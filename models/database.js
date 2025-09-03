@@ -1,7 +1,6 @@
-// models/database.js
 const { Sequelize } = require('sequelize');
 
-// Use Postgres on Render
+// Connect to Postgres using Render environment variables
 const sequelize = new Sequelize(
   process.env.DB_NAME,      // database
   process.env.DB_USER,      // username
@@ -10,7 +9,7 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     dialect: 'postgres',
-    logging: console.log,
+    logging: false, // turn on if you want SQL logs
   }
 );
 
