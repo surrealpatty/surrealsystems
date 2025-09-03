@@ -4,22 +4,24 @@ function showMessage(elementId, message, isSuccess) {
     const el = document.getElementById(elementId);
     if (!el) return;
     el.textContent = message;
-    el.className = "message " + (isSuccess ? "success" : "error");
+    el.className = `message ${isSuccess ? 'success' : 'error'}`;
 }
 
 // Register
-document.getElementById('registerForm')?.addEventListener('submit', async function(e) {
+document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('regUsername').value.trim();
     const email = document.getElementById('regEmail').value.trim();
     const password = document.getElementById('regPassword').value.trim();
-    if (!username || !email || !password) return showMessage('registerMessage', 'All fields required', false);
+    if (!username || !email || !password) {
+        return showMessage('registerMessage', 'All fields required', false);
+    }
 
     try {
         const res = await fetch(`${API_URL}/users/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, password })
+            body: JSON.stringify({ username, email, password }),
         });
         const data = await res.json();
         showMessage('registerMessage', data.message || data.error, res.ok);
@@ -30,17 +32,19 @@ document.getElementById('registerForm')?.addEventListener('submit', async functi
 });
 
 // Login
-document.getElementById('loginForm')?.addEventListener('submit', async function(e) {
+document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value.trim();
-    if (!email || !password) return showMessage('loginMessage', 'Email & password required', false);
+    if (!email || !password) {
+        return showMessage('loginMessage', 'Email & password required', false);
+    }
 
     try {
         const res = await fetch(`${API_URL}/users/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password }),
         });
         const data = await res.json();
         showMessage('loginMessage', data.message || data.error, res.ok);
@@ -54,22 +58,30 @@ document.getElementById('loginForm')?.addEventListener('submit', async function(
 async function loadServices() {
     const list = document.getElementById('services-list');
     if (!list) return;
+
     try {
         const res = await fetch(`${API_URL}/services`);
         const services = await res.json();
         list.innerHTML = '';
-        services.forEach(function(s) {
+        services.forEach((s) => {
             const div = document.createElement('div');
-            div.innerHTML = `<strong>${s.title}</strong> by ${s.User?.username || 'Unknown'}<br>${s.description}<br>Price: $${s.price}<hr>`;
+            div.className = 'service-card';
+            div.innerHTML = `
+                <h3>${s.title}</h3>
+                <p><strong>By:</strong> ${s.User?.username || 'Unknown'}</p>
+                <p>${s.description}</p>
+                <p><strong>Price:</strong> $${s.price}</p>
+            `;
             list.appendChild(div);
         });
     } catch (err) {
         console.error('Failed to load services:', err);
+        list.innerHTML = '<p class="error">Failed to load services</p>';
     }
 }
 
 // Add service
-document.getElementById('service-form')?.addEventListener('submit', async function(e) {
+document.getElementById('service-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const title = document.getElementById('service-title').value.trim();
     const description = document.getElementById('service-description').value.trim();
@@ -81,7 +93,7 @@ document.getElementById('service-form')?.addEventListener('submit', async functi
         const res = await fetch(`${API_URL}/services`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, description, price, userId })
+            body: JSON.stringify({ title, description, price, userId }),
         });
         const data = await res.json();
         alert(data.message || data.error);
