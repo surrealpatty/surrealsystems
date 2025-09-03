@@ -1,4 +1,7 @@
-const API_URL = 'http://localhost:3000';
+// scrpt.js
+
+// Automatically use the current origin (works locally and on Render)
+const API_URL = window.location.origin;
 
 // Helper function to show messages
 function showMessage(elementId, message, isSuccess) {
