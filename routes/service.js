@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Service = require('../models/Service'); // <-- go up one folder
+const Service = require('../models/service'); // <-- go up one folder
 const User = require('../models/User');
 
 // Create a new service
