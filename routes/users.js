@@ -3,7 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-// REGISTER
+// Register
 router.post('/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -18,7 +18,7 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// LOGIN
+// Login
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -30,7 +30,7 @@ router.post('/login', async (req, res) => {
 
         const token = jwt.sign(
             { id: user.id, username: user.username, email: user.email },
-            'supersecretkey', // Use .env in production
+            'supersecretkey',
             { expiresIn: '1h' }
         );
 

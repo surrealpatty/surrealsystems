@@ -1,5 +1,8 @@
-const { DataTypes, Model } = require('sequelize');
-const sequelize = require('../config/database');
+const { Sequelize, DataTypes, Model } = require('sequelize');
+const sequelize = new Sequelize({
+    dialect: 'sqlite',
+    storage: './database.sqlite'
+});
 const bcrypt = require('bcrypt');
 
 class User extends Model {
@@ -11,8 +14,7 @@ class User extends Model {
 User.init({
     username: { type: DataTypes.STRING, allowNull: false, unique: true },
     email: { type: DataTypes.STRING, allowNull: false, unique: true },
-    password: { type: DataTypes.STRING, allowNull: false },
-    role: { type: DataTypes.STRING, defaultValue: 'user' }
+    password: { type: DataTypes.STRING, allowNull: false }
 }, {
     sequelize,
     modelName: 'User',
