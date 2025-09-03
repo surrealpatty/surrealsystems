@@ -1,39 +1,29 @@
-// routes/service.js
 const express = require('express');
-const router = express.Router();
 const Service = require('../models/Service');
 const User = require('../models/User');
+const router = express.Router();
 
 // Get all services
 router.get('/', async (req, res) => {
     try {
-        const services = await Service.findAll({
-            include: [{ model: User, attributes: ['username'] }]
-        });
+        const services = await Service.findAll({ include: User });
         res.json(services);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: err.message });
     }
 });
 
-// Add a service
+// Add service
 router.post('/', async (req, res) => {
     const { title, description, price, userId } = req.body;
-
     if (!title || !description || !price || !userId)
-        return res.status(400).json({ error: 'All fields are required' });
+        return res.status(400).json({ error: 'All fields required' });
 
     try {
-        // Check user exists
-        const user = await User.findByPk(userId);
-        if (!user) return res.status(404).json({ error: 'User not found' });
-
         const service = await Service.create({ title, description, price, UserId: userId });
-        res.status(201).json({ message: 'Service added', serviceId: service.id });
+        res.json({ message: 'Service added', serviceId: service.id });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: err.message });
     }
 });
 

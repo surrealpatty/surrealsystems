@@ -1,17 +1,10 @@
-// models/database.js
 const { Sequelize } = require('sequelize');
 
-// If using full DATABASE_URL from Render:
+// Use DATABASE_URL from Render
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
     protocol: 'postgres',
-    logging: false,
-    dialectOptions: {
-        ssl: {
-            require: true,
-            rejectUnauthorized: false
-        }
-    }
+    logging: false, // change to console.log if you want SQL logs
 });
 
 module.exports = sequelize;
