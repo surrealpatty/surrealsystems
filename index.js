@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
+const cors = require('cors');  // <-- import cors
 const sequelize = require('./config/database');
 
 // Import routes
@@ -11,6 +12,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
+app.use(cors()); // <-- enable CORS
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
