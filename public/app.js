@@ -51,8 +51,9 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
       messageEl.textContent = '✅ Login successful!';
       messageEl.className = 'message success';
 
-      // Save token in localStorage
+      // Save token + user info in localStorage
       localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
 
       // Redirect to dashboard
       window.location.href = 'dashboard.html';
@@ -79,7 +80,10 @@ async function loadServices() {
 
     services.forEach(s => {
       const div = document.createElement('div');
-      div.innerHTML = `<strong>${s.title}</strong> by ${s.User?.username || 'Unknown'}<br>${s.description}<br>Price: $${s.price}<hr>`;
+      div.innerHTML = `
+        <strong>${s.title}</strong> by ${s.User?.username || 'Unknown'}<br>
+        ${s.description}<br>
+        Price: $${s.price}<hr>`;
       list.appendChild(div);
     });
   } catch (err) {
@@ -87,7 +91,49 @@ async function loadServices() {
   }
 }
 
-// Load services if services list exists
+// Load services if the element exists
 if (document.getElementById('services-list')) {
   loadServices();
 }
+
+// --------- POST SERVICE (Dashboard) ---------
+document.getElementById('serviceForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const title = document.getElementById('serviceTitle').value.trim();
+  const description = document.getElementById('serviceDesc').value.trim();
+  const price = document.getElementById('servicePrice').value.trim();
+  const messageEl = document.getElementById('serviceMessage');
+
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      messageEl.textContent = 'You must be logged in to post a service.';
+      messageEl.className = 'message error';
+      return;
+    }
+
+    const res = await fetch(`${API_URL}/services`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ title, description, price })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      messageEl.textContent = data.message || 'Service posted!';
+      messageEl.className = 'message success';
+      e.target.reset();
+      loadServices(); // refresh service list
+    } else {
+      messageEl.textContent = data.error;
+      messageEl.className = 'message error';
+    }
+  } catch (err) {
+    messageEl.textContent = err.message;
+    messageEl.className = 'message error';
+  }
+});

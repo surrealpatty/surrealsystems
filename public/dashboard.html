@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - CodeCrowds</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>CodeCrowds Dashboard</h1>
+      <p id="welcomeMsg"></p>
+      <button id="logoutBtn">Logout</button>
+    </header>
+
+    <section class="form-section">
+      <h2>Post a Service</h2>
+      <form id="serviceForm">
+        <input type="text" id="serviceTitle" placeholder="Service Title" required /><br>
+        <textarea id="serviceDesc" placeholder="Service Description" required></textarea><br>
+        <input type="number" id="servicePrice" placeholder="Price" required /><br>
+        <button type="submit">Post Service</button>
+      </form>
+      <p id="serviceMessage" class="message"></p>
+    </section>
+
+    <section class="form-section">
+      <h2>All Services</h2>
+      <div id="services-list"></div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = 'index.html'; // redirect if not logged in
+    }
+
+    // Welcome message
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    document.getElementById('welcomeMsg').textContent = user.username 
+      ? `Welcome, ${user.username}!`
+      : 'Welcome!';
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>
