@@ -1,20 +1,20 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
-const cors = require('cors');  // <-- import cors
+const cors = require('cors');
 const sequelize = require('./config/database');
 
 // Import routes
-const userRoutes = require('./routes/user');
+const userRoutes = require('./routes/user'); // make sure filename matches
 const serviceRoutes = require('./routes/service');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors()); // <-- enable CORS
+app.use(cors()); // allow cross-origin requests
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'))); // serves your HTML/CSS/JS
 
 // API routes
 app.use('/users', userRoutes);
