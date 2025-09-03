@@ -1,37 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CodeCrowds</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeCrowds</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        input, button { margin: 5px 0; padding: 5px; }
+        .message { margin: 5px 0; padding: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .service-item { border-bottom: 1px solid #ccc; margin-bottom: 10px; padding-bottom: 10px; }
+    </style>
 </head>
 <body>
-<div class="container">
-  <h1>CodeCrowds</h1>
+    <h1>CodeCrowds</h1>
 
-  <section>
     <h2>Register</h2>
     <form id="registerForm">
-      <input type="text" id="regUsername" placeholder="Username" required>
-      <input type="email" id="regEmail" placeholder="Email" required>
-      <input type="password" id="regPassword" placeholder="Password" required>
-      <button type="submit">Register</button>
+        <input type="text" id="regUsername" placeholder="Username" required><br>
+        <input type="email" id="regEmail" placeholder="Email" required><br>
+        <input type="password" id="regPassword" placeholder="Password" required><br>
+        <button type="submit">Register</button>
     </form>
-    <p id="registerMessage" class="message"></p>
-  </section>
+    <div id="registerMessage"></div>
 
-  <section>
     <h2>Login</h2>
     <form id="loginForm">
-      <input type="email" id="loginEmail" placeholder="Email" required>
-      <input type="password" id="loginPassword" placeholder="Password" required>
-      <button type="submit">Login</button>
+        <input type="email" id="loginEmail" placeholder="Email" required><br>
+        <input type="password" id="loginPassword" placeholder="Password" required><br>
+        <button type="submit">Login</button>
     </form>
-    <p id="loginMessage" class="message"></p>
-  </section>
-</div>
+    <div id="loginMessage"></div>
 
-<script src="app.js"></script>
+    <h2>Add Service</h2>
+    <form id="service-form">
+        <input type="text" id="service-title" placeholder="Service Title" required><br>
+        <textarea id="service-description" placeholder="Service Description" required></textarea><br>
+        <input type="number" id="service-price" placeholder="Price" required><br>
+        <input type="text" id="service-userId" placeholder="Your User ID" required><br>
+        <button type="submit">Add Service</button>
+    </form>
+
+    <h2>Services</h2>
+    <div id="services-list"></div>
+
+    <script src="script.js"></script>
 </body>
 </html>
