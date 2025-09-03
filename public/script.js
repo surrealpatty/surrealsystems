@@ -1,70 +1,136 @@
 const API_URL = 'http://localhost:3000';
 
+// Helper function to show messages
+function showMessage(elementId, message, isSuccess) {
+    const el = document.getElementById(elementId);
+    if (el) {
+        el.textContent = message;
+        el.className = "message " + (isSuccess ? "success" : "error");
+    }
+}
+
+// ----------------------
 // Register
-document.getElementById('register-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('username').value;
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+// ----------------------
+const registerForm = document.getElementById('registerForm');
+if (registerForm) {
+    registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    const res = await fetch(`${API_URL}/users/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password })
-    });
+        const username = document.getElementById('regUsername').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value.trim();
 
-    const data = await res.json();
-    alert(data.message || data.error);
-});
+        if (!username || !email || !password) {
+            return showMessage('registerMessage', 'All fields are required', false);
+        }
 
-// Login
-document.getElementById('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
+        try {
+            const res = await fetch(`${API_URL}/users/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password })
+            });
 
-    const res = await fetch(`${API_URL}/users/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-    });
+            const data = await res.json();
+            showMessage('registerMessage', data.message || data.error, res.ok);
 
-    const data = await res.json();
-    alert(data.message || data.error);
-});
-
-// Load services
-async function loadServices() {
-    const res = await fetch(`${API_URL}/services`);
-    const services = await res.json();
-
-    const list = document.getElementById('services-list');
-    list.innerHTML = '';
-    services.forEach(s => {
-        const div = document.createElement('div');
-        div.innerHTML = `<strong>${s.title}</strong> by ${s.User?.username || 'Unknown'}<br>${s.description}<br>Price: $${s.price}<hr>`;
-        list.appendChild(div);
+            if (res.ok) registerForm.reset();
+        } catch (err) {
+            showMessage('registerMessage', 'Error: ' + err.message, false);
+        }
     });
 }
 
-// Add service
-document.getElementById('service-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const title = document.getElementById('service-title').value;
-    const description = document.getElementById('service-description').value;
-    const price = parseFloat(document.getElementById('service-price').value);
-    const userId = document.getElementById('service-userId').value;
+// ----------------------
+// Login
+// ----------------------
+const loginForm = document.getElementById('loginForm');
+if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    const res = await fetch(`${API_URL}/services`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, price, userId })
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+
+        if (!email || !password) {
+            return showMessage('loginMessage', 'Email and password are required', false);
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/users/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await res.json();
+            showMessage('loginMessage', data.message || data.error, res.ok);
+
+            if (res.ok) loginForm.reset();
+        } catch (err) {
+            showMessage('loginMessage', 'Error: ' + err.message, false);
+        }
     });
+}
 
-    const data = await res.json();
-    alert(data.message || data.error);
-    loadServices();
-});
+// ----------------------
+// Services
+// ----------------------
+async function loadServices() {
+    const list = document.getElementById('services-list');
+    if (!list) return;
+
+    try {
+        const res = await fetch(`${API_URL}/services`);
+        const services = await res.json();
+
+        list.innerHTML = '';
+        services.forEach(s => {
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <strong>${s.title}</strong> by ${s.User?.username || 'Unknown'}<br>
+                ${s.description}<br>
+                Price: $${s.price}<hr>
+            `;
+            list.appendChild(div);
+        });
+    } catch (err) {
+        console.error('Failed to load services:', err);
+    }
+}
+
+// Add service
+const serviceForm = document.getElementById('service-form');
+if (serviceForm) {
+    serviceForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const title = document.getElementById('service-title').value.trim();
+        const description = document.getElementById('service-description').value.trim();
+        const price = parseFloat(document.getElementById('service-price').value);
+        const userId = document.getElementById('service-userId').value.trim();
+
+        if (!title || !description || isNaN(price) || !userId) {
+            return alert('All fields are required for service');
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/services`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, description, price, userId })
+            });
+
+            const data = await res.json();
+            alert(data.message || data.error);
+            loadServices();
+            serviceForm.reset();
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    });
+}
 
 // Load services on page load
 loadServices();

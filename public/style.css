@@ -24,7 +24,7 @@ header h1 {
 }
 
 header p {
-    margin: 5px 0 0 0;
+    margin: 5px 0 0;
     color: #555;
 }
 
@@ -80,4 +80,13 @@ button:hover {
 
 .error {
     color: red;
+}
+
+/* Optional: service list styling */
+#services-list div {
+    background: #fff;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
