@@ -1,3 +1,4 @@
+// models/Service.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('./database');
 const User = require('./User');
@@ -8,8 +9,9 @@ const Service = sequelize.define('Service', {
     price: { type: DataTypes.FLOAT, allowNull: false }
 });
 
-// Relation
-User.hasMany(Service);
-Service.belongsTo(User);
+// Association
+User.hasMany(Service, { foreignKey: 'UserId' });
+Service.belongsTo(User, { foreignKey: 'UserId' });
 
 module.exports = Service;
+

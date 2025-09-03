@@ -1,4 +1,5 @@
-const API_URL = 'https://codecrowds.onrender.com'; // Render URL
+// Use Render backend URL
+const API_URL = 'https://codecrowds.onrender.com';
 
 function showMessage(elementId, message, isSuccess) {
     const el = document.getElementById(elementId);
@@ -62,6 +63,7 @@ async function loadServices() {
     try {
         const res = await fetch(`${API_URL}/services`);
         const services = await res.json();
+
         list.innerHTML = '';
         services.forEach(s => {
             const div = document.createElement('div');
@@ -85,7 +87,8 @@ document.getElementById('service-form')?.addEventListener('submit', async e => {
     const price = parseFloat(document.getElementById('service-price').value);
     const userId = document.getElementById('service-userId').value.trim();
 
-    if (!title || !description || isNaN(price) || !userId) return alert('All fields required');
+    if (!title || !description || isNaN(price) || !userId)
+        return alert('All fields required');
 
     try {
         const res = await fetch(`${API_URL}/services`, {
