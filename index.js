@@ -1,5 +1,6 @@
 // index.js
 const express = require('express');
+const cors = require('cors'); // Add CORS
 const app = express();
 const sequelize = require('./models/database'); // Sequelize instance
 const User = require('./models/User');
@@ -8,9 +9,12 @@ const Service = require('./models/Service');
 const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/service');
 
+// Middleware
+app.use(cors({ origin: '*' })); // Allow requests from any origin
 app.use(express.json());
 app.use(express.static('public')); // Serve frontend files
 
+// Routes
 app.use('/users', userRoutes);
 app.use('/services', serviceRoutes);
 
