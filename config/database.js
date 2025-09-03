@@ -1,9 +1,8 @@
 const { Sequelize } = require('sequelize');
 
-const sequelize = new Sequelize('codecrowds', 'root', 'YLtr+TlSWaRifesplsuPacLChe0', { // <--- put your MySQL password
+const sequelize = new Sequelize('codecrowds', 'root', '', {
     host: 'localhost',
-    dialect: 'mysql',
-    logging: false
+    dialect: 'mysql'
 });
 
 module.exports = sequelize;

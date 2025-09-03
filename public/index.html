@@ -1,68 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CodeCrowds</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    /* Screen-reader only labels */
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      overflow: hidden;
-      clip: rect(0,0,0,0);
-      white-space: nowrap;
-      border: 0;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeCrowds</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>CodeCrowds</h1>
-      <p>Connect, Share, and Grow</p>
-    </header>
+<div class="container">
+  <h1>CodeCrowds</h1>
 
-    <section class="form-section">
-      <h2>Register</h2>
-      <form id="registerForm">
-        <label for="regUsername" class="sr-only">Username</label>
-        <input type="text" id="regUsername" placeholder="Username" required />
-        
-        <label for="regEmail" class="sr-only">Email</label>
-        <input type="email" id="regEmail" placeholder="Email" required />
-        
-        <label for="regPassword" class="sr-only">Password</label>
-        <input type="password" id="regPassword" placeholder="Password" required />
-        
-        <button type="submit">Register</button>
-      </form>
-      <p id="registerMessage" class="message"></p>
-    </section>
+  <section>
+    <h2>Register</h2>
+    <form id="registerForm">
+      <input type="text" id="regUsername" placeholder="Username" required>
+      <input type="email" id="regEmail" placeholder="Email" required>
+      <input type="password" id="regPassword" placeholder="Password" required>
+      <button type="submit">Register</button>
+    </form>
+    <p id="registerMessage" class="message"></p>
+  </section>
 
-    <section class="form-section">
-      <h2>Login</h2>
-      <form id="loginForm">
-        <label for="loginEmail" class="sr-only">Email</label>
-        <input type="email" id="loginEmail" placeholder="Email" required />
-        
-        <label for="loginPassword" class="sr-only">Password</label>
-        <input type="password" id="loginPassword" placeholder="Password" required />
-        
-        <button type="submit">Login</button>
-      </form>
-      <p id="loginMessage" class="message"></p>
-    </section>
+  <section>
+    <h2>Login</h2>
+    <form id="loginForm">
+      <input type="email" id="loginEmail" placeholder="Email" required>
+      <input type="password" id="loginPassword" placeholder="Password" required>
+      <button type="submit">Login</button>
+    </form>
+    <p id="loginMessage" class="message"></p>
+  </section>
+</div>
 
-    <section class="form-section">
-      <h2>Services</h2>
-      <div id="services-list"></div>
-    </section>
-  </div>
-
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

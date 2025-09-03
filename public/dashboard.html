@@ -1,83 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - CodeCrowds</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    /* Screen-reader only labels */
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      overflow: hidden;
-      clip: rect(0,0,0,0);
-      white-space: nowrap;
-      border: 0;
-    }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - CodeCrowds</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>CodeCrowds Dashboard</h1>
-      <div>
-        <span id="welcomeMsg"></span>
-        <button id="logoutBtn">Logout</button>
-      </div>
-    </header>
+<div class="container">
+  <header>
+    <h1>Dashboard</h1>
+    <p id="welcomeMsg"></p>
+    <button id="logoutBtn">Logout</button>
+  </header>
 
-    <section class="form-section">
-      <h2>Post a Service</h2>
-      <form id="serviceForm">
-        <label for="serviceTitle" class="sr-only">Service Title</label>
-        <input type="text" id="serviceTitle" placeholder="Service Title" required /><br>
+  <section>
+    <h2>Post a Service</h2>
+    <form id="serviceForm">
+      <input type="text" id="serviceTitle" placeholder="Service Title" required>
+      <textarea id="serviceDesc" placeholder="Description" required></textarea>
+      <input type="number" id="servicePrice" placeholder="Price" required>
+      <button type="submit">Post Service</button>
+    </form>
+    <p id="serviceMessage" class="message"></p>
+  </section>
 
-        <label for="serviceDesc" class="sr-only">Service Description</label>
-        <textarea id="serviceDesc" placeholder="Service Description" required></textarea><br>
+  <section>
+    <h2>All Services</h2>
+    <div id="services-list"></div>
+  </section>
+</div>
 
-        <label for="servicePrice" class="sr-only">Price</label>
-        <input type="number" id="servicePrice" placeholder="Price" required /><br>
-
-        <button type="submit">Post Service</button>
-      </form>
-      <p id="serviceMessage" class="message"></p>
-    </section>
-
-    <section class="form-section">
-      <h2>All Services</h2>
-      <div id="services-list"></div>
-    </section>
-  </div>
-
-  <script src="app.js"></script>
-  <script>
-    // --------- LOGIN CHECK ---------
-    const token = localStorage.getItem('token');
-    if (!token) {
-      window.location.href = 'index.html'; // redirect if not logged in
-    }
-
-    // Welcome message
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    document.getElementById('welcomeMsg').textContent = user.username 
-      ? `Welcome, ${user.username}!`
-      : 'Welcome!';
-
-    // Logout
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = 'index.html';
-    });
-  </script>
+<script src="app.js"></script>
+<script>
+const token = localStorage.getItem('token');
+if (!token) window.location.href = 'index.html';
+const user = JSON.parse(localStorage.getItem('user') || '{}');
+document.getElementById('welcomeMsg').textContent = user.username ? `Welcome, ${user.username}` : 'Welcome!';
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  localStorage.removeItem('token'); localStorage.removeItem('user');
+  window.location.href = 'index.html';
+});
+</script>
 </body>
 </html>

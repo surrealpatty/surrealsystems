@@ -1,52 +1,48 @@
 const express = require('express');
 const router = express.Router();
 const Service = require('../models/Service');
-const { User } = require('../models/User');
-const authMiddleware = require('../middlewares/authMiddleware');
+const User = require('../models/User');
+const jwt = require('jsonwebtoken');
+
+// Middleware to verify JWT
+const authenticate = (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'No token provided' });
+
+    try {
+        const decoded = jwt.verify(token, 'supersecretkey');
+        req.user = decoded;
+        next();
+    } catch {
+        res.status(401).json({ error: 'Invalid token' });
+    }
+};
 
 // CREATE SERVICE
-router.post('/', authMiddleware, async (req, res) => {
-  try {
-    const { title, description, price } = req.body;
-    const service = await Service.create({ title, description, price, userId: req.user.id });
-    res.status(201).json({ message: '✅ Service created successfully', service });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+router.post('/', authenticate, async (req, res) => {
+    try {
+        const { title, description, price } = req.body;
+        const userId = req.user.id;
+
+        if (!title || !description || price == null) {
+            return res.status(400).json({ error: 'All fields are required' });
+        }
+
+        const service = await Service.create({ title, description, price, userId });
+        res.status(201).json({ message: 'Service created', service });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
 });
 
 // GET ALL SERVICES
 router.get('/', async (req, res) => {
-  try {
-    const services = await Service.findAll({ include: { model: User, attributes: ['id', 'username', 'email'] } });
-    res.json(services);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// GET SERVICE BY ID
-router.get('/:id', async (req, res) => {
-  try {
-    const service = await Service.findByPk(req.params.id, { include: { model: User, attributes: ['id', 'username', 'email'] } });
-    if (!service) return res.status(404).json({ error: 'Service not found' });
-    res.json(service);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// DELETE SERVICE (only owner)
-router.delete('/:id', authMiddleware, async (req, res) => {
-  try {
-    const service = await Service.findByPk(req.params.id);
-    if (!service) return res.status(404).json({ error: 'Service not found' });
-    if (service.userId !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
-    await service.destroy();
-    res.json({ message: '🗑️ Service deleted successfully' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    try {
+        const services = await Service.findAll({ include: { model: User, attributes: ['id', 'username'] } });
+        res.json(services);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 module.exports = router;
