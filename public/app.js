@@ -1,7 +1,7 @@
 const API_URL = 'http://localhost:3000';
 
 // --------- REGISTER ---------
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
+document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const username = document.getElementById('regUsername').value.trim();
   const email = document.getElementById('regEmail').value.trim();
@@ -32,7 +32,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
 });
 
 // --------- LOGIN ---------
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
+document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value.trim();
@@ -48,9 +48,14 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const data = await res.json();
 
     if (res.ok) {
-      messageEl.textContent = data.message;
+      messageEl.textContent = '✅ Login successful!';
       messageEl.className = 'message success';
-      e.target.reset();
+
+      // Save token in localStorage
+      localStorage.setItem('token', data.token);
+
+      // Redirect to dashboard
+      window.location.href = 'dashboard.html';
     } else {
       messageEl.textContent = data.error;
       messageEl.className = 'message error';
@@ -68,6 +73,8 @@ async function loadServices() {
     const services = await res.json();
 
     const list = document.getElementById('services-list');
+    if (!list) return;
+
     list.innerHTML = '';
 
     services.forEach(s => {
@@ -80,5 +87,7 @@ async function loadServices() {
   }
 }
 
-// Load services on page load
-loadServices();
+// Load services if services list exists
+if (document.getElementById('services-list')) {
+  loadServices();
+}
