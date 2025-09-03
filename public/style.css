@@ -46,7 +46,7 @@ input {
     display: block;
     width: 100%;
     padding: 12px;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     border: 1px solid #ccc;
     border-radius: 8px;
     font-size: 1rem;
@@ -74,17 +74,10 @@ button:hover {
     font-weight: 500;
 }
 
-/* New additions */
 .success {
     color: green;
 }
 
 .error {
     color: red;
-}
-
-/* Optional: small spacing tweaks */
-.form-section input,
-.form-section button {
-    margin-bottom: 12px;
 }
