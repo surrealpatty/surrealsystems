@@ -13,9 +13,7 @@ document.getElementById('registerForm')?.addEventListener('submit', async (e) =>
     const username = document.getElementById('regUsername').value.trim();
     const email = document.getElementById('regEmail').value.trim();
     const password = document.getElementById('regPassword').value.trim();
-    if (!username || !email || !password) {
-        return showMessage('registerMessage', 'All fields required', false);
-    }
+    if (!username || !email || !password) return showMessage('registerMessage', 'All fields required', false);
 
     try {
         const res = await fetch(`${API_URL}/users/register`, {
@@ -36,9 +34,7 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value.trim();
-    if (!email || !password) {
-        return showMessage('loginMessage', 'Email & password required', false);
-    }
+    if (!email || !password) return showMessage('loginMessage', 'Email & password required', false);
 
     try {
         const res = await fetch(`${API_URL}/users/login`, {
