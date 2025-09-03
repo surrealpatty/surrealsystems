@@ -1,22 +1,15 @@
-// models/User.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('./database');
-const bcrypt = require('bcrypt');
+const User = require('./User');
 
-const User = sequelize.define('User', {
-  username: { type: DataTypes.STRING, allowNull: false, unique: true },
-  email: { type: DataTypes.STRING, allowNull: false, unique: true },
-  password: { type: DataTypes.STRING, allowNull: false }
+const Service = sequelize.define('Service', {
+    title: { type: DataTypes.STRING, allowNull: false },
+    description: { type: DataTypes.TEXT, allowNull: false },
+    price: { type: DataTypes.FLOAT, allowNull: false }
 });
 
-// Hash password before saving
-User.beforeCreate(async (user) => {
-  user.password = await bcrypt.hash(user.password, 10);
-});
+// Relation
+User.hasMany(Service);
+Service.belongsTo(User);
 
-// Instance method to check password
-User.prototype.checkPassword = async function(password) {
-  return await bcrypt.compare(password, this.password);
-};
-
-module.exports = User;
+module.exports = Service;
