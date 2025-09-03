@@ -9,7 +9,7 @@ const serviceRoutes = require('./routes/service');
 const app = express();
 
 // Middleware
-app.use(cors({ origin: '*' }));
+app.use(cors({ origin: '*' })); // allows all origins
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
