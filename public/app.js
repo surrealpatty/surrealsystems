@@ -1,75 +1,55 @@
-// Helper function to show messages
-function showMessage(elementId, message, isSuccess) {
-    const el = document.getElementById(elementId);
-    el.textContent = message;
-    el.className = "message " + (isSuccess ? "success" : "error");
+const API_URL = 'http://localhost:3000';
+
+// Helper for messages
+function showMessage(id, msg, isSuccess) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = 'message ' + (isSuccess ? 'success' : 'error');
 }
 
-// ----------------------
-// Registration
-// ----------------------
-const registerForm = document.getElementById("registerForm");
-if (registerForm) {
-    registerForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
+// Register
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('regUsername').value;
+    const email = document.getElementById('regEmail').value;
+    const password = document.getElementById('regPassword').value;
 
-        const username = document.getElementById("regUsername").value.trim();
-        const email = document.getElementById("regEmail").value.trim();
-        const password = document.getElementById("regPassword").value.trim();
-
-        if (!username || !email || !password) {
-            return showMessage("registerMessage", "All fields are required.", false);
-        }
-
-        try {
-            const res = await fetch("http://localhost:3000/users/register", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, email, password })
-            });
-
-            const data = await res.json();
-            showMessage("registerMessage", data.message || "Registration failed.", res.ok);
-
-            if (res.ok) registerForm.reset();
-        } catch (err) {
-            showMessage("registerMessage", "Error: " + err.message, false);
-        }
+    const res = await fetch(`${API_URL}/users/register`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ username, email, password })
     });
-}
+    const data = await res.json();
+    showMessage('registerMessage', data.message || data.error, res.ok);
+    if(res.ok) document.getElementById('registerForm').reset();
+});
 
-// ----------------------
 // Login
-// ----------------------
-const loginForm = document.getElementById("loginForm");
-if (loginForm) {
-    loginForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
 
-        const email = document.getElementById("loginEmail").value.trim();
-        const password = document.getElementById("loginPassword").value.trim();
+    const res = await fetch(`${API_URL}/users/login`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    showMessage('loginMessage', data.message || data.error, res.ok);
+    if(res.ok) document.getElementById('loginForm').reset();
+});
 
-        if (!email || !password) {
-            return showMessage("loginMessage", "Email and password are required.", false);
-        }
-
-        try {
-            const res = await fetch("http://localhost:3000/users/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password })
-            });
-
-            const data = await res.json();
-            showMessage("loginMessage", data.message || "Login failed.", res.ok);
-
-            if (res.ok) {
-                loginForm.reset();
-                // Optional: redirect to dashboard
-                // window.location.href = "/dashboard.html";
-            }
-        } catch (err) {
-            showMessage("loginMessage", "Error: " + err.message, false);
-        }
+// Load services
+async function loadServices() {
+    const res = await fetch(`${API_URL}/services`);
+    const services = await res.json();
+    const list = document.getElementById('services-list');
+    list.innerHTML = '';
+    services.forEach(s => {
+        const div = document.createElement('div');
+        div.innerHTML = `<strong>${s.title}</strong> by ${s.User?.username || 'Unknown'}<br>${s.description}<br>Price: $${s.price}<hr>`;
+        list.appendChild(div);
     });
 }
+loadServices();

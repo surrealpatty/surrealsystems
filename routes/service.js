@@ -1,24 +1,23 @@
 const express = require('express');
 const router = express.Router();
-const Service = require('../models/service'); // <-- go up one folder
+const Service = require('../models/Service');
 const User = require('../models/User');
 
-// Create a new service
+// Create service
 router.post('/', async (req, res) => {
     try {
         const { title, description, price, userId } = req.body;
         if (!title || !description || price == null || !userId) {
             return res.status(400).json({ error: 'All fields are required' });
         }
-
         const service = await Service.create({ title, description, price, userId });
-        res.status(201).json({ message: 'Service created successfully', service });
+        res.status(201).json({ message: 'Service created', service });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-// Get all services with associated users
+// Get all services
 router.get('/', async (req, res) => {
     try {
         const services = await Service.findAll({
@@ -30,7 +29,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Get a single service
+// Get service by ID
 router.get('/:id', async (req, res) => {
     try {
         const service = await Service.findByPk(req.params.id, {
@@ -43,14 +42,13 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Delete a service
+// Delete service
 router.delete('/:id', async (req, res) => {
     try {
         const service = await Service.findByPk(req.params.id);
         if (!service) return res.status(404).json({ error: 'Service not found' });
-
         await service.destroy();
-        res.json({ message: 'Service deleted successfully' });
+        res.json({ message: 'Service deleted' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
