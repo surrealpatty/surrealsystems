@@ -9,7 +9,7 @@ const serviceRoutes = require('./routes/service');
 const app = express();
 
 // Middleware
-app.use(cors({ origin: '*' }));
+app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -21,8 +21,8 @@ app.use('/services', serviceRoutes);
 const PORT = process.env.PORT || 3000;
 
 sequelize.sync({ alter: true })
-    .then(() => {
-        console.log('✅ Database synced');
-        app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-    })
-    .catch(err => console.error('❌ Database sync failed:', err));
+  .then(() => {
+    console.log('✅ Database synced');
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  })
+  .catch(err => console.error('❌ Database sync failed:', err));
