@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User'); // <-- use ../models/User to go up one folder
+const User = require('../models/User');
 
-// Register a new user
+// Register
 router.post('/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -34,7 +34,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Get all users
+// Get all users (excluding passwords)
 router.get('/', async (req, res) => {
     try {
         const users = await User.findAll({ attributes: { exclude: ['password'] } });
