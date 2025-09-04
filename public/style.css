@@ -3,15 +3,20 @@ html, body {
     height: 100%;
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f4f8;
+}
+
+/* ---------- Flex wrapper for full-height pages ---------- */
+.fullscreen-center {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: #f0f4f8;
+    height: 100%;
 }
 
 /* ---------- Container ---------- */
 .container {
-    max-width: 400px; /* smaller for forms */
+    max-width: 400px;
     width: 100%;
     padding: 2rem;
     background: #fff;
@@ -47,13 +52,15 @@ input:focus, textarea:focus {
     border-color: #007bff;
 }
 
+/* ---------- Buttons ---------- */
 button {
+    width: 100%;
     padding: 0.75rem;
-    font-size: 1rem;
     border-radius: 6px;
     border: none;
-    background: #007bff;
+    background: #007bff; /* All buttons blue */
     color: #fff;
+    font-size: 1rem;
     cursor: pointer;
     transition: background 0.3s;
 }
@@ -66,20 +73,6 @@ button:hover {
 .message {
     font-weight: bold;
     margin-top: 0.5rem;
-    padding: 0.5rem;
-    border-radius: 6px;
-}
-
-.message.success {
-    color: #155724;
-    background-color: #d4edda;
-    border: 1px solid #c3e6cb;
-}
-
-.message.error {
-    color: #721c24;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
 }
 
 /* ---------- Services Page ---------- */
