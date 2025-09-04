@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const Service = require('./models/service');
-const User = require('./models/user');
+const Service = require('./models/Service');
+const User = require('./models/User');
 
 // Get all services
 router.get('/', async (req, res) => {
