@@ -3,69 +3,59 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CodeCrowds - Profile</title>
+<title>Profile - CodeCrowds</title>
 <link rel="stylesheet" href="style.css">
 <style>
-    html, body {
+    body, html {
         height: 100%;
         margin: 0;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: #f0f4f8;
+        background: linear-gradient(135deg, #6cc1ff, #3a8dff);
         display: flex;
         justify-content: center;
         align-items: center;
     }
+
     .container {
         text-align: center;
-        background: #fff;
-        padding: 3rem 2rem;
-        border-radius: 12px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        background: rgba(255,255,255,0.95);
+        padding: 4rem 3rem;
+        border-radius: 16px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.2);
         width: 100%;
-        max-width: 400px;
+        max-width: 450px;
     }
+
     h1 {
-        margin-bottom: 1.5rem;
-        color: #333;
-    }
-    p {
+        font-size: 2.2rem;
         margin-bottom: 2rem;
-        font-size: 1.1rem;
-        color: #555;
+        color: #007bff;
     }
+
     button {
         width: 100%;
         padding: 0.75rem;
-        border-radius: 6px;
+        border-radius: 8px;
         border: none;
         background: #007bff;
         color: #fff;
         font-size: 1rem;
         cursor: pointer;
-        transition: background 0.3s;
+        transition: background 0.3s, transform 0.2s;
     }
+
     button:hover {
         background: #0056b3;
+        transform: translateY(-2px);
     }
 </style>
 </head>
 <body>
     <div class="container">
-        <h1>Your Dashboard</h1>
+        <h1>Your Profile</h1>
         <p>Welcome, <span id="usernameDisplay">User</span>!</p>
         <a href="services.html"><button>Go to Services</button></a>
     </div>
-
-    <script>
-        // Display logged-in username from localStorage
-        document.addEventListener('DOMContentLoaded', () => {
-            const usernameEl = document.getElementById('usernameDisplay');
-            const savedUser = localStorage.getItem('loggedInUser');
-            if (usernameEl && savedUser) {
-                const user = JSON.parse(savedUser);
-                usernameEl.textContent = user.username || 'User';
-            }
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>

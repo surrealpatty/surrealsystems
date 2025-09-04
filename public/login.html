@@ -6,52 +6,66 @@
 <title>Log In - CodeCrowds</title>
 <link rel="stylesheet" href="style.css">
 <style>
-    html, body {
+    body, html {
         height: 100%;
         margin: 0;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: #f0f4f8;
+        background: linear-gradient(135deg, #6cc1ff, #3a8dff);
         display: flex;
         justify-content: center;
         align-items: center;
     }
+
     .container {
         text-align: center;
-        background: #fff;
-        padding: 3rem 2rem;
-        border-radius: 12px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        background: rgba(255,255,255,0.95);
+        padding: 4rem 3rem;
+        border-radius: 16px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.2);
         width: 100%;
-        max-width: 400px;
+        max-width: 450px;
     }
+
     h1 {
+        font-size: 2.2rem;
         margin-bottom: 2rem;
-        color: #333;
+        color: #007bff;
     }
+
     input {
         width: 100%;
         padding: 0.75rem;
         margin-bottom: 1rem;
-        border-radius: 6px;
+        border-radius: 8px;
         border: 1px solid #ccc;
         font-size: 1rem;
     }
+
     button {
         width: 100%;
         padding: 0.75rem;
-        border-radius: 6px;
+        border-radius: 8px;
         border: none;
         background: #007bff;
         color: #fff;
         font-size: 1rem;
         cursor: pointer;
+        transition: background 0.3s, transform 0.2s;
     }
+
     button:hover {
         background: #0056b3;
+        transform: translateY(-2px);
     }
+
     .message {
         margin-top: 1rem;
         font-weight: bold;
+    }
+
+    a {
+        color: #007bff;
+        text-decoration: none;
     }
 </style>
 </head>
