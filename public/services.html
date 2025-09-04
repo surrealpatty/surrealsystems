@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeCrowds - Services</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Available Services</h1>
+        <div id="services-list"></div>
+        
+        <h2>Add a New Service</h2>
+        <form id="serviceForm">
+            <input type="text" id="title" placeholder="Service Title" required>
+            <textarea id="description" placeholder="Service Description" required></textarea>
+            <input type="number" id="price" placeholder="Price" required>
+            <button type="submit">Add Service</button>
+        </form>
+        <p id="service-message" class="message"></p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

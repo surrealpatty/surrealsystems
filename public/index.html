@@ -3,49 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CodeCrowds</title>
-    <!-- Link to external CSS -->
+    <title>CodeCrowds - Home</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>CodeCrowds</h1>
+    <header>
+        <h1>Welcome to CodeCrowds</h1>
+        <nav>
+            <a href="login.html">Login</a> | 
+            <a href="register.html">Register</a>
+        </nav>
+    </header>
 
-        <!-- Register Form -->
-        <h2>Register</h2>
-        <form id="registerForm">
-            <input type="text" id="regUsername" placeholder="Username" required>
-            <input type="email" id="regEmail" placeholder="Email" required>
-            <input type="password" id="regPassword" placeholder="Password" required>
-            <button type="submit">Register</button>
-        </form>
-        <div id="registerMessage" class="message"></div>
-
-        <!-- Login Form -->
-        <h2>Login</h2>
-        <form id="loginForm">
-            <input type="email" id="loginEmail" placeholder="Email" required>
-            <input type="password" id="loginPassword" placeholder="Password" required>
-            <button type="submit">Login</button>
-        </form>
-        <div id="loginMessage" class="message"></div>
-
-        <!-- Add Service Form -->
-        <h2>Add Service</h2>
-        <form id="service-form">
-            <input type="text" id="service-title" placeholder="Service Title" required>
-            <textarea id="service-description" placeholder="Service Description" required></textarea>
-            <input type="number" id="service-price" placeholder="Price" required>
-            <input type="text" id="service-userId" placeholder="Your User ID" required>
-            <button type="submit">Add Service</button>
-        </form>
-
-        <!-- Services List -->
-        <h2>Services</h2>
-        <div id="services-list"></div>
-    </div>
-
-    <!-- JS -->
-    <script src="script.js"></script>
+    <main>
+        <h2>Buy or Sell Skills Easily</h2>
+        <p>Post services, hire freelancers, and grow your network.</p>
+    </main>
 </body>
 </html>
