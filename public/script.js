@@ -7,7 +7,7 @@ function showMessage(elementId, message, isSuccess) {
     el.className = `message ${isSuccess ? 'success' : 'error'}`;
 }
 
-// Register
+// -------------------- Register --------------------
 document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('regUsername').value.trim();
@@ -23,13 +23,18 @@ document.getElementById('registerForm')?.addEventListener('submit', async (e) =>
         });
         const data = await res.json();
         showMessage('registerMessage', data.message || data.error, res.ok);
-        if (res.ok) e.target.reset();
+
+        if (res.ok) {
+            e.target.reset();
+            // Redirect to profile page
+            window.location.href = 'profile.html';
+        }
     } catch (err) {
         showMessage('registerMessage', 'Error: ' + err.message, false);
     }
 });
 
-// Login
+// -------------------- Login --------------------
 document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value.trim();
@@ -44,13 +49,18 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
         });
         const data = await res.json();
         showMessage('loginMessage', data.message || data.error, res.ok);
-        if (res.ok) e.target.reset();
+
+        if (res.ok) {
+            e.target.reset();
+            // Redirect to profile page
+            window.location.href = 'profile.html';
+        }
     } catch (err) {
         showMessage('loginMessage', 'Error: ' + err.message, false);
     }
 });
 
-// Load services
+// -------------------- Load services --------------------
 async function loadServices() {
     const list = document.getElementById('services-list');
     if (!list) return;
@@ -72,11 +82,11 @@ async function loadServices() {
         });
     } catch (err) {
         console.error('Failed to load services:', err);
-        if(list) list.innerHTML = '<p class="error">Failed to load services</p>';
+        if (list) list.innerHTML = '<p class="error">Failed to load services</p>';
     }
 }
 
-// Add service
+// -------------------- Add service --------------------
 document.getElementById('serviceForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const title = document.getElementById('service-title').value.trim();
@@ -100,5 +110,5 @@ document.getElementById('serviceForm')?.addEventListener('submit', async (e) => 
     }
 });
 
-// Initial load on services page
+// -------------------- Initial load on services page --------------------
 loadServices();
