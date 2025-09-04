@@ -1,10 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CodeCrowds - Sign Up</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign Up - CodeCrowds</title>
+<link rel="stylesheet" href="style.css">
+<style>
+    body, html {
+        height: 100%;
+        margin: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #f0f4f8;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .container {
+        text-align: center;
+        background: #fff;
+        padding: 3rem 2rem;
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 400px;
+    }
+    h1 {
+        margin-bottom: 2rem;
+        color: #333;
+    }
+    input {
+        width: 100%;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        font-size: 1rem;
+    }
+    button {
+        width: 100%;
+        padding: 0.75rem;
+        border-radius: 6px;
+        border: none;
+        background: #007bff;
+        color: #fff;
+        font-size: 1rem;
+        cursor: pointer;
+    }
+    button:hover {
+        background: #0056b3;
+    }
+    .message {
+        margin-top: 1rem;
+        font-weight: bold;
+    }
+</style>
 </head>
 <body>
     <div class="container">
@@ -16,8 +65,8 @@
             <button type="submit">Sign Up</button>
         </form>
         <p id="registerMessage" class="message"></p>
+        <p>Already have an account? <a href="login.html">Log In</a></p>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
