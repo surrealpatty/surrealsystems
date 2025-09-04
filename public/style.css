@@ -1,29 +1,37 @@
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f0f4f8;
+/* ---------- Global Styles ---------- */
+html, body {
+    height: 100%;
     margin: 0;
-    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f0f4f8;
 }
 
+/* ---------- Container ---------- */
 .container {
-    max-width: 700px;
-    margin: 2rem auto;
+    max-width: 400px; /* smaller for forms */
+    width: 100%;
     padding: 2rem;
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-}
-
-h1, h2 {
     text-align: center;
-    color: #333;
 }
 
+/* ---------- Headings ---------- */
+h1, h2 {
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+/* ---------- Forms ---------- */
 form {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 input, textarea {
@@ -54,6 +62,7 @@ button:hover {
     background: #0056b3;
 }
 
+/* ---------- Messages ---------- */
 .message {
     font-weight: bold;
     margin-top: 0.5rem;
@@ -73,10 +82,12 @@ button:hover {
     border: 1px solid #f5c6cb;
 }
 
+/* ---------- Services Page ---------- */
 #services-list {
     display: grid;
     grid-template-columns: 1fr;
     gap: 1rem;
+    margin-bottom: 2rem;
 }
 
 .service-card {
