@@ -1,20 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { DataTypes } = require('sequelize');
-const sequelize = require('../models/database');
-
-// Define Service model
-const Service = sequelize.define('Service', {
-  title: DataTypes.STRING,
-  description: DataTypes.TEXT,
-  price: DataTypes.FLOAT,
-  userId: DataTypes.INTEGER
-});
-
-// Associations (optional)
-const User = sequelize.models.User;
-Service.belongsTo(User, { foreignKey: 'userId' });
-User.hasMany(Service, { foreignKey: 'userId' });
+const Service = require('./models/service');
+const User = require('./models/user');
 
 // Get all services
 router.get('/', async (req, res) => {
@@ -29,7 +16,9 @@ router.get('/', async (req, res) => {
 // Add service
 router.post('/', async (req, res) => {
   const { title, description, price, userId } = req.body;
-  if (!title || !description || !price || !userId) return res.status(400).json({ error: 'All fields required' });
+  if (!title || !description || !price || !userId) {
+    return res.status(400).json({ error: 'All fields required' });
+  }
 
   try {
     await Service.create({ title, description, price, userId });

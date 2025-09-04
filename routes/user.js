@@ -1,20 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const { DataTypes } = require('sequelize');
-const sequelize = require('../models/database');
-
-// Define User model
-const User = sequelize.define('User', {
-  username: DataTypes.STRING,
-  email: DataTypes.STRING,
-  password: DataTypes.STRING
-});
+const User = require('./models/user');
 
 // Register
 router.post('/register', async (req, res) => {
   const { username, email, password } = req.body;
-  if (!username || !email || !password) return res.status(400).json({ error: 'All fields required' });
+  if (!username || !email || !password) {
+    return res.status(400).json({ error: 'All fields required' });
+  }
 
   try {
     const hash = await bcrypt.hash(password, 10);
@@ -28,7 +22,9 @@ router.post('/register', async (req, res) => {
 // Login
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ error: 'Email & password required' });
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email & password required' });
+  }
 
   try {
     const user = await User.findOne({ where: { email } });
