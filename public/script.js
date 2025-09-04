@@ -1,6 +1,5 @@
 const API_URL = 'https://codecrowds.onrender.com';
 
-// Utility to show messages
 function showMessage(elementId, message, isSuccess) {
     const el = document.getElementById(elementId);
     if (!el) return;
@@ -8,9 +7,8 @@ function showMessage(elementId, message, isSuccess) {
     el.className = `message ${isSuccess ? 'success' : 'error'}`;
 }
 
-// ===== REGISTER =====
-const registerForm = document.getElementById('registerForm');
-registerForm?.addEventListener('submit', async (e) => {
+// Register
+document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('regUsername').value.trim();
     const email = document.getElementById('regEmail').value.trim();
@@ -31,9 +29,8 @@ registerForm?.addEventListener('submit', async (e) => {
     }
 });
 
-// ===== LOGIN =====
-const loginForm = document.getElementById('loginForm');
-loginForm?.addEventListener('submit', async (e) => {
+// Login
+document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value.trim();
@@ -53,7 +50,7 @@ loginForm?.addEventListener('submit', async (e) => {
     }
 });
 
-// ===== LOAD SERVICES =====
+// Load services
 async function loadServices() {
     const list = document.getElementById('services-list');
     if (!list) return;
@@ -75,20 +72,18 @@ async function loadServices() {
         });
     } catch (err) {
         console.error('Failed to load services:', err);
-        list.innerHTML = '<p class="error">Failed to load services</p>';
+        if(list) list.innerHTML = '<p class="error">Failed to load services</p>';
     }
 }
 
-// ===== ADD SERVICE =====
-const serviceForm = document.getElementById('serviceForm');
-serviceForm?.addEventListener('submit', async (e) => {
+// Add service
+document.getElementById('serviceForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const title = document.getElementById('title').value.trim();
-    const description = document.getElementById('description').value.trim();
-    const price = parseFloat(document.getElementById('price').value);
-    // TODO: Replace with logged-in user ID
-    const userId = 1; // placeholder for now
-    if (!title || !description || isNaN(price)) return showMessage('service-message', 'All fields required', false);
+    const title = document.getElementById('service-title').value.trim();
+    const description = document.getElementById('service-description').value.trim();
+    const price = parseFloat(document.getElementById('service-price').value);
+    const userId = document.getElementById('service-userId').value.trim();
+    if (!title || !description || isNaN(price) || !userId) return alert('All fields required');
 
     try {
         const res = await fetch(`${API_URL}/services`, {
@@ -97,13 +92,13 @@ serviceForm?.addEventListener('submit', async (e) => {
             body: JSON.stringify({ title, description, price, userId }),
         });
         const data = await res.json();
-        showMessage('service-message', data.message || data.error, res.ok);
-        if (res.ok) e.target.reset();
+        alert(data.message || data.error);
         loadServices();
+        e.target.reset();
     } catch (err) {
-        showMessage('service-message', 'Error: ' + err.message, false);
+        alert('Error: ' + err.message);
     }
 });
 
-// ===== INITIALIZE =====
+// Initial load on services page
 loadServices();
