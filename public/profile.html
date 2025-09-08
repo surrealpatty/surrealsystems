@@ -6,103 +6,99 @@
 <title>Profile - CodeCrowds</title>
 <link rel="stylesheet" href="style.css">
 <style>
-    body, html {
-        height: 100%;
-        margin: 0;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #6cc1ff, #3a8dff);
-        display: flex;
-        justify-content: center;
-        align-items: flex-start; /* start at top for scrollable services */
-        padding: 2rem 0;
-    }
+body, html {
+    height: 100%;
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #6cc1ff, #3a8dff);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 2rem 0;
+}
 
-    .container {
-        text-align: center;
-        background: rgba(255,255,255,0.95);
-        padding: 3rem 2rem;
-        border-radius: 16px;
-        box-shadow: 0 12px 30px rgba(0,0,0,0.2);
-        width: 100%;
-        max-width: 600px;
-    }
+.container {
+    text-align: center;
+    background: rgba(255,255,255,0.95);
+    padding: 3rem 2rem;
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+    width: 100%;
+    max-width: 600px;
+}
 
-    h1 {
-        font-size: 2rem;
-        margin-bottom: 1rem;
-        color: #007bff;
-    }
+h1 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: #007bff;
+}
 
-    h2 {
-        color: #007bff;
-        margin-top: 2rem;
-        margin-bottom: 1rem;
-        font-size: 1.5rem;
-    }
+h2 {
+    color: #007bff;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
 
-    p.description {
-        font-size: 1rem;
-        color: #333;
-        margin-bottom: 1rem;
-        text-align: left;
-    }
+p.description {
+    font-size: 1rem;
+    color: #333;
+    margin-bottom: 1rem;
+    text-align: left;
+}
 
-    button {
-        width: 100%;
-        padding: 0.75rem;
-        border-radius: 8px;
-        border: none;
-        background: #007bff;
-        color: #fff;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: background 0.3s, transform 0.2s;
-        margin-top: 1rem;
-    }
+button {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: none;
+    background: #007bff;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+    margin-top: 1rem;
+}
 
-    button:hover {
-        background: #0056b3;
-        transform: translateY(-2px);
-    }
+button:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
 
-    /* Service cards */
-    #services-list {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1rem;
-        margin-top: 1rem;
-    }
+/* Service cards */
+#services-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+}
 
-    .service-card {
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 1rem;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        text-align: left;
-    }
+.service-card {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    text-align: left;
+}
 
-    .service-card h3 {
-        margin: 0 0 0.25rem 0;
-        color: #007bff;
-    }
+.service-card h3 {
+    margin: 0 0 0.25rem 0;
+    color: #007bff;
+}
 
-    .service-card p {
-        margin: 0.25rem 0;
-        color: #555;
-    }
-
+.service-card p {
+    margin: 0.25rem 0;
+    color: #555;
+}
 </style>
 </head>
 <body>
     <div class="container">
         <h1 id="usernameDisplay">User</h1>
-        <p class="description" id="userDescription">Description of the work you provide or work you have done.</p>
+        <p class="description" id="userDescription">Your description here...</p>
 
-        <!-- Services posted by user -->
         <h2>Your Services</h2>
-        <div id="services-list">
-            <!-- Services will be injected here -->
-        </div>
+        <div id="services-list"></div>
 
         <button onclick="window.location.href='services.html'">Go to All Services</button>
     </div>
@@ -110,15 +106,13 @@
 <script>
 const API_URL = 'https://codecrowds.onrender.com';
 
-// Load username and description
+// Display username and description
 document.getElementById('usernameDisplay').textContent = localStorage.getItem('username') || 'User';
 document.getElementById('userDescription').textContent = localStorage.getItem('description') || 'Add a description about the work you provide or have done.';
 
-// Load only user's services
+// Load user's services
 async function loadUserServices() {
     const list = document.getElementById('services-list');
-    if (!list) return;
-
     const userId = localStorage.getItem('userId');
     if (!userId) {
         list.innerHTML = '<p class="error">No user logged in</p>';
@@ -142,8 +136,8 @@ async function loadUserServices() {
                 list.appendChild(div);
             });
     } catch (err) {
-        console.error('Failed to load services:', err);
         list.innerHTML = '<p class="error">Failed to load services</p>';
+        console.error(err);
     }
 }
 
