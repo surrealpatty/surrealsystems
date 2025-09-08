@@ -116,10 +116,16 @@
             window.location.href = 'profile.html';
           }, 1000);
         } else {
-          showMessage('registerMessage', data.error || 'Registration failed', false);
+          // Friendly error messages
+          let message = 'Registration failed';
+          if (data.error?.toLowerCase().includes('email')) message = 'Email is already in use';
+          else if (data.error?.toLowerCase().includes('username')) message = 'Username is already taken';
+          else if (data.error) message = data.error;
+
+          showMessage('registerMessage', message, false);
         }
       } catch (err) {
-        showMessage('registerMessage', 'Error: ' + err.message, false);
+        showMessage('registerMessage', 'Network or server error: ' + err.message, false);
       }
     });
   </script>
