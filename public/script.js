@@ -1,5 +1,6 @@
 const API_URL = 'https://codecrowds.onrender.com';
 
+// Helper to show messages
 function showMessage(elementId, message, isSuccess) {
     const el = document.getElementById(elementId);
     if (!el) return;
@@ -13,7 +14,10 @@ document.getElementById('registerForm')?.addEventListener('submit', async (e) =>
     const username = document.getElementById('regUsername').value.trim();
     const email = document.getElementById('regEmail').value.trim();
     const password = document.getElementById('regPassword').value.trim();
-    if (!username || !email || !password) return showMessage('registerMessage', 'All fields required', false);
+
+    if (!username || !email || !password) {
+        return showMessage('registerMessage', 'All fields required', false);
+    }
 
     try {
         const res = await fetch(`${API_URL}/users/register`, {
@@ -22,12 +26,21 @@ document.getElementById('registerForm')?.addEventListener('submit', async (e) =>
             body: JSON.stringify({ username, email, password }),
         });
         const data = await res.json();
-        showMessage('registerMessage', data.message || data.error, res.ok);
 
         if (res.ok) {
-            e.target.reset();
-            // Redirect to profile page
-            window.location.href = 'profile.html';
+            // Store user info for profile page
+            localStorage.setItem('username', data.username);
+            localStorage.setItem('userId', data.id); // Make sure backend returns user ID
+            localStorage.setItem('description', data.description || '');
+            
+            showMessage('registerMessage', 'Registration successful!', true);
+
+            // Redirect after short delay so message shows
+            setTimeout(() => {
+                window.location.href = 'profile.html';
+            }, 1000);
+        } else {
+            showMessage('registerMessage', data.error || 'Registration failed', false);
         }
     } catch (err) {
         showMessage('registerMessage', 'Error: ' + err.message, false);
@@ -39,6 +52,7 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value.trim();
+
     if (!email || !password) return showMessage('loginMessage', 'Email & password required', false);
 
     try {
@@ -48,12 +62,20 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
             body: JSON.stringify({ email, password }),
         });
         const data = await res.json();
-        showMessage('loginMessage', data.message || data.error, res.ok);
 
         if (res.ok) {
-            e.target.reset();
-            // Redirect to profile page
-            window.location.href = 'profile.html';
+            // Save user info for profile page
+            localStorage.setItem('username', data.username);
+            localStorage.setItem('userId', data.id);
+            localStorage.setItem('description', data.description || '');
+            
+            showMessage('loginMessage', 'Login successful!', true);
+
+            setTimeout(() => {
+                window.location.href = 'profile.html';
+            }, 500);
+        } else {
+            showMessage('loginMessage', data.error || 'Login failed', false);
         }
     } catch (err) {
         showMessage('loginMessage', 'Error: ' + err.message, false);
@@ -89,11 +111,15 @@ async function loadServices() {
 // -------------------- Add service --------------------
 document.getElementById('serviceForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+
     const title = document.getElementById('service-title').value.trim();
     const description = document.getElementById('service-description').value.trim();
     const price = parseFloat(document.getElementById('service-price').value);
-    const userId = document.getElementById('service-userId').value.trim();
-    if (!title || !description || isNaN(price) || !userId) return alert('All fields required');
+    const userId = localStorage.getItem('userId'); // use logged-in user
+
+    if (!title || !description || isNaN(price) || !userId) {
+        return alert('All fields required');
+    }
 
     try {
         const res = await fetch(`${API_URL}/services`, {
