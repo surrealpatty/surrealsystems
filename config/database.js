@@ -3,9 +3,10 @@ const { Sequelize } = require('sequelize');
 const sequelize = new Sequelize(
   process.env.MYSQL_DB || 'codecrowds',       // Database name
   process.env.MYSQL_USER || 'root',           // MySQL username
-  process.env.MYSQL_PASS || 'viisyI1tDa6WgMUGMkJKyWGBb2p77zIt',  // MySQL password
+  process.env.MYSQL_PASS || '',               // MySQL password (use env var in Render)
   {
-    host: process.env.MYSQL_HOST || 'localhost',
+    host: process.env.MYSQL_HOST || 'localhost', // MySQL host
+    port: process.env.MYSQL_PORT || 3306,        // MySQL port
     dialect: 'mysql',
     logging: false
   }
