@@ -40,11 +40,17 @@ h2 {
     font-size: 1.5rem;
 }
 
-p.description {
-    font-size: 1rem;
+p {
     color: #333;
-    margin-bottom: 1rem;
-    text-align: left;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 0.75rem;
+    margin: 0.5rem 0;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
 }
 
 button {
@@ -65,7 +71,6 @@ button:hover {
     transform: translateY(-2px);
 }
 
-/* Service cards */
 #services-list {
     display: grid;
     grid-template-columns: 1fr;
@@ -93,22 +98,29 @@ button:hover {
 </style>
 </head>
 <body>
-    <div class="container">
-        <h1 id="usernameDisplay">User</h1>
-        <p class="description" id="userDescription">Your description here...</p>
+<div class="container">
+    <h1 id="usernameDisplay">User</h1>
 
-        <h2>Your Services</h2>
-        <div id="services-list"></div>
+    <!-- Editable profile form -->
+    <form id="profileForm">
+        <input type="text" id="username" placeholder="Username">
+        <textarea id="description" rows="3" placeholder="Describe the work you provide or have done"></textarea>
+        <button type="submit">Update Profile</button>
+    </form>
 
-        <button onclick="window.location.href='services.html'">Go to All Services</button>
-    </div>
+    <h2>Your Services</h2>
+    <div id="services-list"></div>
+
+    <button onclick="window.location.href='services.html'">Go to All Services</button>
+</div>
 
 <script>
 const API_URL = 'https://codecrowds.onrender.com';
 
-// Display username and description
+// Load existing user info from localStorage
 document.getElementById('usernameDisplay').textContent = localStorage.getItem('username') || 'User';
-document.getElementById('userDescription').textContent = localStorage.getItem('description') || 'Add a description about the work you provide or have done.';
+document.getElementById('username').value = localStorage.getItem('username') || '';
+document.getElementById('description').value = localStorage.getItem('description') || '';
 
 // Load user's services
 async function loadUserServices() {
@@ -142,6 +154,33 @@ async function loadUserServices() {
 }
 
 loadUserServices();
+
+// Handle profile updates
+document.getElementById('profileForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const userId = localStorage.getItem('userId');
+
+    if (!username) return alert('Username is required');
+
+    try {
+        const res = await fetch(`${API_URL}/users/${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, description }),
+        });
+        const data = await res.json();
+        alert(data.message || data.error);
+
+        // Update localStorage and display
+        localStorage.setItem('username', username);
+        localStorage.setItem('description', description);
+        document.getElementById('usernameDisplay').textContent = username;
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+});
 </script>
 </body>
 </html>
