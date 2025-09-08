@@ -1,3 +1,14 @@
+const API_URL = 'https://codecrowds.onrender.com';
+
+// Show message helper
+function showMessage(elementId, message, isSuccess) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.textContent = message;
+    el.className = `message ${isSuccess ? 'success' : 'error'}`;
+}
+
+// -------------------- Register --------------------
 document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('regUsername').value.trim();
@@ -5,7 +16,7 @@ document.getElementById('registerForm')?.addEventListener('submit', async (e) =>
     const password = document.getElementById('regPassword').value.trim();
 
     if (!username || !email || !password) {
-        return showMessage('registerMessage', 'All fields required', false);
+        return showMessage('registerMessage', 'All fields are required', false);
     }
 
     try {
@@ -14,27 +25,34 @@ document.getElementById('registerForm')?.addEventListener('submit', async (e) =>
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, email, password }),
         });
+
         const data = await res.json();
 
         if (res.ok) {
+            // Save user info locally for profile page
             const user = data.user || data;
             localStorage.setItem('username', user.username);
             localStorage.setItem('userId', user.id);
             localStorage.setItem('description', user.description || '');
+
             showMessage('registerMessage', 'Registration successful!', true);
 
             setTimeout(() => {
                 window.location.href = 'profile.html';
             }, 1000);
+
         } else {
-            // Custom message if email is already used
-            if (data.error && data.error.toLowerCase().includes('email')) {
-                showMessage('registerMessage', 'Email already in use', false);
+            // Check for common errors
+            if (data.error?.toLowerCase().includes('email')) {
+                showMessage('registerMessage', 'Email is already in use', false);
+            } else if (data.error?.toLowerCase().includes('username')) {
+                showMessage('registerMessage', 'Username is already taken', false);
             } else {
                 showMessage('registerMessage', data.error || 'Registration failed', false);
             }
         }
+
     } catch (err) {
-        showMessage('registerMessage', 'Error: ' + err.message, false);
+        showMessage('registerMessage', 'Network or server error: ' + err.message, false);
     }
 });
