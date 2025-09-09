@@ -1,10 +1,9 @@
 const { Sequelize } = require('sequelize');
 
-// Use DATABASE_URL (Render with Postgres) or fall back to local MySQL
 let sequelize;
 
 if (process.env.DATABASE_URL) {
-  // Production (Render/Postgres)
+  // Render (Postgres)
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
     protocol: 'postgres',
@@ -12,12 +11,12 @@ if (process.env.DATABASE_URL) {
     dialectOptions: {
       ssl: {
         require: true,
-        rejectUnauthorized: false, // Render requires this
+        rejectUnauthorized: false,
       },
     },
   });
 } else {
-  // Local development (MySQL)
+  // Local (MySQL)
   sequelize = new Sequelize(
     process.env.DB_NAME || 'codecrowds_dev',
     process.env.DB_USER || 'root',
@@ -29,10 +28,5 @@ if (process.env.DATABASE_URL) {
     }
   );
 }
-
-// Test connection
-sequelize.authenticate()
-  .then(() => console.log('✅ Database connected!'))
-  .catch(err => console.error('❌ Database connection failed:', err));
 
 module.exports = sequelize;
