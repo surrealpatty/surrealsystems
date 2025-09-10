@@ -15,9 +15,8 @@ body, html {
     justify-content: center;
     padding: 2rem 0;
 }
-
 .container {
-    max-width: 420px;        /* same as other pages */
+    max-width: 420px;
     width: 100%;
     padding: 2.5rem 2rem;
     background: rgba(255,255,255,0.95);
@@ -25,32 +24,28 @@ body, html {
     box-shadow: 0 12px 30px rgba(0,0,0,0.15);
     display: flex;
     flex-direction: column;
-    align-items: center;     /* center all content horizontally */
-    gap: 1.5rem;             /* consistent spacing */
+    align-items: center;
+    gap: 1.5rem;
 }
-
 h1, h2 {
     text-align: center;
     color: #007bff;
     margin: 0;
 }
-
 form {
     width: 100%;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
 }
-
 input, textarea, button {
-    width: 100%;              /* fill container without breaking */
+    width: 100%;
     padding: 0.75rem;
     border-radius: 8px;
     border: 1px solid #ccc;
     font-size: 1rem;
-    box-sizing: border-box;   /* prevent overflow */
+    box-sizing: border-box;
 }
-
 button {
     background: #007bff;
     color: #fff;
@@ -58,19 +53,16 @@ button {
     cursor: pointer;
     transition: background 0.3s, transform 0.2s;
 }
-
 button:hover {
     background: #0056b3;
     transform: translateY(-2px);
 }
-
 #services-list {
     width: 100%;
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
-
 .service-card {
     width: 100%;
     background: #f8f9fa;
@@ -79,12 +71,10 @@ button:hover {
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     text-align: left;
 }
-
 .service-card h3 {
     margin: 0 0 0.25rem 0;
     color: #007bff;
 }
-
 .service-card p {
     margin: 0.25rem 0;
     color: #555;
@@ -107,72 +97,6 @@ button:hover {
     <button onclick="window.location.href='services.html'">Go to All Services</button>
 </div>
 
-<script>
-const API_URL = 'https://codecrowds.onrender.com';
-
-// Load user info
-document.getElementById('usernameDisplay').textContent = localStorage.getItem('username') || 'User';
-document.getElementById('username').value = localStorage.getItem('username') || '';
-document.getElementById('description').value = localStorage.getItem('description') || '';
-
-// Load user services
-async function loadUserServices() {
-    const list = document.getElementById('services-list');
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
-        list.innerHTML = '<p class="error">No user logged in</p>';
-        return;
-    }
-
-    try {
-        const res = await fetch(`${API_URL}/services`);
-        const services = await res.json();
-        list.innerHTML = '';
-        services
-            .filter(s => s.User?.id === userId)
-            .forEach(s => {
-                const div = document.createElement('div');
-                div.className = 'service-card';
-                div.innerHTML = `
-                    <h3>${s.title}</h3>
-                    <p>${s.description}</p>
-                    <p><strong>Price:</strong> $${s.price}</p>
-                `;
-                list.appendChild(div);
-            });
-    } catch (err) {
-        list.innerHTML = '<p class="error">Failed to load services</p>';
-        console.error(err);
-    }
-}
-
-loadUserServices();
-
-// Update profile
-document.getElementById('profileForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('username').value.trim();
-    const description = document.getElementById('description').value.trim();
-    const userId = localStorage.getItem('userId');
-
-    if (!username) return alert('Username required');
-
-    try {
-        const res = await fetch(`${API_URL}/users/${userId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, description }),
-        });
-        const data = await res.json();
-        alert(data.message || data.error);
-
-        localStorage.setItem('username', username);
-        localStorage.setItem('description', description);
-        document.getElementById('usernameDisplay').textContent = username;
-    } catch (err) {
-        alert('Error: ' + err.message);
-    }
-});
-</script>
+<script src="profile.js"></script>
 </body>
 </html>
