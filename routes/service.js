@@ -3,17 +3,20 @@ const router = express.Router();
 const Service = require('../models/Service');
 const User = require('../models/User');
 
-// Get all services
+// Get all services with associated user info
 router.get('/', async (req, res) => {
   try {
-    const services = await Service.findAll({ include: User });
+    const services = await Service.findAll({
+      include: { model: User, attributes: ['id', 'username'] }
+    });
     res.json(services);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Failed to load services' });
   }
 });
 
-// Add service
+// Add a new service
 router.post('/', async (req, res) => {
   const { title, description, price, userId } = req.body;
   if (!title || !description || !price || !userId) {
@@ -21,9 +24,10 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    await Service.create({ title, description, price, userId });
-    res.json({ message: 'Service added successfully' });
+    const service = await Service.create({ title, description, price, userId });
+    res.json({ message: 'Service added successfully', service });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Failed to add service' });
   }
 });

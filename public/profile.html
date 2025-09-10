@@ -105,6 +105,7 @@ const usernameDisplay = document.getElementById('usernameDisplay');
 const usernameInput = document.getElementById('username');
 const descriptionInput = document.getElementById('description');
 const profileForm = document.getElementById('profileForm');
+const servicesList = document.getElementById('services-list');
 
 // Get stored data
 const storedUsername = localStorage.getItem('username');
@@ -118,18 +119,18 @@ descriptionInput.value = storedDescription || '';
 
 // Load user services
 async function loadUserServices() {
-    const list = document.getElementById('services-list');
     if (!userId) {
-        list.innerHTML = '<p class="error">No user logged in</p>';
+        servicesList.innerHTML = '<p class="error">No user logged in</p>';
         return;
     }
 
     try {
         const res = await fetch(`${API_URL}/services`);
         const services = await res.json();
-        list.innerHTML = '';
+        servicesList.innerHTML = '';
+        // Filter services by logged-in user's id
         services
-            .filter(s => s.User?.id == userId)  // loose equality to match string vs number
+            .filter(s => s.userId == userId) // use userId field directly
             .forEach(s => {
                 const div = document.createElement('div');
                 div.className = 'service-card';
@@ -138,11 +139,11 @@ async function loadUserServices() {
                     <p>${s.description}</p>
                     <p><strong>Price:</strong> $${s.price}</p>
                 `;
-                list.appendChild(div);
+                servicesList.appendChild(div);
             });
     } catch (err) {
         console.error(err);
-        list.innerHTML = '<p class="error">Failed to load services</p>';
+        servicesList.innerHTML = '<p class="error">Failed to load services</p>';
     }
 }
 
