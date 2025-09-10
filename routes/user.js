@@ -1,9 +1,10 @@
+// routes/user.js
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const User = require('../models/User');
 
-// Register
+// ==================== REGISTER ====================
 router.post('/register', async (req, res) => {
     const { username, email, password } = req.body;
 
@@ -38,7 +39,7 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// Login
+// ==================== LOGIN ====================
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
@@ -65,6 +66,26 @@ router.post('/login', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Login failed' });
+    }
+});
+
+// ==================== UPDATE PROFILE ====================
+router.put('/:id', async (req, res) => {
+    const { username, description } = req.body;
+
+    try {
+        const user = await User.findByPk(req.params.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        if (username) user.username = username;
+        if (description) user.description = description;
+
+        await user.save();
+
+        res.json({ message: 'Profile updated successfully', user });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to update profile' });
     }
 });
 
