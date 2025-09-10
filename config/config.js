@@ -1,26 +1,23 @@
-require('dotenv').config();
-
 module.exports = {
   development: {
-    dialect: 'better-sqlite3',
-    storage: './database.sqlite',
-    logging: false,
+    username: "root",
+    password: "your_mysql_password",
+    database: "codecrowds_dev",
+    host: "127.0.0.1",
+    dialect: "mysql"
   },
   test: {
-    dialect: 'better-sqlite3',
-    storage: './database_test.sqlite',
-    logging: false,
+    username: "root",
+    password: "your_mysql_password",
+    database: "codecrowds_test",
+    host: "127.0.0.1",
+    dialect: "mysql"
   },
   production: {
-    use_env_variable: 'DATABASE_URL',
-    dialect: 'postgres',
-    protocol: 'postgres',
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false,
-      },
-    },
-    logging: false,
-  },
+    username: "root",
+    password: "your_mysql_password",
+    database: "codecrowds_prod",
+    host: "127.0.0.1",
+    dialect: "mysql"
+  }
 };
