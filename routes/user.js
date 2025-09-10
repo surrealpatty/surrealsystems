@@ -1,26 +1,22 @@
-// routes/user.js
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const User = require('../models/User');
 
-// ==================== REGISTER ====================
+// REGISTER
 router.post('/register', async (req, res) => {
     const { username, email, password } = req.body;
-
     if (!username || !email || !password) {
         return res.status(400).json({ error: 'All fields required' });
     }
 
     try {
-        // Check if email or username already exists
         const existingEmail = await User.findOne({ where: { email } });
         if (existingEmail) return res.status(400).json({ error: 'Email is already in use' });
 
         const existingUsername = await User.findOne({ where: { username } });
         if (existingUsername) return res.status(400).json({ error: 'Username is already taken' });
 
-        // Hash password and create user
         const hash = await bcrypt.hash(password, 10);
         const newUser = await User.create({ username, email, password: hash });
 
@@ -39,10 +35,9 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// ==================== LOGIN ====================
+// LOGIN
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
-
     if (!email || !password) {
         return res.status(400).json({ error: 'Email & password required' });
     }
@@ -69,7 +64,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// ==================== UPDATE PROFILE ====================
+// UPDATE PROFILE
 router.put('/:id', async (req, res) => {
     const { username, description } = req.body;
 

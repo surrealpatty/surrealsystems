@@ -1,44 +1,35 @@
-document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
+const API_URL = "https://codecrowds.onrender.com"; // change if needed
+
+document.getElementById('profileForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const username = document.getElementById('regUsername').value.trim();
-    const email = document.getElementById('regEmail').value.trim();
-    const password = document.getElementById('regPassword').value.trim();
+    const userId = localStorage.getItem('userId');
+    const username = document.getElementById('profileUsername').value.trim();
+    const description = document.getElementById('profileDescription').value.trim();
 
-    if (!username || !email || !password) {
-        return showMessage('registerMessage', 'All fields required', false);
+    if (!userId) {
+        return alert("No user logged in!");
     }
 
     try {
-        const res = await fetch(`${API_URL}/users/register`, {
-            method: 'POST',
+        const res = await fetch(`${API_URL}/users/${userId}`, {
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, password }),
+            body: JSON.stringify({ username, description }),
         });
 
         const data = await res.json();
+        console.log("Update response:", data);
 
         if (res.ok) {
-            const user = data.user || data;
-            localStorage.setItem('username', user.username);
-            localStorage.setItem('userId', user.id);
-            localStorage.setItem('description', user.description || '');
-
-            showMessage('registerMessage', 'Registration successful!', true);
-
-            setTimeout(() => {
-                window.location.href = 'profile.html';
-            }, 1000);
+            alert("Profile updated successfully!");
+            localStorage.setItem('username', data.user.username);
+            localStorage.setItem('description', data.user.description || '');
         } else {
-            // Map backend error messages to friendly messages
-            let message = 'Registration failed';
-            if (data.error?.includes('email')) message = 'Email is already in use';
-            else if (data.error?.includes('username')) message = 'Username is already taken';
-            else if (data.error) message = data.error;
-
-            showMessage('registerMessage', message, false);
+            alert(data.error || "Update failed");
         }
     } catch (err) {
-        showMessage('registerMessage', 'Network or server error: ' + err.message, false);
+        console.error(err);
+        alert("Network error: " + err.message);
     }
 });
