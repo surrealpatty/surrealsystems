@@ -4,6 +4,7 @@ html, body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #6cc1ff, #3a8dff);
+    color: #333;
 }
 
 /* ---------- Flex wrapper for full-height pages ---------- */
@@ -23,6 +24,9 @@ html, body {
     border-radius: 16px;
     box-shadow: 0 12px 30px rgba(0,0,0,0.15);
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 /* ---------- Headings ---------- */
@@ -30,6 +34,7 @@ h1, h2 {
     color: #007bff;
     margin-bottom: 1.5rem;
     font-size: 1.8rem;
+    text-align: center;
 }
 
 /* ---------- Forms ---------- */
@@ -45,6 +50,11 @@ input, textarea {
     font-size: 1rem;
     border-radius: 8px;
     border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+textarea {
+    resize: vertical;
 }
 
 input:focus, textarea:focus {
@@ -62,6 +72,7 @@ button, .btn {
     background: #007bff;
     color: #fff;
     font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
     transition: background 0.3s, transform 0.2s;
     text-decoration: none;
@@ -73,12 +84,25 @@ button:hover, .btn:hover {
     transform: translateY(-2px);
 }
 
+/* ---------- Logout Button ---------- */
+.logout-btn {
+    margin-top: 1rem;
+    background: #ff4d4f;
+}
+
+.logout-btn:hover {
+    background: #c30000;
+}
+
 /* ---------- Messages ---------- */
 .message {
     font-weight: bold;
     margin-top: 0.5rem;
     color: #333;
 }
+
+.message.success { color: green; }
+.message.error { color: red; }
 
 /* ---------- Links under forms ---------- */
 p {
@@ -105,6 +129,7 @@ p a:hover {
 }
 
 .service-card {
+    width: 100%;
     background: #f8f9fa;
     border-radius: 10px;
     padding: 1.5rem;
@@ -125,11 +150,9 @@ p a:hover {
     color: #555;
 }
 
-.logout-btn {
-    margin-top: 1rem;
-    background: #ff4d4f;
-}
-
-.logout-btn:hover {
-    background: #c30000;
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+    .container {
+        padding: 2rem 1.5rem;
+    }
 }
