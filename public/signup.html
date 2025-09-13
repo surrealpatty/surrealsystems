@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign Up - CodeCrowds</title>
+  <title>Profile - CodeCrowds</title>
   <link rel="stylesheet" href="style.css">
   <style>
     body, html {
@@ -60,24 +60,33 @@
 
     .message.success { color: green; }
     .message.error { color: red; }
+
+    .logout-btn {
+      margin-top: 1rem;
+      background: #ff4d4f;
+    }
+
+    .logout-btn:hover {
+      background: #c30000;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Sign Up</h1>
-    <form id="registerForm">
-      <input type="text" id="regUsername" placeholder="Username" required>
-      <input type="email" id="regEmail" placeholder="Email" required>
-      <input type="password" id="regPassword" placeholder="Password" required>
-      <button type="submit">Sign Up</button>
+    <h1>Profile</h1>
+    <form id="profileForm">
+      <input type="text" id="profileUsername" placeholder="Username" required>
+      <input type="text" id="profileDescription" placeholder="Description">
+      <button type="submit">Update Profile</button>
     </form>
-    <p id="registerMessage" class="message"></p>
-    <p>Already have an account? <a href="login.html">Log In</a></p>
+    <p id="profileMessage" class="message"></p>
+    <button id="logoutBtn" class="logout-btn">Log Out</button>
   </div>
 
   <script>
     const API_URL = 'https://codecrowds.onrender.com';
 
+    // Helper to show messages
     function showMessage(elementId, message, isSuccess) {
       const el = document.getElementById(elementId);
       if (!el) return;
@@ -85,48 +94,66 @@
       el.className = `message ${isSuccess ? 'success' : 'error'}`;
     }
 
-    document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
+    // Load current user info from localStorage
+    const usernameInput = document.getElementById('profileUsername');
+    const descInput = document.getElementById('profileDescription');
+    const userId = localStorage.getItem('userId');
+    const token = localStorage.getItem('token');
+
+    if (!userId || !token) {
+      alert("You must be logged in to view this page.");
+      window.location.href = 'login.html';
+    } else {
+      usernameInput.value = localStorage.getItem('username') || '';
+      descInput.value = localStorage.getItem('description') || '';
+    }
+
+    // ==========================
+    // UPDATE PROFILE
+    // ==========================
+    document.getElementById('profileForm')?.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const username = document.getElementById('regUsername').value.trim();
-      const email = document.getElementById('regEmail').value.trim();
-      const password = document.getElementById('regPassword').value.trim();
+      const username = usernameInput.value.trim();
+      const description = descInput.value.trim();
 
-      if (!username || !email || !password) {
-        return showMessage('registerMessage', 'All fields are required', false);
+      if (!username) {
+        return showMessage('profileMessage', 'Username cannot be empty', false);
       }
 
       try {
-        const res = await fetch(`${API_URL}/users/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, email, password }),
+        const res = await fetch(`${API_URL}/users/${userId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ username, description }),
         });
 
         const data = await res.json();
 
         if (res.ok) {
-          localStorage.setItem('username', data.username);
-          localStorage.setItem('userId', data.id);
-          localStorage.setItem('description', data.description || '');
-
-          showMessage('registerMessage', 'Registration successful!', true);
-
-          setTimeout(() => {
-            window.location.href = 'profile.html';
-          }, 1000);
+          localStorage.setItem('username', data.user.username);
+          localStorage.setItem('description', data.user.description || '');
+          showMessage('profileMessage', 'Profile updated successfully!', true);
         } else {
-          // Friendly error messages
-          let message = 'Registration failed';
-          if (data.error?.toLowerCase().includes('email')) message = 'Email is already in use';
-          else if (data.error?.toLowerCase().includes('username')) message = 'Username is already taken';
-          else if (data.error) message = data.error;
-
-          showMessage('registerMessage', message, false);
+          showMessage('profileMessage', data.error || 'Update failed', false);
         }
       } catch (err) {
-        showMessage('registerMessage', 'Network or server error: ' + err.message, false);
+        showMessage('profileMessage', 'Network error: ' + err.message, false);
       }
+    });
+
+    // ==========================
+    // LOGOUT
+    // ==========================
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('username');
+      localStorage.removeItem('description');
+      window.location.href = 'login.html';
     });
   </script>
 </body>
