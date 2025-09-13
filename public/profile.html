@@ -79,6 +79,13 @@ button:hover {
     margin: 0.25rem 0;
     color: #555;
 }
+.logout-btn {
+    margin-top: 1rem;
+    background: #ff4d4f;
+}
+.logout-btn:hover {
+    background: #c30000;
+}
 </style>
 </head>
 <body>
@@ -95,6 +102,7 @@ button:hover {
     <div id="services-list"></div>
 
     <button onclick="window.location.href='services.html'">Go to All Services</button>
+    <button id="logoutBtn" class="logout-btn">Log Out</button>
 </div>
 
 <script>
@@ -108,29 +116,30 @@ const profileForm = document.getElementById('profileForm');
 const servicesList = document.getElementById('services-list');
 
 // Get stored data
-const storedUsername = localStorage.getItem('username');
-const storedDescription = localStorage.getItem('description');
 const userId = localStorage.getItem('userId');
+const token = localStorage.getItem('token');
+
+// Redirect if not logged in
+if (!userId || !token) {
+    alert('You must be logged in to view this page.');
+    window.location.href = 'login.html';
+}
 
 // Display username and description
-usernameDisplay.textContent = storedUsername || 'User';
-usernameInput.value = storedUsername || '';
-descriptionInput.value = storedDescription || '';
+usernameDisplay.textContent = localStorage.getItem('username') || 'User';
+usernameInput.value = localStorage.getItem('username') || '';
+descriptionInput.value = localStorage.getItem('description') || '';
 
 // Load user services
 async function loadUserServices() {
-    if (!userId) {
-        servicesList.innerHTML = '<p class="error">No user logged in</p>';
-        return;
-    }
-
     try {
-        const res = await fetch(`${API_URL}/services`);
+        const res = await fetch(`${API_URL}/services`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
         const services = await res.json();
         servicesList.innerHTML = '';
-        // Filter services by logged-in user's id
         services
-            .filter(s => s.userId == userId) // use userId field directly
+            .filter(s => s.userId == userId)
             .forEach(s => {
                 const div = document.createElement('div');
                 div.className = 'service-card';
@@ -142,18 +151,15 @@ async function loadUserServices() {
                 servicesList.appendChild(div);
             });
     } catch (err) {
-        console.error(err);
         servicesList.innerHTML = '<p class="error">Failed to load services</p>';
+        console.error(err);
     }
 }
-
 loadUserServices();
 
 // Update profile
 profileForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!userId) return alert('No user logged in');
-
     const username = usernameInput.value.trim();
     const description = descriptionInput.value.trim();
     if (!username) return alert('Username required');
@@ -161,8 +167,11 @@ profileForm.addEventListener('submit', async (e) => {
     try {
         const res = await fetch(`${API_URL}/users/${userId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, description }),
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ username, description })
         });
         const data = await res.json();
         if (res.ok) {
@@ -174,9 +183,15 @@ profileForm.addEventListener('submit', async (e) => {
             alert(data.error || 'Failed to update profile');
         }
     } catch (err) {
-        console.error(err);
         alert('Network error: ' + err.message);
+        console.error(err);
     }
+});
+
+// Logout button
+document.getElementById('logoutBtn')?.addEventListener('click', () => {
+    localStorage.clear();
+    window.location.href = 'login.html';
 });
 </script>
 </body>
