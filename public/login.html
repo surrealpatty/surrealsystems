@@ -1,27 +1,50 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Log In - CodeCrowds</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-<div class="fullscreen-center">
-    <div class="container">
-        <h1>Log In</h1>
-        <form id="loginForm">
-            <input type="email" id="loginEmail" placeholder="Email" required>
-            <input type="password" id="loginPassword" placeholder="Password" required>
+const API_URL = 'https://codecrowds.onrender.com';
 
-            <div class="button-group">
-                <button type="submit">Log In</button>
-                <a href="signup.html" class="btn">Sign Up</a>
-            </div>
-        </form>
-        <p id="loginMessage" class="message"></p>
-    </div>
-</div>
-<script src="script.js"></script>
-</body>
-</html>
+// Helper to show messages
+function showMessage(elementId, message, isSuccess) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.textContent = message;
+    el.className = `message ${isSuccess ? 'success' : 'error'}`;
+}
+
+// LOGIN FORM
+document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+
+    if (!email || !password) {
+        return showMessage('loginMessage', 'Email and password are required', false);
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/users/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            // Save token & user info
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('userId', data.user.id);
+            localStorage.setItem('username', data.user.username || '');
+            localStorage.setItem('description', data.user.description || '');
+
+            showMessage('loginMessage', 'Login successful! Redirecting...', true);
+
+            // Redirect to profile or home
+            setTimeout(() => {
+                window.location.href = 'profile.html'; // or home page
+            }, 1000);
+        } else {
+            showMessage('loginMessage', data.error || 'Login failed', false);
+        }
+    } catch (err) {
+        showMessage('loginMessage', 'Network error: ' + err.message, false);
+    }
+});
