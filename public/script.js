@@ -34,7 +34,64 @@ async function safeFetch(url, options = {}) {
     }
 }
 
-// ---------- PROFILE ----------
+// ---------- SIGNUP ----------
+const signupForm = document.getElementById('signupForm');
+signupForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('signupUsername').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value.trim();
+
+    if (!username || !email || !password) return showMessage('signupMessage', 'All fields required', false);
+
+    try {
+        const data = await safeFetch(`${API_URL}/users/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
+        });
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userId', data.user.id);
+        localStorage.setItem('username', data.user.username);
+        localStorage.setItem('description', data.user.description || '');
+        showMessage('signupMessage', 'Sign up successful! Redirecting...', true);
+        setTimeout(() => window.location.href = 'profile.html', 1000);
+
+    } catch (err) {
+        showMessage('signupMessage', 'Sign up failed: ' + err.message, false);
+    }
+});
+
+// ---------- LOGIN ----------
+const loginForm = document.getElementById('loginForm');
+loginForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+
+    if (!email || !password) return showMessage('loginMessage', 'Email & password required', false);
+
+    try {
+        const data = await safeFetch(`${API_URL}/users/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userId', data.user.id);
+        localStorage.setItem('username', data.user.username);
+        localStorage.setItem('description', data.user.description || '');
+        showMessage('loginMessage', 'Login successful! Redirecting...', true);
+        setTimeout(() => window.location.href = 'profile.html', 1000);
+
+    } catch (err) {
+        showMessage('loginMessage', 'Login failed: ' + err.message, false);
+    }
+});
+
+// ---------- PROFILE & SERVICES ----------
 const profileForm = document.getElementById('profileForm');
 if (profileForm) {
     const usernameInput = document.getElementById('username');
@@ -51,7 +108,7 @@ if (profileForm) {
     usernameInput.value = localStorage.getItem('username') || '';
     descInput.value = localStorage.getItem('description') || '';
 
-    // ---------- Update Profile ----------
+    // Update Profile
     profileForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = usernameInput.value.trim();
@@ -78,7 +135,7 @@ if (profileForm) {
         }
     });
 
-    // ---------- Load Services ----------
+    // Load Services
     async function loadServices() {
         try {
             const services = await safeFetch(`${API_URL}/services`, {
@@ -108,7 +165,7 @@ if (profileForm) {
     }
     loadServices();
 
-    // ---------- Add Service ----------
+    // Add Service
     serviceForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const title = document.getElementById('serviceTitle').value.trim();
@@ -135,7 +192,7 @@ if (profileForm) {
         }
     });
 
-    // ---------- Edit Service ----------
+    // Edit Service
     async function editService(service) {
         const newTitle = prompt('Edit title', service.title);
         const newDesc = prompt('Edit description', service.description);
@@ -157,7 +214,7 @@ if (profileForm) {
         }
     }
 
-    // ---------- Delete Service ----------
+    // Delete Service
     async function deleteService(id) {
         if (!confirm('Delete this service?')) return;
         try {
@@ -171,7 +228,7 @@ if (profileForm) {
         }
     }
 
-    // ---------- Logout ----------
+    // Logout
     document.getElementById('logoutBtn')?.addEventListener('click', () => {
         localStorage.clear();
         window.location.href = 'login.html';
