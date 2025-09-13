@@ -1,4 +1,5 @@
 const { DataTypes } = require('sequelize');
+const bcrypt = require('bcrypt');
 const sequelize = require('../config/database');
 
 const User = sequelize.define('User', {
@@ -22,11 +23,23 @@ const User = sequelize.define('User', {
     }
 }, {
     tableName: 'users',
-    timestamps: true
+    timestamps: true,
+    hooks: {
+        // Hash password before saving
+        beforeCreate: async (user) => {
+            if (user.password) {
+                const salt = await bcrypt.genSalt(10);
+                user.password = await bcrypt.hash(user.password, salt);
+            }
+        },
+        beforeUpdate: async (user) => {
+            if (user.changed('password')) {
+                const salt = await bcrypt.genSalt(10);
+                user.password = await bcrypt.hash(user.password, salt);
+            }
+        }
+    }
 });
 
-User.sync({ alter: true })
-    .then(() => console.log('✅ User table synced'))
-    .catch(err => console.error('❌ Failed to sync User table:', err));
-
+// Remove sync here (best done in app.js or index.js)
 module.exports = User;
