@@ -1,60 +1,41 @@
-/* ---------- Global Styles ---------- */
-html, body {
+/* ---------- Global ---------- */
+body, html {
     height: 100%;
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #6cc1ff, #3a8dff);
-    color: #333;
-}
-
-/* ---------- Flex wrapper for full-height pages ---------- */
-.fullscreen-center {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
 }
 
 /* ---------- Container ---------- */
 .container {
-    max-width: 420px;
+    max-width: 800px;
     width: 100%;
     padding: 2.5rem 2rem;
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255,255,255,0.95);
     border-radius: 16px;
     box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-    text-align: center;
+    margin: 2rem auto;
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    text-align: center;
 }
 
 /* ---------- Headings ---------- */
 h1, h2 {
     color: #007bff;
-    margin-bottom: 1.5rem;
-    font-size: 1.8rem;
-    text-align: center;
+    margin: 0;
 }
 
-/* ---------- Forms ---------- */
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-input, textarea {
+/* ---------- Inputs & Buttons ---------- */
+input, textarea, button, .btn {
+    width: 100%;
     padding: 0.75rem;
-    font-size: 1rem;
+    margin-bottom: 1rem;
     border-radius: 8px;
     border: 1px solid #ccc;
+    font-size: 1rem;
     box-sizing: border-box;
-}
-
-textarea {
-    resize: vertical;
 }
 
 input:focus, textarea:focus {
@@ -63,20 +44,14 @@ input:focus, textarea:focus {
     box-shadow: 0 0 6px rgba(0,123,255,0.3);
 }
 
-/* ---------- Buttons ---------- */
 button, .btn {
-    width: 100%;
-    padding: 0.75rem;
-    border-radius: 8px;
-    border: none;
     background: #007bff;
     color: #fff;
-    font-size: 1rem;
-    font-weight: 600;
+    border: none;
     cursor: pointer;
+    font-weight: 600;
     transition: background 0.3s, transform 0.2s;
     text-decoration: none;
-    display: inline-block;
 }
 
 button:hover, .btn:hover {
@@ -84,22 +59,84 @@ button:hover, .btn:hover {
     transform: translateY(-2px);
 }
 
-/* ---------- Button group for login/signup ---------- */
+/* ---------- Button Group ---------- */
 .button-group {
     display: flex;
     gap: 1rem;
     justify-content: center;
-    margin-top: 1rem;
 }
 
-.button-group button,
-.button-group .btn {
+.button-group button, .button-group .btn {
     flex: 1;
 }
 
-/* ---------- Logout Button ---------- */
-.logout-btn {
+/* ---------- Messages ---------- */
+.message {
+    font-weight: bold;
+}
+
+.message.success { color: green; }
+.message.error { color: red; }
+
+/* ---------- Services Grid ---------- */
+#services-list {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
     margin-top: 1rem;
+}
+
+.service-card {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.service-card h3 {
+    margin: 0;
+    color: #007bff;
+}
+
+.service-card p {
+    margin: 0;
+    color: #555;
+}
+
+/* ---------- Card Buttons ---------- */
+.service-card button {
+    padding: 0.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.3s;
+}
+
+.service-card .edit-btn {
+    background: #28a745;
+    color: #fff;
+}
+
+.service-card .edit-btn:hover {
+    background: #1e7e34;
+}
+
+.service-card .delete-btn {
+    background: #ff4d4f;
+    color: #fff;
+}
+
+.service-card .delete-btn:hover {
+    background: #c30000;
+}
+
+/* ---------- Logout ---------- */
+.logout-btn {
     background: #ff4d4f;
 }
 
@@ -107,65 +144,7 @@ button:hover, .btn:hover {
     background: #c30000;
 }
 
-/* ---------- Messages ---------- */
-.message {
-    font-weight: bold;
-    margin-top: 0.5rem;
-    color: #333;
-}
-
-.message.success { color: green; }
-.message.error { color: red; }
-
-/* ---------- Links under forms ---------- */
-p {
-    margin-top: 1rem;
-    font-size: 0.9rem;
-    color: #333;
-}
-
-p a {
-    color: #007bff;
-    text-decoration: none;
-}
-
-p a:hover {
-    text-decoration: underline;
-}
-
-/* ---------- Services Page ---------- */
-#services-list {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.service-card {
-    width: 100%;
-    background: #f8f9fa;
-    border-radius: 10px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.service-card h3 {
-    margin: 0 0 0.5rem 0;
-    color: #007bff;
-}
-
-.service-card p {
-    margin: 0.25rem 0;
-    color: #555;
-}
-
 /* ---------- Responsive ---------- */
 @media (max-width: 480px) {
-    .container {
-        padding: 2rem 1.5rem;
-    }
+    .container { padding: 2rem 1rem; }
 }
