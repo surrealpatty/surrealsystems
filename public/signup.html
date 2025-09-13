@@ -8,64 +8,59 @@
 </head>
 <body>
 <div class="fullscreen-center">
-    <div class="container">
-        <h1>Sign Up</h1>
-        <form id="signupForm">
-            <input type="text" id="signupUsername" placeholder="Username" required>
-            <input type="email" id="signupEmail" placeholder="Email" required>
-            <input type="password" id="signupPassword" placeholder="Password" required>
+  <div class="container">
+    <h1>Sign Up</h1>
+    <form id="signupForm">
+      <input type="text" id="signupUsername" placeholder="Username" required>
+      <input type="email" id="signupEmail" placeholder="Email" required>
+      <input type="password" id="signupPassword" placeholder="Password" required>
 
-            <div class="button-group">
-                <button type="submit">Sign Up</button>
-                <a href="login.html" class="btn">Log In</a>
-            </div>
-        </form>
-        <p id="signupMessage" class="message"></p>
-    </div>
+      <!-- Side-by-side buttons -->
+      <div class="button-group">
+        <button type="submit">Sign Up</button>
+        <a href="login.html" class="btn">Log In</a>
+      </div>
+    </form>
+    <p id="signupMessage" class="message"></p>
+  </div>
 </div>
 
 <script>
 const API_URL = 'https://codecrowds.onrender.com';
-
 const signupForm = document.getElementById('signupForm');
 const signupMessage = document.getElementById('signupMessage');
 
+function showMessage(element, message, isSuccess) {
+  element.textContent = message;
+  element.className = `message ${isSuccess ? 'success' : 'error'}`;
+}
+
 signupForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  const username = document.getElementById('signupUsername').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value.trim();
 
-    const username = document.getElementById('signupUsername').value.trim();
-    const email = document.getElementById('signupEmail').value.trim();
-    const password = document.getElementById('signupPassword').value;
+  if (!username || !email || !password) return showMessage(signupMessage, 'All fields required', false);
 
-    if (!username || !email || !password) {
-        signupMessage.textContent = 'All fields are required';
-        signupMessage.className = 'message error';
-        return;
+  try {
+    const res = await fetch(`${API_URL}/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, email, password })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userId', data.user.id);
+      localStorage.setItem('username', data.user.username);
+      window.location.href = 'profile.html';
+    } else {
+      showMessage(signupMessage, data.error || 'Sign up failed', false);
     }
-
-    try {
-        const res = await fetch(`${API_URL}/users/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, password })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            signupMessage.textContent = 'Sign Up successful! Redirecting to login...';
-            signupMessage.className = 'message success';
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 1500);
-        } else {
-            signupMessage.textContent = data.error || 'Sign Up failed';
-            signupMessage.className = 'message error';
-        }
-    } catch (err) {
-        signupMessage.textContent = 'Network error: ' + err.message;
-        signupMessage.className = 'message error';
-    }
+  } catch (err) {
+    showMessage(signupMessage, 'Network error: ' + err.message, false);
+  }
 });
 </script>
 </body>
