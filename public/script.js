@@ -140,6 +140,7 @@ if (document.getElementById('serviceForm')) {
     const token = getToken();
     const userId = getUserId();
     const servicesList = document.getElementById('services-list');
+    const messageEl = document.getElementById('service-message');
 
     if (!token || !userId) { window.location.href='login.html'; }
 
@@ -160,9 +161,9 @@ if (document.getElementById('serviceForm')) {
 
     document.getElementById('serviceForm').addEventListener('submit', async (e)=>{
         e.preventDefault();
-        const title = document.getElementById('serviceTitle').value.trim();
-        const description = document.getElementById('serviceDescription').value.trim();
-        const price = parseFloat(document.getElementById('servicePrice').value);
+        const title = document.getElementById('service-title').value.trim();
+        const description = document.getElementById('service-description').value.trim();
+        const price = parseFloat(document.getElementById('service-price').value);
         if (!title || !description || !price) return;
 
         try {
@@ -172,7 +173,6 @@ if (document.getElementById('serviceForm')) {
                 body: JSON.stringify({ title, description, price, userId })
             });
             const data = await res.json();
-            const messageEl = document.getElementById('serviceMessage');
             if (res.ok) {
                 messageEl.textContent='Service added successfully!';
                 messageEl.className='message success';
@@ -183,7 +183,6 @@ if (document.getElementById('serviceForm')) {
                 messageEl.className='message error';
             }
         } catch(err){
-            const messageEl = document.getElementById('serviceMessage');
             messageEl.textContent='Network error: '+err.message;
             messageEl.className='message error';
             console.error(err);
