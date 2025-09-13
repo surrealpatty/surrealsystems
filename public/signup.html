@@ -1,160 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile - CodeCrowds</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    body, html {
-      height: 100%;
-      margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #6cc1ff, #3a8dff);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .container {
-      background: rgba(255,255,255,0.95);
-      padding: 3rem 2rem;
-      border-radius: 16px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.2);
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
-    }
-
-    h1 {
-      color: #007bff;
-      margin-bottom: 2rem;
-    }
-
-    input, button {
-      width: 100%;
-      padding: 0.75rem;
-      margin-bottom: 1rem;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
-
-    button {
-      background: #007bff;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    button:hover {
-      background: #0056b3;
-    }
-
-    .message {
-      margin-top: 1rem;
-      font-weight: bold;
-    }
-
-    .message.success { color: green; }
-    .message.error { color: red; }
-
-    .logout-btn {
-      margin-top: 1rem;
-      background: #ff4d4f;
-    }
-
-    .logout-btn:hover {
-      background: #c30000;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign Up - CodeCrowds</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <h1>Profile</h1>
-    <form id="profileForm">
-      <input type="text" id="profileUsername" placeholder="Username" required>
-      <input type="text" id="profileDescription" placeholder="Description">
-      <button type="submit">Update Profile</button>
-    </form>
-    <p id="profileMessage" class="message"></p>
-    <button id="logoutBtn" class="logout-btn">Log Out</button>
-  </div>
+<div class="fullscreen-center">
+    <div class="container">
+        <h1>Sign Up</h1>
+        <form id="signupForm">
+            <input type="text" id="signupUsername" placeholder="Username" required>
+            <input type="email" id="signupEmail" placeholder="Email" required>
+            <input type="password" id="signupPassword" placeholder="Password" required>
 
-  <script>
-    const API_URL = 'https://codecrowds.onrender.com';
+            <div class="button-group">
+                <button type="submit">Sign Up</button>
+                <a href="login.html" class="btn">Log In</a>
+            </div>
+        </form>
+        <p id="signupMessage" class="message"></p>
+    </div>
+</div>
 
-    // Helper to show messages
-    function showMessage(elementId, message, isSuccess) {
-      const el = document.getElementById(elementId);
-      if (!el) return;
-      el.textContent = message;
-      el.className = `message ${isSuccess ? 'success' : 'error'}`;
+<script>
+const API_URL = 'https://codecrowds.onrender.com';
+
+const signupForm = document.getElementById('signupForm');
+const signupMessage = document.getElementById('signupMessage');
+
+signupForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const username = document.getElementById('signupUsername').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+
+    if (!username || !email || !password) {
+        signupMessage.textContent = 'All fields are required';
+        signupMessage.className = 'message error';
+        return;
     }
 
-    // Load current user info from localStorage
-    const usernameInput = document.getElementById('profileUsername');
-    const descInput = document.getElementById('profileDescription');
-    const userId = localStorage.getItem('userId');
-    const token = localStorage.getItem('token');
-
-    if (!userId || !token) {
-      alert("You must be logged in to view this page.");
-      window.location.href = 'login.html';
-    } else {
-      usernameInput.value = localStorage.getItem('username') || '';
-      descInput.value = localStorage.getItem('description') || '';
-    }
-
-    // ==========================
-    // UPDATE PROFILE
-    // ==========================
-    document.getElementById('profileForm')?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const username = usernameInput.value.trim();
-      const description = descInput.value.trim();
-
-      if (!username) {
-        return showMessage('profileMessage', 'Username cannot be empty', false);
-      }
-
-      try {
-        const res = await fetch(`${API_URL}/users/${userId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ username, description }),
+    try {
+        const res = await fetch(`${API_URL}/users/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
         });
 
         const data = await res.json();
 
         if (res.ok) {
-          localStorage.setItem('username', data.user.username);
-          localStorage.setItem('description', data.user.description || '');
-          showMessage('profileMessage', 'Profile updated successfully!', true);
+            signupMessage.textContent = 'Sign Up successful! Redirecting to login...';
+            signupMessage.className = 'message success';
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1500);
         } else {
-          showMessage('profileMessage', data.error || 'Update failed', false);
+            signupMessage.textContent = data.error || 'Sign Up failed';
+            signupMessage.className = 'message error';
         }
-      } catch (err) {
-        showMessage('profileMessage', 'Network error: ' + err.message, false);
-      }
-    });
-
-    // ==========================
-    // LOGOUT
-    // ==========================
-    document.getElementById('logoutBtn')?.addEventListener('click', () => {
-      localStorage.removeItem('token');
-      localStorage.removeItem('userId');
-      localStorage.removeItem('username');
-      localStorage.removeItem('description');
-      window.location.href = 'login.html';
-    });
-  </script>
+    } catch (err) {
+        signupMessage.textContent = 'Network error: ' + err.message;
+        signupMessage.className = 'message error';
+    }
+});
+</script>
 </body>
 </html>
