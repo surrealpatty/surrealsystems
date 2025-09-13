@@ -1,4 +1,4 @@
-const API_URL = 'https://codecrowds.onrender.com/api'; // your backend API
+const API_URL = 'https://codecrowds.onrender.com/api'; // Make sure this matches your backend
 
 // ---------- Helpers ----------
 function showMessage(elementId, message, isSuccess = true) {
@@ -11,6 +11,31 @@ function showMessage(elementId, message, isSuccess = true) {
 function getToken() { return localStorage.getItem('token'); }
 function getUserId() { return localStorage.getItem('userId'); }
 
+async function safeFetch(url, options = {}) {
+    try {
+        const res = await fetch(url, options);
+        const contentType = res.headers.get('content-type') || '';
+        let data;
+
+        if (contentType.includes('application/json')) {
+            data = await res.json();
+        } else {
+            data = await res.text(); // fallback for HTML responses
+            console.error('Non-JSON response:', data);
+            throw new Error(`Server returned non-JSON response`);
+        }
+
+        if (!res.ok) {
+            throw new Error(data.error || JSON.stringify(data) || 'Request failed');
+        }
+
+        return data;
+    } catch (err) {
+        console.error('Fetch error:', err);
+        throw err; // rethrow for caller to handle
+    }
+}
+
 // ---------- SIGNUP ----------
 const signupForm = document.getElementById('signupForm');
 signupForm?.addEventListener('submit', async (e) => {
@@ -22,25 +47,21 @@ signupForm?.addEventListener('submit', async (e) => {
     if (!username || !email || !password) return showMessage('signupMessage', 'All fields required', false);
 
     try {
-        const res = await fetch(`${API_URL}/users/register`, {
+        const data = await safeFetch(`${API_URL}/users/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, email, password })
         });
-        const data = await res.json();
 
-        if (res.ok) {
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('userId', data.user.id);
-            localStorage.setItem('username', data.user.username);
-            localStorage.setItem('description', data.user.description || '');
-            showMessage('signupMessage', 'Sign up successful! Redirecting...', true);
-            setTimeout(() => window.location.href = 'profile.html', 1000);
-        } else {
-            showMessage('signupMessage', data.error || 'Sign up failed', false);
-        }
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userId', data.user.id);
+        localStorage.setItem('username', data.user.username);
+        localStorage.setItem('description', data.user.description || '');
+        showMessage('signupMessage', 'Sign up successful! Redirecting...', true);
+        setTimeout(() => window.location.href = 'profile.html', 1000);
+
     } catch (err) {
-        showMessage('signupMessage', 'Network error: ' + err.message, false);
+        showMessage('signupMessage', 'Error: ' + err.message, false);
     }
 });
 
@@ -54,29 +75,25 @@ loginForm?.addEventListener('submit', async (e) => {
     if (!email || !password) return showMessage('loginMessage', 'Email & password required', false);
 
     try {
-        const res = await fetch(`${API_URL}/users/login`, {
+        const data = await safeFetch(`${API_URL}/users/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
-        const data = await res.json();
 
-        if (res.ok) {
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('userId', data.user.id);
-            localStorage.setItem('username', data.user.username);
-            localStorage.setItem('description', data.user.description || '');
-            showMessage('loginMessage', 'Login successful! Redirecting...', true);
-            setTimeout(() => window.location.href = 'profile.html', 1000);
-        } else {
-            showMessage('loginMessage', data.error || 'Login failed', false);
-        }
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userId', data.user.id);
+        localStorage.setItem('username', data.user.username);
+        localStorage.setItem('description', data.user.description || '');
+        showMessage('loginMessage', 'Login successful! Redirecting...', true);
+        setTimeout(() => window.location.href = 'profile.html', 1000);
+
     } catch (err) {
-        showMessage('loginMessage', 'Network error: ' + err.message, false);
+        showMessage('loginMessage', 'Error: ' + err.message, false);
     }
 });
 
-// ---------- PROFILE ----------
+// ---------- PROFILE & SERVICES ----------
 const profileForm = document.getElementById('profileForm');
 if (profileForm) {
     const usernameInput = document.getElementById('username');
@@ -92,7 +109,6 @@ if (profileForm) {
     usernameInput.value = localStorage.getItem('username') || '';
     descInput.value = localStorage.getItem('description') || '';
 
-    // Update profile
     profileForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = usernameInput.value.trim();
@@ -100,30 +116,25 @@ if (profileForm) {
         if (!username) return alert('Username required');
 
         try {
-            const res = await fetch(`${API_URL}/users/${userId}`, {
+            const data = await safeFetch(`${API_URL}/users/${userId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ username, description })
             });
-            const data = await res.json();
 
-            if (res.ok) {
-                alert('Profile updated!');
-                localStorage.setItem('username', data.user.username);
-                localStorage.setItem('description', data.user.description || '');
-                usernameDisplay.textContent = data.user.username;
-            } else alert(data.error || 'Update failed');
-        } catch (err) { alert('Network error: ' + err.message); }
+            alert('Profile updated!');
+            localStorage.setItem('username', data.user.username);
+            localStorage.setItem('description', data.user.description || '');
+            usernameDisplay.textContent = data.user.username;
+
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
     });
 
-    // ---------- SERVICES ----------
     async function loadServices() {
         try {
-            const res = await fetch(`${API_URL}/services`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const services = await res.json();
-
+            const services = await safeFetch(`${API_URL}/services`, { headers: { 'Authorization': `Bearer ${token}` } });
             servicesList.innerHTML = '';
             services.filter(s => s.userId == userId).forEach(s => {
                 const div = document.createElement('div');
@@ -139,6 +150,7 @@ if (profileForm) {
                 div.querySelector('.delete-btn').addEventListener('click', () => deleteService(s.id));
                 servicesList.appendChild(div);
             });
+
         } catch (err) {
             servicesList.innerHTML = '<p class="error">Failed to load services</p>';
             console.error(err);
@@ -146,57 +158,49 @@ if (profileForm) {
     }
     loadServices();
 
-    // Add service
     document.getElementById('serviceForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const title = document.getElementById('serviceTitle').value.trim();
         const description = document.getElementById('serviceDesc').value.trim();
         const price = parseFloat(document.getElementById('servicePrice').value);
 
-        if (!title || !description || isNaN(price)) return alert('All fields required');
+        if (!title || !description || !price) return alert('All fields required');
 
         try {
-            const res = await fetch(`${API_URL}/services`, {
+            await safeFetch(`${API_URL}/services`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ title, description, price })
             });
-            const data = await res.json();
 
-            if (res.ok) {
-                document.getElementById('serviceForm').reset();
-                loadServices();
-            } else {
-                alert(data.error || 'Service creation failed');
-            }
-        } catch (err) { alert('Network error: ' + err.message); }
+            document.getElementById('serviceForm').reset();
+            loadServices();
+
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
     });
 
     function editService(service) {
         const newTitle = prompt('Edit title', service.title);
         const newDesc = prompt('Edit description', service.description);
         const newPrice = parseFloat(prompt('Edit price', service.price));
-        if (!newTitle || !newDesc || isNaN(newPrice)) return;
+        if (!newTitle || !newDesc || !newPrice) return;
 
-        fetch(`${API_URL}/services/${service.id}`, {
+        safeFetch(`${API_URL}/services/${service.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ title: newTitle, description: newDesc, price: newPrice })
-        }).then(async res => {
-            const data = await res.json();
-            if (res.ok) loadServices();
-            else alert(data.error || 'Failed to update service');
-        }).catch(err => alert('Network error: ' + err.message));
+        }).then(loadServices).catch(err => alert('Error: ' + err.message));
     }
 
     function deleteService(id) {
         if (!confirm('Delete this service?')) return;
-        fetch(`${API_URL}/services/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
-            .then(async res => {
-                const data = await res.json();
-                if (res.ok) loadServices();
-                else alert(data.error || 'Failed to delete service');
-            }).catch(err => alert('Network error: ' + err.message));
+
+        safeFetch(`${API_URL}/services/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        }).then(loadServices).catch(err => alert('Error: ' + err.message));
     }
 
     document.getElementById('logoutBtn')?.addEventListener('click', () => {
