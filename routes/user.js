@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+
+// Secret for JWT (store in .env in production)
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
 // REGISTER
 router.post('/register', async (req, res) => {
@@ -20,8 +24,12 @@ router.post('/register', async (req, res) => {
         const hash = await bcrypt.hash(password, 10);
         const newUser = await User.create({ username, email, password: hash });
 
+        // Create token
+        const token = jwt.sign({ id: newUser.id, email: newUser.email }, JWT_SECRET, { expiresIn: '1h' });
+
         res.json({
             message: 'User registered successfully',
+            token,
             user: {
                 id: newUser.id,
                 username: newUser.username,
@@ -49,8 +57,12 @@ router.post('/login', async (req, res) => {
         const match = await bcrypt.compare(password, user.password);
         if (!match) return res.status(400).json({ error: 'Invalid password' });
 
+        // Create token
+        const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
+
         res.json({
             message: 'Login successful',
+            token,
             user: {
                 id: user.id,
                 username: user.username,
@@ -64,7 +76,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// UPDATE PROFILE
+// UPDATE PROFILE (protected route example)
 router.put('/:id', async (req, res) => {
     const { username, description } = req.body;
 
