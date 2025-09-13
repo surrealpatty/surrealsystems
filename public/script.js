@@ -1,8 +1,6 @@
 const API_URL = 'https://codecrowds.onrender.com';
 
-// -----------------
-// HELPER FUNCTIONS
-// -----------------
+// ---------- Helpers ----------
 function showMessage(elementId, message, isSuccess = true) {
     const el = document.getElementById(elementId);
     if (!el) return;
@@ -13,20 +11,20 @@ function showMessage(elementId, message, isSuccess = true) {
 function getToken() { return localStorage.getItem('token'); }
 function getUserId() { return localStorage.getItem('userId'); }
 
-// -----------------
-// SIGNUP
-// -----------------
-document.getElementById('signupForm')?.addEventListener('submit', async (e) => {
+// ---------- SIGNUP ----------
+const signupForm = document.getElementById('signupForm');
+signupForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('signupUsername').value.trim();
     const email = document.getElementById('signupEmail').value.trim();
     const password = document.getElementById('signupPassword').value.trim();
-    if (!username || !email || !password) return alert('All fields required!');
+
+    if (!username || !email || !password) return showMessage('signupMessage', 'All fields required', false);
 
     try {
         const res = await fetch(`${API_URL}/users/register`, {
             method: 'POST',
-            headers: {'Content-Type':'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, email, password })
         });
         const data = await res.json();
@@ -35,26 +33,27 @@ document.getElementById('signupForm')?.addEventListener('submit', async (e) => {
             localStorage.setItem('userId', data.user.id);
             localStorage.setItem('username', data.user.username);
             localStorage.setItem('description', data.user.description || '');
-            window.location.href = 'profile.html';
-        } else {
-            showMessage('signupMessage', data.error || 'Registration failed', false);
-        }
-    } catch(err) { showMessage('signupMessage', err.message, false); }
+            showMessage('signupMessage', 'Sign up successful! Redirecting...', true);
+            setTimeout(() => window.location.href='profile.html', 1000);
+        } else showMessage('signupMessage', data.error || 'Sign up failed', false);
+    } catch (err) {
+        showMessage('signupMessage', 'Network error: '+err.message, false);
+    }
 });
 
-// -----------------
-// LOGIN
-// -----------------
-document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
+// ---------- LOGIN ----------
+const loginForm = document.getElementById('loginForm');
+loginForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value.trim();
-    if (!email || !password) return alert('Email & password required!');
+
+    if (!email || !password) return showMessage('loginMessage', 'Email & password required', false);
 
     try {
         const res = await fetch(`${API_URL}/users/login`, {
             method: 'POST',
-            headers: {'Content-Type':'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
         const data = await res.json();
@@ -63,131 +62,117 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
             localStorage.setItem('userId', data.user.id);
             localStorage.setItem('username', data.user.username);
             localStorage.setItem('description', data.user.description || '');
-            window.location.href = 'profile.html';
-        } else {
-            showMessage('loginMessage', data.error || 'Login failed', false);
-        }
-    } catch(err) { showMessage('loginMessage', err.message, false); }
+            showMessage('loginMessage', 'Login successful! Redirecting...', true);
+            setTimeout(() => window.location.href='profile.html', 1000);
+        } else showMessage('loginMessage', data.error || 'Login failed', false);
+    } catch (err) {
+        showMessage('loginMessage', 'Network error: '+err.message, false);
+    }
 });
 
-// -----------------
-// PROFILE PAGE
-// -----------------
-if (document.getElementById('profileForm')) {
-    const token = getToken();
-    const userId = getUserId();
-    if (!token || !userId) { window.location.href='login.html'; }
-
-    const usernameInput = document.getElementById('profileUsername');
-    const descInput = document.getElementById('profileDescription');
+// ---------- PROFILE ----------
+const profileForm = document.getElementById('profileForm');
+if(profileForm){
+    const usernameInput = document.getElementById('username');
+    const descInput = document.getElementById('description');
     const usernameDisplay = document.getElementById('usernameDisplay');
     const servicesList = document.getElementById('services-list');
+    const token = getToken();
+    const userId = getUserId();
 
+    if(!token || !userId) window.location.href='login.html';
+
+    usernameDisplay.textContent = localStorage.getItem('username') || 'User';
     usernameInput.value = localStorage.getItem('username') || '';
     descInput.value = localStorage.getItem('description') || '';
-    usernameDisplay.textContent = localStorage.getItem('username') || 'User';
 
-    // Update profile
-    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+    profileForm.addEventListener('submit', async (e)=>{
         e.preventDefault();
         const username = usernameInput.value.trim();
         const description = descInput.value.trim();
-        if (!username) return alert('Username required');
+        if(!username) return alert('Username required');
 
-        try {
+        try{
             const res = await fetch(`${API_URL}/users/${userId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json','Authorization': `Bearer ${token}` },
+                method:'PUT',
+                headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ username, description })
             });
             const data = await res.json();
-            if (res.ok) {
+            if(res.ok){
                 alert('Profile updated!');
                 localStorage.setItem('username', data.user.username);
                 localStorage.setItem('description', data.user.description || '');
                 usernameDisplay.textContent = data.user.username;
             } else alert(data.error || 'Update failed');
-        } catch(err) { alert('Network error: '+err.message); }
+        } catch(err){ alert('Network error: '+err.message); }
     });
 
-    // Load user services
-    async function loadUserServices() {
-        try {
-            const res = await fetch(`${API_URL}/services`, { headers: {'Authorization':`Bearer ${token}`} });
+    // ---------- SERVICES ----------
+    async function loadServices(){
+        try{
+            const res = await fetch(`${API_URL}/services`, { headers: { 'Authorization': `Bearer ${token}` } });
             const services = await res.json();
-            servicesList.innerHTML = '';
+            servicesList.innerHTML='';
             services.filter(s=>s.userId==userId).forEach(s=>{
-                const div = document.createElement('div');
+                const div=document.createElement('div');
                 div.className='service-card';
-                div.innerHTML=`<h3>${s.title}</h3><p>${s.description}</p><p><strong>Price:</strong> $${s.price}</p>`;
+                div.innerHTML=`<h3>${s.title}</h3><p>${s.description}</p><p><strong>Price:</strong> $${s.price}</p>
+                <button class="edit-btn">Edit</button><button class="delete-btn">Delete</button>`;
+                div.querySelector('.edit-btn').addEventListener('click',()=>editService(s));
+                div.querySelector('.delete-btn').addEventListener('click',()=>deleteService(s.id));
                 servicesList.appendChild(div);
             });
-        } catch(err) { console.error(err); servicesList.innerHTML='<p class="error">Failed to load services</p>'; }
-    }
-    loadUserServices();
-
-    // Logout
-    document.getElementById('logoutBtn')?.addEventListener('click', () => {
-        localStorage.clear();
-        window.location.href='login.html';
-    });
-}
-
-// -----------------
-// SERVICES PAGE
-// -----------------
-if (document.getElementById('serviceForm')) {
-    const token = getToken();
-    const userId = getUserId();
-    const servicesList = document.getElementById('services-list');
-    const messageEl = document.getElementById('service-message');
-
-    if (!token || !userId) { window.location.href='login.html'; }
-
-    async function loadServices() {
-        try {
-            const res = await fetch(`${API_URL}/services`, { headers: {'Authorization': `Bearer ${token}`} });
-            const services = await res.json();
-            servicesList.innerHTML = '';
-            services.forEach(s=>{
-                const div = document.createElement('div');
-                div.className='service-card';
-                div.innerHTML=`<h3>${s.title}</h3><p>${s.description}</p><p><strong>Price:</strong> $${s.price}</p><p><strong>By User ID:</strong> ${s.userId}</p>`;
-                servicesList.appendChild(div);
-            });
-        } catch(err) { servicesList.innerHTML='<p class="error">Failed to load services</p>'; console.error(err); }
+        } catch(err){ servicesList.innerHTML='<p class="error">Failed to load services</p>'; console.error(err);}
     }
     loadServices();
 
-    document.getElementById('serviceForm').addEventListener('submit', async (e)=>{
+    document.getElementById('serviceForm')?.addEventListener('submit', async (e)=>{
         e.preventDefault();
         const title = document.getElementById('service-title').value.trim();
         const description = document.getElementById('service-description').value.trim();
         const price = parseFloat(document.getElementById('service-price').value);
-        if (!title || !description || !price) return;
 
-        try {
+        if(!title || !description || !price) return alert('All fields required');
+
+        try{
             const res = await fetch(`${API_URL}/services`, {
-                method: 'POST',
-                headers: {'Content-Type':'application/json','Authorization': `Bearer ${token}`},
-                body: JSON.stringify({ title, description, price, userId })
+                method:'POST',
+                headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ title, description, price })
             });
-            const data = await res.json();
-            if (res.ok) {
-                messageEl.textContent='Service added successfully!';
-                messageEl.className='message success';
+            if(res.ok){
                 document.getElementById('serviceForm').reset();
                 loadServices();
             } else {
-                messageEl.textContent=data.error || 'Failed to add service';
-                messageEl.className='message error';
+                const data = await res.json();
+                alert(data.error || 'Service creation failed');
             }
-        } catch(err){
-            messageEl.textContent='Network error: '+err.message;
-            messageEl.className='message error';
-            console.error(err);
-        }
+        } catch(err){ alert('Network error: '+err.message); }
     });
 
-    document.getElementById('backProfileBtn')?.addEventListener('click', ()=>window.location.href='profile.html');
+    function editService(service){
+        const newTitle = prompt('Edit title', service.title);
+        const newDesc = prompt('Edit description', service.description);
+        const newPrice = parseFloat(prompt('Edit price', service.price));
+        if(!newTitle || !newDesc || !newPrice) return;
+        fetch(`${API_URL}/services/${service.id}`, {
+            method:'PUT',
+            headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ title:newTitle, description:newDesc, price:newPrice })
+        }).then(res=>{
+            if(res.ok) loadServices();
+        });
+    }
+
+    function deleteService(id){
+        if(!confirm('Delete this service?')) return;
+        fetch(`${API_URL}/services/${id}`, { method:'DELETE', headers:{ 'Authorization': `Bearer ${token}` } })
+        .then(res=>{ if(res.ok) loadServices(); });
+    }
+
+    document.getElementById('logoutBtn')?.addEventListener('click',()=>{
+        localStorage.clear();
+        window.location.href='login.html';
+    });
 }
