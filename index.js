@@ -11,20 +11,32 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname,'public')));
 
 // API routes
 app.use('/users', userRoutes);
 app.use('/services', serviceRoutes);
 
-// Fallback to serve front-end pages (profile.html, dashboard.html etc.)
-app.get('*', (req,res)=>{
-  res.sendFile(path.join(__dirname,'public','index.html')); 
+// Serve static files from public
+app.use(express.static(path.join(__dirname,'public')));
+
+// For front-end routes like /dashboard.html, /profile.html
+app.get(['/dashboard.html','/profile.html','/login.html','/register.html'], (req,res)=>{
+  res.sendFile(path.join(__dirname,'public',req.path));
 });
+
+// Catch-all for unknown API routes
+app.use('/users*', (req,res)=> res.status(404).json({error:'User route not found'}));
+app.use('/services*', (req,res)=> res.status(404).json({error:'Service route not found'}));
 
 // PORT
 const PORT = process.env.PORT || 3000;
 
 sequelize.sync({alter:true})
-.then(()=>{ console.log('✅ DB synced'); app.listen(PORT,()=>console.log(`🚀 Server on port ${PORT}`)); })
-.catch(err=>{ console.error('❌ DB sync failed',err); process.exit(1); });
+.then(()=>{ 
+  console.log('✅ DB synced'); 
+  app.listen(PORT,()=>console.log(`🚀 Server on port ${PORT}`)); 
+})
+.catch(err=>{ 
+  console.error('❌ DB sync failed',err); 
+  process.exit(1); 
+});
