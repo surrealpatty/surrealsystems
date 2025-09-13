@@ -11,75 +11,6 @@ function showMessage(elementId, message, isSuccess = true) {
 function getToken() { return localStorage.getItem('token'); }
 function getUserId() { return localStorage.getItem('userId'); }
 
-// ---------- SIGNUP ----------
-const signupForm = document.getElementById('signupForm');
-signupForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('signupUsername').value.trim();
-    const email = document.getElementById('signupEmail').value.trim();
-    const password = document.getElementById('signupPassword').value.trim();
-
-    if (!username || !email || !password) return showMessage('signupMessage', 'All fields required', false);
-
-    try {
-        const res = await fetch(`${API_URL}/users/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, password })
-        });
-
-        let data;
-        try { data = await res.json(); } 
-        catch(e) { data = { error: 'Invalid server response' }; }
-
-        if (res.ok) {
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('userId', data.user.id);
-            localStorage.setItem('username', data.user.username);
-            localStorage.setItem('description', data.user.description || '');
-            showMessage('signupMessage', 'Sign up successful! Redirecting...', true);
-            setTimeout(() => window.location.href='profile.html', 1000);
-        } else showMessage('signupMessage', data.error || 'Sign up failed', false);
-
-    } catch (err) {
-        showMessage('signupMessage', 'Network error: ' + err.message, false);
-    }
-});
-
-// ---------- LOGIN ----------
-const loginForm = document.getElementById('loginForm');
-loginForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value.trim();
-
-    if (!email || !password) return showMessage('loginMessage', 'Email & password required', false);
-
-    try {
-        const res = await fetch(`${API_URL}/users/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-
-        let data;
-        try { data = await res.json(); } 
-        catch(e) { data = { error: 'Invalid server response' }; }
-
-        if (res.ok) {
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('userId', data.user.id);
-            localStorage.setItem('username', data.user.username);
-            localStorage.setItem('description', data.user.description || '');
-            showMessage('loginMessage', 'Login successful! Redirecting...', true);
-            setTimeout(() => window.location.href='profile.html', 1000);
-        } else showMessage('loginMessage', data.error || 'Login failed', false);
-
-    } catch (err) {
-        showMessage('loginMessage', 'Network error: ' + err.message, false);
-    }
-});
-
 // ---------- PROFILE ----------
 const profileForm = document.getElementById('profileForm');
 if(profileForm){
@@ -146,13 +77,15 @@ if(profileForm){
     }
     loadServices();
 
-    document.getElementById('serviceForm')?.addEventListener('submit', async (e)=>{
+    // ---------- ADD SERVICE ----------
+    const serviceForm = document.getElementById('serviceForm');
+    serviceForm?.addEventListener('submit', async (e)=>{
         e.preventDefault();
-        const title = document.getElementById('service-title').value.trim();
-        const description = document.getElementById('service-description').value.trim();
-        const price = parseFloat(document.getElementById('service-price').value);
+        const title = document.getElementById('serviceTitle').value.trim();
+        const description = document.getElementById('serviceDesc').value.trim();
+        const price = parseFloat(document.getElementById('servicePrice').value);
 
-        if(!title || !description || !price) return alert('All fields required');
+        if(!title || !description || isNaN(price)) return alert('All fields required');
 
         try{
             const res = await fetch(`${API_URL}/services`, {
@@ -162,7 +95,7 @@ if(profileForm){
             });
 
             if(res.ok){
-                document.getElementById('serviceForm').reset();
+                serviceForm.reset();
                 loadServices();
             } else {
                 let data;
@@ -177,7 +110,7 @@ if(profileForm){
         const newTitle = prompt('Edit title', service.title);
         const newDesc = prompt('Edit description', service.description);
         const newPrice = parseFloat(prompt('Edit price', service.price));
-        if(!newTitle || !newDesc || !newPrice) return;
+        if(!newTitle || !newDesc || isNaN(newPrice)) return;
 
         fetch(`${API_URL}/services/${service.id}`, {
             method:'PUT',
