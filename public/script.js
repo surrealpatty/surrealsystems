@@ -1,146 +1,41 @@
-const API_URL = 'https://codecrowds.onrender.com/api'; // make sure /api matches your backend
+document.getElementById('serviceForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-// ---------- Helpers ----------
-function showMessage(elementId, message, isSuccess = true) {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-    el.textContent = message;
-    el.className = `message ${isSuccess ? 'success' : 'error'}`;
-}
+    const title = document.getElementById('serviceTitle').value.trim(); // match your HTML IDs
+    const description = document.getElementById('serviceDesc').value.trim();
+    const price = parseFloat(document.getElementById('servicePrice').value);
 
-function getToken() { return localStorage.getItem('token'); }
-function getUserId() { return localStorage.getItem('userId'); }
+    if (!title || !description || !price) return alert('All fields required');
 
-// ---------- PROFILE ----------
-const profileForm = document.getElementById('profileForm');
-if(profileForm){
-    const usernameInput = document.getElementById('username');
-    const descInput = document.getElementById('description');
-    const usernameDisplay = document.getElementById('usernameDisplay');
-    const servicesList = document.getElementById('services-list');
-    const token = getToken();
-    const userId = getUserId();
+    try {
+        const res = await fetch(`${API_URL}/services`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({ title, description, price })
+        });
 
-    if(!token || !userId) window.location.href='login.html';
+        let data;
+        try {
+            data = await res.json();
+            console.log('Response JSON:', data); // ✅ Logs valid JSON responses
+        } catch (e) {
+            const text = await res.text();
+            console.error('Non-JSON response from server:', text); // ✅ Logs HTML or plain text
+            data = { error: 'Invalid server response' };
+        }
 
-    usernameDisplay.textContent = localStorage.getItem('username') || 'User';
-    usernameInput.value = localStorage.getItem('username') || '';
-    descInput.value = localStorage.getItem('description') || '';
+        if (res.ok) {
+            document.getElementById('serviceForm').reset();
+            loadServices(); // reload the services list
+        } else {
+            alert(data.error || 'Service creation failed');
+        }
 
-    profileForm.addEventListener('submit', async (e)=>{
-        e.preventDefault();
-        const username = usernameInput.value.trim();
-        const description = descInput.value.trim();
-        if(!username) return alert('Username required');
-
-        try{
-            const res = await fetch(`${API_URL}/users/${userId}`, {
-                method:'PUT',
-                headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ username, description })
-            });
-
-            let data;
-            try { data = await res.json(); } 
-            catch(e) { data = { error: 'Invalid server response' }; }
-
-            if(res.ok){
-                alert('Profile updated!');
-                localStorage.setItem('username', data.user.username);
-                localStorage.setItem('description', data.user.description || '');
-                usernameDisplay.textContent = data.user.username;
-            } else alert(data.error || 'Update failed');
-
-        } catch(err){ alert('Network error: '+err.message); }
-    });
-
-    // ---------- SERVICES ----------
-    async function loadServices(){
-        try{
-            const res = await fetch(`${API_URL}/services`, { headers: { 'Authorization': `Bearer ${token}` } });
-            let services;
-            try { services = await res.json(); } 
-            catch(e) { services = []; }
-
-            servicesList.innerHTML='';
-            services.filter(s=>s.userId==userId).forEach(s=>{
-                const div=document.createElement('div');
-                div.className='service-card';
-                div.innerHTML=`<h3>${s.title}</h3><p>${s.description}</p><p><strong>Price:</strong> $${s.price}</p>
-                <button class="edit-btn">Edit</button><button class="delete-btn">Delete</button>`;
-                div.querySelector('.edit-btn').addEventListener('click',()=>editService(s));
-                div.querySelector('.delete-btn').addEventListener('click',()=>deleteService(s.id));
-                servicesList.appendChild(div);
-            });
-
-        } catch(err){ servicesList.innerHTML='<p class="error">Failed to load services</p>'; console.error(err);}
+    } catch (err) {
+        alert('Network error: ' + err.message);
+        console.error(err);
     }
-    loadServices();
-
-    // ---------- ADD SERVICE ----------
-    const serviceForm = document.getElementById('serviceForm');
-    serviceForm?.addEventListener('submit', async (e)=>{
-        e.preventDefault();
-        const title = document.getElementById('serviceTitle').value.trim();
-        const description = document.getElementById('serviceDesc').value.trim();
-        const price = parseFloat(document.getElementById('servicePrice').value);
-
-        if(!title || !description || isNaN(price)) return alert('All fields required');
-
-        try{
-            const res = await fetch(`${API_URL}/services`, {
-                method:'POST',
-                headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ title, description, price })
-            });
-
-            if(res.ok){
-                serviceForm.reset();
-                loadServices();
-            } else {
-                let data;
-                try { data = await res.json(); } catch(e){ data = { error: 'Invalid server response' }; }
-                alert(data.error || 'Service creation failed');
-            }
-
-        } catch(err){ alert('Network error: '+err.message); }
-    });
-
-    function editService(service){
-        const newTitle = prompt('Edit title', service.title);
-        const newDesc = prompt('Edit description', service.description);
-        const newPrice = parseFloat(prompt('Edit price', service.price));
-        if(!newTitle || !newDesc || isNaN(newPrice)) return;
-
-        fetch(`${API_URL}/services/${service.id}`, {
-            method:'PUT',
-            headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ title:newTitle, description:newDesc, price:newPrice })
-        }).then(async res=>{
-            if(res.ok) loadServices();
-            else {
-                let data;
-                try { data = await res.json(); } catch(e){ data = { error: 'Invalid server response' }; }
-                alert(data.error || 'Failed to update service');
-            }
-        }).catch(err=>alert('Network error: '+err.message));
-    }
-
-    function deleteService(id){
-        if(!confirm('Delete this service?')) return;
-        fetch(`${API_URL}/services/${id}`, { method:'DELETE', headers:{ 'Authorization': `Bearer ${token}` } })
-        .then(async res=>{
-            if(res.ok) loadServices();
-            else {
-                let data;
-                try { data = await res.json(); } catch(e){ data = { error: 'Invalid server response' }; }
-                alert(data.error || 'Failed to delete service');
-            }
-        }).catch(err=>alert('Network error: '+err.message));
-    }
-
-    document.getElementById('logoutBtn')?.addEventListener('click',()=>{
-        localStorage.clear();
-        window.location.href='login.html';
-    });
-}
+});
