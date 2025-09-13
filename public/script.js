@@ -1,4 +1,4 @@
-const API_URL = 'https://codecrowds.onrender.com';
+const API_URL = 'https://codecrowds.onrender.com/api'; // make sure /api matches your backend
 
 // ---------- Helpers ----------
 function showMessage(elementId, message, isSuccess = true) {
@@ -27,7 +27,11 @@ signupForm?.addEventListener('submit', async (e) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, email, password })
         });
-        const data = await res.json();
+
+        let data;
+        try { data = await res.json(); } 
+        catch(e) { data = { error: 'Invalid server response' }; }
+
         if (res.ok) {
             localStorage.setItem('token', data.token);
             localStorage.setItem('userId', data.user.id);
@@ -36,8 +40,9 @@ signupForm?.addEventListener('submit', async (e) => {
             showMessage('signupMessage', 'Sign up successful! Redirecting...', true);
             setTimeout(() => window.location.href='profile.html', 1000);
         } else showMessage('signupMessage', data.error || 'Sign up failed', false);
+
     } catch (err) {
-        showMessage('signupMessage', 'Network error: '+err.message, false);
+        showMessage('signupMessage', 'Network error: ' + err.message, false);
     }
 });
 
@@ -56,7 +61,11 @@ loginForm?.addEventListener('submit', async (e) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
-        const data = await res.json();
+
+        let data;
+        try { data = await res.json(); } 
+        catch(e) { data = { error: 'Invalid server response' }; }
+
         if (res.ok) {
             localStorage.setItem('token', data.token);
             localStorage.setItem('userId', data.user.id);
@@ -65,8 +74,9 @@ loginForm?.addEventListener('submit', async (e) => {
             showMessage('loginMessage', 'Login successful! Redirecting...', true);
             setTimeout(() => window.location.href='profile.html', 1000);
         } else showMessage('loginMessage', data.error || 'Login failed', false);
+
     } catch (err) {
-        showMessage('loginMessage', 'Network error: '+err.message, false);
+        showMessage('loginMessage', 'Network error: ' + err.message, false);
     }
 });
 
@@ -98,13 +108,18 @@ if(profileForm){
                 headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ username, description })
             });
-            const data = await res.json();
+
+            let data;
+            try { data = await res.json(); } 
+            catch(e) { data = { error: 'Invalid server response' }; }
+
             if(res.ok){
                 alert('Profile updated!');
                 localStorage.setItem('username', data.user.username);
                 localStorage.setItem('description', data.user.description || '');
                 usernameDisplay.textContent = data.user.username;
             } else alert(data.error || 'Update failed');
+
         } catch(err){ alert('Network error: '+err.message); }
     });
 
@@ -112,7 +127,10 @@ if(profileForm){
     async function loadServices(){
         try{
             const res = await fetch(`${API_URL}/services`, { headers: { 'Authorization': `Bearer ${token}` } });
-            const services = await res.json();
+            let services;
+            try { services = await res.json(); } 
+            catch(e) { services = []; }
+
             servicesList.innerHTML='';
             services.filter(s=>s.userId==userId).forEach(s=>{
                 const div=document.createElement('div');
@@ -123,6 +141,7 @@ if(profileForm){
                 div.querySelector('.delete-btn').addEventListener('click',()=>deleteService(s.id));
                 servicesList.appendChild(div);
             });
+
         } catch(err){ servicesList.innerHTML='<p class="error">Failed to load services</p>'; console.error(err);}
     }
     loadServices();
@@ -141,13 +160,16 @@ if(profileForm){
                 headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ title, description, price })
             });
+
             if(res.ok){
                 document.getElementById('serviceForm').reset();
                 loadServices();
             } else {
-                const data = await res.json();
+                let data;
+                try { data = await res.json(); } catch(e){ data = { error: 'Invalid server response' }; }
                 alert(data.error || 'Service creation failed');
             }
+
         } catch(err){ alert('Network error: '+err.message); }
     });
 
@@ -156,19 +178,32 @@ if(profileForm){
         const newDesc = prompt('Edit description', service.description);
         const newPrice = parseFloat(prompt('Edit price', service.price));
         if(!newTitle || !newDesc || !newPrice) return;
+
         fetch(`${API_URL}/services/${service.id}`, {
             method:'PUT',
             headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ title:newTitle, description:newDesc, price:newPrice })
-        }).then(res=>{
+        }).then(async res=>{
             if(res.ok) loadServices();
-        });
+            else {
+                let data;
+                try { data = await res.json(); } catch(e){ data = { error: 'Invalid server response' }; }
+                alert(data.error || 'Failed to update service');
+            }
+        }).catch(err=>alert('Network error: '+err.message));
     }
 
     function deleteService(id){
         if(!confirm('Delete this service?')) return;
         fetch(`${API_URL}/services/${id}`, { method:'DELETE', headers:{ 'Authorization': `Bearer ${token}` } })
-        .then(res=>{ if(res.ok) loadServices(); });
+        .then(async res=>{
+            if(res.ok) loadServices();
+            else {
+                let data;
+                try { data = await res.json(); } catch(e){ data = { error: 'Invalid server response' }; }
+                alert(data.error || 'Failed to delete service');
+            }
+        }).catch(err=>alert('Network error: '+err.message));
     }
 
     document.getElementById('logoutBtn')?.addEventListener('click',()=>{
