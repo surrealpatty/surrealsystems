@@ -186,7 +186,7 @@ editBtn.addEventListener('click', async () => {
             localStorage.setItem('description', data.user.description || '');
             usernameDisplay.textContent = data.user.username;
 
-            // Lock fields
+            // Lock fields again
             usernameInput.readOnly = true;
             descInput.readOnly = true;
             editBtn.textContent = 'Edit Profile';
