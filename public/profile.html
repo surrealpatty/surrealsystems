@@ -5,17 +5,139 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Profile - CodeCrowds</title>
 <link rel="stylesheet" href="style.css">
+<style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #f0f4f8;
+        color: #333;
+    }
+
+    header {
+        background: #4e54c8;
+        color: #fff;
+        padding: 60px 20px;
+        text-align: center;
+    }
+
+    header h1 {
+        font-size: 3rem;
+        margin-bottom: 20px;
+    }
+
+    header h1 .brand {
+        color: #00aaff;
+        text-shadow:
+            2px 2px 0 #060606,
+           -2px 2px 0 #060606,
+            2px -2px 0 #060606,
+           -2px -2px 0 #060606;
+    }
+
+    header p {
+        font-size: 1.3rem;
+        max-width: 600px;
+        margin: 0 auto 30px;
+    }
+
+    .profile-container {
+        max-width: 800px;
+        margin: 40px auto;
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+
+    .profile-container h2, .profile-container h3 {
+        color: #4e54c8;
+    }
+
+    .profile-container input, 
+    .profile-container textarea {
+        width: 95%;
+        padding: 12px;
+        margin: 8px 0;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 1rem;
+    }
+
+    .profile-container button {
+        padding: 12px 25px;
+        margin: 10px 0;
+        font-size: 1rem;
+        color: #4e54c8;
+        background-color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: 0.3s;
+    }
+
+    .profile-container button:hover {
+        background-color: #ddd;
+    }
+
+    .services-list {
+        margin-top: 30px;
+    }
+
+    .service-card {
+        background: #f9f9f9;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .service-card h4 {
+        margin: 0 0 10px 0;
+        color: #4e54c8;
+    }
+
+    .service-card p {
+        margin: 0 0 10px 0;
+    }
+
+    footer {
+        text-align: center;
+        padding: 20px;
+        background: #eee;
+        font-size: 0.9rem;
+        color: #555;
+        margin-top: 40px;
+    }
+
+    .lock-btns {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+</style>
 </head>
 <body>
-<div class="container">
-    <h1 id="usernameDisplay">User</h1>
+
+<header>
+    <h1><span class="brand">CodeCrowds</span></h1>
+    <p>Showcase your coding skills, offer services, and connect with clients worldwide. Manage your profile and services below.</p>
+</header>
+
+<div class="profile-container">
+    <h2 id="usernameDisplay">User</h2>
     <form id="profileForm">
         <input id="username" type="text" placeholder="Username" required>
-        <textarea id="description" placeholder="Description"></textarea>
+        <div class="lock-btns">
+            <button type="button" id="toggleLockBtn">Unlock About Me</button>
+            <button type="button" id="saveDescBtn" disabled>Save About Me</button>
+        </div>
+        <textarea id="description" placeholder="About Me"></textarea>
         <button type="submit">Update Profile</button>
     </form>
 
-    <h2>My Services</h2>
+    <h3>My Services</h3>
     <form id="serviceForm">
         <input id="service-title" placeholder="Title" required>
         <textarea id="service-description" placeholder="Description" required></textarea>
@@ -23,9 +145,14 @@
         <button type="submit">Add Service</button>
     </form>
 
-    <div id="services-list"></div>
+    <div class="services-list" id="services-list"></div>
     <button class="logout-btn" id="logoutBtn">Logout</button>
 </div>
+
+<footer>
+    &copy; 2025 CodeCrowds. All rights reserved.
+</footer>
+
 <script src="script.js"></script>
 </body>
 </html>
