@@ -40,19 +40,6 @@ body, html {
 }
 #profileForm textarea { resize: vertical; }
 
-#editProfileBtn {
-    padding: 12px 25px;
-    font-size: 1rem;
-    color: #4e54c8;
-    background-color: #fff;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-top: 10px;
-    transition: 0.3s;
-}
-#editProfileBtn:hover { background-color: #ddd; }
-
 /* Services Section */
 .services-section {
     display: grid;
@@ -120,9 +107,8 @@ body, html {
     <!-- Profile Info -->
     <h1 id="usernameDisplay">User</h1>
     <form id="profileForm">
-        <input id="username" type="text" placeholder="Username" readonly>
-        <textarea id="description" placeholder="About Me" readonly></textarea>
-        <button type="button" id="editProfileBtn">Edit Profile</button>
+        <input id="username" type="text" placeholder="Username">
+        <textarea id="description" placeholder="About Me"></textarea>
     </form>
 
     <!-- Services Section -->
@@ -142,60 +128,55 @@ body, html {
 
 <script src="script.js"></script>
 <script>
-// ---------- Profile Edit/Save ----------
+// ---------- Profile Auto-Save ----------
 const usernameInput = document.getElementById('username');
 const descInput = document.getElementById('description');
 const usernameDisplay = document.getElementById('usernameDisplay');
-const editBtn = document.getElementById('editProfileBtn');
 const token = localStorage.getItem('token');
 const userId = localStorage.getItem('userId');
 
-// Populate fields from localStorage
+// Load saved values
 usernameInput.value = localStorage.getItem('username') || '';
 descInput.value = localStorage.getItem('description') || '';
 usernameDisplay.textContent = localStorage.getItem('username') || 'User';
 
-let editing = false;
+// Auto-save function
+async function saveProfile() {
+    const newUsername = usernameInput.value.trim();
+    const newDesc = descInput.value.trim();
+    if (!newUsername) return;
 
-editBtn.addEventListener('click', async () => {
-    if (!editing) {
-        // Unlock fields
-        usernameInput.readOnly = false;
-        descInput.readOnly = false;
-        editBtn.textContent = 'Save Profile';
-        editing = true;
-    } else {
-        // Save changes
-        const newUsername = usernameInput.value.trim();
-        const newDesc = descInput.value.trim();
-        if (!newUsername) return alert('Username cannot be empty');
+    try {
+        const res = await fetch(`https://codecrowds.onrender.com/users/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ username: newUsername, description: newDesc })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to save profile');
 
-        try {
-            const res = await fetch(`https://codecrowds.onrender.com/users/${userId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ username: newUsername, description: newDesc })
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed to save profile');
+        // Update localStorage + UI
+        localStorage.setItem('username', data.user.username);
+        localStorage.setItem('description', data.user.description || '');
+        usernameDisplay.textContent = data.user.username;
+        console.log('Profile auto-saved');
+    } catch (err) {
+        console.error('Error saving profile:', err.message);
+    }
+}
 
-            localStorage.setItem('username', data.user.username);
-            localStorage.setItem('description', data.user.description || '');
-            usernameDisplay.textContent = data.user.username;
+// Save on blur (when user leaves the field)
+usernameInput.addEventListener('blur', saveProfile);
+descInput.addEventListener('blur', saveProfile);
 
-            // Lock fields
-            usernameInput.readOnly = true;
-            descInput.readOnly = true;
-            editBtn.textContent = 'Edit Profile';
-            editing = false;
-
-            alert('Profile updated successfully!');
-        } catch (err) {
-            alert('Error saving profile: ' + err.message);
-        }
+// (Optional) also save on Enter key in username
+usernameInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        saveProfile();
     }
 });
 </script>
