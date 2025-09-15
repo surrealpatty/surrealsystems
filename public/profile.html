@@ -10,20 +10,26 @@ body, html {
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f0f4f8;
+    background: #4e54c8; /* Flood the background with blue */
     color: #333;
 }
 
-/* Profile header card with blue background */
+/* Container to center content */
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+/* Profile header card */
 .profile-header {
-    max-width: 600px;
-    margin: 40px auto;
-    background: #4e54c8;
+    background: #4e54c8; /* Same as page, so card blends a little */
     color: #fff;
     padding: 30px 25px;
     border-radius: 20px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25); /* stronger shadow for contrast */
     text-align: center;
+    margin-bottom: 40px;
 }
 
 .profile-header h1 {
@@ -70,21 +76,19 @@ body, html {
 
 /* Services section */
 .services-section {
-    max-width: 900px;
-    margin: 30px auto;
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
     justify-content: center;
 }
 
-/* Add service card (same style as homepage cards) */
+/* Service cards */
 .service-card, .add-service-card {
     background: #fff;
     border-radius: 12px;
     padding: 25px;
     width: 250px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     transition: transform 0.2s;
 }
 
@@ -130,32 +134,34 @@ body, html {
 </head>
 <body>
 
-<!-- Profile header -->
-<div class="profile-header">
-    <h1 id="usernameDisplay">User</h1>
-    <form id="profileForm">
-        <input id="username" type="text" placeholder="Username" required>
-        <textarea id="description" placeholder="About Me"></textarea>
-        <button type="submit">Update Profile</button>
-    </form>
+<div class="container">
+    <!-- Profile header -->
+    <div class="profile-header">
+        <h1 id="usernameDisplay">User</h1>
+        <form id="profileForm">
+            <input id="username" type="text" placeholder="Username" required>
+            <textarea id="description" placeholder="About Me"></textarea>
+            <button type="submit">Update Profile</button>
+        </form>
+    </div>
+
+    <!-- Services section -->
+    <section class="services-section">
+        <!-- Add new service card -->
+        <form id="serviceForm" class="add-service-card">
+            <h3>Add New Service</h3>
+            <input id="service-title" placeholder="Title" required>
+            <textarea id="service-description" placeholder="Description" required></textarea>
+            <input id="service-price" type="number" placeholder="Price" required>
+            <button type="submit">Add Service</button>
+        </form>
+
+        <!-- Existing services will appear here -->
+        <div id="services-list"></div>
+    </section>
+
+    <button class="logout-btn" id="logoutBtn">Logout</button>
 </div>
-
-<!-- Services section -->
-<section class="services-section">
-    <!-- Add new service card -->
-    <form id="serviceForm" class="add-service-card">
-        <h3>Add New Service</h3>
-        <input id="service-title" placeholder="Title" required>
-        <textarea id="service-description" placeholder="Description" required></textarea>
-        <input id="service-price" type="number" placeholder="Price" required>
-        <button type="submit">Add Service</button>
-    </form>
-
-    <!-- Existing services will appear here -->
-    <div id="services-list"></div>
-</section>
-
-<button class="logout-btn" id="logoutBtn">Logout</button>
 
 <script src="script.js"></script>
 </body>
