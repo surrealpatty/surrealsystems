@@ -27,31 +27,16 @@ body, html {
     gap: 2rem;
 }
 
-/* Profile Form */
-#profileForm input,
-#profileForm textarea {
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 1rem;
-    box-sizing: border-box;
+/* Profile Display */
+#usernameDisplay {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
 }
-#profileForm textarea { resize: vertical; }
-
-#editProfileBtn {
-    padding: 12px 25px;
-    font-size: 1rem;
-    color: #4e54c8;
-    background-color: #fff;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-top: 10px;
-    transition: 0.3s;
+#descriptionDisplay {
+    font-size: 1.1rem;
+    color: #555;
+    white-space: pre-wrap; /* Keeps line breaks */
 }
-#editProfileBtn:hover { background-color: #ddd; }
 
 /* Services Section */
 .services-section {
@@ -117,13 +102,9 @@ body, html {
 <body>
 
 <div class="container">
-    <!-- Profile Info -->
+    <!-- Profile Display -->
     <h1 id="usernameDisplay">User</h1>
-    <form id="profileForm">
-        <input id="username" type="text" placeholder="Username" readonly>
-        <textarea id="description" placeholder="About Me" readonly></textarea>
-        <button type="button" id="editProfileBtn">Edit Profile</button>
-    </form>
+    <p id="descriptionDisplay">About Me</p>
 
     <!-- Services Section -->
     <section class="services-section">
@@ -142,62 +123,9 @@ body, html {
 
 <script src="script.js"></script>
 <script>
-// ---------- Profile Edit/Save ----------
-const usernameInput = document.getElementById('username');
-const descInput = document.getElementById('description');
-const usernameDisplay = document.getElementById('usernameDisplay');
-const editBtn = document.getElementById('editProfileBtn');
-const token = localStorage.getItem('token');
-const userId = localStorage.getItem('userId');
-
-// Populate fields from localStorage
-usernameInput.value = localStorage.getItem('username') || '';
-descInput.value = localStorage.getItem('description') || '';
-usernameDisplay.textContent = localStorage.getItem('username') || 'User';
-
-let editing = false;
-
-editBtn.addEventListener('click', async () => {
-    if (!editing) {
-        // Unlock fields
-        usernameInput.readOnly = false;
-        descInput.readOnly = false;
-        editBtn.textContent = 'Save Profile';
-        editing = true;
-    } else {
-        // Save changes
-        const newUsername = usernameInput.value.trim();
-        const newDesc = descInput.value.trim();
-        if (!newUsername) return alert('Username cannot be empty');
-
-        try {
-            const res = await fetch(`https://codecrowds.onrender.com/users/${userId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ username: newUsername, description: newDesc })
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed to save profile');
-
-            localStorage.setItem('username', data.user.username);
-            localStorage.setItem('description', data.user.description || '');
-            usernameDisplay.textContent = data.user.username;
-
-            // Lock fields again
-            usernameInput.readOnly = true;
-            descInput.readOnly = true;
-            editBtn.textContent = 'Edit Profile';
-            editing = false;
-
-            alert('Profile updated successfully!');
-        } catch (err) {
-            alert('Error saving profile: ' + err.message);
-        }
-    }
-});
+// Populate profile from localStorage (read-only)
+document.getElementById('usernameDisplay').textContent = localStorage.getItem('username') || 'User';
+document.getElementById('descriptionDisplay').textContent = localStorage.getItem('description') || 'About Me';
 </script>
 </body>
 </html>
