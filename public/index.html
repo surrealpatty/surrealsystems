@@ -82,6 +82,40 @@
         color: #555;
     }
 
+    .login-container {
+        max-width: 400px;
+        margin: 50px auto;
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    .login-container h2 {
+        margin-bottom: 20px;
+        color: #4e54c8;
+    }
+
+    .login-container input {
+        width: 90%;
+        padding: 12px;
+        margin: 8px 0;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 1rem;
+    }
+
+    .login-container button {
+        width: 95%;
+        margin-top: 10px;
+    }
+
+    .message {
+        margin: 10px 0;
+        font-weight: bold;
+    }
+
     footer {
         text-align: center;
         padding: 20px;
@@ -96,8 +130,6 @@
 <header>
     <h1>CodeCrowds</h1>
     <p>Showcase your coding skills, offer services, and connect with clients worldwide. Join a community where talent meets opportunity!</p>
-    <a href="register.html" class="btn">Get Started</a>
-    <a href="login.html" class="btn">Login</a>
 </header>
 
 <section class="features">
@@ -115,9 +147,21 @@
     </div>
 </section>
 
+<div class="login-container">
+    <h2>Login</h2>
+    <form id="loginForm">
+        <input id="loginEmail" type="email" placeholder="Email" required>
+        <input id="loginPassword" type="password" placeholder="Password" required>
+        <button type="submit" class="btn">Login</button>
+    </form>
+    <p id="loginMessage" class="message"></p>
+    <p>Don't have an account? <a href="register.html">Sign up here</a></p>
+</div>
+
 <footer>
     &copy; 2025 CodeCrowds. All rights reserved.
 </footer>
 
+<script src="script.js"></script>
 </body>
 </html>
