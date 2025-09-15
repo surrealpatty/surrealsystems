@@ -27,6 +27,7 @@ body, html {
     gap: 2rem;
 }
 
+/* Profile Form */
 #profileForm input,
 #profileForm textarea {
     width: 100%;
@@ -37,10 +38,7 @@ body, html {
     font-size: 1rem;
     box-sizing: border-box;
 }
-
-#profileForm textarea {
-    resize: vertical;
-}
+#profileForm textarea { resize: vertical; }
 
 #editProfileBtn {
     padding: 12px 25px;
@@ -53,17 +51,14 @@ body, html {
     margin-top: 10px;
     transition: 0.3s;
 }
+#editProfileBtn:hover { background-color: #ddd; }
 
-#editProfileBtn:hover {
-    background-color: #ddd;
-}
-
+/* Services Section */
 .services-section {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
 }
-
 .add-service-card {
     background: #fff;
     border-radius: 12px;
@@ -71,9 +66,7 @@ body, html {
     box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     transition: transform 0.2s;
 }
-
 .add-service-card:hover { transform: translateY(-5px); }
-
 .add-service-card h3 { margin-bottom: 15px; color: #4e54c8; }
 
 .service-card {
@@ -86,7 +79,6 @@ body, html {
     gap: 0.5rem;
     transition: transform 0.2s;
 }
-
 .service-card h3 { margin: 0; color: #4e54c8; }
 .service-card p { margin: 0; color: #555; }
 
@@ -100,10 +92,8 @@ body, html {
     font-weight: 600;
     transition: background 0.3s;
 }
-
 .service-card .edit-btn { background: #28a745; color: #fff; }
 .service-card .edit-btn:hover { background: #1e7e34; }
-
 .service-card .delete-btn { background: #ff4d4f; color: #fff; }
 .service-card .delete-btn:hover { background-color: #c30000; }
 
@@ -119,7 +109,6 @@ body, html {
     cursor: pointer;
     transition: 0.3s;
 }
-
 .logout-btn:hover { background-color: #c30000; }
 
 @media (max-width: 480px) { .container { padding: 2rem 1rem; } }
