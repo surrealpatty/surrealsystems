@@ -3,35 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CodeCrowds - Showcase Your Skills</title>
+<title>CodeCrowds - Showcase & Sell Your Skills</title>
 <link rel="stylesheet" href="style.css">
 <style>
     body, html {
         margin: 0;
         padding: 0;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(to right, #4e54c8, #8f94fb);
+        background: #f0f4f8;
+        color: #333;
+    }
+
+    header {
+        background: #4e54c8;
         color: #fff;
-        height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        padding: 60px 20px;
         text-align: center;
     }
 
-    .container {
-        max-width: 600px;
-        padding: 20px;
-    }
-
-    h1 {
+    header h1 {
         font-size: 3rem;
         margin-bottom: 20px;
     }
 
-    p {
-        font-size: 1.2rem;
-        margin-bottom: 30px;
+    header p {
+        font-size: 1.3rem;
+        max-width: 600px;
+        margin: 0 auto 30px;
     }
 
     .btn {
@@ -51,15 +49,75 @@
     .btn:hover {
         background-color: #ddd;
     }
+
+    .features {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: 50px 20px;
+        gap: 20px;
+        text-align: center;
+    }
+
+    .feature-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 30px;
+        width: 250px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .feature-card h3 {
+        margin-bottom: 15px;
+        color: #4e54c8;
+    }
+
+    .feature-card p {
+        font-size: 1rem;
+        color: #555;
+    }
+
+    footer {
+        text-align: center;
+        padding: 20px;
+        background: #eee;
+        font-size: 0.9rem;
+        color: #555;
+    }
 </style>
 </head>
 <body>
-<div class="container">
-    <h1>Welcome to CodeCrowds</h1>
-    <p>Showcase your coding skills, offer your services, and connect with clients from all around the world. 
-       Join our growing community of developers today!</p>
+
+<header>
+    <h1>CodeCrowds</h1>
+    <p>Showcase your coding skills, offer services, and connect with clients worldwide. Join a community where talent meets opportunity!</p>
     <a href="register.html" class="btn">Get Started</a>
     <a href="login.html" class="btn">Login</a>
-</div>
+</header>
+
+<section class="features">
+    <div class="feature-card">
+        <h3>Offer Your Services</h3>
+        <p>Create posts to sell your coding skills and get noticed by clients worldwide.</p>
+    </div>
+    <div class="feature-card">
+        <h3>Connect & Collaborate</h3>
+        <p>Rate and interact with other developers, build credibility, and grow your network.</p>
+    </div>
+    <div class="feature-card">
+        <h3>Ad-Free & Premium</h3>
+        <p>Upgrade to premium for extra features like ad-free experience, lower fees, and more visibility.</p>
+    </div>
+</section>
+
+<footer>
+    &copy; 2025 CodeCrowds. All rights reserved.
+</footer>
+
 </body>
 </html>
