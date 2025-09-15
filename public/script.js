@@ -1,4 +1,4 @@
-// ✅ Base URL
+// ---------- Constants ----------
 const API_URL = 'https://codecrowds.onrender.com';
 
 // ---------- Helpers ----------
@@ -12,19 +12,13 @@ function showMessage(elementId, message, isSuccess = true) {
 function getToken() { return localStorage.getItem('token'); }
 function getUserId() { return localStorage.getItem('userId'); }
 
-// ---------- Safe Fetch Helper ----------
 async function safeFetch(url, options = {}) {
     try {
         const res = await fetch(url, options);
         const contentType = res.headers.get('content-type') || '';
         let data;
-        if (contentType.includes('application/json')) {
-            data = await res.json();
-        } else {
-            const text = await res.text();
-            console.error('Non-JSON response from server:', text);
-            throw new Error('Server returned non-JSON response. See console for details.');
-        }
+        if (contentType.includes('application/json')) data = await res.json();
+        else throw new Error(await res.text());
         if (!res.ok) throw new Error(data.error || 'Server error');
         return data;
     } catch (err) {
@@ -33,62 +27,7 @@ async function safeFetch(url, options = {}) {
     }
 }
 
-// ---------- REGISTER ----------
-const registerForm = document.getElementById('registerForm');
-registerForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('registerUsername').value.trim();
-    const email = document.getElementById('registerEmail').value.trim();
-    const password = document.getElementById('registerPassword').value.trim();
-    if (!username || !email || !password) return showMessage('registerMessage', 'All fields required', false);
-
-    try {
-        const data = await safeFetch(`${API_URL}/users/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, password })
-        });
-
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('userId', data.user.id);
-        localStorage.setItem('username', data.user.username);
-        localStorage.setItem('description', data.user.description || '');
-
-        showMessage('registerMessage', 'Registration successful! Redirecting...', true);
-        setTimeout(() => window.location.href = 'profile.html', 1000);
-    } catch (err) {
-        showMessage('registerMessage', err.message, false);
-    }
-});
-
-// ---------- LOGIN ----------
-const loginForm = document.getElementById('loginForm');
-loginForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value.trim();
-    if (!email || !password) return showMessage('loginMessage', 'Email and password are required', false);
-
-    try {
-        const data = await safeFetch(`${API_URL}/users/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('userId', data.user.id);
-        localStorage.setItem('username', data.user.username || '');
-        localStorage.setItem('description', data.user.description || '');
-
-        showMessage('loginMessage', 'Login successful! Redirecting...', true);
-        setTimeout(() => window.location.href = 'profile.html', 1000);
-    } catch (err) {
-        showMessage('loginMessage', err.message, false);
-    }
-});
-
-// ---------- PROFILE & SERVICES ----------
+// ---------- Profile ----------
 const profileForm = document.getElementById('profileForm');
 if (profileForm) {
     const usernameInput = document.getElementById('username');
@@ -105,20 +44,20 @@ if (profileForm) {
     usernameInput.value = localStorage.getItem('username') || '';
     descInput.value = localStorage.getItem('description') || '';
 
-    // ---------- LOCKABLE ABOUT ME ----------
+    // ---------- About Me Lock/Unlock ----------
     let locked = true;
     descInput.readOnly = locked;
 
     const toggleLockBtn = document.createElement('button');
     toggleLockBtn.type = 'button';
     toggleLockBtn.textContent = 'Unlock About Me';
-    profileForm.insertBefore(toggleLockBtn, profileForm.querySelector('button'));
+    profileForm.appendChild(toggleLockBtn);
 
     const saveDescBtn = document.createElement('button');
     saveDescBtn.type = 'button';
     saveDescBtn.textContent = 'Save About Me';
     saveDescBtn.disabled = true;
-    profileForm.insertBefore(saveDescBtn, profileForm.querySelector('button'));
+    profileForm.appendChild(saveDescBtn);
 
     toggleLockBtn.addEventListener('click', () => {
         locked = !locked;
@@ -147,34 +86,12 @@ if (profileForm) {
         }
     });
 
-    // ---------- Update Profile ----------
-    profileForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const username = usernameInput.value.trim();
-        const description = descInput.value.trim();
-        if (!username) return alert('Username required');
-
-        try {
-            const data = await safeFetch(`${API_URL}/users/${userId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ username, description })
-            });
-            alert('Profile updated!');
-            localStorage.setItem('username', data.user.username);
-            localStorage.setItem('description', data.user.description || '');
-            usernameDisplay.textContent = data.user.username;
-        } catch (err) {
-            alert('Profile update failed: ' + err.message);
-        }
-    });
-
-    // ---------- Load Services ----------
+    // ---------- Services ----------
     async function loadServices() {
         try {
             const services = await safeFetch(`${API_URL}/services`, { headers: { 'Authorization': `Bearer ${token}` } });
             servicesList.innerHTML = '';
-            services.filter(s => s.userId == userId).forEach(s => {
+            services.filter(s => s.userId == parseInt(userId)).forEach(s => {
                 const div = document.createElement('div');
                 div.className = 'service-card';
                 div.innerHTML = `
@@ -194,7 +111,6 @@ if (profileForm) {
     }
     loadServices();
 
-    // ---------- Add Service ----------
     serviceForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const title = document.getElementById('service-title').value.trim();
@@ -216,7 +132,6 @@ if (profileForm) {
         }
     });
 
-    // ---------- Edit Service ----------
     async function editService(service) {
         const newTitle = prompt('Edit title', service.title);
         const newDesc = prompt('Edit description', service.description);
@@ -236,7 +151,6 @@ if (profileForm) {
         }
     }
 
-    // ---------- Delete Service ----------
     async function deleteService(id) {
         if (!confirm('Delete this service?')) return;
         try {
