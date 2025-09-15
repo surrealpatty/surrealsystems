@@ -1,4 +1,4 @@
-// ✅ Base URL - remove /api because backend routes are directly /users and /services
+// ✅ Base URL
 const API_URL = 'https://codecrowds.onrender.com';
 
 // ---------- Helpers ----------
@@ -17,7 +17,6 @@ async function safeFetch(url, options = {}) {
     try {
         const res = await fetch(url, options);
         const contentType = res.headers.get('content-type') || '';
-
         let data;
         if (contentType.includes('application/json')) {
             data = await res.json();
@@ -26,7 +25,6 @@ async function safeFetch(url, options = {}) {
             console.error('Non-JSON response from server:', text);
             throw new Error('Server returned non-JSON response. See console for details.');
         }
-
         if (!res.ok) throw new Error(data.error || 'Server error');
         return data;
     } catch (err) {
@@ -34,6 +32,62 @@ async function safeFetch(url, options = {}) {
         throw err;
     }
 }
+
+// ---------- REGISTER ----------
+const registerForm = document.getElementById('registerForm');
+registerForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('registerUsername').value.trim();
+    const email = document.getElementById('registerEmail').value.trim();
+    const password = document.getElementById('registerPassword').value.trim();
+    if (!username || !email || !password) return showMessage('registerMessage', 'All fields required', false);
+
+    try {
+        const data = await safeFetch(`${API_URL}/users/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
+        });
+
+        // Save token & user info
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userId', data.user.id);
+        localStorage.setItem('username', data.user.username);
+        localStorage.setItem('description', data.user.description || '');
+
+        showMessage('registerMessage', 'Registration successful! Redirecting...', true);
+        setTimeout(() => window.location.href = 'profile.html', 1000);
+    } catch (err) {
+        showMessage('registerMessage', err.message, false);
+    }
+});
+
+// ---------- LOGIN ----------
+const loginForm = document.getElementById('loginForm');
+loginForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    if (!email || !password) return showMessage('loginMessage', 'Email and password are required', false);
+
+    try {
+        const data = await safeFetch(`${API_URL}/users/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userId', data.user.id);
+        localStorage.setItem('username', data.user.username || '');
+        localStorage.setItem('description', data.user.description || '');
+
+        showMessage('loginMessage', 'Login successful! Redirecting...', true);
+        setTimeout(() => window.location.href = 'profile.html', 1000);
+    } catch (err) {
+        showMessage('loginMessage', err.message, false);
+    }
+});
 
 // ---------- PROFILE & SERVICES ----------
 const profileForm = document.getElementById('profileForm');
@@ -65,7 +119,6 @@ if (profileForm) {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ username, description })
             });
-
             alert('Profile updated!');
             localStorage.setItem('username', data.user.username);
             localStorage.setItem('description', data.user.description || '');
@@ -79,7 +132,6 @@ if (profileForm) {
     async function loadServices() {
         try {
             const services = await safeFetch(`${API_URL}/services`, { headers: { 'Authorization': `Bearer ${token}` } });
-
             servicesList.innerHTML = '';
             services.filter(s => s.userId == userId).forEach(s => {
                 const div = document.createElement('div');
@@ -104,12 +156,10 @@ if (profileForm) {
     // Add Service
     serviceForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        // ✅ Fixed IDs to match profile.html
         const title = document.getElementById('service-title').value.trim();
         const description = document.getElementById('service-description').value.trim();
         const priceRaw = document.getElementById('service-price').value;
         const price = parseFloat(priceRaw);
-
         if (!title || !description || isNaN(price)) return alert('All fields required');
 
         try {
@@ -118,7 +168,6 @@ if (profileForm) {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ title, description, price })
             });
-
             serviceForm.reset();
             loadServices();
         } catch (err) {
