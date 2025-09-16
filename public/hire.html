@@ -57,13 +57,11 @@ form button:hover {
 
 .message {
     font-weight: 600;
-    color: #28a745;
     text-align: center;
 }
 
-.error {
-    color: #ff4d4f;
-}
+.message.success { color: #28a745; }
+.message.error { color: #ff4d4f; }
 </style>
 </head>
 <body>
@@ -104,10 +102,9 @@ async function loadPosterName() {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
-        if (res.ok) {
-            hireHeading.textContent = `Contact ${data.username}`;
-            // Optional: prefill message
-            messageContent.value = `Hi ${data.username}, I'm interested in your service.`;
+        if (res.ok || res.status === 200) {
+            hireHeading.textContent = `Contact ${data.username || 'Service Provider'}`;
+            messageContent.value = `Hi ${data.username || ''}, I'm interested in your service.`;
         } else {
             hireHeading.textContent = 'Contact Service Provider';
         }
@@ -139,9 +136,9 @@ messageForm.addEventListener('submit', async (e) => {
             })
         });
         const data = await res.json();
-        if (res.ok) {
+        if (res.ok || res.status === 200) {
             responseMessage.textContent = 'Message sent successfully!';
-            responseMessage.className = 'message';
+            responseMessage.className = 'message success';
             messageForm.reset();
         } else {
             responseMessage.textContent = data.error || 'Failed to send message.';
