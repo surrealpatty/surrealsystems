@@ -3,59 +3,127 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hire Service - CodeCrowds</title>
+<title>Hire - CodeCrowds</title>
 <link rel="stylesheet" href="style.css">
 <style>
-body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
-.container { max-width: 500px; margin: 50px auto; background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
-h1 { text-align: center; color: #007bff; margin-bottom: 1.5rem; }
-input, textarea, button { width: 100%; margin-bottom: 1rem; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; }
-button { background-color: #007bff; color: #fff; border: none; cursor: pointer; transition: 0.3s; }
-button:hover { background-color: #0056b3; }
-.message { font-weight: 600; margin-bottom: 1rem; }
-.message.success { color: #28a745; }
-.message.error { color: #ff4d4f; }
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #4e54c8, #00aaff);
+    min-height: 100%;
+    color: #333;
+}
+
+.container {
+    max-width: 600px;
+    width: 90%;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    margin: 50px auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+h1 {
+    color: #4e54c8;
+    text-align: center;
+}
+
+form input, form textarea, form button {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+form button {
+    background-color: #4e54c8;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+form button:hover {
+    background-color: #3b40a1;
+}
+
+.message {
+    font-weight: 600;
+    color: #28a745;
+    text-align: center;
+}
+
+.error {
+    color: #ff4d4f;
+}
 </style>
 </head>
 <body>
-
 <div class="container">
-    <h1>Contact Service Provider</h1>
-    <form id="hireForm">
-        <input type="text" id="subject" placeholder="Subject" required>
-        <textarea id="message" placeholder="Your message..." rows="5" required></textarea>
+    <h1 id="hireHeading">Contact Service Provider</h1>
+
+    <form id="messageForm">
+        <textarea id="messageContent" placeholder="Write your message..." required></textarea>
         <button type="submit">Send Message</button>
     </form>
-    <p id="statusMessage" class="message"></p>
-    <button id="backBtn">Back to Services</button>
+
+    <p id="responseMessage" class="message"></p>
 </div>
 
 <script>
 const API_URL = 'https://codecrowds.onrender.com';
 const token = localStorage.getItem('token');
 const userId = localStorage.getItem('userId');
+const hireHeading = document.getElementById('hireHeading');
+const messageForm = document.getElementById('messageForm');
+const messageContent = document.getElementById('messageContent');
+const responseMessage = document.getElementById('responseMessage');
 
-// Redirect if not logged in
-if (!userId || !token) {
-    alert('You must be logged in to view this page.');
+// Get posterId from URL query params
+const urlParams = new URLSearchParams(window.location.search);
+const posterId = urlParams.get('posterId');
+
+// Redirect if not logged in or posterId missing
+if (!token || !userId || !posterId) {
+    alert('Invalid access.');
     window.location.href = 'index.html';
 }
 
-// Parse query string
-const urlParams = new URLSearchParams(window.location.search);
-const serviceId = urlParams.get('serviceId');
-const posterId = urlParams.get('posterId');
+// Load poster's username and update heading
+async function loadPosterName() {
+    try {
+        const res = await fetch(`${API_URL}/users/${posterId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+            hireHeading.textContent = `Contact ${data.username}`;
+            // Optional: prefill message
+            messageContent.value = `Hi ${data.username}, I'm interested in your service.`;
+        } else {
+            hireHeading.textContent = 'Contact Service Provider';
+        }
+    } catch (err) {
+        console.error(err);
+        hireHeading.textContent = 'Contact Service Provider';
+    }
+}
 
-const hireForm = document.getElementById('hireForm');
-const statusMessage = document.getElementById('statusMessage');
+loadPosterName();
 
-hireForm.addEventListener('submit', async function(e) {
+// Handle message submission
+messageForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-
-    const subject = document.getElementById('subject').value.trim();
-    const message = document.getElementById('message').value.trim();
-
-    if (!subject || !message) return alert('All fields are required.');
+    const message = messageContent.value.trim();
+    if (!message) return;
 
     try {
         const res = await fetch(`${API_URL}/messages`, {
@@ -65,33 +133,25 @@ hireForm.addEventListener('submit', async function(e) {
                 'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-                fromUserId: userId,
-                toUserId: posterId,
-                serviceId: serviceId,
-                subject: subject,
-                message: message
+                senderId: userId,
+                receiverId: posterId,
+                content: message
             })
         });
-
         const data = await res.json();
         if (res.ok) {
-            statusMessage.textContent = 'Message sent successfully!';
-            statusMessage.className = 'message success';
-            hireForm.reset();
+            responseMessage.textContent = 'Message sent successfully!';
+            responseMessage.className = 'message';
+            messageForm.reset();
         } else {
-            statusMessage.textContent = data.error || 'Failed to send message.';
-            statusMessage.className = 'message error';
+            responseMessage.textContent = data.error || 'Failed to send message.';
+            responseMessage.className = 'message error';
         }
     } catch (err) {
-        statusMessage.textContent = 'Network error: ' + err.message;
-        statusMessage.className = 'message error';
         console.error(err);
+        responseMessage.textContent = 'Network error: ' + err.message;
+        responseMessage.className = 'message error';
     }
-});
-
-// Back button
-document.getElementById('backBtn').addEventListener('click', function() {
-    window.location.href = 'services.html';
 });
 </script>
 </body>
