@@ -46,34 +46,6 @@
     color: #555;
 }
 
-/* Buttons inside cards */
-.service-card button {
-    padding: 0.5rem;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background 0.3s;
-}
-
-.service-card .edit-btn {
-    background: #28a745;
-    color: #fff;
-}
-
-.service-card .edit-btn:hover {
-    background: #1e7e34;
-}
-
-.service-card .delete-btn {
-    background: #ff4d4f;
-    color: #fff;
-}
-
-.service-card .delete-btn:hover {
-    background: #c30000;
-}
-
 /* Form and Buttons */
 form input, form textarea, form button {
     width: 100%;
@@ -139,6 +111,7 @@ form button:hover {
 const API_URL = 'https://codecrowds.onrender.com';
 const token = localStorage.getItem('token');
 const userId = localStorage.getItem('userId');
+
 const servicesList = document.getElementById('services-list');
 const serviceForm = document.getElementById('serviceForm');
 const serviceMessage = document.getElementById('service-message');
@@ -158,7 +131,7 @@ async function loadServices() {
         const services = await res.json();
         servicesList.innerHTML = '';
 
-        services.forEach(s => {
+        services.forEach(function(s) {
             const div = document.createElement('div');
             div.className = 'service-card';
             div.innerHTML = `
@@ -166,14 +139,7 @@ async function loadServices() {
                 <p>${s.description}</p>
                 <p><strong>Price:</strong> $${s.price}</p>
                 <p><strong>By:</strong> ${s.username || s.userId}</p>
-                ${s.userId == userId ? `
-                    <button class="edit-btn">Edit</button>
-                    <button class="delete-btn">Delete</button>
-                ` : ''}
             `;
-
-            div.querySelector('.edit-btn')?.addEventListener('click', () => editService(s));
-            div.querySelector('.delete-btn')?.addEventListener('click', () => deleteService(s.id));
             servicesList.appendChild(div);
         });
     } catch (err) {
@@ -183,13 +149,16 @@ async function loadServices() {
 }
 
 // Add a new service
-serviceForm.addEventListener('submit', async (e) => {
+serviceForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     const title = document.getElementById('service-title').value.trim();
     const description = document.getElementById('service-description').value.trim();
     const price = parseFloat(document.getElementById('service-price').value);
 
-    if (!title || !description || isNaN(price)) return alert('All fields are required.');
+    if (!title || !description || isNaN(price)) {
+        alert('All fields are required.');
+        return;
+    }
 
     try {
         const res = await fetch(`${API_URL}/services`, {
@@ -217,49 +186,12 @@ serviceForm.addEventListener('submit', async (e) => {
     }
 });
 
-// Edit a service
-function editService(service) {
-    const newTitle = prompt('Edit title', service.title);
-    const newDesc = prompt('Edit description', service.description);
-    const newPrice = prompt('Edit price', service.price);
-    if (!newTitle || !newDesc || !newPrice) return;
-
-    fetch(`${API_URL}/services/${service.id}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ title: newTitle, description: newDesc, price: parseFloat(newPrice) })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.error) alert(data.error);
-        loadServices();
-    })
-    .catch(err => alert('Network error: ' + err.message));
-}
-
-// Delete a service
-function deleteService(serviceId) {
-    if (!confirm('Are you sure you want to delete this service?')) return;
-    fetch(`${API_URL}/services/${serviceId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.error) alert(data.error);
-        loadServices();
-    })
-    .catch(err => alert('Network error: ' + err.message));
-}
-
 // Back to profile button
-document.getElementById('backProfileBtn').addEventListener('click', () => {
+document.getElementById('backProfileBtn').addEventListener('click', function() {
     window.location.href = 'profile.html';
 });
 
+// Load services on page load
 window.onload = loadServices;
 </script>
 </body>
