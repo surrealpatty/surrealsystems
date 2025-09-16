@@ -32,6 +32,7 @@
     flex-direction: column;
     gap: 0.5rem;
     transition: transform 0.2s;
+    cursor: pointer;
 }
 
 .service-card:hover {
@@ -41,7 +42,7 @@
 .service-card h3 { margin: 0; color: #007bff; }
 .service-card p { margin: 0; color: #555; }
 
-/* Hidden inquiry form inside each card */
+/* Hidden inquiry form */
 .inquiry-form {
     display: none;
     margin-top: 1rem;
@@ -68,9 +69,7 @@
     cursor: pointer;
 }
 
-.inquiry-form button:hover {
-    background-color: #218838;
-}
+.inquiry-form button:hover { background-color: #218838; }
 
 form input, form textarea, form button {
     width: 100%;
@@ -81,11 +80,7 @@ form input, form textarea, form button {
     border: 1px solid #ccc;
 }
 
-form button {
-    background-color: #007bff;
-    color: #fff;
-}
-
+form button { background-color: #007bff; color: #fff; }
 form button:hover { background-color: #0056b3; }
 
 .message { font-weight: 600; margin-bottom: 1rem; }
@@ -102,7 +97,6 @@ form button:hover { background-color: #0056b3; }
     transition: 0.3s;
     margin-top: 0.5rem;
 }
-
 #backProfileBtn:hover { background-color: #008ecc; }
 </style>
 </head>
@@ -163,16 +157,19 @@ async function loadServices() {
             const sendBtn = inquiryForm.querySelector('button');
             const textarea = inquiryForm.querySelector('textarea');
 
-            // Toggle inquiry form on card click
+            // Toggle inquiry form - only one open at a time
             div.addEventListener('click', function(e) {
-                if (!inquiryForm.contains(e.target)) { 
-                    inquiryForm.style.display = inquiryForm.style.display === 'block' ? 'none' : 'block';
+                if (!inquiryForm.contains(e.target)) {
+                    // close all other forms first
+                    document.querySelectorAll('.inquiry-form').forEach(f => f.style.display = 'none');
+                    // open this one
+                    inquiryForm.style.display = 'block';
                 }
             });
 
-            // Send inquiry button
+            // Send inquiry
             sendBtn.addEventListener('click', async function(e) {
-                e.stopPropagation(); // prevent toggling card
+                e.stopPropagation();
                 const message = textarea.value.trim();
                 if (!message) return alert("Please enter a message.");
 
