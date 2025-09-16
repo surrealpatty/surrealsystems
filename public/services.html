@@ -15,12 +15,14 @@
     box-shadow: 0 12px 30px rgba(0,0,0,0.15);
     margin: 2rem auto;
 }
+
 #services-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1rem;
     margin-bottom: 2rem;
 }
+
 .service-card {
     background: #f8f9fa;
     border-radius: 10px;
@@ -31,38 +33,44 @@
     gap: 0.5rem;
     transition: transform 0.2s;
 }
-.service-card:hover { transform: translateY(-5px); }
+
+.service-card:hover {
+    transform: translateY(-5px);
+}
+
 .service-card h3 { margin: 0; color: #007bff; }
 .service-card p { margin: 0; color: #555; }
 
-.contact-section {
+/* Hidden inquiry form inside each card */
+.inquiry-form {
     display: none;
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px solid #ddd;
 }
-.contact-section textarea {
+
+.inquiry-form textarea {
     width: 100%;
+    min-height: 60px;
     padding: 8px;
+    margin-bottom: 0.5rem;
     border-radius: 6px;
     border: 1px solid #ccc;
-    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
 }
-.contact-section button {
-    background: #007bff;
+
+.inquiry-form button {
+    background-color: #28a745;
     color: white;
+    padding: 8px 15px;
     border: none;
-    padding: 8px 12px;
     border-radius: 6px;
     cursor: pointer;
 }
-.contact-section button:hover {
-    background: #0056b3;
-}
 
-.message { font-weight: 600; margin-top: 0.5rem; }
-.message.success { color: #28a745; }
-.message.error { color: #ff4d4f; }
+.inquiry-form button:hover {
+    background-color: #218838;
+}
 
 form input, form textarea, form button {
     width: 100%;
@@ -72,11 +80,17 @@ form input, form textarea, form button {
     border-radius: 8px;
     border: 1px solid #ccc;
 }
+
 form button {
     background-color: #007bff;
     color: #fff;
 }
+
 form button:hover { background-color: #0056b3; }
+
+.message { font-weight: 600; margin-bottom: 1rem; }
+.message.success { color: #28a745; }
+.message.error { color: #ff4d4f; }
 
 #backProfileBtn {
     padding: 12px 25px;
@@ -88,6 +102,7 @@ form button:hover { background-color: #0056b3; }
     transition: 0.3s;
     margin-top: 0.5rem;
 }
+
 #backProfileBtn:hover { background-color: #008ecc; }
 </style>
 </head>
@@ -138,56 +153,49 @@ async function loadServices() {
                 <p>${s.description}</p>
                 <p><strong>Price:</strong> $${s.price}</p>
                 <p><strong>By:</strong> ${s.username || s.userId}</p>
-                <button class="contact-toggle">Contact ${s.username || 'Provider'}</button>
-                <div class="contact-section">
-                    <textarea placeholder="Write your message..."></textarea>
-                    <button class="send-btn">Send Message</button>
-                    <p class="message"></p>
+                <div class="inquiry-form">
+                    <textarea placeholder="Write your inquiry..."></textarea>
+                    <button type="button">Send Inquiry</button>
                 </div>
             `;
 
-            const toggleBtn = div.querySelector('.contact-toggle');
-            const contactSection = div.querySelector('.contact-section');
-            const sendBtn = div.querySelector('.send-btn');
-            const textarea = div.querySelector('textarea');
-            const messageBox = div.querySelector('.message');
+            const inquiryForm = div.querySelector('.inquiry-form');
+            const sendBtn = inquiryForm.querySelector('button');
+            const textarea = inquiryForm.querySelector('textarea');
 
-            // Toggle dropdown
-            toggleBtn.addEventListener('click', () => {
-                contactSection.style.display = contactSection.style.display === 'block' ? 'none' : 'block';
+            // Toggle inquiry form on card click
+            div.addEventListener('click', function(e) {
+                if (!inquiryForm.contains(e.target)) { 
+                    inquiryForm.style.display = inquiryForm.style.display === 'block' ? 'none' : 'block';
+                }
             });
 
-            // Send message
-            sendBtn.addEventListener('click', async () => {
-                const content = textarea.value.trim();
-                if (!content) return alert("Message cannot be empty.");
+            // Send inquiry button
+            sendBtn.addEventListener('click', async function(e) {
+                e.stopPropagation(); // prevent toggling card
+                const message = textarea.value.trim();
+                if (!message) return alert("Please enter a message.");
 
                 try {
-                    const res = await fetch(`${API_URL}/messages`, {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
+                    const res = await fetch(`${API_URL}/inquiries`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`
                         },
-                        body: JSON.stringify({
-                            senderId: userId,
-                            receiverId: s.userId,
-                            content
-                        })
+                        body: JSON.stringify({ serviceId: s.id, message, fromUserId: userId })
                     });
                     const data = await res.json();
                     if (res.ok) {
-                        messageBox.textContent = "Message sent!";
-                        messageBox.className = "message success";
-                        textarea.value = '';
+                        alert("Inquiry sent successfully!");
+                        textarea.value = "";
+                        inquiryForm.style.display = "none";
                     } else {
-                        messageBox.textContent = data.error || "Failed to send message.";
-                        messageBox.className = "message error";
+                        alert(data.error || "Failed to send inquiry");
                     }
                 } catch (err) {
                     console.error(err);
-                    messageBox.textContent = "Network error: " + err.message;
-                    messageBox.className = "message error";
+                    alert("Network error: " + err.message);
                 }
             });
 
