@@ -3,207 +3,139 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Services - CodeCrowds</title>
+<title>Hire - CodeCrowds</title>
 <link rel="stylesheet" href="style.css">
 <style>
-/* Container */
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #4e54c8, #00aaff);
+    min-height: 100%;
+    color: #333;
+}
 .container {
-    max-width: 800px;
-    width: 100%;
-    padding: 2.5rem 2rem;
-    background: rgba(255,255,255,0.95);
+    max-width: 600px;
+    width: 90%;
+    padding: 2rem;
+    background: #fff;
     border-radius: 16px;
     box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-    margin: 2rem auto;
-}
-
-/* Service Cards Grid */
-#services-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-/* Individual Service Card */
-.service-card {
-    background: #f8f9fa;
-    border-radius: 10px;
-    padding: 1rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin: 50px auto;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    gap: 1.5rem;
 }
-
-.service-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-}
-
-.service-card h3 {
-    margin: 0;
-    color: #007bff;
-}
-
-.service-card p {
-    margin: 0;
-    color: #555;
-}
-
-/* Form and Buttons */
+h1 { color: #4e54c8; text-align: center; }
 form input, form textarea, form button {
     width: 100%;
+    padding: 12px;
     margin-bottom: 1rem;
-    padding: 10px;
-    font-size: 1rem;
     border-radius: 8px;
     border: 1px solid #ccc;
+    font-size: 1rem;
+    box-sizing: border-box;
 }
-
 form button {
-    background-color: #007bff;
-    color: #fff;
-}
-
-form button:hover {
-    background-color: #0056b3;
-}
-
-/* Messages */
-.message {
-    font-weight: 600;
-    margin-bottom: 1rem;
-}
-
-.message.success { color: #28a745; }
-.message.error { color: #ff4d4f; }
-
-/* Back button */
-#backProfileBtn {
-    padding: 12px 25px;
-    background-color: #00aaff;
+    background-color: #4e54c8;
     color: #fff;
     border: none;
-    border-radius: 8px;
     cursor: pointer;
     transition: 0.3s;
-    margin-top: 0.5rem;
 }
-
-#backProfileBtn:hover {
-    background-color: #008ecc;
+form button:hover { background-color: #3b40a1; }
+.message {
+    font-weight: 600;
+    color: #28a745;
+    text-align: center;
 }
+.error { color: #ff4d4f; }
 </style>
 </head>
 <body>
 <div class="container">
-    <h1>Available Services</h1>
-    <div id="services-list"></div>
-
-    <h2>Add a New Service</h2>
-    <form id="serviceForm">
-        <input type="text" id="service-title" placeholder="Service Title" required>
-        <textarea id="service-description" placeholder="Service Description" required></textarea>
-        <input type="number" id="service-price" placeholder="Price" min="0" required>
-        <button type="submit">Add Service</button>
+    <h1 id="hireHeading">Contact Service Provider</h1>
+    <form id="messageForm">
+        <textarea id="messageContent" placeholder="Write your message..." required></textarea>
+        <button type="submit">Send Message</button>
     </form>
-
-    <button id="backProfileBtn">Back to Profile</button>
-    <p id="service-message" class="message"></p>
+    <p id="responseMessage" class="message"></p>
 </div>
 
 <script>
 const API_URL = 'https://codecrowds.onrender.com';
 const token = localStorage.getItem('token');
 const userId = localStorage.getItem('userId');
-const servicesList = document.getElementById('services-list');
-const serviceForm = document.getElementById('serviceForm');
-const serviceMessage = document.getElementById('service-message');
+const hireHeading = document.getElementById('hireHeading');
+const messageForm = document.getElementById('messageForm');
+const messageContent = document.getElementById('messageContent');
+const responseMessage = document.getElementById('responseMessage');
 
-// Redirect if not logged in
-if (!userId || !token) {
-    alert('You must be logged in to view this page.');
-    window.location.href = 'index.html';
+// Get posterId from URL query params
+const urlParams = new URLSearchParams(window.location.search);
+const posterId = urlParams.get('posterId');
+
+// Redirect if not logged in or posterId missing
+if (!token || !userId || !posterId) {
+    alert('Invalid access.');
+    window.location.href = 'services.html';
 }
 
-// Load all services
-async function loadServices() {
+// Load poster's username and update heading
+async function loadPosterName() {
     try {
-        const res = await fetch(`${API_URL}/services`, {
+        const res = await fetch(`${API_URL}/users/${posterId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        const services = await res.json();
-        servicesList.innerHTML = '';
-
-        services.forEach(s => {
-            const div = document.createElement('div');
-            div.className = 'service-card';
-            div.innerHTML = `
-                <h3>${s.title}</h3>
-                <p>${s.description}</p>
-                <p><strong>Price:</strong> $${s.price}</p>
-                <p><strong>By:</strong> ${s.username || s.userId}</p>
-            `;
-
-            // Ensure posterId exists before adding click event
-            if (s.userId) {
-                div.addEventListener('click', () => {
-                    window.location.href = `hire.html?posterId=${encodeURIComponent(s.userId)}`;
-                });
-            }
-
-            servicesList.appendChild(div);
-        });
+        const data = await res.json();
+        if (res.ok) {
+            hireHeading.textContent = `Contact ${data.username}`;
+            messageContent.value = `Hi ${data.username}, I'm interested in your service.`;
+        } else {
+            hireHeading.textContent = 'Contact Service Provider';
+        }
     } catch (err) {
-        servicesList.innerHTML = '<p class="message error">Failed to load services</p>';
         console.error(err);
+        hireHeading.textContent = 'Contact Service Provider';
     }
 }
 
-// Add a new service
-serviceForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const title = document.getElementById('service-title').value.trim();
-    const description = document.getElementById('service-description').value.trim();
-    const price = parseFloat(document.getElementById('service-price').value);
+loadPosterName();
 
-    if (!title || !description || isNaN(price)) return alert('All fields are required.');
+// Handle message submission
+messageForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const message = messageContent.value.trim();
+    if (!message) return;
 
     try {
-        const res = await fetch(`${API_URL}/services`, {
+        const res = await fetch(`${API_URL}/messages`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ title, description, price, userId })
+            body: JSON.stringify({
+                senderId: userId,
+                receiverId: posterId,
+                content: message
+            })
         });
         const data = await res.json();
         if (res.ok) {
-            serviceMessage.textContent = 'Service added successfully!';
-            serviceMessage.className = 'message success';
-            serviceForm.reset();
-            loadServices();
+            responseMessage.textContent = 'Message sent successfully!';
+            responseMessage.className = 'message';
+            messageForm.reset();
         } else {
-            serviceMessage.textContent = data.error || 'Failed to add service';
-            serviceMessage.className = 'message error';
+            responseMessage.textContent = data.error || 'Failed to send message.';
+            responseMessage.className = 'message error';
         }
     } catch (err) {
-        serviceMessage.textContent = 'Network error: ' + err.message;
-        serviceMessage.className = 'message error';
         console.error(err);
+        responseMessage.textContent = 'Network error: ' + err.message;
+        responseMessage.className = 'message error';
     }
 });
-
-// Back to profile button
-document.getElementById('backProfileBtn').addEventListener('click', () => {
-    window.location.href = 'profile.html';
-});
-
-window.onload = loadServices;
 </script>
 </body>
 </html>

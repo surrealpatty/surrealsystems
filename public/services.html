@@ -15,14 +15,12 @@
     box-shadow: 0 12px 30px rgba(0,0,0,0.15);
     margin: 2rem auto;
 }
-
 #services-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1rem;
     margin-bottom: 2rem;
 }
-
 .service-card {
     background: #f8f9fa;
     border-radius: 10px;
@@ -34,14 +32,9 @@
     cursor: pointer;
     transition: transform 0.2s;
 }
-
-.service-card:hover {
-    transform: translateY(-5px);
-}
-
+.service-card:hover { transform: translateY(-5px); }
 .service-card h3 { margin: 0; color: #007bff; }
 .service-card p { margin: 0; color: #555; }
-
 form input, form textarea, form button {
     width: 100%;
     margin-bottom: 1rem;
@@ -50,18 +43,14 @@ form input, form textarea, form button {
     border-radius: 8px;
     border: 1px solid #ccc;
 }
-
 form button {
     background-color: #007bff;
     color: #fff;
 }
-
 form button:hover { background-color: #0056b3; }
-
 .message { font-weight: 600; margin-bottom: 1rem; }
 .message.success { color: #28a745; }
 .message.error { color: #ff4d4f; }
-
 #backProfileBtn {
     padding: 12px 25px;
     background-color: #00aaff;
@@ -72,7 +61,6 @@ form button:hover { background-color: #0056b3; }
     transition: 0.3s;
     margin-top: 0.5rem;
 }
-
 #backProfileBtn:hover { background-color: #008ecc; }
 </style>
 </head>
@@ -124,12 +112,10 @@ async function loadServices() {
                 <p><strong>Price:</strong> $${s.price}</p>
                 <p><strong>By:</strong> ${s.username || s.userId}</p>
             `;
-            // Redirect to hire page when clicked
-            if (s.userId) {
-                div.addEventListener('click', function() {
-                    window.location.href = `hire.html?posterId=${encodeURIComponent(s.userId)}`;
-                });
-            }
+            // Redirect with posterId instead of serviceId
+            div.addEventListener('click', function() {
+                window.location.href = `hire.html?posterId=${s.userId}`;
+            });
             servicesList.appendChild(div);
         });
     } catch (err) {
