@@ -1,250 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Services - CodeCrowds</title>
-<link rel="stylesheet" href="style.css">
-<style>
-.container {
-    max-width: 800px;
-    width: 100%;
-    padding: 2.5rem 2rem;
-    background: rgba(255,255,255,0.95);
-    border-radius: 16px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-    margin: 2rem auto;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Services - CodeCrowds</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f4f9;
+      color: #333;
+    }
 
-#services-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 20px;
+    }
 
-.service-card {
-    background: #f8f9fa;
-    border-radius: 10px;
-    padding: 1rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    transition: transform 0.2s;
-    cursor: pointer;
-}
+    h1 {
+      text-align: center;
+      color: #4e54c8;
+    }
 
-.service-card:hover {
-    transform: translateY(-5px);
-}
+    .service-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
 
-.service-card h3 { margin: 0; color: #007bff; }
-.service-card p { margin: 0; color: #555; }
+    .service-card:hover {
+      transform: translateY(-3px);
+    }
 
-/* Hidden inquiry form */
-.inquiry-form {
-    display: none;
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid #ddd;
-}
+    .hire-form {
+      margin-top: 15px;
+      padding: 15px;
+      background: #f9f9ff;
+      border-radius: 10px;
+      display: none; /* hidden until clicked */
+    }
 
-.inquiry-form textarea {
-    width: 100%;
-    min-height: 60px;
-    padding: 8px;
-    margin-bottom: 0.5rem;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 0.9rem;
-}
+    .hire-form textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      resize: none;
+      margin-bottom: 10px;
+    }
 
-.inquiry-form button {
-    background-color: #28a745;
-    color: white;
-    padding: 8px 15px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-}
+    .hire-form button {
+      background: #4e54c8;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
 
-.inquiry-form button:hover { background-color: #218838; }
+    .hire-form button:hover {
+      background: #3b40a1;
+    }
 
-form input, form textarea, form button {
-    width: 100%;
-    margin-bottom: 1rem;
-    padding: 10px;
-    font-size: 1rem;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-}
+    .message {
+      margin-top: 10px;
+      font-weight: bold;
+      color: green;
+    }
 
-form button { background-color: #007bff; color: #fff; }
-form button:hover { background-color: #0056b3; }
-
-.message { font-weight: 600; margin-bottom: 1rem; }
-.message.success { color: #28a745; }
-.message.error { color: #ff4d4f; }
-
-#backProfileBtn {
-    padding: 12px 25px;
-    background-color: #00aaff;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.3s;
-    margin-top: 0.5rem;
-}
-#backProfileBtn:hover { background-color: #008ecc; }
-</style>
+    .error {
+      color: red;
+    }
+  </style>
 </head>
 <body>
-<div class="container">
+  <div class="container">
     <h1>Available Services</h1>
-    <div id="services-list"></div>
+    <div id="servicesList"></div>
+  </div>
 
-    <h2>Add a New Service</h2>
-    <form id="serviceForm">
-        <input type="text" id="service-title" placeholder="Service Title" required>
-        <textarea id="service-description" placeholder="Service Description" required></textarea>
-        <input type="number" id="service-price" placeholder="Price" min="0" required>
-        <button type="submit">Add Service</button>
-    </form>
-    <button id="backProfileBtn">Back to Profile</button>
-    <p id="service-message" class="message"></p>
-</div>
+  <script>
+    const API_URL = "https://codecrowds.onrender.com";
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
+    const servicesList = document.getElementById("servicesList");
 
-<script>
-const API_URL = 'https://codecrowds.onrender.com';
-const token = localStorage.getItem('token');
-const userId = localStorage.getItem('userId');
-
-const servicesList = document.getElementById('services-list');
-const serviceForm = document.getElementById('serviceForm');
-const serviceMessage = document.getElementById('service-message');
-
-if (!userId || !token) {
-    alert('You must be logged in to view this page.');
-    window.location.href = 'index.html';
-}
-
-// Load all services
-async function loadServices() {
-    try {
+    // Fetch services
+    async function loadServices() {
+      try {
         const res = await fetch(`${API_URL}/services`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` }
         });
         const services = await res.json();
-        servicesList.innerHTML = '';
 
-        services.forEach(function(s) {
-            const div = document.createElement('div');
-            div.className = 'service-card';
-            div.innerHTML = `
-                <h3>${s.title}</h3>
-                <p>${s.description}</p>
-                <p><strong>Price:</strong> $${s.price}</p>
-                <p><strong>By:</strong> ${s.username || s.userId}</p>
-                <div class="inquiry-form">
-                    <textarea placeholder="Write your inquiry..."></textarea>
-                    <button type="button">Send Inquiry</button>
-                </div>
-            `;
+        servicesList.innerHTML = "";
+        services.forEach(service => {
+          const card = document.createElement("div");
+          card.className = "service-card";
+          card.innerHTML = `
+            <h2>${service.title}</h2>
+            <p>${service.description}</p>
+            <p><strong>Posted by:</strong> ${service.user?.username || "Unknown"}</p>
 
-            const inquiryForm = div.querySelector('.inquiry-form');
-            const sendBtn = inquiryForm.querySelector('button');
-            const textarea = inquiryForm.querySelector('textarea');
+            <div class="hire-form">
+              <textarea placeholder="Write your message..."></textarea>
+              <button>Send Message</button>
+              <p class="response"></p>
+            </div>
+          `;
 
-            // Toggle inquiry form - only one open at a time
-            div.addEventListener('click', function(e) {
-                if (!inquiryForm.contains(e.target)) {
-                    // close all other forms first
-                    document.querySelectorAll('.inquiry-form').forEach(f => f.style.display = 'none');
-                    // open this one
-                    inquiryForm.style.display = 'block';
-                }
-            });
+          // Click card → toggle hire form
+          card.addEventListener("click", (e) => {
+            if (!e.target.closest("button")) { 
+              const form = card.querySelector(".hire-form");
+              form.style.display = form.style.display === "block" ? "none" : "block";
+            }
+          });
 
-            // Send inquiry
-            sendBtn.addEventListener('click', async function(e) {
-                e.stopPropagation();
-                const message = textarea.value.trim();
-                if (!message) return alert("Please enter a message.");
+          // Handle message sending
+          const button = card.querySelector("button");
+          const textarea = card.querySelector("textarea");
+          const responseMsg = card.querySelector(".response");
 
-                try {
-                    const res = await fetch(`${API_URL}/inquiries`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${token}`
-                        },
-                        body: JSON.stringify({ serviceId: s.id, message, fromUserId: userId })
-                    });
-                    const data = await res.json();
-                    if (res.ok) {
-                        alert("Inquiry sent successfully!");
-                        textarea.value = "";
-                        inquiryForm.style.display = "none";
-                    } else {
-                        alert(data.error || "Failed to send inquiry");
-                    }
-                } catch (err) {
-                    console.error(err);
-                    alert("Network error: " + err.message);
-                }
-            });
+          button.addEventListener("click", async (e) => {
+            e.stopPropagation(); // prevent card click toggle
+            const message = textarea.value.trim();
+            if (!message) return;
 
-            servicesList.appendChild(div);
+            try {
+              const res = await fetch(`${API_URL}/messages`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                  senderId: userId,
+                  receiverId: service.userId,
+                  content: message
+                })
+              });
+              const data = await res.json();
+              if (res.ok) {
+                responseMsg.textContent = "Message sent!";
+                responseMsg.className = "message";
+                textarea.value = "";
+              } else {
+                responseMsg.textContent = data.error || "Failed to send.";
+                responseMsg.className = "message error";
+              }
+            } catch (err) {
+              responseMsg.textContent = "Network error: " + err.message;
+              responseMsg.className = "message error";
+            }
+          });
+
+          servicesList.appendChild(card);
         });
-    } catch (err) {
-        servicesList.innerHTML = '<p class="error">Failed to load services</p>';
-        console.error(err);
+      } catch (err) {
+        console.error("Error loading services:", err);
+      }
     }
-}
 
-// Add a new service
-serviceForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const title = document.getElementById('service-title').value.trim();
-    const description = document.getElementById('service-description').value.trim();
-    const price = parseFloat(document.getElementById('service-price').value);
-
-    if (!title || !description || isNaN(price)) return alert('All fields are required.');
-
-    try {
-        const res = await fetch(`${API_URL}/services`, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ title, description, price, userId })
-        });
-        const data = await res.json();
-        if (res.ok) {
-            serviceMessage.textContent = 'Service added successfully!';
-            serviceMessage.className = 'message success';
-            serviceForm.reset();
-            loadServices();
-        } else {
-            serviceMessage.textContent = data.error || 'Failed to add service';
-            serviceMessage.className = 'message error';
-        }
-    } catch (err) {
-        serviceMessage.textContent = 'Network error: ' + err.message;
-        serviceMessage.className = 'message error';
-        console.error(err);
-    }
-});
-
-// Back to profile
-document.getElementById('backProfileBtn').addEventListener('click', function() {
-    window.location.href = 'profile.html';
-});
-
-window.onload = loadServices;
-</script>
+    loadServices();
+  </script>
 </body>
 </html>
