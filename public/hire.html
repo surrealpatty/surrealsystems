@@ -148,10 +148,12 @@ async function loadServices() {
                 <p><strong>By:</strong> ${s.username || s.userId}</p>
             `;
 
-            // Click to hire
-            div.addEventListener('click', () => {
-                window.location.href = `hire.html?posterId=${s.userId}`;
-            });
+            // Ensure posterId exists before adding click event
+            if (s.userId) {
+                div.addEventListener('click', () => {
+                    window.location.href = `hire.html?posterId=${encodeURIComponent(s.userId)}`;
+                });
+            }
 
             servicesList.appendChild(div);
         });
