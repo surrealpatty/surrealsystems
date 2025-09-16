@@ -11,7 +11,7 @@
         margin: 0;
         padding: 0;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #4e54c8; /* same blue as index header */
+        background-color: #4e54c8; /* blue background */
         color: #fff;
         min-height: 100%;
     }
@@ -21,7 +21,7 @@
         max-width: 900px;
         width: 90%;
         padding: 2.5rem 2rem;
-        background: rgba(255, 255, 255, 0.95);
+        background: #fff; /* container white for contrast */
         border-radius: 16px;
         box-shadow: 0 12px 30px rgba(0,0,0,0.15);
         margin: 50px auto 2rem auto;
@@ -58,8 +58,8 @@
     button {
         padding: 12px 25px;
         font-size: 1rem;
-        color: #fff; /* white text */
-        background-color: #4e54c8; /* blue background */
+        color: #4e54c8; /* blue text */
+        background-color: #fff; /* white button */
         border: none;
         border-radius: 8px;
         cursor: pointer;
@@ -67,7 +67,9 @@
         transition: 0.3s;
     }
 
-    button:hover { background-color: #6469d6; } /* slightly lighter blue on hover */
+    button:hover {
+        background-color: #e6e6e6; /* light gray hover */
+    }
 
     /* ---------- Services Section ---------- */
     .services-section {
@@ -99,15 +101,16 @@
         color: #555;
     }
 
+    /* Service card buttons */
     .service-card .edit-btn,
     .service-card .delete-btn {
-        color: #fff; /* match other buttons */
-        background-color: #4e54c8;
+        color: #4e54c8; /* blue text */
+        background-color: #fff; /* white button */
     }
 
     .service-card .edit-btn:hover,
     .service-card .delete-btn:hover {
-        background-color: #6469d6;
+        background-color: #e6e6e6;
     }
 
     /* ---------- Logout Button ---------- */
@@ -115,11 +118,11 @@
         display: block;
         max-width: 200px;
         margin: 30px auto 50px auto;
-        color: #fff; /* white text */
-        background-color: #4e54c8;
+        color: #4e54c8; /* blue text */
+        background-color: #fff; /* white button */
     }
 
-    .logout-btn:hover { background-color: #6469d6; }
+    .logout-btn:hover { background-color: #e6e6e6; }
 
     @media (max-width: 480px) {
         .container { padding: 2rem 1rem; }
