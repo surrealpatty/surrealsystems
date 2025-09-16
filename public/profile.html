@@ -1,174 +1,166 @@
-const API_URL = 'https://codecrowds.onrender.com';
-
-// ---------- Helpers ----------
-function getToken() { return localStorage.getItem('token'); }
-function getUserId() { return localStorage.getItem('userId'); }
-
-async function safeFetch(url, options = {}) {
-    try {
-        const res = await fetch(url, options);
-        const contentType = res.headers.get('content-type') || '';
-        let data;
-        if (contentType.includes('application/json')) data = await res.json();
-        else throw new Error(await res.text());
-        if (!res.ok) throw new Error(data.error || 'Server error');
-        return data;
-    } catch (err) {
-        console.error('Fetch error:', err);
-        throw err;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile - CodeCrowds</title>
+<link rel="stylesheet" href="style.css">
+<style>
+    /* ---------- Global ---------- */
+    body, html {
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #4e54c8, #00aaff); /* Gradient like index header */
+        color: #fff;
+        min-height: 100%;
     }
-}
 
-// ---------- Redirect if no token ----------
-if (!getToken()) {
-    alert('You must log in first!');
-    window.location.href = 'login.html';
-}
-
-// ---------- Profile Edit ----------
-const usernameInput = document.getElementById('username');
-const descInput = document.getElementById('description');
-const usernameDisplay = document.getElementById('usernameDisplay');
-const editBtn = document.getElementById('editProfileBtn');
-const userId = getUserId();
-
-usernameInput.value = localStorage.getItem('username') || '';
-descInput.value = localStorage.getItem('description') || '';
-usernameDisplay.textContent = localStorage.getItem('username') || 'User';
-
-let editing = false;
-
-editBtn.addEventListener('click', async () => {
-    if (!editing) {
-        usernameInput.readOnly = false;
-        descInput.readOnly = false;
-        editBtn.textContent = 'Save Profile';
-        editing = true;
-    } else {
-        const newUsername = usernameInput.value.trim();
-        const newDesc = descInput.value.trim();
-        if (!newUsername) return alert('Username cannot be empty');
-
-        try {
-            const token = getToken();
-            const data = await safeFetch(`${API_URL}/users/${userId}`, {
-                method: 'PUT',
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'Authorization': `Bearer ${token}` 
-                },
-                body: JSON.stringify({ username: newUsername, description: newDesc })
-            });
-
-            localStorage.setItem('username', data.user.username);
-            localStorage.setItem('description', data.user.description || '');
-            usernameDisplay.textContent = data.user.username;
-
-            usernameInput.readOnly = true;
-            descInput.readOnly = true;
-            editBtn.textContent = 'Edit Profile';
-            editing = false;
-            alert('Profile updated successfully!');
-        } catch (err) {
-            alert('Error saving profile: ' + err.message);
-        }
+    /* ---------- Container ---------- */
+    .container {
+        max-width: 900px;
+        width: 90%;
+        padding: 2.5rem 2rem;
+        background: #ffffff; /* fully white for contrast */
+        border-radius: 16px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+        margin: 50px auto 2rem auto;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        color: #333;
     }
-});
 
-// ---------- Services ----------
-const servicesList = document.getElementById('services-list');
-const serviceForm = document.getElementById('serviceForm');
-
-async function loadServices() {
-    try {
-        const token = getToken();
-        const services = await safeFetch(`${API_URL}/services`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        servicesList.innerHTML = '';
-        services.filter(s => s.userId == userId).forEach(s => {
-            const div = document.createElement('div');
-            div.className = 'service-card';
-            div.innerHTML = `
-                <h3>${s.title}</h3>
-                <p>${s.description}</p>
-                <p><strong>Price:</strong> $${s.price}</p>
-                <button class="edit-btn">Edit</button>
-                <button class="delete-btn">Delete</button>
-            `;
-            div.querySelector('.edit-btn').addEventListener('click', () => editService(s));
-            div.querySelector('.delete-btn').addEventListener('click', () => deleteService(s.id));
-            servicesList.appendChild(div);
-        });
-    } catch (err) {
-        servicesList.innerHTML = '<p class="error">Failed to load services</p>';
+    /* ---------- Headings ---------- */
+    h1.profile-name {
+        color: #4e54c8;
+        text-align: center;
+        margin-bottom: 1rem;
     }
-}
-loadServices();
 
-serviceForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const title = document.getElementById('service-title').value.trim();
-    const description = document.getElementById('service-description').value.trim();
-    const price = parseFloat(document.getElementById('service-price').value);
-    if (!title || !description || isNaN(price)) return alert('All fields required');
-
-    try {
-        const token = getToken();
-        await safeFetch(`${API_URL}/services`, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json', 
-                'Authorization': `Bearer ${token}` 
-            },
-            body: JSON.stringify({ title, description, price })
-        });
-        serviceForm.reset();
-        loadServices();
-    } catch (err) {
-        alert('Failed to add service: ' + err.message);
+    /* ---------- Profile Form ---------- */
+    #profileForm input,
+    #profileForm textarea {
+        width: 100%;
+        padding: 12px;
+        margin: 8px 0;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 1rem;
+        box-sizing: border-box;
+        background: #fff;
+        color: #333;
     }
-});
 
-async function editService(service) {
-    const newTitle = prompt('Edit title', service.title);
-    const newDesc = prompt('Edit description', service.description);
-    const newPrice = parseFloat(prompt('Edit price', service.price));
-    if (!newTitle || !newDesc || isNaN(newPrice)) return;
+    #profileForm textarea { resize: vertical; }
 
-    try {
-        const token = getToken();
-        await safeFetch(`${API_URL}/services/${service.id}`, {
-            method: 'PUT',
-            headers: { 
-                'Content-Type': 'application/json', 
-                'Authorization': `Bearer ${token}` 
-            },
-            body: JSON.stringify({ title: newTitle, description: newDesc, price: newPrice })
-        });
-        loadServices();
-    } catch (err) {
-        alert('Failed to update service: ' + err.message);
+    /* ---------- Buttons ---------- */
+    button {
+        padding: 12px 25px;
+        font-size: 1rem;
+        color: #fff; /* white text */
+        background-color: #4e54c8; /* blue button */
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-top: 10px;
+        transition: 0.3s;
     }
-}
 
-async function deleteService(id) {
-    if (!confirm('Delete this service?')) return;
-    try {
-        const token = getToken();
-        await safeFetch(`${API_URL}/services/${id}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        loadServices();
-    } catch (err) {
-        alert('Failed to delete service: ' + err.message);
+    button:hover {
+        background-color: #3b40a1; /* darker blue on hover */
     }
-}
 
-// ---------- Logout ----------
-document.getElementById('logoutBtn').addEventListener('click', () => {
-    localStorage.clear();
-    window.location.href = 'login.html';
-});
+    /* ---------- Services Section ---------- */
+    .services-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .add-service-card, .service-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        transition: transform 0.2s;
+        color: #333;
+    }
+
+    .add-service-card:hover, .service-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .add-service-card h3, .service-card h3 {
+        margin-bottom: 15px;
+        color: #4e54c8;
+    }
+
+    .service-card p {
+        margin: 0;
+        color: #555;
+    }
+
+    /* Service card buttons */
+    .service-card .edit-btn,
+    .service-card .delete-btn {
+        color: #fff; /* white text */
+        background-color: #4e54c8; /* blue button */
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        padding: 8px 16px;
+        margin-top: 10px;
+        transition: 0.3s;
+    }
+
+    .service-card .edit-btn:hover,
+    .service-card .delete-btn:hover {
+        background-color: #3b40a1; /* darker blue hover */
+    }
+
+    /* ---------- Logout Button ---------- */
+    .logout-btn {
+        display: block;
+        max-width: 200px;
+        margin: 30px auto 50px auto;
+        color: #fff; /* white text */
+        background-color: #4e54c8; /* blue button */
+    }
+
+    .logout-btn:hover { background-color: #3b40a1; }
+
+    @media (max-width: 480px) {
+        .container { padding: 2rem 1rem; }
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Profile Info -->
+    <h1 class="profile-name" id="usernameDisplay">User</h1>
+    <form id="profileForm">
+        <input id="username" type="text" placeholder="Username" readonly>
+        <textarea id="description" placeholder="About Me" readonly></textarea>
+        <button type="button" id="editProfileBtn">Edit Profile</button>
+    </form>
+
+    <!-- Services Section -->
+    <section class="services-section">
+        <form id="serviceForm" class="add-service-card">
+            <h3>Add New Service</h3>
+            <input id="service-title" placeholder="Title" required>
+            <textarea id="service-description" placeholder="Description" required></textarea>
+            <input id="service-price" type="number" placeholder="Price" required>
+            <button type="submit">Add Service</button>
+        </form>
+        <div id="services-list"></div>
+    </section>
+
+    <button class="logout-btn" id="logoutBtn">Logout</button>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
