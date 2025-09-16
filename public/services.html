@@ -29,12 +29,41 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    cursor: pointer;
     transition: transform 0.2s;
 }
 .service-card:hover { transform: translateY(-5px); }
 .service-card h3 { margin: 0; color: #007bff; }
 .service-card p { margin: 0; color: #555; }
+
+.contact-section {
+    display: none;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+}
+.contact-section textarea {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    margin-bottom: 0.5rem;
+}
+.contact-section button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.contact-section button:hover {
+    background: #0056b3;
+}
+
+.message { font-weight: 600; margin-top: 0.5rem; }
+.message.success { color: #28a745; }
+.message.error { color: #ff4d4f; }
+
 form input, form textarea, form button {
     width: 100%;
     margin-bottom: 1rem;
@@ -48,9 +77,7 @@ form button {
     color: #fff;
 }
 form button:hover { background-color: #0056b3; }
-.message { font-weight: 600; margin-bottom: 1rem; }
-.message.success { color: #28a745; }
-.message.error { color: #ff4d4f; }
+
 #backProfileBtn {
     padding: 12px 25px;
     background-color: #00aaff;
@@ -111,11 +138,59 @@ async function loadServices() {
                 <p>${s.description}</p>
                 <p><strong>Price:</strong> $${s.price}</p>
                 <p><strong>By:</strong> ${s.username || s.userId}</p>
+                <button class="contact-toggle">Contact ${s.username || 'Provider'}</button>
+                <div class="contact-section">
+                    <textarea placeholder="Write your message..."></textarea>
+                    <button class="send-btn">Send Message</button>
+                    <p class="message"></p>
+                </div>
             `;
-            // Redirect with posterId instead of serviceId
-            div.addEventListener('click', function() {
-                window.location.href = `hire.html?posterId=${s.userId}`;
+
+            const toggleBtn = div.querySelector('.contact-toggle');
+            const contactSection = div.querySelector('.contact-section');
+            const sendBtn = div.querySelector('.send-btn');
+            const textarea = div.querySelector('textarea');
+            const messageBox = div.querySelector('.message');
+
+            // Toggle dropdown
+            toggleBtn.addEventListener('click', () => {
+                contactSection.style.display = contactSection.style.display === 'block' ? 'none' : 'block';
             });
+
+            // Send message
+            sendBtn.addEventListener('click', async () => {
+                const content = textarea.value.trim();
+                if (!content) return alert("Message cannot be empty.");
+
+                try {
+                    const res = await fetch(`${API_URL}/messages`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            senderId: userId,
+                            receiverId: s.userId,
+                            content
+                        })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        messageBox.textContent = "Message sent!";
+                        messageBox.className = "message success";
+                        textarea.value = '';
+                    } else {
+                        messageBox.textContent = data.error || "Failed to send message.";
+                        messageBox.className = "message error";
+                    }
+                } catch (err) {
+                    console.error(err);
+                    messageBox.textContent = "Network error: " + err.message;
+                    messageBox.className = "message error";
+                }
+            });
+
             servicesList.appendChild(div);
         });
     } catch (err) {
