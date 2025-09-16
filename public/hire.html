@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hire Service - CodeCrowds</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
+.container { max-width: 500px; margin: 50px auto; background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+h1 { text-align: center; color: #007bff; margin-bottom: 1.5rem; }
+input, textarea, button { width: 100%; margin-bottom: 1rem; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; }
+button { background-color: #007bff; color: #fff; border: none; cursor: pointer; transition: 0.3s; }
+button:hover { background-color: #0056b3; }
+.message { font-weight: 600; margin-bottom: 1rem; }
+.message.success { color: #28a745; }
+.message.error { color: #ff4d4f; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Contact Service Provider</h1>
+    <form id="hireForm">
+        <input type="text" id="subject" placeholder="Subject" required>
+        <textarea id="message" placeholder="Your message..." rows="5" required></textarea>
+        <button type="submit">Send Message</button>
+    </form>
+    <p id="statusMessage" class="message"></p>
+    <button id="backBtn">Back to Services</button>
+</div>
+
+<script>
+const API_URL = 'https://codecrowds.onrender.com';
+const token = localStorage.getItem('token');
+const userId = localStorage.getItem('userId');
+
+// Redirect if not logged in
+if (!userId || !token) {
+    alert('You must be logged in to view this page.');
+    window.location.href = 'index.html';
+}
+
+// Parse query string
+const urlParams = new URLSearchParams(window.location.search);
+const serviceId = urlParams.get('serviceId');
+const posterId = urlParams.get('posterId');
+
+const hireForm = document.getElementById('hireForm');
+const statusMessage = document.getElementById('statusMessage');
+
+hireForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const subject = document.getElementById('subject').value.trim();
+    const message = document.getElementById('message').value.trim();
+
+    if (!subject || !message) return alert('All fields are required.');
+
+    try {
+        const res = await fetch(`${API_URL}/messages`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                fromUserId: userId,
+                toUserId: posterId,
+                serviceId: serviceId,
+                subject: subject,
+                message: message
+            })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            statusMessage.textContent = 'Message sent successfully!';
+            statusMessage.className = 'message success';
+            hireForm.reset();
+        } else {
+            statusMessage.textContent = data.error || 'Failed to send message.';
+            statusMessage.className = 'message error';
+        }
+    } catch (err) {
+        statusMessage.textContent = 'Network error: ' + err.message;
+        statusMessage.className = 'message error';
+        console.error(err);
+    }
+});
+
+// Back button
+document.getElementById('backBtn').addEventListener('click', function() {
+    window.location.href = 'services.html';
+});
+</script>
+</body>
+</html>
