@@ -1,15 +1,21 @@
 const API_URL = 'https://codecrowds.onrender.com';
 
 // ---------- Helpers ----------
-function getToken() {
+function getFreshToken() {
     const token = localStorage.getItem('token');
-    if (!token) console.warn('No token found in localStorage');
+    if (!token) {
+        alert('You are not logged in. Redirecting to login page.');
+        window.location.href = 'index.html';
+    }
     return token;
 }
 
-function getUserId() {
+function getFreshUserId() {
     const userId = localStorage.getItem('userId');
-    if (!userId) console.warn('No userId found in localStorage');
+    if (!userId) {
+        alert('You are not logged in. Redirecting to login page.');
+        window.location.href = 'index.html';
+    }
     return userId;
 }
 
@@ -35,14 +41,6 @@ const descInput = document.getElementById('description');
 const usernameDisplay = document.getElementById('usernameDisplay');
 const editBtn = document.getElementById('editProfileBtn');
 
-let userId = getUserId();
-let token = getToken();
-
-if (!userId || !token) {
-    alert('You are not logged in. Redirecting to login page.');
-    window.location.href = 'index.html';
-}
-
 usernameInput.value = localStorage.getItem('username') || '';
 descInput.value = localStorage.getItem('description') || '';
 usernameDisplay.textContent = localStorage.getItem('username') || 'User';
@@ -58,8 +56,9 @@ editBtn.addEventListener('click', async () => {
     } else {
         const newUsername = usernameInput.value.trim();
         const newDesc = descInput.value.trim();
+        const token = getFreshToken();
+        const userId = getFreshUserId();
 
-        if (!token) return alert('You are not logged in');
         if (!newUsername) return alert('Username cannot be empty');
 
         try {
@@ -93,7 +92,8 @@ const servicesList = document.getElementById('services-list');
 const serviceForm = document.getElementById('serviceForm');
 
 async function loadServices() {
-    if (!token) return servicesList.innerHTML = '<p>Please login to load services</p>';
+    const token = getFreshToken();
+    const userId = getFreshUserId();
 
     try {
         const services = await safeFetch(`${API_URL}/services`, { 
@@ -127,8 +127,8 @@ serviceForm.addEventListener('submit', async (e) => {
     const title = document.getElementById('service-title').value.trim();
     const description = document.getElementById('service-description').value.trim();
     const price = parseFloat(document.getElementById('service-price').value);
+    const token = getFreshToken();
 
-    if (!token) return alert('You are not logged in');
     if (!title || !description || isNaN(price)) return alert('All fields required');
 
     try {
@@ -152,8 +152,8 @@ async function editService(service) {
     const newTitle = prompt('Edit title', service.title);
     const newDesc = prompt('Edit description', service.description);
     const newPrice = parseFloat(prompt('Edit price', service.price));
+    const token = getFreshToken();
 
-    if (!token) return alert('You are not logged in');
     if (!newTitle || !newDesc || isNaN(newPrice)) return;
 
     try {
@@ -174,7 +174,7 @@ async function editService(service) {
 
 async function deleteService(id) {
     if (!confirm('Delete this service?')) return;
-    if (!token) return alert('You are not logged in');
+    const token = getFreshToken();
 
     try {
         await safeFetch(`${API_URL}/services/${id}`, {
