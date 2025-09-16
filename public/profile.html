@@ -11,7 +11,7 @@
         margin: 0;
         padding: 0;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #4e54c8, #00aaff); /* Gradient like index header */
+        background: linear-gradient(135deg, #4e54c8, #00aaff);
         color: #fff;
         min-height: 100%;
     }
@@ -21,7 +21,7 @@
         max-width: 900px;
         width: 90%;
         padding: 2.5rem 2rem;
-        background: #ffffff; /* fully white for contrast */
+        background: #ffffff;
         border-radius: 16px;
         box-shadow: 0 12px 30px rgba(0,0,0,0.15);
         margin: 50px auto 2rem auto;
@@ -58,8 +58,8 @@
     button {
         padding: 12px 25px;
         font-size: 1rem;
-        color: #fff; /* white text */
-        background-color: #4e54c8; /* blue button */
+        color: #fff;
+        background-color: #4e54c8;
         border: none;
         border-radius: 8px;
         cursor: pointer;
@@ -68,7 +68,7 @@
     }
 
     button:hover {
-        background-color: #3b40a1; /* darker blue on hover */
+        background-color: #3b40a1;
     }
 
     /* ---------- Services Section ---------- */
@@ -104,8 +104,8 @@
     /* Service card buttons */
     .service-card .edit-btn,
     .service-card .delete-btn {
-        color: #fff; /* white text */
-        background-color: #4e54c8; /* blue button */
+        color: #fff;
+        background-color: #4e54c8;
         border: none;
         border-radius: 8px;
         cursor: pointer;
@@ -116,7 +116,7 @@
 
     .service-card .edit-btn:hover,
     .service-card .delete-btn:hover {
-        background-color: #3b40a1; /* darker blue hover */
+        background-color: #3b40a1;
     }
 
     /* ---------- Logout Button ---------- */
@@ -124,8 +124,8 @@
         display: block;
         max-width: 200px;
         margin: 30px auto 50px auto;
-        color: #fff; /* white text */
-        background-color: #4e54c8; /* blue button */
+        color: #fff;
+        background-color: #4e54c8;
     }
 
     .logout-btn:hover { background-color: #3b40a1; }
@@ -141,21 +141,22 @@
     <!-- Profile Info -->
     <h1 class="profile-name" id="usernameDisplay">User</h1>
     <form id="profileForm">
-        <input id="username" type="text" placeholder="Username" readonly>
-        <textarea id="description" placeholder="About Me" readonly></textarea>
-        <button type="button" id="editProfileBtn">Edit Profile</button>
+        <input id="profileUsername" type="text" placeholder="Username">
+        <textarea id="profileDesc" placeholder="About Me"></textarea>
+        <button type="button" id="saveProfile">Save Profile</button>
     </form>
+    <p id="profileMessage"></p>
 
     <!-- Services Section -->
     <section class="services-section">
-        <form id="serviceForm" class="add-service-card">
+        <form id="addServiceForm" class="add-service-card">
             <h3>Add New Service</h3>
-            <input id="service-title" placeholder="Title" required>
-            <textarea id="service-description" placeholder="Description" required></textarea>
-            <input id="service-price" type="number" placeholder="Price" required>
+            <input id="serviceTitle" placeholder="Title" required>
+            <textarea id="serviceDesc" placeholder="Description" required></textarea>
+            <input id="servicePrice" type="number" placeholder="Price" required>
             <button type="submit">Add Service</button>
         </form>
-        <div id="services-list"></div>
+        <div id="servicesList"></div>
     </section>
 
     <button class="logout-btn" id="logoutBtn">Logout</button>
