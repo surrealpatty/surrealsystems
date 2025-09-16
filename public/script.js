@@ -1,18 +1,15 @@
 const API_URL = 'https://codecrowds.onrender.com';
 
-// ---------- Login ----------
+// ---------- LOGIN (index.html) ----------
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
-    const loginEmail = document.getElementById('loginEmail');
-    const loginPassword = document.getElementById('loginPassword');
-    const loginMessage = document.getElementById('loginMessage');
-
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const email = loginEmail.value.trim();
-        const password = loginPassword.value.trim();
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+        const loginMessage = document.getElementById('loginMessage');
 
-        if (!email || !password) return;
+        if (!email || !password) return alert('Email and password are required');
 
         try {
             const res = await fetch(`${API_URL}/users/login`, {
@@ -23,7 +20,7 @@ if (loginForm) {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Login failed');
 
-            // Save info in localStorage
+            // Save login info to localStorage
             localStorage.setItem('token', data.token);
             localStorage.setItem('userId', data.user.id);
             localStorage.setItem('username', data.user.username);
@@ -31,7 +28,10 @@ if (loginForm) {
 
             loginMessage.style.color = 'green';
             loginMessage.textContent = 'Login successful! Redirecting...';
-            setTimeout(() => { window.location.href = 'profile.html'; }, 1000);
+
+            setTimeout(() => {
+                window.location.href = 'profile.html';
+            }, 1000);
         } catch (err) {
             console.error(err);
             loginMessage.style.color = 'red';
@@ -40,7 +40,7 @@ if (loginForm) {
     });
 }
 
-// ---------- Auth Helpers ----------
+// ---------- AUTH HELPERS ----------
 function getToken() {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -59,7 +59,7 @@ function getUserId() {
     return userId;
 }
 
-// ---------- Profile Page ----------
+// ---------- PROFILE / SERVICES PAGE ----------
 const usernameInput = document.getElementById('username');
 const descInput = document.getElementById('description');
 const usernameDisplay = document.getElementById('usernameDisplay');
@@ -118,7 +118,7 @@ if (usernameInput && descInput && usernameDisplay) {
     });
 }
 
-// ---------- Services ----------
+// ---------- LOAD SERVICES ----------
 async function loadServices() {
     if (!servicesList) return;
     const token = getToken();
@@ -154,6 +154,7 @@ async function loadServices() {
 }
 if (servicesList) loadServices();
 
+// ---------- ADD SERVICE ----------
 if (serviceForm) {
     serviceForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -182,7 +183,7 @@ if (serviceForm) {
     });
 }
 
-// ---------- Edit Service ----------
+// ---------- EDIT SERVICE ----------
 async function editService(service) {
     const newTitle = prompt('Edit title', service.title);
     const newDesc = prompt('Edit description', service.description);
@@ -208,7 +209,7 @@ async function editService(service) {
     }
 }
 
-// ---------- Delete Service ----------
+// ---------- DELETE SERVICE ----------
 async function deleteService(id) {
     if (!confirm('Delete this service?')) return;
     const token = getToken();
@@ -227,7 +228,7 @@ async function deleteService(id) {
     }
 }
 
-// ---------- Logout ----------
+// ---------- LOGOUT ----------
 const logoutBtn = document.getElementById('logoutBtn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
