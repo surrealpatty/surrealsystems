@@ -20,6 +20,7 @@ async function safeFetch(url, options = {}) {
         let data;
         if (contentType.includes('application/json')) data = await res.json();
         else data = await res.text();
+
         if (!res.ok) throw new Error(data.error || data || 'Server error');
         return data;
     } catch (err) {
@@ -34,7 +35,14 @@ const descInput = document.getElementById('description');
 const usernameDisplay = document.getElementById('usernameDisplay');
 const editBtn = document.getElementById('editProfileBtn');
 
-const userId = getUserId();
+let userId = getUserId();
+let token = getToken();
+
+if (!userId || !token) {
+    alert('You are not logged in. Redirecting to login page.');
+    window.location.href = 'index.html';
+}
+
 usernameInput.value = localStorage.getItem('username') || '';
 descInput.value = localStorage.getItem('description') || '';
 usernameDisplay.textContent = localStorage.getItem('username') || 'User';
@@ -50,13 +58,11 @@ editBtn.addEventListener('click', async () => {
     } else {
         const newUsername = usernameInput.value.trim();
         const newDesc = descInput.value.trim();
-        const token = getToken();
 
         if (!token) return alert('You are not logged in');
         if (!newUsername) return alert('Username cannot be empty');
 
         try {
-            console.log('Updating profile with token:', token);
             const data = await safeFetch(`${API_URL}/users/${userId}`, {
                 method: 'PUT',
                 headers: { 
@@ -87,11 +93,9 @@ const servicesList = document.getElementById('services-list');
 const serviceForm = document.getElementById('serviceForm');
 
 async function loadServices() {
-    const token = getToken();
     if (!token) return servicesList.innerHTML = '<p>Please login to load services</p>';
 
     try {
-        console.log('Loading services with token:', token);
         const services = await safeFetch(`${API_URL}/services`, { 
             headers: { 'Authorization': `Bearer ${token}` } 
         });
@@ -123,13 +127,11 @@ serviceForm.addEventListener('submit', async (e) => {
     const title = document.getElementById('service-title').value.trim();
     const description = document.getElementById('service-description').value.trim();
     const price = parseFloat(document.getElementById('service-price').value);
-    const token = getToken();
 
     if (!token) return alert('You are not logged in');
     if (!title || !description || isNaN(price)) return alert('All fields required');
 
     try {
-        console.log('Adding service with token:', token);
         await safeFetch(`${API_URL}/services`, {
             method: 'POST',
             headers: { 
@@ -150,7 +152,6 @@ async function editService(service) {
     const newTitle = prompt('Edit title', service.title);
     const newDesc = prompt('Edit description', service.description);
     const newPrice = parseFloat(prompt('Edit price', service.price));
-    const token = getToken();
 
     if (!token) return alert('You are not logged in');
     if (!newTitle || !newDesc || isNaN(newPrice)) return;
@@ -173,7 +174,6 @@ async function editService(service) {
 
 async function deleteService(id) {
     if (!confirm('Delete this service?')) return;
-    const token = getToken();
     if (!token) return alert('You are not logged in');
 
     try {
@@ -191,5 +191,5 @@ async function deleteService(id) {
 // ---------- Logout ----------
 document.getElementById('logoutBtn').addEventListener('click', () => {
     localStorage.clear();
-    window.location.href = 'login.html';
+    window.location.href = 'index.html';
 });
