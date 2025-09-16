@@ -1,5 +1,6 @@
 const API_URL = 'https://codecrowds.onrender.com';
 
+// ---------- Helpers ----------
 function getToken() { return localStorage.getItem('token'); }
 function getUserId() { return localStorage.getItem('userId'); }
 
@@ -23,7 +24,7 @@ const usernameInput = document.getElementById('username');
 const descInput = document.getElementById('description');
 const usernameDisplay = document.getElementById('usernameDisplay');
 const editBtn = document.getElementById('editProfileBtn');
-const token = getToken();
+
 const userId = getUserId();
 
 usernameInput.value = localStorage.getItem('username') || '';
@@ -44,11 +45,13 @@ editBtn.addEventListener('click', async () => {
         if (!newUsername) return alert('Username cannot be empty');
 
         try {
+            const token = getToken(); // fetch fresh token
             const data = await safeFetch(`${API_URL}/users/${userId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ username: newUsername, description: newDesc })
             });
+
             localStorage.setItem('username', data.user.username);
             localStorage.setItem('description', data.user.description || '');
             usernameDisplay.textContent = data.user.username;
@@ -70,7 +73,11 @@ const serviceForm = document.getElementById('serviceForm');
 
 async function loadServices() {
     try {
-        const services = await safeFetch(`${API_URL}/services`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const token = getToken(); // fetch fresh token
+        const services = await safeFetch(`${API_URL}/services`, { 
+            headers: { 'Authorization': `Bearer ${token}` } 
+        });
+
         servicesList.innerHTML = '';
         services.filter(s => s.userId == userId).forEach(s => {
             const div = document.createElement('div');
@@ -82,6 +89,7 @@ async function loadServices() {
                 <button class="edit-btn">Edit</button>
                 <button class="delete-btn">Delete</button>
             `;
+
             div.querySelector('.edit-btn').addEventListener('click', () => editService(s));
             div.querySelector('.delete-btn').addEventListener('click', () => deleteService(s.id));
             servicesList.appendChild(div);
@@ -100,9 +108,13 @@ serviceForm.addEventListener('submit', async (e) => {
     if (!title || !description || isNaN(price)) return alert('All fields required');
 
     try {
+        const token = getToken(); // fetch fresh token
         await safeFetch(`${API_URL}/services`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': `Bearer ${token}` 
+            },
             body: JSON.stringify({ title, description, price })
         });
         serviceForm.reset();
@@ -119,6 +131,7 @@ async function editService(service) {
     if (!newTitle || !newDesc || isNaN(newPrice)) return;
 
     try {
+        const token = getToken(); // fetch fresh token
         await safeFetch(`${API_URL}/services/${service.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -133,6 +146,7 @@ async function editService(service) {
 async function deleteService(id) {
     if (!confirm('Delete this service?')) return;
     try {
+        const token = getToken(); // fetch fresh token
         await safeFetch(`${API_URL}/services/${id}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
