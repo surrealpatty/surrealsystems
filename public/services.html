@@ -31,8 +31,8 @@
       box-shadow: 0 6px 16px rgba(0,0,0,0.1);
       padding: 20px;
       margin-bottom: 20px;
-      cursor: pointer;
       transition: 0.3s;
+      cursor: pointer;
     }
 
     .service-card:hover {
@@ -104,21 +104,22 @@
         services.forEach(service => {
           const card = document.createElement("div");
           card.className = "service-card";
+
           card.innerHTML = `
             <h2>${service.title}</h2>
             <p>${service.description}</p>
             <p><strong>Posted by:</strong> ${service.user?.username || "Unknown"}</p>
 
             <div class="hire-form">
-              <textarea placeholder="Write your message..."></textarea>
+              <textarea placeholder="Write your message...">Hi ${service.user?.username || "there"}, I’m interested in your service.</textarea>
               <button>Send Message</button>
               <p class="response"></p>
             </div>
           `;
 
-          // Click card → toggle hire form
+          // Toggle dropdown when clicking the card
           card.addEventListener("click", (e) => {
-            if (!e.target.closest("button")) { 
+            if (!e.target.closest("button") && !e.target.closest("textarea")) {
               const form = card.querySelector(".hire-form");
               form.style.display = form.style.display === "block" ? "none" : "block";
             }
@@ -130,7 +131,7 @@
           const responseMsg = card.querySelector(".response");
 
           button.addEventListener("click", async (e) => {
-            e.stopPropagation(); // prevent card click toggle
+            e.stopPropagation(); // don’t toggle form when sending
             const message = textarea.value.trim();
             if (!message) return;
 
