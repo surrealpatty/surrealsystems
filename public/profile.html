@@ -48,11 +48,17 @@
         border: 1px solid #ccc;
         font-size: 1rem;
         box-sizing: border-box;
-        background: #fff;
+        background: #f9f9f9;
         color: #333;
     }
 
     #profileForm textarea { resize: vertical; }
+
+    #profileForm input[readonly],
+    #profileForm textarea[readonly] {
+        background: #eee;
+        cursor: not-allowed;
+    }
 
     /* ---------- Buttons ---------- */
     button {
@@ -141,22 +147,21 @@
     <!-- Profile Info -->
     <h1 class="profile-name" id="usernameDisplay">User</h1>
     <form id="profileForm">
-        <input id="profileUsername" type="text" placeholder="Username">
-        <textarea id="profileDesc" placeholder="About Me"></textarea>
-        <button type="button" id="saveProfile">Save Profile</button>
+        <input id="username" type="text" placeholder="Username" readonly>
+        <textarea id="description" placeholder="About Me" readonly></textarea>
+        <button type="button" id="editProfileBtn">Edit Profile</button>
     </form>
-    <p id="profileMessage"></p>
 
     <!-- Services Section -->
     <section class="services-section">
-        <form id="addServiceForm" class="add-service-card">
+        <form id="serviceForm" class="add-service-card">
             <h3>Add New Service</h3>
-            <input id="serviceTitle" placeholder="Title" required>
-            <textarea id="serviceDesc" placeholder="Description" required></textarea>
-            <input id="servicePrice" type="number" placeholder="Price" required>
+            <input id="service-title" placeholder="Title" required>
+            <textarea id="service-description" placeholder="Description" required></textarea>
+            <input id="service-price" type="number" placeholder="Price" required>
             <button type="submit">Add Service</button>
         </form>
-        <div id="servicesList"></div>
+        <div id="services-list"></div>
     </section>
 
     <button class="logout-btn" id="logoutBtn">Logout</button>
