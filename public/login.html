@@ -17,6 +17,58 @@
     <p id="loginMessage" class="message"></p>
     <p>Don't have an account? <a href="register.html">Register here</a></p>
 </div>
-<script src="script.js"></script>
+
+<script>
+const API_URL = 'https://codecrowds.onrender.com';
+
+async function safeFetch(url, options = {}) {
+    try {
+        const res = await fetch(url, options);
+        const contentType = res.headers.get('content-type') || '';
+        let data;
+        if (contentType.includes('application/json')) data = await res.json();
+        else data = await res.text();
+
+        if (!res.ok) throw new Error(data.error || data || 'Server error');
+        return data;
+    } catch (err) {
+        console.error('Fetch error:', err);
+        throw err;
+    }
+}
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    const msg = document.getElementById('loginMessage');
+
+    if (!email || !password) {
+        msg.textContent = 'Email and password are required';
+        return;
+    }
+
+    try {
+        const data = await safeFetch(`${API_URL}/users/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        // Store token and user info
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userId', data.user.id);
+        localStorage.setItem('username', data.user.username);
+        localStorage.setItem('description', data.user.description || '');
+
+        // Redirect to profile page
+        window.location.href = 'profile.html';
+    } catch (err) {
+        console.error('Login error:', err);
+        msg.textContent = err.message;
+    }
+});
+</script>
 </body>
 </html>
