@@ -78,6 +78,43 @@
 form input, form textarea, form button {
     width: 100%;
     margin-bottom: 1rem;
+    padding: 10px;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+form button {
+    background-color: #007bff;
+    color: #fff;
+}
+
+form button:hover {
+    background-color: #0056b3;
+}
+
+/* Messages */
+.message {
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.message.success { color: #28a745; }
+.message.error { color: #ff4d4f; }
+
+/* Back button */
+#backProfileBtn {
+    padding: 12px 25px;
+    background-color: #00aaff;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+#backProfileBtn:hover {
+    background-color: #008ecc;
 }
 </style>
 </head>
@@ -90,12 +127,12 @@ form input, form textarea, form button {
     <form id="serviceForm">
         <input type="text" id="service-title" placeholder="Service Title" required>
         <textarea id="service-description" placeholder="Service Description" required></textarea>
-        <input type="number" id="service-price" placeholder="Price" required>
+        <input type="number" id="service-price" placeholder="Price" min="0" required>
         <button type="submit">Add Service</button>
     </form>
     <p id="service-message" class="message"></p>
 
-    <button id="backProfileBtn" class="btn">Back to Profile</button>
+    <button id="backProfileBtn">Back to Profile</button>
 </div>
 
 <script>
@@ -109,7 +146,7 @@ const serviceMessage = document.getElementById('service-message');
 // Redirect if not logged in
 if (!userId || !token) {
     alert('You must be logged in to view this page.');
-    window.location.href = 'login.html';
+    window.location.href = 'index.html';
 }
 
 // Load all services
@@ -120,6 +157,7 @@ async function loadServices() {
         });
         const services = await res.json();
         servicesList.innerHTML = '';
+
         services.forEach(s => {
             const div = document.createElement('div');
             div.className = 'service-card';
@@ -133,9 +171,8 @@ async function loadServices() {
                     <button class="delete-btn">Delete</button>
                 ` : ''}
             `;
-            // Edit functionality
+
             div.querySelector('.edit-btn')?.addEventListener('click', () => editService(s));
-            // Delete functionality
             div.querySelector('.delete-btn')?.addEventListener('click', () => deleteService(s.id));
             servicesList.appendChild(div);
         });
@@ -144,7 +181,6 @@ async function loadServices() {
         console.error(err);
     }
 }
-loadServices();
 
 // Add a new service
 serviceForm.addEventListener('submit', async (e) => {
@@ -153,7 +189,7 @@ serviceForm.addEventListener('submit', async (e) => {
     const description = document.getElementById('service-description').value.trim();
     const price = parseFloat(document.getElementById('service-price').value);
 
-    if (!title || !description || !price) return;
+    if (!title || !description || isNaN(price)) return alert('All fields are required.');
 
     try {
         const res = await fetch(`${API_URL}/services`, {
@@ -223,6 +259,8 @@ function deleteService(serviceId) {
 document.getElementById('backProfileBtn').addEventListener('click', () => {
     window.location.href = 'profile.html';
 });
+
+window.onload = loadServices;
 </script>
 </body>
 </html>
