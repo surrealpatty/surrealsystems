@@ -28,7 +28,6 @@ router.get('/', authenticateToken, async (req, res) => {
             order: [['createdAt', 'DESC']]
         });
 
-        // Format messages with senderName
         const formatted = messages.map(msg => ({
             id: msg.id,
             content: msg.content,
