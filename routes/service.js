@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const Service = require('../models/Service');
-const User = require('../models/User'); // ✅ consistent uppercase U
+const User = require('../models/User'); // ✅ make sure this matches your Sequelize model
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
-// Middleware
+// Middleware to authenticate token
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -19,25 +19,23 @@ function authenticateToken(req, res, next) {
     });
 }
 
-// GET all services
+// GET all services with associated user
 router.get('/', async (req, res) => {
     try {
         const services = await Service.findAll({
-            include: [
-                {
-                    model: User,
-                    attributes: ['id', 'username'], // ✅ fetch username
-                },
-            ],
+            include: {
+                model: User,
+                attributes: ['id', 'username'] // only username and id for front-end
+            }
         });
-        res.json(services);
+        res.json(services); // ✅ always return JSON
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to load services' });
     }
 });
 
-// CREATE service
+// CREATE a new service
 router.post('/', authenticateToken, async (req, res) => {
     const { title, description, price } = req.body;
     const userId = req.user.id;
@@ -47,67 +45,17 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     try {
-        const service = await Service.create({
-            title,
-            description,
-            price,
-            userId,
-        });
+        const service = await Service.create({ title, description, price, userId });
 
-        // include username of creator in the response
+        // Include username in response
         const createdService = await Service.findByPk(service.id, {
-            include: [{ model: User, attributes: ['id', 'username'] }],
+            include: { model: User, attributes: ['id', 'username'] }
         });
 
-        res.json({ message: 'Service added successfully', service: createdService });
+        res.status(201).json({ message: 'Service added successfully', service: createdService });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to add service' });
-    }
-});
-
-// UPDATE service
-router.put('/:id', authenticateToken, async (req, res) => {
-    const { title, description, price } = req.body;
-    const userId = req.user.id;
-
-    try {
-        const service = await Service.findByPk(req.params.id);
-        if (!service) return res.status(404).json({ error: 'Service not found' });
-        if (service.userId !== userId) return res.status(403).json({ error: 'Unauthorized' });
-
-        if (title) service.title = title;
-        if (description) service.description = description;
-        if (price) service.price = price;
-
-        await service.save();
-
-        // return updated with username
-        const updatedService = await Service.findByPk(service.id, {
-            include: [{ model: User, attributes: ['id', 'username'] }],
-        });
-
-        res.json({ message: 'Service updated successfully', service: updatedService });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to update service' });
-    }
-});
-
-// DELETE service
-router.delete('/:id', authenticateToken, async (req, res) => {
-    const userId = req.user.id;
-
-    try {
-        const service = await Service.findByPk(req.params.id);
-        if (!service) return res.status(404).json({ error: 'Service not found' });
-        if (service.userId !== userId) return res.status(403).json({ error: 'Unauthorized' });
-
-        await service.destroy();
-        res.json({ message: 'Service deleted successfully' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to delete service' });
     }
 });
 
