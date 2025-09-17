@@ -1,13 +1,15 @@
-// index.js (or app.js at project root)
+// Load environment variables from .env
 require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const sequelize = require('./config/database');
+const { sequelize } = require('./config/database'); // Make sure your sequelize export is correct
 
+// Route imports
 const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/service');
-const messageRoutes = require('./routes/message');
+const messageRoutes = require('./routes/message'); // If you have messaging feature
 
 const app = express();
 
@@ -20,7 +22,7 @@ app.use('/users', userRoutes);
 app.use('/services', serviceRoutes);
 app.use('/messages', messageRoutes);
 
-// Serve static files
+// Serve static files (CSS, JS, images)
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Serve specific HTML pages
@@ -36,11 +38,12 @@ app.use((req, res, next) => {
     next();
 });
 
-// Start server
+// Start server after syncing DB
 const PORT = process.env.PORT || 3000;
-sequelize.sync({ alter: true })
+
+sequelize.sync({ alter: true }) // or { force: false } in production
     .then(() => { 
-        console.log('✅ DB synced'); 
+        console.log('✅ DB synced successfully'); 
         app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`)); 
     })
     .catch(err => { 
