@@ -41,5 +41,13 @@ const User = sequelize.define('User', {
     }
 });
 
-// Remove sync here (best done in app.js or index.js)
+// ✅ Associations
+User.associate = (models) => {
+    // A user can post many services
+    User.hasMany(models.Service, {
+        foreignKey: 'userId',
+        as: 'services'
+    });
+};
+
 module.exports = User;

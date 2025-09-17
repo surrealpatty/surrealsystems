@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Service = require('../models/Service');
-const User = require('../models/User');
+const User = require('../models/User'); // ✅ consistent uppercase U
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
@@ -26,7 +26,7 @@ router.get('/', async (req, res) => {
             include: [
                 {
                     model: User,
-                    attributes: ['id', 'username'], // only return safe user fields
+                    attributes: ['id', 'username'], // ✅ fetch username
                 },
             ],
         });
