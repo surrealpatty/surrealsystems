@@ -18,14 +18,39 @@
     max-width: 1000px;
     margin: 30px auto;
     padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
   }
 
   h1 {
     text-align: center;
     color: #4e54c8;
-    margin-bottom: 30px;
+    margin-bottom: 15px;
   }
 
+  /* Inbox box */
+  .inbox-box {
+    background: #fff;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .message-card {
+    background: #f7f8ff;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+  }
+
+  .message-card p {
+    margin: 5px 0;
+  }
+
+  /* Services grid */
   #servicesList {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -37,16 +62,9 @@
     border-radius: 15px;
     padding: 20px;
     box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-    transition: transform 0.2s, box-shadow 0.2s;
-    cursor: pointer;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-  }
-
-  .service-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 24px rgba(0,0,0,0.12);
   }
 
   .service-title {
@@ -113,95 +131,134 @@
 </head>
 <body>
 <div class="container">
+  <h1>Inbox</h1>
+  <div class="inbox-box" id="messagesList">
+    <!-- Messages will appear here -->
+  </div>
+
   <h1>Available Services</h1>
   <div id="servicesList"></div>
 </div>
 
 <script>
-  const API_URL = "https://codecrowds.onrender.com";
-  const token = localStorage.getItem("token");
-  const userId = localStorage.getItem("userId");
-  const servicesList = document.getElementById("servicesList");
+const API_URL = "https://codecrowds.onrender.com";
+const token = localStorage.getItem("token");
+const userId = localStorage.getItem("userId");
 
-  async function loadServices() {
-    try {
-      const res = await fetch(`${API_URL}/services`, { headers: { Authorization: `Bearer ${token}` }});
-      const services = await res.json();
-      servicesList.innerHTML = "";
+const messagesList = document.getElementById("messagesList");
+const servicesList = document.getElementById("servicesList");
 
-      services.forEach(service => {
-        const card = document.createElement("div");
-        card.className = "service-card";
+// ---------- Load Messages ----------
+async function loadMessages() {
+  try {
+    const res = await fetch(`${API_URL}/messages?receiverId=${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const messages = await res.json();
 
-        // Fix for Posted by: display
-        const postedBy = service.User?.username || service.user?.username || "Unknown";
+    messagesList.innerHTML = '';
+    if (messages.length === 0) {
+      messagesList.innerHTML = '<p>No messages</p>';
+      return;
+    }
 
-        card.innerHTML = `
-          <div class="service-title">${service.title}</div>
-          <div class="service-description">${service.description}</div>
-          <div class="service-user">Posted by: ${postedBy}</div>
-          <div class="hire-form">
-            <textarea>Hi ${postedBy}, I'm interested in your service.</textarea>
-            <button>Send Message</button>
-            <p class="response"></p>
-          </div>
-        `;
+    messages.forEach(msg => {
+      const div = document.createElement('div');
+      div.className = 'message-card';
+      div.innerHTML = `<strong>From: ${msg.senderName || 'User'}</strong>
+                       <p>${msg.content}</p>
+                       <small>${new Date(msg.createdAt).toLocaleString()}</small>`;
+      messagesList.appendChild(div);
+    });
+  } catch(err) {
+    messagesList.innerHTML = `<p class="response error">Failed to load messages</p>`;
+    console.error(err);
+  }
+}
 
-        const form = card.querySelector(".hire-form");
-        const textarea = form.querySelector("textarea");
-        const button = form.querySelector("button");
-        const responseMsg = form.querySelector(".response");
+// ---------- Load Services ----------
+async function loadServices() {
+  try {
+    const res = await fetch(`${API_URL}/services`, { headers: { Authorization: `Bearer ${token}` } });
+    const services = await res.json();
+    servicesList.innerHTML = '';
 
-        card.addEventListener("click", e => {
-          if (!e.target.closest("button") && !e.target.closest("textarea")) {
-            form.style.display = form.style.display === "flex" ? "none" : "flex";
-          }
-        });
+    services.forEach(service => {
+      const card = document.createElement("div");
+      card.className = "service-card";
 
-        button.addEventListener("click", async e => {
-          e.stopPropagation();
-          const message = textarea.value.trim();
-          if (!message) return;
+      const postedBy = service.User?.username || service.user?.username || "Unknown";
 
-          try {
-            const res = await fetch(`${API_URL}/messages`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                senderId: userId,
-                receiverId: service.userId,
-                content: message
-              })
-            });
+      card.innerHTML = `
+        <div class="service-title">${service.title}</div>
+        <div class="service-description">${service.description}</div>
+        <div class="service-user">Posted by: ${postedBy}</div>
+        <div class="hire-form">
+          <textarea>Hi ${postedBy}, I'm interested in your service.</textarea>
+          <button>Send Message</button>
+          <p class="response"></p>
+        </div>
+      `;
 
-            const data = await res.json();
-            if (res.ok) {
-              responseMsg.textContent = "Message sent!";
-              responseMsg.className = "response success";
-              textarea.value = "";
-              form.style.display = "none";
-            } else {
-              responseMsg.textContent = data.error || "Failed to send.";
-              responseMsg.className = "response error";
-            }
-          } catch (err) {
-            responseMsg.textContent = "Network error: " + err.message;
+      const form = card.querySelector(".hire-form");
+      const textarea = form.querySelector("textarea");
+      const button = form.querySelector("button");
+      const responseMsg = form.querySelector(".response");
+
+      card.addEventListener("click", e => {
+        if (!e.target.closest("button") && !e.target.closest("textarea")) {
+          form.style.display = form.style.display === "flex" ? "none" : "flex";
+        }
+      });
+
+      button.addEventListener("click", async e => {
+        e.stopPropagation();
+        const message = textarea.value.trim();
+        if (!message) return;
+
+        try {
+          const res = await fetch(`${API_URL}/messages`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              senderId: userId,
+              receiverId: service.userId,
+              content: message
+            })
+          });
+
+          const data = await res.json();
+          if (res.ok) {
+            responseMsg.textContent = "Message sent!";
+            responseMsg.className = "response success";
+            textarea.value = "";
+            form.style.display = "none";
+          } else {
+            responseMsg.textContent = data.error || "Failed to send.";
             responseMsg.className = "response error";
           }
-        });
-
-        servicesList.appendChild(card);
+        } catch (err) {
+          responseMsg.textContent = "Network error: " + err.message;
+          responseMsg.className = "response error";
+        }
       });
-    } catch (err) {
-      servicesList.innerHTML = "<p class='response error'>Failed to load services</p>";
-      console.error(err);
-    }
-  }
 
+      servicesList.appendChild(card);
+    });
+  } catch(err) {
+    servicesList.innerHTML = "<p class='response error'>Failed to load services</p>";
+    console.error(err);
+  }
+}
+
+// ---------- INIT ----------
+window.onload = () => {
+  loadMessages();
   loadServices();
+};
 </script>
 </body>
 </html>

@@ -102,6 +102,7 @@ if (editBtn) {
                     },
                     body: JSON.stringify({ username: newUsername, description: newDesc })
                 });
+
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error || 'Profile update failed');
 
@@ -122,23 +123,25 @@ if (editBtn) {
 }
 
 // ---------- SERVICES ----------
-const servicesList = document.getElementById('services-list');
+const servicesList = document.getElementById('servicesList'); // Correct ID
 const serviceForm = document.getElementById('serviceForm');
 
 async function loadServices() {
     const token = getToken();
     const userId = getUserId();
-    if (!token || !userId || !servicesList) return;
+    if (!token || !servicesList) return;
 
     try {
         const res = await fetch(`${API_URL}/services`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        const services = await res.json();
-        if (!res.ok) throw new Error(services.error || 'Failed to load services');
 
+        if (!res.ok) throw new Error(`Failed to load services: ${res.status}`);
+
+        const services = await res.json();
         servicesList.innerHTML = '';
-        services.filter(s => s.userId == userId).forEach(s => {
+
+        services.forEach(s => {
             const div = document.createElement('div');
             div.className = 'service-card';
             div.innerHTML = `
@@ -157,6 +160,7 @@ async function loadServices() {
         servicesList.innerHTML = `<p class="error">Failed to load services: ${err.message}</p>`;
     }
 }
+
 if (serviceForm) {
     serviceForm.addEventListener('submit', async e => {
         e.preventDefault();
@@ -173,7 +177,12 @@ if (serviceForm) {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ title, description, price, userId })
             });
-            if (!res.ok) throw new Error('Failed to add service');
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || 'Failed to add service');
+            }
+
             serviceForm.reset();
             loadServices();
         } catch (err) {
@@ -197,7 +206,12 @@ async function editService(service) {
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ title: newTitle, description: newDesc, price: newPrice })
         });
-        if (!res.ok) throw new Error('Failed to update service');
+
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.error || 'Failed to update service');
+        }
+
         loadServices();
     } catch (err) { alert(err.message); }
 }
@@ -210,7 +224,12 @@ async function deleteService(id) {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!res.ok) throw new Error('Failed to delete service');
+
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.error || 'Failed to delete service');
+        }
+
         loadServices();
     } catch (err) { alert(err.message); }
 }
