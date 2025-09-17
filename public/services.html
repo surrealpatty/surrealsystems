@@ -67,48 +67,6 @@
     color: #777;
     margin-bottom: 12px;
   }
-
-  .hire-form {
-    margin-top: 10px;
-    padding: 12px;
-    background: #f7f8ff;
-    border-radius: 10px;
-    display: none;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .hire-form textarea {
-    width: 100%;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    resize: none;
-    font-size: 0.9rem;
-  }
-
-  .hire-form button {
-    align-self: flex-end;
-    background: #4e54c8;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.2s;
-  }
-
-  .hire-form button:hover {
-    background: #3b40a1;
-  }
-
-  .response {
-    font-size: 0.85rem;
-    margin-top: 5px;
-  }
-
-  .response.success { color: green; }
-  .response.error { color: red; }
 </style>
 </head>
 <body>
@@ -118,90 +76,50 @@
 </div>
 
 <script>
-  const API_URL = "https://codecrowds.onrender.com";
-  const token = localStorage.getItem("token");
-  const userId = localStorage.getItem("userId");
-  const servicesList = document.getElementById("servicesList");
+const API_URL = 'https://codecrowds.onrender.com';
+const token = localStorage.getItem('token');
+const userId = localStorage.getItem('userId');
+const servicesList = document.getElementById('servicesList');
 
-  async function loadServices() {
+// ---------- Load Services ----------
+async function loadServices() {
+    if (!token || !servicesList) return;
+
     try {
-      const res = await fetch(`${API_URL}/services`, { headers: { Authorization: `Bearer ${token}` }});
-      const services = await res.json();
-      servicesList.innerHTML = "";
-
-      services.forEach(service => {
-        const card = document.createElement("div");
-        card.className = "service-card";
-
-        // Fix for Posted by: display
-        const postedBy = service.User?.username || service.user?.username || "Unknown";
-
-        card.innerHTML = `
-          <div class="service-title">${service.title}</div>
-          <div class="service-description">${service.description}</div>
-          <div class="service-user">Posted by: ${postedBy}</div>
-          <div class="hire-form">
-            <textarea>Hi ${postedBy}, I'm interested in your service.</textarea>
-            <button>Send Message</button>
-            <p class="response"></p>
-          </div>
-        `;
-
-        const form = card.querySelector(".hire-form");
-        const textarea = form.querySelector("textarea");
-        const button = form.querySelector("button");
-        const responseMsg = form.querySelector(".response");
-
-        card.addEventListener("click", e => {
-          if (!e.target.closest("button") && !e.target.closest("textarea")) {
-            form.style.display = form.style.display === "flex" ? "none" : "flex";
-          }
+        const res = await fetch(`${API_URL}/services`, {
+            headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        button.addEventListener("click", async e => {
-          e.stopPropagation();
-          const message = textarea.value.trim();
-          if (!message) return;
+        // Check if response is JSON
+        const contentType = res.headers.get('content-type');
+        let services = [];
+        if (contentType && contentType.includes('application/json')) {
+            services = await res.json();
+        } else {
+            throw new Error('Server returned non-JSON response.');
+        }
 
-          try {
-            const res = await fetch(`${API_URL}/messages`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                senderId: userId,
-                receiverId: service.userId,
-                content: message
-              })
-            });
+        servicesList.innerHTML = '';
+        services.forEach(service => {
+            const postedBy = service.User?.username || service.user?.username || 'Unknown';
 
-            const data = await res.json();
-            if (res.ok) {
-              responseMsg.textContent = "Message sent!";
-              responseMsg.className = "response success";
-              textarea.value = "";
-              form.style.display = "none";
-            } else {
-              responseMsg.textContent = data.error || "Failed to send.";
-              responseMsg.className = "response error";
-            }
-          } catch (err) {
-            responseMsg.textContent = "Network error: " + err.message;
-            responseMsg.className = "response error";
-          }
+            const card = document.createElement('div');
+            card.className = 'service-card';
+            card.innerHTML = `
+                <div class="service-title">${service.title}</div>
+                <div class="service-description">${service.description}</div>
+                <div class="service-user">Posted by: ${postedBy}</div>
+            `;
+            servicesList.appendChild(card);
         });
-
-        servicesList.appendChild(card);
-      });
     } catch (err) {
-      servicesList.innerHTML = "<p class='response error'>Failed to load services</p>";
-      console.error(err);
+        servicesList.innerHTML = `<p style="color:red">Failed to load services: ${err.message}</p>`;
+        console.error(err);
     }
-  }
+}
 
-  loadServices();
+// ---------- INIT ----------
+window.onload = loadServices;
 </script>
 </body>
 </html>
