@@ -5,6 +5,7 @@ const path = require('path');
 const sequelize = require('./config/database');
 const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/service');
+const messageRoutes = require('./routes/message'); // ✅ add this
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 // --- API routes first ---
 app.use('/users', userRoutes);
 app.use('/services', serviceRoutes);
+app.use('/messages', messageRoutes); // ✅ add this
 
 // --- Serve static files from public after API ---
 app.use(express.static(path.join(__dirname, 'public')));
@@ -26,7 +28,7 @@ app.get(['/dashboard.html','/profile.html','/login.html','/register.html'], (req
 
 // --- Catch-all for unknown API routes ---
 app.use((req,res,next)=>{
-  if (req.path.startsWith('/users') || req.path.startsWith('/services')) {
+  if (req.path.startsWith('/users') || req.path.startsWith('/services') || req.path.startsWith('/messages')) {
     return res.status(404).json({ error: 'API route not found' });
   }
   next();
