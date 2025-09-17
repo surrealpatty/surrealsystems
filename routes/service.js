@@ -22,7 +22,14 @@ function authenticateToken(req, res, next) {
 // GET all services
 router.get('/', async (req, res) => {
     try {
-        const services = await Service.findAll({ include: { model: User, attributes: ['id', 'username'] } });
+        const services = await Service.findAll({
+            include: [
+                {
+                    model: User,
+                    attributes: ['id', 'username'], // only return safe user fields
+                },
+            ],
+        });
         res.json(services);
     } catch (err) {
         console.error(err);
@@ -34,11 +41,25 @@ router.get('/', async (req, res) => {
 router.post('/', authenticateToken, async (req, res) => {
     const { title, description, price } = req.body;
     const userId = req.user.id;
-    if (!title || !description || !price) return res.status(400).json({ error: 'All fields required' });
+
+    if (!title || !description || !price) {
+        return res.status(400).json({ error: 'All fields required' });
+    }
 
     try {
-        const service = await Service.create({ title, description, price, userId });
-        res.json({ message: 'Service added successfully', service });
+        const service = await Service.create({
+            title,
+            description,
+            price,
+            userId,
+        });
+
+        // include username of creator in the response
+        const createdService = await Service.findByPk(service.id, {
+            include: [{ model: User, attributes: ['id', 'username'] }],
+        });
+
+        res.json({ message: 'Service added successfully', service: createdService });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to add service' });
@@ -60,7 +81,13 @@ router.put('/:id', authenticateToken, async (req, res) => {
         if (price) service.price = price;
 
         await service.save();
-        res.json({ message: 'Service updated successfully', service });
+
+        // return updated with username
+        const updatedService = await Service.findByPk(service.id, {
+            include: [{ model: User, attributes: ['id', 'username'] }],
+        });
+
+        res.json({ message: 'Service updated successfully', service: updatedService });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to update service' });
@@ -70,6 +97,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 // DELETE service
 router.delete('/:id', authenticateToken, async (req, res) => {
     const userId = req.user.id;
+
     try {
         const service = await Service.findByPk(req.params.id);
         if (!service) return res.status(404).json({ error: 'Service not found' });
