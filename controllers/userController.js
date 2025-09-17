@@ -17,7 +17,6 @@ exports.registerUser = async (req, res) => {
             return res.status(400).json({ error: 'All fields required' });
         }
 
-        // Check duplicates
         if (await User.findOne({ where: { email } })) return res.status(400).json({ error: 'Email already in use' });
         if (await User.findOne({ where: { username } })) return res.status(400).json({ error: 'Username taken' });
 
