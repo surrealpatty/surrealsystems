@@ -1,9 +1,10 @@
 // src/middlewares/authenticateToken.js
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-    throw new Error('JWT_SECRET is not defined in environment variables');
+// Use environment secret if available, else fallback
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
+if (!process.env.JWT_SECRET) {
+    console.warn('⚠️ Warning: JWT_SECRET is not set in environment variables. Using fallback secret.');
 }
 
 /**
