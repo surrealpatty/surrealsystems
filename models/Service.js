@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database');
+const { sequelize } = require('../config/database'); // ✅ correct import
 const User = require('./User');
 
 const Service = sequelize.define('Service', {
@@ -15,6 +15,9 @@ const Service = sequelize.define('Service', {
         type: DataTypes.FLOAT,
         allowNull: false
     }
+}, {
+    tableName: 'services',
+    timestamps: true
 });
 
 // Association

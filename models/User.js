@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database'); // ✅ import named export
+const { sequelize } = require('../config/database'); // ✅ correct named import
 
 const User = sequelize.define('User', {
     username: {
@@ -20,6 +20,9 @@ const User = sequelize.define('User', {
         type: DataTypes.TEXT,
         defaultValue: ''
     }
+}, {
+    tableName: 'users',
+    timestamps: true
 });
 
 module.exports = User;
