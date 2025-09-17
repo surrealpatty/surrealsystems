@@ -124,7 +124,7 @@ button:hover { background-color: #3b40a1; }
         <button type="button" id="editProfileBtn">Edit Profile</button>
     </form>
 
-    <!-- Inbox -->
+    <!-- Messages/Inbox -->
     <section class="messages-section">
         <h3>Inbox</h3>
         <div id="messages-list">
@@ -321,14 +321,13 @@ async function loadMessages() {
         const res = await fetch(`${API_URL}/messages?receiverId=${userId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-
-        const text = await res.text();
+        const text = await res.text(); // read raw response
+        console.log("Server response for messages:", text); // debug output
 
         let messages;
         try {
-            messages = JSON.parse(text);
+            messages = JSON.parse(text); // try parsing JSON
         } catch {
-            console.error("Server returned non-JSON:", text);
             messagesList.innerHTML = `<p class="error">Failed to load messages: server returned invalid JSON</p>`;
             return;
         }
@@ -361,7 +360,7 @@ document.getElementById('goToServicesBtn').addEventListener('click', () => {
 
 // Load on page load
 window.onload = () => {
-    loadMessages();
+    loadMessages(); // load inbox first
     loadServices();
 };
 </script>
