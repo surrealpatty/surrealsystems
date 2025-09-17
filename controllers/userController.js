@@ -1,21 +1,50 @@
+// src/controllers/userController.js
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
 // Register a new user
 exports.registerUser = async (req, res) => {
     try {
         const { username, email, password } = req.body;
-        const hashedPassword = await bcrypt.hash(password, 10);
 
-        const user = await User.create({
+        if (!username || !email || !password) {
+            return res.status(400).json({ error: 'All fields required' });
+        }
+
+        // Check duplicates
+        if (await User.findOne({ where: { email } })) {
+            return res.status(400).json({ error: 'Email already in use' });
+        }
+        if (await User.findOne({ where: { username } })) {
+            return res.status(400).json({ error: 'Username taken' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = await User.create({
             username,
             email,
             password: hashedPassword
         });
 
-        res.status(201).json({ message: 'User created successfully', user });
+        // Create JWT
+        const token = jwt.sign({ id: newUser.id, email: newUser.email }, JWT_SECRET, { expiresIn: '1h' });
+
+        res.status(201).json({
+            message: 'User created successfully',
+            token,
+            user: {
+                id: newUser.id,
+                username: newUser.username,
+                email: newUser.email,
+                description: newUser.description || ''
+            }
+        });
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        console.error(err);
+        res.status(500).json({ error: 'Failed to register user' });
     }
 };
 
@@ -23,25 +52,70 @@ exports.registerUser = async (req, res) => {
 exports.loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await User.findOne({ where: { email } });
 
+        if (!email || !password) {
+            return res.status(400).json({ error: 'Email and password required' });
+        }
+
+        const user = await User.findOne({ where: { email } });
         if (!user) return res.status(404).json({ error: 'User not found' });
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ error: 'Incorrect password' });
+        if (!isMatch) return res.status(400).json({ error: 'Invalid password' });
 
-        res.json({ message: 'Login successful', user });
+        // Create JWT
+        const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
+
+        res.json({
+            message: 'Login successful',
+            token,
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                description: user.description || ''
+            }
+        });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error(err);
+        res.status(500).json({ error: 'Login failed' });
     }
 };
 
-// Optional: get all users
+// Get all users (optional)
 exports.getUsers = async (req, res) => {
     try {
         const users = await User.findAll();
         res.json(users);
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+};
+
+// Update profile
+exports.updateProfile = async (req, res) => {
+    try {
+        const { username, description } = req.body;
+        const user = await User.findByPk(req.params.id);
+
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        if (username) user.username = username;
+        if (description) user.description = description;
+
+        await user.save();
+
+        res.json({
+            message: 'Profile updated successfully',
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                description: user.description || ''
+            }
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to update profile' });
     }
 };
