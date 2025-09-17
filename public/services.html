@@ -132,12 +132,16 @@
       services.forEach(service => {
         const card = document.createElement("div");
         card.className = "service-card";
+
+        // Fix for Posted by: display
+        const postedBy = service.User?.username || service.user?.username || "Unknown";
+
         card.innerHTML = `
           <div class="service-title">${service.title}</div>
           <div class="service-description">${service.description}</div>
-          <div class="service-user">Posted by: ${service.user?.username || "Unknown"}</div>
+          <div class="service-user">Posted by: ${postedBy}</div>
           <div class="hire-form">
-            <textarea>Hi ${service.user?.username || "there"}, I'm interested in your service.</textarea>
+            <textarea>Hi ${postedBy}, I'm interested in your service.</textarea>
             <button>Send Message</button>
             <p class="response"></p>
           </div>
@@ -158,6 +162,7 @@
           e.stopPropagation();
           const message = textarea.value.trim();
           if (!message) return;
+
           try {
             const res = await fetch(`${API_URL}/messages`, {
               method: "POST",
@@ -171,6 +176,7 @@
                 content: message
               })
             });
+
             const data = await res.json();
             if (res.ok) {
               responseMsg.textContent = "Message sent!";
