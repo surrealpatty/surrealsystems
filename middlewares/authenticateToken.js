@@ -1,7 +1,6 @@
-// src/middlewares/authenticateToken.js
 const jwt = require('jsonwebtoken');
 
-// Use environment secret if available, else fallback
+// Use environment variable or fallback secret
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 if (!process.env.JWT_SECRET) {
     console.warn('⚠️ Warning: JWT_SECRET is not set in environment variables. Using fallback secret.');
@@ -12,11 +11,9 @@ if (!process.env.JWT_SECRET) {
  */
 module.exports = function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Expect "Bearer <token>"
+    const token = authHeader && authHeader.split(' ')[1]; // "Bearer <token>"
 
-    if (!token) {
-        return res.status(401).json({ error: 'Access denied. No token provided.' });
-    }
+    if (!token) return res.status(401).json({ error: 'Access denied. No token provided.' });
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
