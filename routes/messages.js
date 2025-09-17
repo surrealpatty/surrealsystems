@@ -6,7 +6,6 @@ const User = require('../models/User');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
-// Auth middleware
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -19,7 +18,7 @@ function authenticateToken(req, res, next) {
     });
 }
 
-// GET messages for logged-in user
+// GET messages
 router.get('/', authenticateToken, async (req, res) => {
     try {
         const messages = await Message.findAll({
@@ -27,14 +26,24 @@ router.get('/', authenticateToken, async (req, res) => {
             include: [{ model: User, as: 'sender', attributes: ['id', 'username'] }],
             order: [['createdAt', 'DESC']]
         });
-        res.json(messages);
+
+        // Map messages to include senderName
+        const formatted = messages.map(msg => ({
+            id: msg.id,
+            content: msg.content,
+            senderId: msg.senderId,
+            senderName: msg.sender.username,
+            createdAt: msg.createdAt
+        }));
+
+        res.json(formatted);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to fetch messages' });
     }
 });
 
-// POST new message
+// POST message
 router.post('/', authenticateToken, async (req, res) => {
     const { receiverId, content } = req.body;
     if (!receiverId || !content) return res.status(400).json({ error: 'Receiver and content required' });
