@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database');
+const sequelize = require('../config/database'); // import the configured sequelize
 const User = require('./User');
 
 const Message = sequelize.define('Message', {
@@ -24,7 +24,6 @@ const Message = sequelize.define('Message', {
 Message.belongsTo(User, { as: 'sender', foreignKey: 'senderId' });
 Message.belongsTo(User, { as: 'receiver', foreignKey: 'receiverId' });
 
-// Optional: Add reverse association on User for convenience
 User.hasMany(Message, { as: 'sentMessages', foreignKey: 'senderId' });
 User.hasMany(Message, { as: 'receivedMessages', foreignKey: 'receiverId' });
 
