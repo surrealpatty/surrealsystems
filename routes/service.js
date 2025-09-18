@@ -1,96 +1,75 @@
-const API_URL = 'https://codecrowds.onrender.com';
-const token = localStorage.getItem('token');
-const userId = localStorage.getItem('userId');
-const servicesList = document.getElementById('servicesList');
+const express = require('express');
+const router = express.Router();
+const { Service, User } = require('../models'); // Sequelize models
+const authenticateToken = require('../middlewares/authenticateToken');
 
-if (!token) {
-    window.location.href = 'index.html';
-}
+// Get all services
+router.get('/', authenticateToken, async (req, res) => {
+  try {
+    const services = await Service.findAll({
+      include: [{ model: User, attributes: ['id', 'username'] }],
+    });
+    res.json(services);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch services' });
+  }
+});
 
-// ---------- Load Services ----------
-async function loadServices() {
-    try {
-        const res = await fetch(`${API_URL}/services`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+// Create a new service
+router.post('/', authenticateToken, async (req, res) => {
+  const { title, description, price } = req.body;
+  try {
+    const service = await Service.create({
+      title,
+      description,
+      price,
+      userId: req.user.id, // From JWT
+    });
+    res.status(201).json(service);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create service' });
+  }
+});
 
-        if (!res.ok) throw new Error('Failed to fetch services');
+// Update a service
+router.put('/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const { title, description, price } = req.body;
 
-        const services = await res.json();
-        servicesList.innerHTML = '';
+  try {
+    const service = await Service.findByPk(id);
+    if (!service) return res.status(404).json({ error: 'Service not found' });
+    if (service.userId !== req.user.id) return res.status(403).json({ error: 'Not allowed' });
 
-        services.forEach(service => {
-            const postedBy = service.User?.username || 'Unknown';
-            const serviceOwnerId = service.User?.id || service.userId;
+    service.title = title;
+    service.description = description;
+    service.price = price;
+    await service.save();
 
-            const card = document.createElement('div');
-            card.className = 'service-card';
-            card.innerHTML = `
-                <div class="service-title">${service.title}</div>
-                <div class="service-description">${service.description}</div>
-                <div class="service-user">Posted by: ${postedBy}</div>
-                <div class="hire-form" style="display:none;">
-                    <textarea>Hi ${postedBy}, I'm interested in your service.</textarea>
-                    <button>Send Message</button>
-                    <p class="response"></p>
-                </div>
-            `;
+    res.json(service);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update service' });
+  }
+});
 
-            const form = card.querySelector(".hire-form");
-            const textarea = form.querySelector("textarea");
-            const button = form.querySelector("button");
-            const responseMsg = form.querySelector(".response");
+// Delete a service
+router.delete('/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
 
-            // Toggle message form on card click
-            card.addEventListener("click", e => {
-                if (!e.target.closest("button") && !e.target.closest("textarea")) {
-                    form.style.display = form.style.display === "flex" ? "none" : "flex";
-                }
-            });
+  try {
+    const service = await Service.findByPk(id);
+    if (!service) return res.status(404).json({ error: 'Service not found' });
+    if (service.userId !== req.user.id) return res.status(403).json({ error: 'Not allowed' });
 
-            // Send message
-            button.addEventListener("click", async e => {
-                e.stopPropagation();
-                const message = textarea.value.trim();
-                if (!message) return;
+    await service.destroy();
+    res.json({ message: 'Service deleted' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete service' });
+  }
+});
 
-                try {
-                    const res = await fetch(`${API_URL}/messages`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${token}`
-                        },
-                        body: JSON.stringify({
-                            senderId: userId,
-                            receiverId: serviceOwnerId,
-                            content: message
-                        })
-                    });
-
-                    const data = await res.json();
-                    if (res.ok) {
-                        responseMsg.textContent = "Message sent!";
-                        responseMsg.className = "response success";
-                        textarea.value = "";
-                        form.style.display = "none";
-                    } else {
-                        responseMsg.textContent = data.error || "Failed to send.";
-                        responseMsg.className = "response error";
-                    }
-                } catch (err) {
-                    responseMsg.textContent = "Network error: " + err.message;
-                    responseMsg.className = "response error";
-                }
-            });
-
-            servicesList.appendChild(card);
-        });
-    } catch (err) {
-        servicesList.innerHTML = `<p style="color:red">Failed to load services: ${err.message}</p>`;
-        console.error(err);
-    }
-}
-
-// ---------- INIT ----------
-window.onload = loadServices;
+module.exports = router;
