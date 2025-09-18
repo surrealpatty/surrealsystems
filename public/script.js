@@ -1,96 +1,41 @@
 const API_URL = 'https://codecrowds.onrender.com';
-const token = localStorage.getItem('token');
-const userId = localStorage.getItem('userId');
-const servicesList = document.getElementById('servicesList');
+const loginForm = document.getElementById('loginForm');
+const loginMessage = document.getElementById('loginMessage');
 
-if (!token) {
-  window.location.href = 'index.html';
-}
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-// ---------- Load Services ----------
-async function loadServices() {
-  try {
-    const res = await fetch(`${API_URL}/services`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
 
-    if (!res.ok) throw new Error('Failed to fetch services');
+    if (!email || !password) {
+        loginMessage.textContent = 'Please fill in all fields.';
+        loginMessage.style.color = 'red';
+        return;
+    }
 
-    const services = await res.json();
-    servicesList.innerHTML = '';
-
-    services.forEach((service) => {
-      const postedBy = service.User?.username || 'Unknown';
-      const serviceOwnerId = service.User?.id || service.userId;
-
-      const card = document.createElement('div');
-      card.className = 'service-card';
-      card.innerHTML = `
-        <div class="service-title">${service.title}</div>
-        <div class="service-description">${service.description}</div>
-        <div class="service-user">Posted by: ${postedBy}</div>
-        <div class="hire-form" style="display:none;">
-          <textarea>Hi ${postedBy}, I'm interested in your service.</textarea>
-          <button>Send Message</button>
-          <p class="response"></p>
-        </div>
-      `;
-
-      const form = card.querySelector('.hire-form');
-      const textarea = form.querySelector('textarea');
-      const button = form.querySelector('button');
-      const responseMsg = form.querySelector('.response');
-
-      // Toggle message form
-      card.addEventListener('click', (e) => {
-        if (!e.target.closest('button') && !e.target.closest('textarea')) {
-          form.style.display = form.style.display === 'flex' ? 'none' : 'flex';
-        }
-      });
-
-      // Send message
-      button.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const message = textarea.value.trim();
-        if (!message) return;
-
-        try {
-          const res = await fetch(`${API_URL}/messages`, {
+    try {
+        const res = await fetch(`${API_URL}/users/login`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              senderId: userId,
-              receiverId: serviceOwnerId,
-              content: message,
-            }),
-          });
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
 
-          const data = await res.json();
-          if (res.ok) {
-            responseMsg.textContent = 'Message sent!';
-            responseMsg.className = 'response success';
-            textarea.value = '';
-            form.style.display = 'none';
-          } else {
-            responseMsg.textContent = data.error || 'Failed to send.';
-            responseMsg.className = 'response error';
-          }
-        } catch (err) {
-          responseMsg.textContent = 'Network error: ' + err.message;
-          responseMsg.className = 'response error';
+        const data = await res.json();
+
+        if (!res.ok) {
+            loginMessage.textContent = data.error || 'Login failed';
+            loginMessage.style.color = 'red';
+        } else {
+            // Save token and userId
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('userId', data.user.id);
+
+            // Redirect to services or profile page
+            window.location.href = 'services.html';
         }
-      });
-
-      servicesList.appendChild(card);
-    });
-  } catch (err) {
-    servicesList.innerHTML = `<p style="color:red">Failed to load services: ${err.message}</p>`;
-    console.error(err);
-  }
-}
-
-// ---------- INIT ----------
-window.onload = loadServices;
+    } catch (err) {
+        loginMessage.textContent = 'Network error: ' + err.message;
+        loginMessage.style.color = 'red';
+    }
+});
