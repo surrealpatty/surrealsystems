@@ -12,7 +12,7 @@ require('./models/Message');
 // Routes
 const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/service');
-const messageRoutes = require('./routes/message'); // Make sure the file name is message.js
+const messageRoutes = require('./routes/message'); // Ensure file name is message.js
 
 const app = express();
 
@@ -26,9 +26,20 @@ app.use('/users', userRoutes);
 app.use('/services', serviceRoutes);
 app.use('/messages', messageRoutes);
 
-// Serve HTML pages
-app.get(['/index.html', '/signup.html', '/profile.html', '/services.html'], (req, res) => {
+// Serve HTML pages (include register.html)
+app.get([
+    '/index.html',
+    '/signup.html',
+    '/register.html',   // ✅ Add this
+    '/profile.html',
+    '/services.html'
+], (req, res) => {
     res.sendFile(path.join(__dirname, 'public', req.path));
+});
+
+// Catch-all route for main page
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // 404 for API routes
