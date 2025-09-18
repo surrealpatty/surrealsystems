@@ -1,119 +1,96 @@
-const express = require('express');
-const router = express.Router();
-const Service = require('../models/Service');
-const User = require('../models/User');
-const authenticateToken = require('../middlewares/authenticateToken');
+const API_URL = 'https://codecrowds.onrender.com';
+const token = localStorage.getItem('token');
+const userId = localStorage.getItem('userId');
+const servicesList = document.getElementById('servicesList');
 
-// GET all services with user info
-router.get('/', async (req, res) => {
+if (!token) {
+    window.location.href = 'index.html';
+}
+
+// ---------- Load Services ----------
+async function loadServices() {
     try {
-        const services = await Service.findAll({
-            include: { model: User, as: 'user', attributes: ['id', 'username'] }
+        const res = await fetch(`${API_URL}/services`, {
+            headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        // Flatten so frontend can use s.userId and s.username
-        const servicesWithUser = services.map(s => ({
-            id: s.id,
-            title: s.title,
-            description: s.description,
-            price: s.price,
-            userId: s.user.id,
-            username: s.user.username
-        }));
+        if (!res.ok) throw new Error('Failed to fetch services');
 
-        res.json(servicesWithUser);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to load services' });
-    }
-});
+        const services = await res.json();
+        servicesList.innerHTML = '';
 
-// POST a new service (requires token)
-router.post('/', authenticateToken, async (req, res) => {
-    const { title, description, price } = req.body;
-    const userId = req.user.id;
+        services.forEach(service => {
+            const postedBy = service.User?.username || 'Unknown';
+            const serviceOwnerId = service.User?.id || service.userId;
 
-    if (!title || !description || !price) {
-        return res.status(400).json({ error: 'All fields required' });
-    }
+            const card = document.createElement('div');
+            card.className = 'service-card';
+            card.innerHTML = `
+                <div class="service-title">${service.title}</div>
+                <div class="service-description">${service.description}</div>
+                <div class="service-user">Posted by: ${postedBy}</div>
+                <div class="hire-form" style="display:none;">
+                    <textarea>Hi ${postedBy}, I'm interested in your service.</textarea>
+                    <button>Send Message</button>
+                    <p class="response"></p>
+                </div>
+            `;
 
-    try {
-        const service = await Service.create({ title, description, price, userId });
+            const form = card.querySelector(".hire-form");
+            const textarea = form.querySelector("textarea");
+            const button = form.querySelector("button");
+            const responseMsg = form.querySelector(".response");
 
-        const createdService = await Service.findByPk(service.id, {
-            include: { model: User, as: 'user', attributes: ['id', 'username'] }
-        });
+            // Toggle message form on card click
+            card.addEventListener("click", e => {
+                if (!e.target.closest("button") && !e.target.closest("textarea")) {
+                    form.style.display = form.style.display === "flex" ? "none" : "flex";
+                }
+            });
 
-        res.status(201).json({
-            message: 'Service added successfully',
-            service: {
-                id: createdService.id,
-                title: createdService.title,
-                description: createdService.description,
-                price: createdService.price,
-                userId: createdService.user.id,
-                username: createdService.user.username
-            }
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to add service' });
-    }
-});
+            // Send message
+            button.addEventListener("click", async e => {
+                e.stopPropagation();
+                const message = textarea.value.trim();
+                if (!message) return;
 
-// PUT /services/:id
-router.put('/:id', authenticateToken, async (req, res) => {
-    const { title, description, price } = req.body;
-    const serviceId = req.params.id;
-    const userId = req.user.id;
+                try {
+                    const res = await fetch(`${API_URL}/messages`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            senderId: userId,
+                            receiverId: serviceOwnerId,
+                            content: message
+                        })
+                    });
 
-    try {
-        const service = await Service.findByPk(serviceId);
-        if (!service) return res.status(404).json({ error: 'Service not found' });
-        if (service.userId !== userId) return res.status(403).json({ error: 'Unauthorized' });
+                    const data = await res.json();
+                    if (res.ok) {
+                        responseMsg.textContent = "Message sent!";
+                        responseMsg.className = "response success";
+                        textarea.value = "";
+                        form.style.display = "none";
+                    } else {
+                        responseMsg.textContent = data.error || "Failed to send.";
+                        responseMsg.className = "response error";
+                    }
+                } catch (err) {
+                    responseMsg.textContent = "Network error: " + err.message;
+                    responseMsg.className = "response error";
+                }
+            });
 
-        service.title = title || service.title;
-        service.description = description || service.description;
-        service.price = price !== undefined ? price : service.price;
-        await service.save();
-
-        const updatedService = await Service.findByPk(service.id, {
-            include: { model: User, as: 'user', attributes: ['id', 'username'] }
-        });
-
-        res.json({
-            message: 'Service updated',
-            service: {
-                id: updatedService.id,
-                title: updatedService.title,
-                description: updatedService.description,
-                price: updatedService.price,
-                userId: updatedService.user.id,
-                username: updatedService.user.username
-            }
+            servicesList.appendChild(card);
         });
     } catch (err) {
+        servicesList.innerHTML = `<p style="color:red">Failed to load services: ${err.message}</p>`;
         console.error(err);
-        res.status(500).json({ error: 'Failed to update service' });
     }
-});
+}
 
-// DELETE /services/:id
-router.delete('/:id', authenticateToken, async (req, res) => {
-    const serviceId = req.params.id;
-    const userId = req.user.id;
-
-    try {
-        const service = await Service.findByPk(serviceId);
-        if (!service) return res.status(404).json({ error: 'Service not found' });
-        if (service.userId !== userId) return res.status(403).json({ error: 'Unauthorized' });
-
-        await service.destroy();
-        res.json({ message: 'Service deleted' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to delete service' });
-    }
-});
-
-module.exports = router;
+// ---------- INIT ----------
+window.onload = loadServices;
