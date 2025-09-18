@@ -1,33 +1,30 @@
-// ---------- Signup ----------
-const signupForm = document.getElementById('registerForm'); // your form has id="registerForm"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - CodeCrowds</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="signup-container">
+        <h1>Create an Account</h1>
+        <form id="registerForm">
+            <label for="registerUsername">Username</label>
+            <input id="registerUsername" type="text" name="username" required>
 
-if (signupForm) {
-    signupForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
+            <label for="registerEmail">Email</label>
+            <input id="registerEmail" type="email" name="email" required>
 
-        const username = document.getElementById('registerUsername').value.trim();
-        const email = document.getElementById('registerEmail').value.trim();
-        const password = document.getElementById('registerPassword').value.trim();
+            <label for="registerPassword">Password</label>
+            <input id="registerPassword" type="password" name="password" required>
 
-        try {
-            const res = await fetch(`${API_URL}/users/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, email, password })
-            });
+            <button type="submit">Sign Up</button>
+        </form>
+        <p id="registerMessage" class="error-message"></p>
+        <p>Already have an account? <a href="index.html">Login</a></p>
+    </div>
 
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Signup failed');
-
-            // Save token & user info
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('userId', data.user.id);
-            localStorage.setItem('username', data.user.username);
-
-            // Redirect to profile
-            window.location.href = 'profile.html';
-        } catch (err) {
-            document.getElementById('registerMessage').textContent = err.message;
-        }
-    });
-}
+    <script src="script.js"></script>
+</body>
+</html>

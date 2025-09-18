@@ -1,17 +1,55 @@
+// ================= API & Auth =================
 const API_URL = 'https://codecrowds.onrender.com';
 const token = localStorage.getItem('token');
 const userId = localStorage.getItem('userId');
+
+// ================= Signup Form =================
+const signupForm = document.getElementById('registerForm'); // form id="registerForm"
+if (signupForm) {
+    signupForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const username = document.getElementById('registerUsername').value.trim();
+        const email = document.getElementById('registerEmail').value.trim();
+        const password = document.getElementById('registerPassword').value.trim();
+
+        try {
+            const res = await fetch(`${API_URL}/users/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password })
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Signup failed');
+
+            // Save token & user info
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('userId', data.user.id);
+            localStorage.setItem('username', data.user.username);
+
+            // Redirect to profile
+            window.location.href = 'profile.html';
+        } catch (err) {
+            document.getElementById('registerMessage').textContent = err.message;
+        }
+    });
+}
+
+// ================= Service Listing =================
 const servicesList = document.getElementById('servicesList');
 
 // Redirect if not logged in
 if (!token && servicesList) window.location.href = 'index.html';
 
-// Load services
 async function loadServices() {
+    if (!servicesList) return;
+
     try {
         const res = await fetch(`${API_URL}/services`, {
             headers: { Authorization: `Bearer ${token}` }
         });
+
         if (!res.ok) throw new Error('Failed to fetch services');
 
         const services = await res.json();
@@ -19,7 +57,7 @@ async function loadServices() {
 
         services.forEach(service => {
             const postedBy = service.User?.username || 'Unknown';
-            const serviceOwnerId = service.User?.id || service.userId;
+            const serviceOwnerId = service.User?.id ?? service.userId;
 
             const card = document.createElement('div');
             card.className = 'service-card';
@@ -27,8 +65,8 @@ async function loadServices() {
                 <div class="service-title">${service.title}</div>
                 <div class="service-description">${service.description}</div>
                 <div class="service-user">Posted by: ${postedBy}</div>
-                <div class="hire-form" style="display:none;">
-                    <textarea>Hi ${postedBy}, I'm interested in your service.</textarea>
+                <div class="hire-form" style="display:none; flex-direction:column; gap:5px;">
+                    <textarea placeholder="Hi ${postedBy}, I'm interested in your service."></textarea>
                     <button>Send Message</button>
                     <p class="response"></p>
                 </div>
@@ -39,11 +77,17 @@ async function loadServices() {
             const button = form.querySelector('button');
             const responseMsg = form.querySelector('.response');
 
-            // Toggle form
+            // Toggle form visibility
             card.addEventListener('click', e => {
                 if (!e.target.closest('button') && !e.target.closest('textarea')) {
-                    form.style.display = form.style.display === 'flex' ? 'none' : 'flex';
+                    form.style.display = form.style.display === 'none' ? 'flex' : 'none';
                 }
+            });
+
+            // Clear response when typing
+            textarea.addEventListener('input', () => {
+                responseMsg.textContent = '';
+                responseMsg.className = 'response';
             });
 
             // Send message
@@ -61,6 +105,7 @@ async function loadServices() {
                         },
                         body: JSON.stringify({ receiverId: serviceOwnerId, content: message })
                     });
+
                     const data = await res.json();
 
                     if (res.ok) {
@@ -69,7 +114,7 @@ async function loadServices() {
                         textarea.value = '';
                         form.style.display = 'none';
                     } else {
-                        responseMsg.textContent = data.error || 'Failed to send.';
+                        responseMsg.textContent = data.error || 'Failed to send message';
                         responseMsg.className = 'response error';
                     }
                 } catch (err) {
@@ -86,4 +131,5 @@ async function loadServices() {
     }
 }
 
-window.onload = loadServices;
+// Load services when page loads
+window.addEventListener('load', loadServices);
