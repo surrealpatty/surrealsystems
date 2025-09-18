@@ -4,7 +4,11 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { sequelize } = require('./config/database'); // Make sure your sequelize export is correct
+const { sequelize } = require('./config/database'); 
+
+// Import models so Sequelize registers them
+require('./models/User');
+require('./models/Service');
 
 // Route imports
 const userRoutes = require('./routes/user');
@@ -41,7 +45,7 @@ app.use((req, res, next) => {
 // Start server after syncing DB
 const PORT = process.env.PORT || 3000;
 
-sequelize.sync({ alter: true }) // or { force: false } in production
+sequelize.sync({ alter: true }) 
     .then(() => { 
         console.log('✅ DB synced successfully'); 
         app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`)); 
