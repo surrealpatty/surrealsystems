@@ -6,12 +6,10 @@ const User = require('../models/User');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
-// Centralized middleware to authenticate JWT
+// JWT Middleware
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     if (!authHeader) return res.status(401).json({ error: 'No token provided' });
-
-    // Token must start with "Bearer "
     const token = authHeader.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
@@ -55,14 +53,12 @@ router.post('/', authenticateToken, async (req, res) => {
     if (!receiverId || !content) return res.status(400).json({ error: 'Receiver and content required' });
 
     try {
-        // Use req.user.id as senderId to prevent client-side spoofing
         const message = await Message.create({
             senderId: req.user.id,
             receiverId,
             content
         });
 
-        // Optionally fetch sender info for response
         const fullMessage = await Message.findByPk(message.id, {
             include: [{ model: User, as: 'sender', attributes: ['id', 'username'] }]
         });
