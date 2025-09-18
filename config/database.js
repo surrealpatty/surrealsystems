@@ -3,16 +3,13 @@ const { Sequelize } = require('sequelize');
 let sequelize;
 
 if (process.env.DATABASE_URL) {
-    // For deployment (e.g., Heroku or Render using PostgreSQL)
+    // For deployment (Postgres)
     sequelize = new Sequelize(process.env.DATABASE_URL, {
         dialect: 'postgres',
         protocol: 'postgres',
         logging: false,
         dialectOptions: {
-            ssl: {
-                require: true,
-                rejectUnauthorized: false
-            }
+            ssl: { require: true, rejectUnauthorized: false }
         }
     });
 } else if (process.env.DB_NAME && process.env.DB_USER) {
@@ -20,7 +17,7 @@ if (process.env.DATABASE_URL) {
     sequelize = new Sequelize(
         process.env.DB_NAME,
         process.env.DB_USER,
-        process.env.DB_PASSWORD,
+        process.env.DB_PASSWORD || '',
         {
             host: process.env.DB_HOST || 'localhost',
             dialect: 'mysql',
@@ -28,7 +25,7 @@ if (process.env.DATABASE_URL) {
         }
     );
 } else {
-    // Fallback: SQLite for testing or if no DB env set
+    // Fallback: SQLite
     sequelize = new Sequelize({
         dialect: 'sqlite',
         storage: './database.sqlite',
