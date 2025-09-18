@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database'); // ✅ correct named import
+const { sequelize } = require('../config/database');
 const User = require('./User');
 
 const Message = sequelize.define('Message', {
