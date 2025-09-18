@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { Service, User } = require('../models'); // Sequelize models
+const { Service, User } = require('../models'); // now works
 const authenticateToken = require('../middlewares/authenticateToken');
 
 // Get all services
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const services = await Service.findAll({
-      include: [{ model: User, attributes: ['id', 'username'] }],
+      include: [{ model: User, as: 'user', attributes: ['id', 'username'] }],
     });
     res.json(services);
   } catch (err) {
@@ -24,7 +24,7 @@ router.post('/', authenticateToken, async (req, res) => {
       title,
       description,
       price,
-      userId: req.user.id, // From JWT
+      userId: req.user.id,
     });
     res.status(201).json(service);
   } catch (err) {
