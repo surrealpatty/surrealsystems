@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database'); // ✅ correct import
+const { sequelize } = require('../config/database');
 const User = require('./User');
 
 const Service = sequelize.define('Service', {
@@ -20,8 +20,8 @@ const Service = sequelize.define('Service', {
     timestamps: true
 });
 
-// Association
-Service.belongsTo(User, { foreignKey: 'userId' });
-User.hasMany(Service, { foreignKey: 'userId' });
+// Associations
+Service.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(Service, { foreignKey: 'userId', as: 'services' });
 
 module.exports = Service;
