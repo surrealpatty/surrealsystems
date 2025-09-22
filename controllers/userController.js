@@ -1,21 +1,13 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
-// Use environment secret if available, else fallback
-const JWT_SECRET = process.env.JWT_SECRET || 's7n3!vZx@9qK4m1L';
-if (!process.env.JWT_SECRET) {
-    console.warn('⚠️ Warning: JWT_SECRET is not set in environment variables. Using fallback secret.');
-}
-
-// Register a new user
+// Register
 exports.registerUser = async (req, res) => {
     try {
         const { username, email, password } = req.body;
-
-        if (!username || !email || !password) {
-            return res.status(400).json({ error: 'All fields required' });
-        }
+        if (!username || !email || !password) return res.status(400).json({ error: 'All fields required' });
 
         if (await User.findOne({ where: { email } })) return res.status(400).json({ error: 'Email already in use' });
         if (await User.findOne({ where: { username } })) return res.status(400).json({ error: 'Username taken' });
@@ -23,20 +15,15 @@ exports.registerUser = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = await User.create({ username, email, password: hashedPassword });
 
-        const token = jwt.sign({ id: newUser.id, email: newUser.email }, JWT_SECRET, { expiresIn: '1h' });
-
-        res.status(201).json({
-            message: 'User created successfully',
-            token,
-            user: { id: newUser.id, username: newUser.username, email: newUser.email, description: newUser.description || '' }
-        });
+        const token = jwt.sign({ id: newUser.id, username: newUser.username }, JWT_SECRET, { expiresIn: '7d' });
+        res.status(201).json({ token, user: newUser });
     } catch (err) {
-        console.error('Register error:', err);
-        res.status(500).json({ error: 'Failed to register user' });
+        console.error(err);
+        res.status(500).json({ error: 'Registration failed' });
     }
 };
 
-// Login a user
+// Login
 exports.loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -45,34 +32,29 @@ exports.loginUser = async (req, res) => {
         const user = await User.findOne({ where: { email } });
         if (!user) return res.status(404).json({ error: 'User not found' });
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ error: 'Invalid password' });
+        const valid = await bcrypt.compare(password, user.password);
+        if (!valid) return res.status(400).json({ error: 'Invalid password' });
 
-        const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
-
-        res.json({
-            message: 'Login successful',
-            token,
-            user: { id: user.id, username: user.username, email: user.email, description: user.description || '' }
-        });
+        const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
+        res.json({ token, user });
     } catch (err) {
-        console.error('Login error:', err);
+        console.error(err);
         res.status(500).json({ error: 'Login failed' });
     }
 };
 
-// Get all users (protected)
+// Get all users
 exports.getUsers = async (req, res) => {
     try {
-        const users = await User.findAll();
+        const users = await User.findAll({ attributes: ['id', 'username', 'email', 'description'] });
         res.json(users);
     } catch (err) {
-        console.error('Get users error:', err);
-        res.status(500).json({ error: err.message });
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch users' });
     }
 };
 
-// Update profile (protected)
+// Update profile
 exports.updateProfile = async (req, res) => {
     try {
         const { username, description } = req.body;
@@ -83,13 +65,9 @@ exports.updateProfile = async (req, res) => {
         if (description) user.description = description;
 
         await user.save();
-
-        res.json({
-            message: 'Profile updated successfully',
-            user: { id: user.id, username: user.username, email: user.email, description: user.description || '' }
-        });
+        res.json({ user });
     } catch (err) {
-        console.error('Update profile error:', err);
+        console.error(err);
         res.status(500).json({ error: 'Failed to update profile' });
     }
 };
