@@ -1,6 +1,5 @@
 const { Sequelize } = require('sequelize');
 
-// Use environment variables
 const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,
@@ -8,11 +7,11 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT || 5432,
-    dialect: 'postgres',          // ← Change this to postgres
-    logging: console.log,         // Optional: logs SQL queries
+    dialect: 'postgres',
     dialectOptions: {
-      ssl: { rejectUnauthorized: false } // Required for Render Postgres
-    }
+      ssl: { rejectUnauthorized: false } // 🔑 Required for Render Postgres
+    },
+    logging: console.log, // optional, shows queries in console
   }
 );
 
