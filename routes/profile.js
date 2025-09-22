@@ -1,49 +1,77 @@
-const express = require('express');
-const router = express.Router();
-const { User } = require('../models'); // adjust the path if your User model is elsewhere
-const authenticateToken = require('../middlewares/authenticateToken');
+const API_URL = 'https://codecrowds.onrender.com';
 
-// =========================
-// GET a user's profile by ID
-// =========================
-router.get('/:id', authenticateToken, async (req, res) => {
+// Load user info from localStorage
+const userId = localStorage.getItem('userId');
+const usernameInput = document.getElementById('username');
+const descriptionInput = document.getElementById('description');
+const usernameDisplay = document.getElementById('usernameDisplay');
+
+usernameInput.value = localStorage.getItem('username') || '';
+descriptionInput.value = localStorage.getItem('description') || '';
+usernameDisplay.textContent = localStorage.getItem('username') || 'User';
+
+// Load user's services
+async function loadUserServices() {
+    const list = document.getElementById('services-list');
+    if (!userId) {
+        list.innerHTML = '<p class="error">No user logged in</p>';
+        return;
+    }
+
     try {
-        const user = await User.findByPk(req.params.id, {
-            attributes: ['id', 'username', 'email', 'description'] // only return safe fields
+        const res = await fetch(`${API_URL}/services`);
+        const services = await res.json();
+
+        list.innerHTML = '';
+        services
+            .filter(s => s.User?.id == userId) // == because localStorage stores strings
+            .forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'service-card';
+                div.innerHTML = `
+                    <h3>${s.title}</h3>
+                    <p>${s.description}</p>
+                    <p><strong>Price:</strong> $${s.price}</p>
+                `;
+                list.appendChild(div);
+            });
+    } catch (err) {
+        console.error(err);
+        list.innerHTML = '<p class="error">Failed to load services</p>';
+    }
+}
+
+loadUserServices();
+
+// Handle profile update
+document.getElementById('profileForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (!userId) return alert("No user logged in!");
+
+    const username = usernameInput.value.trim();
+    const description = descriptionInput.value.trim();
+
+    if (!username) return alert('Username required');
+
+    try {
+        const res = await fetch(`${API_URL}/users/${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, description }),
         });
+        const data = await res.json();
 
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+        if (res.ok) {
+            alert('Profile updated successfully!');
+            localStorage.setItem('username', data.user.username);
+            localStorage.setItem('description', data.user.description || '');
+            usernameDisplay.textContent = data.user.username;
+        } else {
+            alert(data.error || 'Failed to update profile');
         }
-
-        res.json(user);
     } catch (err) {
-        console.error('Error fetching profile:', err);
-        res.status(500).json({ error: 'Server error' });
+        console.error(err);
+        alert('Network error: ' + err.message);
     }
 });
-
-// =========================
-// UPDATE a user's profile by ID
-// =========================
-router.put('/:id', authenticateToken, async (req, res) => {
-    try {
-        const { username, description } = req.body;
-
-        const user = await User.findByPk(req.params.id);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        user.username = username || user.username;
-        user.description = description || user.description;
-        await user.save();
-
-        res.json({ message: 'Profile updated successfully', user });
-    } catch (err) {
-        console.error('Error updating profile:', err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-module.exports = router;
