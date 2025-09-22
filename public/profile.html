@@ -14,6 +14,7 @@ body, html {
     color: #fff;
     min-height: 100%;
 }
+
 .container {
     max-width: 900px;
     width: 90%;
@@ -27,28 +28,36 @@ body, html {
     gap: 2rem;
     color: #333;
 }
+
 h1.profile-name {
     color: #4e54c8;
     text-align: center;
     margin-bottom: 1rem;
 }
+
 #profileForm input, #profileForm textarea {
     width: 100%;
     padding: 12px;
     margin: 8px 0;
     border-radius: 8px;
-    border: 1px solid #ccc;
     font-size: 1rem;
     box-sizing: border-box;
-    background: #fff;
     color: #333;
 }
-#profileForm textarea { resize: vertical; }
-.editable {
-    border: 2px solid #4e54c8;
-    padding: 10px;
-    border-radius: 8px;
+
+#description {
+    border: none;          
+    background: #f7f7f7;   
+    resize: vertical;
+    min-height: 80px;
+    transition: border 0.3s, background 0.3s;
 }
+
+#description.editable {
+    border: 1px solid #4e54c8;  
+    background: #fff;            
+}
+
 button {
     padding: 12px 25px;
     font-size: 1rem;
@@ -61,11 +70,13 @@ button {
     transition: 0.3s;
 }
 button:hover { background-color: #3b40a1; }
+
 .services-section, .messages-section {
     display: grid;
     grid-template-columns: 1fr;
     gap: 20px;
 }
+
 .add-service-card, .service-card, .message-card, .inbox-card {
     background: #fff;
     border-radius: 12px;
@@ -75,8 +86,10 @@ button:hover { background-color: #3b40a1; }
     color: #333;
 }
 .add-service-card:hover, .service-card:hover, .message-card:hover, .inbox-card:hover { transform: translateY(-5px); }
+
 .add-service-card h3, .service-card h3, .message-card h3, .inbox-card h3 { margin-bottom: 15px; color: #4e54c8; }
 .service-card p, .message-card p { margin: 0; color: #555; }
+
 .service-card .edit-btn, .service-card .delete-btn {
     color: #fff;
     background-color: #4e54c8;
@@ -88,6 +101,7 @@ button:hover { background-color: #3b40a1; }
     transition: 0.3s;
 }
 .service-card .edit-btn:hover, .service-card .delete-btn:hover { background-color: #3b40a1; }
+
 .logout-btn {
     display: block;
     max-width: 200px;
@@ -96,11 +110,13 @@ button:hover { background-color: #3b40a1; }
     background-color: #4e54c8;
 }
 .logout-btn:hover { background-color: #3b40a1; }
+
 #goToServicesBtn {
     background-color: #3b40a1;
     margin-top: 10px;
 }
 #goToServicesBtn:hover { background-color: #008ecc; }
+
 /* Inbox scrollable */
 #messages-list {
     max-height: 300px;
@@ -109,6 +125,8 @@ button:hover { background-color: #3b40a1; }
     flex-direction: column;
     gap: 10px;
 }
+
+/* Individual message card inside inbox */
 .message-card {
     background: #f7f7f7;
     padding: 15px;
@@ -116,6 +134,7 @@ button:hover { background-color: #3b40a1; }
     color: #333;
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
+
 @media (max-width: 480px) {
     .container { padding: 2rem 1rem; }
 }
@@ -161,23 +180,24 @@ button:hover { background-color: #3b40a1; }
 <script>
 const API_URL = 'https://codecrowds.onrender.com';
 
-// Token and User
-function getToken() { const t = localStorage.getItem('token'); if (!t) { window.location.href='index.html'; return null; } return t; }
-function getUserId() { const id = localStorage.getItem('userId'); if (!id) { window.location.href='index.html'; return null; } return id; }
-
-// Profile
-const descInput = document.getElementById('description');
 const usernameDisplay = document.getElementById('usernameDisplay');
+const descInput = document.getElementById('description');
 const editBtn = document.getElementById('editProfileBtn');
 
-descInput.value = localStorage.getItem('description') || '';
-usernameDisplay.textContent = localStorage.getItem('username') || 'User';
-
 let editing = false;
+
+function getToken() {
+    return localStorage.getItem('token') || null;
+}
+function getUserId() {
+    return localStorage.getItem('userId') || null;
+}
+
+// ---------- Profile ----------
 editBtn.addEventListener('click', async () => {
     const token = getToken();
     const userId = getUserId();
-    if (!token || !userId) return;
+    if (!token || !userId) return alert("Not logged in");
 
     if (!editing) {
         descInput.readOnly = false;
@@ -186,141 +206,143 @@ editBtn.addEventListener('click', async () => {
         editing = true;
     } else {
         const newDesc = descInput.value.trim();
+
         try {
             const res = await fetch(`${API_URL}/users/${userId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type':'application/json','Authorization':`Bearer ${token}` },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ description: newDesc })
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Update failed');
+            if (!res.ok) throw new Error(data.error || 'Profile update failed');
 
             localStorage.setItem('description', data.user.description || '');
-            descInput.value = data.user.description || '';
             descInput.readOnly = true;
             descInput.classList.remove('editable');
             editBtn.textContent = 'Edit Profile';
             editing = false;
             alert('Profile updated successfully!');
-        } catch(err){ console.error(err); alert('Error: '+err.message);}
+        } catch (err) {
+            console.error(err);
+            alert('Error saving profile: ' + err.message);
+        }
     }
 });
 
-// Load messages
-const messagesList = document.getElementById('messages-list');
-async function loadMessages(){
-    const token = getToken();
-    const userId = getUserId();
-    if(!token||!userId) return;
-    try{
-        const res = await fetch(`${API_URL}/messages?receiverId=${userId}`, { headers:{ 'Authorization':`Bearer ${token}` } });
-        const text = await res.text();
-        let messages;
-        try{ messages = JSON.parse(text); } catch{ messages=[]; }
-        messagesList.innerHTML = '';
-        if(messages.length===0){ messagesList.innerHTML='<p>No messages</p>'; return; }
-        messages.forEach(msg=>{
-            const div = document.createElement('div');
-            div.className='message-card';
-            div.innerHTML=`<h4>From: ${msg.senderName||'User'}</h4>
-                           <p>${msg.content}</p>
-                           <p><small>${new Date(msg.createdAt).toLocaleString()}</small></p>`;
-            messagesList.appendChild(div);
-        });
-    }catch(err){ console.error(err); messagesList.innerHTML=`<p class="error">Failed to load messages: ${err.message}</p>`;}
-}
-
-// Services
+// ---------- Services ----------
 const servicesList = document.getElementById('services-list');
 const serviceForm = document.getElementById('serviceForm');
 
-async function loadServices(){
+async function loadServices() {
     const token = getToken();
     const userId = getUserId();
-    if(!token||!userId) return;
-    try{
-        const res = await fetch(`${API_URL}/services`, { headers:{ 'Authorization':`Bearer ${token}` } });
+    if (!token || !userId) return;
+
+    try {
+        const res = await fetch(`${API_URL}/services`, { headers: { 'Authorization': `Bearer ${token}` } });
         const services = await res.json();
-        servicesList.innerHTML='';
-        services.filter(s=>s.userId==userId).forEach(s=>{
-            const div=document.createElement('div');
-            div.className='service-card';
-            div.innerHTML=`<h3>${s.title}</h3><p>${s.description}</p><p><strong>Price:</strong> $${s.price}</p>
-                           <button class="edit-btn">Edit</button> <button class="delete-btn">Delete</button>`;
-            div.querySelector('.edit-btn').addEventListener('click',()=>editService(s));
-            div.querySelector('.delete-btn').addEventListener('click',()=>deleteService(s.id));
+        servicesList.innerHTML = '';
+        services.filter(s => s.userId == userId).forEach(s => {
+            const div = document.createElement('div');
+            div.className = 'service-card';
+            div.innerHTML = `<h3>${s.title}</h3><p>${s.description}</p><p><strong>Price:</strong> $${s.price}</p>
+                <button class="edit-btn">Edit</button> <button class="delete-btn">Delete</button>`;
+            div.querySelector('.edit-btn').addEventListener('click', () => editService(s));
+            div.querySelector('.delete-btn').addEventListener('click', () => deleteService(s.id));
             servicesList.appendChild(div);
         });
-    }catch(err){ console.error(err); servicesList.innerHTML=`<p class="error">Failed to load services: ${err.message}</p>`;}
+    } catch (err) {
+        console.error(err);
+        servicesList.innerHTML = `<p class="error">Failed to load services: ${err.message}</p>`;
+    }
 }
 
-serviceForm.addEventListener('submit', async e=>{
+serviceForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const token = getToken();
     const userId = getUserId();
-    if(!token||!userId) return;
+    if (!token || !userId) return;
+
     const title = document.getElementById('service-title').value.trim();
     const description = document.getElementById('service-description').value.trim();
     const price = parseFloat(document.getElementById('service-price').value);
-    if(!title||!description||!price) return alert('All fields required');
-    try{
+
+    if (!title || !description || !price) return alert('All fields are required');
+
+    try {
         const res = await fetch(`${API_URL}/services`, {
-            method:'POST',
-            headers:{ 'Content-Type':'application/json','Authorization':`Bearer ${token}` },
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ title, description, price, userId })
         });
         const data = await res.json();
-        if(!res.ok) throw new Error(data.error||'Failed to add service');
+        if (!res.ok) throw new Error(data.error || 'Failed to add service');
+
         serviceForm.reset();
         loadServices();
-    }catch(err){ console.error(err); alert('Error adding service: '+err.message);}
+    } catch (err) {
+        console.error(err);
+        alert('Error adding service: ' + err.message);
+    }
 });
 
-async function deleteService(id){
+async function deleteService(id) {
     const token = getToken();
-    if(!token) return;
-    if(!confirm('Are you sure you want to delete this service?')) return;
-    try{
-        const res = await fetch(`${API_URL}/services/${id}`,{ method:'DELETE', headers:{ 'Authorization':`Bearer ${token}` } });
-        if(!res.ok) throw new Error('Failed to delete service');
+    if (!token) return;
+    if (!confirm('Are you sure you want to delete this service?')) return;
+
+    try {
+        const res = await fetch(`${API_URL}/services/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        if (!res.ok) throw new Error('Failed to delete service');
         loadServices();
-    }catch(err){ console.error(err); alert('Error deleting service: '+err.message);}
+    } catch (err) {
+        console.error(err);
+        alert('Error deleting service: ' + err.message);
+    }
 }
 
-function editService(service){
-    const newTitle=prompt('Edit Title',service.title);
-    const newDesc=prompt('Edit Description',service.description);
-    const newPrice=prompt('Edit Price',service.price);
-    if(newTitle&&newDesc&&newPrice) updateService(service.id,newTitle,newDesc,newPrice);
+function editService(service) {
+    const newTitle = prompt('Edit Title', service.title);
+    const newDesc = prompt('Edit Description', service.description);
+    const newPrice = prompt('Edit Price', service.price);
+
+    if (newTitle && newDesc && newPrice) updateService(service.id, newTitle, newDesc, newPrice);
 }
 
-async function updateService(id,title,description,price){
+async function updateService(id, title, description, price) {
     const token = getToken();
-    try{
+    try {
         const res = await fetch(`${API_URL}/services/${id}`, {
-            method:'PUT',
-            headers:{ 'Content-Type':'application/json','Authorization':`Bearer ${token}` },
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ title, description, price })
         });
-        if(!res.ok) throw new Error('Failed to update service');
+        if (!res.ok) throw new Error('Failed to update service');
         loadServices();
-    }catch(err){ console.error(err); alert('Error updating service: '+err.message);}
+    } catch (err) {
+        console.error(err);
+        alert('Error updating service: ' + err.message);
+    }
 }
 
-// Logout
-document.getElementById('logoutBtn').addEventListener('click',()=>{
+// ---------- Logout ----------
+document.getElementById('logoutBtn').addEventListener('click', () => {
     localStorage.clear();
-    window.location.href='index.html';
+    window.location.href = 'index.html';
 });
 
-// Go to services page
-document.getElementById('goToServicesBtn').addEventListener('click',()=>{
-    window.location.href='services.html';
+// ---------- Go to Services Page ----------
+document.getElementById('goToServicesBtn').addEventListener('click', () => {
+    window.location.href = 'services.html';
 });
 
-// Load
-window.onload=()=>{
-    loadMessages();
+// Load data on page load
+window.onload = () => {
+    const username = localStorage.getItem('username');
+    const description = localStorage.getItem('description');
+    if (username) usernameDisplay.textContent = username;
+    if (description) descInput.value = description;
+
     loadServices();
 };
 </script>
