@@ -5,6 +5,128 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Profile - CodeCrowds</title>
 <link rel="stylesheet" href="style.css">
+<style>
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #4e54c8, #00aaff);
+    color: #fff;
+    min-height: 100%;
+}
+
+.container {
+    max-width: 900px;
+    width: 90%;
+    padding: 2.5rem 2rem;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    margin: 50px auto 2rem auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    color: #333;
+}
+
+h1.profile-name {
+    color: #4e54c8;
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+#profileForm input, #profileForm textarea {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    box-sizing: border-box;
+    background: #fff;
+    color: #333;
+}
+#profileForm textarea { resize: vertical; }
+
+button {
+    padding: 12px 25px;
+    font-size: 1rem;
+    color: #fff;
+    background-color: #4e54c8;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: 0.3s;
+}
+button:hover { background-color: #3b40a1; }
+
+.services-section, .messages-section {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+.add-service-card, .service-card, .message-card, .inbox-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    transition: transform 0.2s;
+    color: #333;
+}
+.add-service-card:hover, .service-card:hover, .message-card:hover, .inbox-card:hover { transform: translateY(-5px); }
+
+.add-service-card h3, .service-card h3, .message-card h3, .inbox-card h3 { margin-bottom: 15px; color: #4e54c8; }
+.service-card p, .message-card p { margin: 0; color: #555; }
+
+.service-card .edit-btn, .service-card .delete-btn {
+    color: #fff;
+    background-color: #4e54c8;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 8px 16px;
+    margin-top: 10px;
+    transition: 0.3s;
+}
+.service-card .edit-btn:hover, .service-card .delete-btn:hover { background-color: #3b40a1; }
+
+.logout-btn {
+    display: block;
+    max-width: 200px;
+    margin: 30px auto 50px auto;
+    color: #fff;
+    background-color: #4e54c8;
+}
+.logout-btn:hover { background-color: #3b40a1; }
+
+#goToServicesBtn {
+    background-color: #3b40a1;
+    margin-top: 10px;
+}
+#goToServicesBtn:hover { background-color: #008ecc; }
+
+#messages-list {
+    max-height: 300px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.message-card {
+    background: #f7f7f7;
+    padding: 15px;
+    border-radius: 10px;
+    color: #333;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 480px) {
+    .container { padding: 2rem 1rem; }
+}
+</style>
 </head>
 <body>
 
@@ -27,7 +149,7 @@
         </div>
     </section>
 
-    <!-- Services Section -->
+    <!-- Add & Manage Services -->
     <section class="services-section">
         <form id="serviceForm" class="add-service-card">
             <h3>Add New Service</h3>
