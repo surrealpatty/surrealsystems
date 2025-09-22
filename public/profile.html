@@ -25,16 +25,14 @@ body, html {
     margin: 50px auto 2rem auto;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 2rem;
     color: #333;
-    text-align: center;
 }
 
-h1.profile-name { color: #4e54c8; margin-bottom: 1rem; }
-
-#descriptionDisplay {
-    font-size: 1.1rem;
-    margin-bottom: 10px;
+h1.profile-name {
+    color: #4e54c8;
+    text-align: center;
+    margin-bottom: 0.5rem;
 }
 
 #profileForm input, #profileForm textarea {
@@ -63,6 +61,37 @@ button {
 }
 button:hover { background-color: #3b40a1; }
 
+.services-section, .messages-section {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+.add-service-card, .service-card, .message-card, .inbox-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    transition: transform 0.2s;
+    color: #333;
+}
+.add-service-card:hover, .service-card:hover, .message-card:hover, .inbox-card:hover { transform: translateY(-5px); }
+
+.add-service-card h3, .service-card h3, .message-card h3, .inbox-card h3 { margin-bottom: 15px; color: #4e54c8; }
+.service-card p, .message-card p { margin: 0; color: #555; }
+
+.service-card .edit-btn, .service-card .delete-btn {
+    color: #fff;
+    background-color: #4e54c8;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 8px 16px;
+    margin-top: 10px;
+    transition: 0.3s;
+}
+.service-card .edit-btn:hover, .service-card .delete-btn:hover { background-color: #3b40a1; }
+
 .logout-btn {
     display: block;
     max-width: 200px;
@@ -71,19 +100,67 @@ button:hover { background-color: #3b40a1; }
     background-color: #4e54c8;
 }
 .logout-btn:hover { background-color: #3b40a1; }
+
+#goToServicesBtn {
+    background-color: #3b40a1;
+    margin-top: 10px;
+}
+#goToServicesBtn:hover { background-color: #008ecc; }
+
+#messages-list {
+    max-height: 300px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.message-card {
+    background: #f7f7f7;
+    padding: 15px;
+    border-radius: 10px;
+    color: #333;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 480px) {
+    .container { padding: 2rem 1rem; }
+}
 </style>
 </head>
 <body>
 
 <div class="container">
     <h1 class="profile-name" id="usernameDisplay">User</h1>
-    <p id="descriptionDisplay">No description yet</p>
 
+    <!-- Profile Info -->
     <form id="profileForm">
-        <input id="username" type="text" placeholder="Username" readonly>
         <textarea id="description" placeholder="About Me" readonly></textarea>
         <button type="button" id="editProfileBtn">Edit Profile</button>
     </form>
+
+    <!-- Inbox Section -->
+    <section class="messages-section">
+        <div class="inbox-card">
+            <h3>Inbox</h3>
+            <div id="messages-list">
+                <p>No messages</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Add & Manage Services -->
+    <section class="services-section">
+        <form id="serviceForm" class="add-service-card">
+            <h3>Add New Service</h3>
+            <input id="service-title" placeholder="Title" required>
+            <textarea id="service-description" placeholder="Description" required></textarea>
+            <input id="service-price" type="number" placeholder="Price" required>
+            <button type="submit">Add Service</button>
+            <button type="button" id="goToServicesBtn">Go to Services Page</button>
+        </form>
+        <div id="services-list"></div>
+    </section>
 
     <button class="logout-btn" id="logoutBtn">Logout</button>
 </div>
