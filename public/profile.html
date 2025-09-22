@@ -27,26 +27,30 @@ body, html {
     flex-direction: column;
     gap: 2rem;
     color: #333;
+    text-align: center;
 }
 
-h1.profile-name {
+#usernameDisplay {
     color: #4e54c8;
-    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+#descriptionDisplay {
+    font-size: 1.1rem;
     margin-bottom: 1rem;
 }
 
-#profileForm input, #profileForm textarea {
+#descriptionInput {
     width: 100%;
-    padding: 12px;
-    margin: 8px 0;
+    padding: 10px;
+    margin-bottom: 10px;
+    display: none;
     border-radius: 8px;
     border: 1px solid #ccc;
     font-size: 1rem;
     box-sizing: border-box;
-    background: #fff;
-    color: #333;
 }
-#profileForm textarea { resize: vertical; }
 
 button {
     padding: 12px 25px;
@@ -56,7 +60,7 @@ button {
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    margin-top: 10px;
+    margin-top: 5px;
     transition: 0.3s;
 }
 button:hover { background-color: #3b40a1; }
@@ -132,14 +136,13 @@ button:hover { background-color: #3b40a1; }
 <body>
 
 <div class="container">
-    <h1 class="profile-name" id="usernameDisplay">User</h1>
-
     <!-- Profile Info -->
-    <form id="profileForm">
-        <input id="username" type="text" placeholder="Username" readonly>
-        <textarea id="description" placeholder="About Me" readonly></textarea>
+    <div class="profile-header">
+        <h1 id="usernameDisplay">User</h1>
+        <p id="descriptionDisplay">About Me</p>
+        <textarea id="descriptionInput" placeholder="About Me"></textarea>
         <button type="button" id="editProfileBtn">Edit Profile</button>
-    </form>
+    </div>
 
     <!-- Inbox Section -->
     <section class="messages-section">
@@ -151,7 +154,7 @@ button:hover { background-color: #3b40a1; }
         </div>
     </section>
 
-    <!-- Add & Manage Services -->
+    <!-- Services Section -->
     <section class="services-section">
         <form id="serviceForm" class="add-service-card">
             <h3>Add New Service</h3>

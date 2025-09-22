@@ -1,80 +1,77 @@
 const API_URL = 'https://codecrowds.onrender.com';
 
-// ---------- Helpers ----------
+// Utility
 function getToken() {
     const token = localStorage.getItem('token');
     if (!token) { window.location.href = 'index.html'; return null; }
     return token;
 }
-
 function getUserId() {
     const userId = localStorage.getItem('userId');
     if (!userId) { window.location.href = 'index.html'; return null; }
     return userId;
 }
 
-// ---------- Profile ----------
-const usernameInput = document.getElementById('username');
-const descInput = document.getElementById('description');
+// Profile Elements
 const usernameDisplay = document.getElementById('usernameDisplay');
+const descriptionDisplay = document.getElementById('descriptionDisplay');
+const descriptionInput = document.getElementById('descriptionInput');
 const editBtn = document.getElementById('editProfileBtn');
 
 let editing = false;
 
-// Load profile from backend
+// Load profile from API
 async function loadProfile() {
     const token = getToken();
     const userId = getUserId();
     if (!token || !userId) return;
 
     try {
-        const res = await fetch(`${API_URL}/profile/${userId}`, {
+        const res = await fetch(`${API_URL}/users/${userId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
 
-        usernameInput.value = data.username;
-        descInput.value = data.description || '';
-        usernameDisplay.textContent = data.username;
+        usernameDisplay.textContent = data.username || 'User';
+        descriptionDisplay.textContent = data.description || 'No description yet';
+        descriptionInput.value = data.description || '';
     } catch (err) {
-        console.error('Error loading profile:', err);
+        console.error(err);
     }
 }
 
-// Edit / Save profile
+// Toggle edit/save
 editBtn.addEventListener('click', async () => {
     const token = getToken();
     const userId = getUserId();
     if (!token || !userId) return;
 
     if (!editing) {
-        usernameInput.readOnly = false;
-        descInput.readOnly = false;
+        // Enter edit mode
+        descriptionDisplay.style.display = 'none';
+        descriptionInput.style.display = 'block';
         editBtn.textContent = 'Save Profile';
         editing = true;
     } else {
-        const newUsername = usernameInput.value.trim();
-        const newDesc = descInput.value.trim();
-        if (!newUsername) return alert('Username cannot be empty');
-
+        // Save changes
+        const newDesc = descriptionInput.value.trim();
         try {
-            const res = await fetch(`${API_URL}/profile/${userId}`, {
+            const res = await fetch(`${API_URL}/users/${userId}`, {
                 method: 'PUT',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` 
+                    'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ username: newUsername, description: newDesc })
+                body: JSON.stringify({ description: newDesc })
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Profile update failed');
 
-            usernameInput.readOnly = true;
-            descInput.readOnly = true;
+            descriptionDisplay.textContent = data.user.description || 'No description yet';
+            descriptionDisplay.style.display = 'block';
+            descriptionInput.style.display = 'none';
             editBtn.textContent = 'Edit Profile';
             editing = false;
-
-            usernameDisplay.textContent = data.user.username;
             alert('Profile updated successfully!');
         } catch (err) {
             console.error(err);
@@ -93,15 +90,16 @@ async function loadServices() {
     if (!token || !userId) return;
 
     try {
-        const res = await fetch(`${API_URL}/services`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const res = await fetch(`${API_URL}/services`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
         const services = await res.json();
         servicesList.innerHTML = '';
         services.filter(s => s.userId == userId).forEach(s => {
             const div = document.createElement('div');
             div.className = 'service-card';
             div.innerHTML = `<h3>${s.title}</h3><p>${s.description}</p><p><strong>Price:</strong> $${s.price}</p>
-                             <button class="edit-btn">Edit</button> 
-                             <button class="delete-btn">Delete</button>`;
+                <button class="edit-btn">Edit</button> <button class="delete-btn">Delete</button>`;
             div.querySelector('.edit-btn').addEventListener('click', () => editService(s));
             div.querySelector('.delete-btn').addEventListener('click', () => deleteService(s.id));
             servicesList.appendChild(div);
@@ -112,7 +110,6 @@ async function loadServices() {
     }
 }
 
-// Add, edit, delete services
 serviceForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const token = getToken();
@@ -122,18 +119,18 @@ serviceForm.addEventListener('submit', async (e) => {
     const title = document.getElementById('service-title').value.trim();
     const description = document.getElementById('service-description').value.trim();
     const price = parseFloat(document.getElementById('service-price').value);
+
     if (!title || !description || !price) return alert('All fields are required');
 
     try {
         const res = await fetch(`${API_URL}/services`, {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` 
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ title, description, price, userId })
         });
-        if (!res.ok) throw new Error('Failed to add service');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to add service');
+
         serviceForm.reset();
         loadServices();
     } catch (err) {
@@ -148,9 +145,9 @@ async function deleteService(id) {
     if (!confirm('Are you sure you want to delete this service?')) return;
 
     try {
-        const res = await fetch(`${API_URL}/services/${id}`, { 
-            method: 'DELETE', 
-            headers: { 'Authorization': `Bearer ${token}` } 
+        const res = await fetch(`${API_URL}/services/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to delete service');
         loadServices();
@@ -164,6 +161,7 @@ function editService(service) {
     const newTitle = prompt('Edit Title', service.title);
     const newDesc = prompt('Edit Description', service.description);
     const newPrice = prompt('Edit Price', service.price);
+
     if (newTitle && newDesc && newPrice) updateService(service.id, newTitle, newDesc, newPrice);
 }
 
@@ -195,12 +193,17 @@ async function loadMessages() {
         const res = await fetch(`${API_URL}/messages?receiverId=${userId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        const messages = await res.json();
+        const text = await res.text();
+        let messages;
+        try { messages = JSON.parse(text); } 
+        catch { messages = []; }
+
         messagesList.innerHTML = '';
         if (messages.length === 0) {
             messagesList.innerHTML = '<p>No messages</p>';
             return;
         }
+
         messages.forEach(msg => {
             const div = document.createElement('div');
             div.className = 'message-card';
@@ -226,7 +229,7 @@ document.getElementById('goToServicesBtn').addEventListener('click', () => {
     window.location.href = 'services.html';
 });
 
-// ---------- On page load ----------
+// Load on page load
 window.onload = () => {
     loadProfile();
     loadMessages();
