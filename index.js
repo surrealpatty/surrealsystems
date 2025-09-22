@@ -4,15 +4,15 @@ const cors = require('cors');
 const path = require('path');
 const { sequelize } = require('./config/database');
 
-// Import models to initialize with Sequelize
+// Models
 require('./models/User');
 require('./models/Service');
 require('./models/Message');
 
-// Import routes
+// Routes
 const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/service');
-const messageRoutes = require('./routes/message');
+const messageRoutes = require('./routes/message'); // Make sure file name is message.js
 
 const app = express();
 
@@ -20,15 +20,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve static files
+// Serve all files inside 'public' folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API routes
+// API Routes
 app.use('/users', userRoutes);
 app.use('/services', serviceRoutes);
 app.use('/messages', messageRoutes);
 
-// Root route
+// Root route -> serves index.html
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -46,8 +46,10 @@ const PORT = process.env.PORT || 3000;
 
 sequelize.sync({ alter: true })
     .then(() => {
-        console.log('✅ Database synced');
-        app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+        console.log('✅ DB synced');
+        app.listen(PORT, () => {
+            console.log(`🚀 Server running on port ${PORT}`);
+        });
     })
     .catch(err => {
         console.error('❌ DB sync failed', err);
