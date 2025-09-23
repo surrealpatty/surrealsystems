@@ -21,13 +21,13 @@ function authenticateToken(req, res, next) {
     }
 }
 
-// GET messages
+// GET messages for logged-in user
 router.get('/', authenticateToken, async (req, res) => {
     try {
         const messages = await Message.findAll({
             where: { receiverId: req.user.id },
-            include: [{ model: User, as: 'sender', attributes: ['id','username'] }],
-            order: [['createdAt','DESC']]
+            include: [{ model: User, as: 'sender', attributes: ['id', 'username'] }],
+            order: [['createdAt', 'DESC']]
         });
         res.json(messages);
     } catch (err) {
@@ -36,14 +36,24 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-// POST message
+// POST send message
 router.post('/', authenticateToken, async (req, res) => {
     const { receiverId, content } = req.body;
-    if (!receiverId || !content) return res.status(400).json({ error: 'Receiver and content required' });
+    if (!receiverId || !content) {
+        return res.status(400).json({ error: 'Receiver and content required' });
+    }
 
     try {
-        const message = await Message.create({ senderId: req.user.id, receiverId, content });
-        const fullMessage = await Message.findByPk(message.id, { include: [{ model: User, as: 'sender', attributes:['id','username'] }] });
+        const message = await Message.create({
+            senderId: req.user.id,
+            receiverId,
+            content
+        });
+
+        const fullMessage = await Message.findByPk(message.id, {
+            include: [{ model: User, as: 'sender', attributes: ['id', 'username'] }]
+        });
+
         res.json({ message: 'Message sent!', data: fullMessage });
     } catch (err) {
         console.error(err);

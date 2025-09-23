@@ -98,12 +98,11 @@ goBackBtn.addEventListener('click', () => {
 // Load messages
 async function loadMessages() {
     try {
-        const res = await fetch(`${API_URL}/messages?userId=${userId}`, {
+        const res = await fetch(`${API_URL}/messages`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to fetch messages');
-        const data = await res.json();
-        const messages = data.messages || data;
+        const messages = await res.json();
 
         messagesList.innerHTML = '';
         if (!messages.length) {
@@ -140,7 +139,7 @@ async function loadMessages() {
                             Authorization: `Bearer ${token}`
                         },
                         body: JSON.stringify({
-                            recipientId: m.sender.id,
+                            receiverId: m.sender.id, // ✅ FIXED: matches backend
                             content: replyContent
                         })
                     });
