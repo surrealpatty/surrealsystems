@@ -110,18 +110,21 @@ const logoutBtn = document.getElementById('logoutBtn');
 
 let userId = null;
 
-// Load profile
+// ================= Load profile =================
 async function loadProfile() {
     try {
         const res = await fetch(`${API_URL}/profile`, { 
             headers: { Authorization: `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to fetch profile');
-        const user = await res.json();
+        const userData = await res.json();
+
+        // Some APIs return user object inside 'user', some return directly
+        const user = userData.user ? userData.user : userData;
 
         userId = user.id;
         localStorage.setItem('userId', userId);
-        localStorage.setItem('username', user.username);
+        localStorage.setItem('username', user.username || '');
 
         profileUsername.textContent = user.username || 'Unknown User';
         profileDescription.textContent = user.description || 'No description yet.';
@@ -133,7 +136,7 @@ async function loadProfile() {
     }
 }
 
-// Edit / Save description
+// ================= Edit / Save Description =================
 let editing = false;
 editDescBtn.addEventListener('click', async () => {
     editing = !editing;
@@ -153,9 +156,11 @@ editDescBtn.addEventListener('click', async () => {
             if (!res.ok) throw new Error('Failed to update description');
 
             const data = await res.json();
-            profileDescription.textContent = data.user?.description || profileDescription.textContent;
-            profileUsername.textContent = data.user?.username || profileUsername.textContent;
-            localStorage.setItem('description', data.user?.description || '');
+            const updatedUser = data.user ? data.user : data;
+
+            profileUsername.textContent = updatedUser.username || profileUsername.textContent;
+            profileDescription.textContent = updatedUser.description || profileDescription.textContent;
+            localStorage.setItem('description', updatedUser.description || '');
             alert('Profile updated successfully!');
         } catch (err) {
             console.error(err);
@@ -164,7 +169,7 @@ editDescBtn.addEventListener('click', async () => {
     }
 });
 
-// Load services
+// ================= Load services =================
 async function loadServices() {
     if (!userId || !servicesList) return;
     try {
@@ -192,7 +197,7 @@ async function loadServices() {
     }
 }
 
-// Load messages
+// ================= Load messages =================
 async function loadMessages() {
     if (!userId || !messagesList) return;
     try {
@@ -219,13 +224,13 @@ async function loadMessages() {
     }
 }
 
-// Logout
+// ================= Logout =================
 logoutBtn.addEventListener('click', () => {
     localStorage.clear();
     window.location.href = 'index.html';
 });
 
-// Initialize
+// ================= Initialize =================
 window.addEventListener('load', async () => {
     await loadProfile(); // ensures userId is set
     loadServices();
