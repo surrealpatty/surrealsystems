@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Profile - CodeCrowds</title>
+<link rel="stylesheet" href="style.css">
 <style>
 body, html {
     margin: 0;
@@ -20,7 +21,7 @@ body, html {
     margin: 50px auto;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 2rem;
     background: rgba(255,255,255,0.95);
     border-radius: 16px;
     box-shadow: 0 12px 30px rgba(0,0,0,0.15);
@@ -36,12 +37,6 @@ h1 { color: #4e54c8; margin-bottom: 0.5rem; }
     background-color: #f0f0f0;
     color: #333;
 }
-.button-group {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
 button {
     padding: 10px 20px;
     font-size: 1rem;
@@ -50,6 +45,7 @@ button {
     border: none;
     border-radius: 8px;
     cursor: pointer;
+    margin-top: 5px;
     transition: 0.3s;
 }
 button:hover { background-color: #3b40a1; }
@@ -65,22 +61,30 @@ button:hover { background-color: #3b40a1; }
     box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     transition: transform 0.2s;
     color: #333;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    text-align: left;
 }
 .card:hover { transform: translateY(-5px); }
 .card h3 { margin-bottom: 10px; color: #4e54c8; }
 .card p { margin: 5px 0; color: #555; }
-.card .card-buttons {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 10px;
+.card input, .card textarea {
+    width: 100%;
+    margin-bottom: 5px;
+    padding: 5px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
 }
-.edit-btn { background-color: #28a745; flex: 1; margin-right: 5px; }
-.edit-btn:hover { background-color: #1e7e34; }
-.delete-btn { background-color: #ff4d4f; flex: 1; margin-left: 5px; }
-.delete-btn:hover { background-color: #c30000; }
+
+/* Button Group at top */
+.button-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+.button-group button { margin: 0; }
+
+/* New Service Section */
 #newServiceSection {
     display: none;
     flex-direction: column;
@@ -100,9 +104,9 @@ button:hover { background-color: #3b40a1; }
 <div class="container">
     <h1 id="profile-username">Loading username...</h1>
     <p id="profile-description">Loading description...</p>
+    <button type="button" id="editDescBtn">Edit Description</button>
 
     <div class="button-group">
-        <button type="button" id="editDescBtn">Edit Description</button>
         <button type="button" id="goToServicesBtn">Go to Services</button>
         <button type="button" id="goToMessagesBtn">Go to Messages</button>
         <button type="button" id="toggleNewServiceBtn">Add New Service</button>
@@ -111,6 +115,7 @@ button:hover { background-color: #3b40a1; }
     <h2>Your Services</h2>
     <div id="services-list"><p>Loading services...</p></div>
 
+    <!-- Create Service Section -->
     <div id="newServiceSection">
         <input type="text" id="newServiceTitle" placeholder="Service Title">
         <textarea id="newServiceDesc" placeholder="Service Description"></textarea>
@@ -133,6 +138,7 @@ const goToServicesBtn = document.getElementById('goToServicesBtn');
 const goToMessagesBtn = document.getElementById('goToMessagesBtn');
 const servicesList = document.getElementById('services-list');
 const logoutBtn = document.getElementById('logoutBtn');
+
 const toggleNewServiceBtn = document.getElementById('toggleNewServiceBtn');
 const newServiceSection = document.getElementById('newServiceSection');
 const createServiceBtn = document.getElementById('createServiceBtn');
@@ -142,12 +148,13 @@ const newServicePrice = document.getElementById('newServicePrice');
 
 let userId = localStorage.getItem('userId');
 
-// Load Profile
+// ---------------- Load Profile ----------------
 async function loadProfile() {
     try {
         const res = await fetch(`${API_URL}/profile`, {
             headers: { Authorization: `Bearer ${token}` }
         });
+        if (!res.ok) throw new Error('Failed to fetch profile');
         const userData = await res.json();
         const user = userData.user ? userData.user : userData;
 
@@ -165,7 +172,7 @@ async function loadProfile() {
     }
 }
 
-// Edit/Save Description
+// ---------------- Edit / Save Description ----------------
 let editing = false;
 editDescBtn.addEventListener('click', async () => {
     editing = !editing;
@@ -183,25 +190,29 @@ editDescBtn.addEventListener('click', async () => {
                 },
                 body: JSON.stringify({ description: newDesc })
             });
+            if (!res.ok) throw new Error('Failed to update description');
             const data = await res.json();
             const updatedUser = data.user ? data.user : data;
 
             profileUsername.textContent = updatedUser.username || profileUsername.textContent;
             profileDescription.textContent = updatedUser.description || newDesc;
+            localStorage.setItem('description', updatedUser.description || newDesc);
         } catch (err) {
             console.error(err);
             profileDescription.textContent = localStorage.getItem('description') || 'Failed to save';
+            alert('Failed to save description.');
         }
     }
 });
 
-// Load Services
+// ---------------- Load Services ----------------
 async function loadServices() {
     if (!userId) return;
     try {
         const res = await fetch(`${API_URL}/services`, {
             headers: { Authorization: `Bearer ${token}` }
         });
+        if (!res.ok) throw new Error('Failed to fetch services');
         const data = await res.json();
         const services = data.services || data;
 
@@ -216,19 +227,75 @@ async function loadServices() {
         userServices.forEach(s => {
             const div = document.createElement('div');
             div.className = 'card';
-            div.dataset.id = s.id;
             div.innerHTML = `
-                <h3>${s.title}</h3>
-                <p>${s.description}</p>
-                <p><strong>Price:</strong> $${s.price}</p>
-                <div class="card-buttons">
-                    <button class="edit-btn">Edit</button>
-                    <button class="delete-btn">Delete</button>
+                <div class="service-display">
+                    <h3>${s.title}</h3>
+                    <p>${s.description}</p>
+                    <p><strong>Price:</strong> $${s.price}</p>
+                    <button class="editServiceBtn">Edit</button>
+                    <button class="deleteServiceBtn">Delete</button>
+                </div>
+                <div class="service-edit" style="display:none;">
+                    <input type="text" class="editTitle" value="${s.title}">
+                    <textarea class="editDesc">${s.description}</textarea>
+                    <input type="number" class="editPrice" value="${s.price}">
+                    <button class="saveServiceBtn">Save</button>
+                    <button class="cancelEditBtn">Cancel</button>
                 </div>
             `;
-            div.querySelector('.edit-btn').addEventListener('click', () => editService(s));
-            div.querySelector('.delete-btn').addEventListener('click', () => deleteService(s.id));
             servicesList.appendChild(div);
+
+            // Edit button
+            div.querySelector('.editServiceBtn').addEventListener('click', () => {
+                div.querySelector('.service-display').style.display = 'none';
+                div.querySelector('.service-edit').style.display = 'block';
+            });
+
+            // Cancel edit
+            div.querySelector('.cancelEditBtn').addEventListener('click', () => {
+                div.querySelector('.service-edit').style.display = 'none';
+                div.querySelector('.service-display').style.display = 'block';
+            });
+
+            // Save edit
+            div.querySelector('.saveServiceBtn').addEventListener('click', async () => {
+                const updated = {
+                    title: div.querySelector('.editTitle').value,
+                    description: div.querySelector('.editDesc').value,
+                    price: div.querySelector('.editPrice').value
+                };
+                try {
+                    const res = await fetch(`${API_URL}/services/${s.id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify(updated)
+                    });
+                    if (!res.ok) throw new Error('Failed to update service');
+                    await loadServices();
+                } catch (err) {
+                    console.error(err);
+                    alert('Failed to save service.');
+                }
+            });
+
+            // Delete button
+            div.querySelector('.deleteServiceBtn').addEventListener('click', async () => {
+                if (!confirm('Are you sure you want to delete this service?')) return;
+                try {
+                    const res = await fetch(`${API_URL}/services/${s.id}`, {
+                        method: 'DELETE',
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (!res.ok) throw new Error('Failed to delete service');
+                    await loadServices();
+                } catch (err) {
+                    console.error(err);
+                    alert('Failed to delete service.');
+                }
+            });
         });
     } catch (err) {
         console.error(err);
@@ -236,44 +303,12 @@ async function loadServices() {
     }
 }
 
-// Edit Service
-async function editService(service) {
-    const newTitle = prompt("New Title:", service.title);
-    const newDesc = prompt("New Description:", service.description);
-    const newPrice = prompt("New Price:", service.price);
-    if (!newTitle || !newDesc || !newPrice) return;
-
-    try {
-        await fetch(`${API_URL}/services/${service.id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify({ title: newTitle, description: newDesc, price: newPrice })
-        });
-        await loadServices();
-    } catch (err) { console.error(err); alert('Failed to edit service'); }
-}
-
-// Delete Service
-async function deleteService(id) {
-    if (!confirm("Delete this service?")) return;
-    try {
-        await fetch(`${API_URL}/services/${id}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        await loadServices();
-    } catch (err) { console.error(err); alert('Failed to delete service'); }
-}
-
-// Toggle New Service
+// ---------------- Toggle New Service Section ----------------
 toggleNewServiceBtn.addEventListener('click', () => {
     newServiceSection.style.display = newServiceSection.style.display === 'flex' ? 'none' : 'flex';
 });
 
-// Create Service
+// ---------------- Create New Service ----------------
 createServiceBtn.addEventListener('click', async () => {
     const title = newServiceTitle.value.trim();
     const description = newServiceDesc.value.trim();
@@ -281,25 +316,43 @@ createServiceBtn.addEventListener('click', async () => {
     if (!title || !description || !price) return alert('All fields are required.');
 
     try {
-        await fetch(`${API_URL}/services`, {
+        const res = await fetch(`${API_URL}/services`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
             body: JSON.stringify({ title, description, price })
         });
+        if (!res.ok) throw new Error('Failed to create service');
+
+        alert('Service created successfully!');
         newServiceTitle.value = '';
         newServiceDesc.value = '';
         newServicePrice.value = '';
         newServiceSection.style.display = 'none';
         await loadServices();
-    } catch (err) { console.error(err); alert('Failed to create service'); }
+    } catch (err) {
+        console.error(err);
+        alert('Failed to create service.');
+    }
 });
 
-// Logout & Navigation
-logoutBtn.addEventListener('click', () => { localStorage.clear(); window.location.href = 'index.html'; });
-goToServicesBtn.addEventListener('click', () => window.location.href='services.html');
-goToMessagesBtn.addEventListener('click', () => window.location.href='messages.html');
+// ---------------- Logout ----------------
+logoutBtn.addEventListener('click', () => {
+    localStorage.clear();
+    window.location.href = 'index.html';
+});
 
-window.addEventListener('load', async () => { await loadProfile(); await loadServices(); });
+// ---------------- Go to other pages ----------------
+goToServicesBtn.addEventListener('click', () => { window.location.href = 'services.html'; });
+goToMessagesBtn.addEventListener('click', () => { window.location.href = 'messages.html'; });
+
+// ---------------- Initialize ----------------
+window.addEventListener('load', async () => {
+    await loadProfile();
+    await loadServices();
+});
 </script>
 </body>
 </html>
