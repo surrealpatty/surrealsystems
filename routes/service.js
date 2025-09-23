@@ -5,10 +5,14 @@ const authenticateToken = require('../middlewares/authenticateToken');
 
 const router = express.Router();
 
-// GET all services
+// GET all services with user info
 router.get('/', authenticateToken, async (req, res) => {
     try {
-        const services = await Service.findAll({ include: [{ model: User, as: 'user', attributes: ['id','username'] }] });
+        const services = await Service.findAll({
+            include: [
+                { model: User, as: 'user', attributes: ['id', 'username'] } // include username
+            ]
+        });
         res.json(services);
     } catch (err) {
         console.error(err);
@@ -20,7 +24,12 @@ router.get('/', authenticateToken, async (req, res) => {
 router.post('/', authenticateToken, async (req, res) => {
     const { title, description, price } = req.body;
     try {
-        const service = await Service.create({ title, description, price, userId: req.user.id });
+        const service = await Service.create({
+            title,
+            description,
+            price,
+            userId: req.user.id
+        });
         res.status(201).json(service);
     } catch (err) {
         console.error(err);
@@ -28,10 +37,11 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-// PUT / DELETE services (protected by owner)
+// PUT service (owner only)
 router.put('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const { title, description, price } = req.body;
+
     try {
         const service = await Service.findByPk(id);
         if (!service) return res.status(404).json({ error: 'Service not found' });
@@ -48,8 +58,10 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 });
 
+// DELETE service (owner only)
 router.delete('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
+
     try {
         const service = await Service.findByPk(id);
         if (!service) return res.status(404).json({ error: 'Service not found' });

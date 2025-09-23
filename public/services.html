@@ -117,14 +117,13 @@ async function loadServices() {
         servicesList.innerHTML = '';
 
         services.forEach(s => {
-            const username = s.User?.username || 'Unknown'; // <- Will now work if backend includes User
             const div = document.createElement('div');
             div.className = 'service-card';
             div.innerHTML = `
                 <h3>${s.title}</h3>
                 <p>${s.description}</p>
                 <p><strong>Price:</strong> $${s.price}</p>
-                <p class="username">Posted by: ${username}</p>
+                <p class="username">Posted by: ${s.user?.username || 'Unknown'}</p>
             `;
             servicesList.appendChild(div);
         });
