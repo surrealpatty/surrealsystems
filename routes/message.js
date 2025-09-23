@@ -1,5 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const { Op } = require('sequelize');
 const Message = require('../models/Message');
 const User = require('../models/User');
 
@@ -21,7 +22,7 @@ function authenticateToken(req, res, next) {
     }
 }
 
-// GET messages for logged-in user
+// GET inbox (messages received by logged-in user)
 router.get('/', authenticateToken, async (req, res) => {
     try {
         const messages = await Message.findAll({
@@ -33,6 +34,28 @@ router.get('/', authenticateToken, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to fetch messages' });
+    }
+});
+
+// GET conversation history with another user
+router.get('/conversation/:otherUserId', authenticateToken, async (req, res) => {
+    const otherUserId = req.params.otherUserId;
+    try {
+        const messages = await Message.findAll({
+            where: {
+                [Op.or]: [
+                    { senderId: req.user.id, receiverId: otherUserId },
+                    { senderId: otherUserId, receiverId: req.user.id }
+                ]
+            },
+            include: [{ model: User, as: 'sender', attributes: ['id', 'username'] }],
+            order: [['createdAt', 'ASC']]
+        });
+
+        res.json(messages);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch conversation history' });
     }
 });
 
@@ -49,11 +72,9 @@ router.post('/', authenticateToken, async (req, res) => {
             receiverId,
             content
         });
-
         const fullMessage = await Message.findByPk(message.id, {
             include: [{ model: User, as: 'sender', attributes: ['id', 'username'] }]
         });
-
         res.json({ message: 'Message sent!', data: fullMessage });
     } catch (err) {
         console.error(err);

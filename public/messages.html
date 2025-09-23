@@ -59,19 +59,6 @@ button:hover { background-color: #3b40a1; }
 .card h3 { margin-bottom: 5px; color: #4e54c8; }
 .card p { margin: 5px 0; color: #555; }
 .card .timestamp { font-size: 0.8rem; color: #999; }
-.reply-section {
-    margin-top: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-.reply-section textarea {
-    width: 100%;
-    min-height: 50px;
-    padding: 5px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-}
 </style>
 </head>
 <body>
@@ -95,7 +82,7 @@ goBackBtn.addEventListener('click', () => {
     window.location.href = 'profile.html';
 });
 
-// Load messages
+// Load inbox (received messages)
 async function loadMessages() {
     try {
         const res = await fetch(`${API_URL}/messages`, {
@@ -117,40 +104,13 @@ async function loadMessages() {
                 <h3>From: ${m.sender?.username || 'Unknown'}</h3>
                 <p>${m.content}</p>
                 <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
-                <div class="reply-section">
-                    <textarea placeholder="Type your reply..."></textarea>
-                    <button class="replyBtn">Reply</button>
-                </div>
+                <button class="viewConversationBtn">View Conversation</button>
             `;
             messagesList.appendChild(div);
 
-            // Reply button functionality
-            const replyBtn = div.querySelector('.replyBtn');
-            const replyInput = div.querySelector('textarea');
-            replyBtn.addEventListener('click', async () => {
-                const replyContent = replyInput.value.trim();
-                if (!replyContent) return alert('Please type a message.');
-
-                try {
-                    const res = await fetch(`${API_URL}/messages`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${token}`
-                        },
-                        body: JSON.stringify({
-                            receiverId: m.sender.id, // ✅ FIXED: matches backend
-                            content: replyContent
-                        })
-                    });
-                    if (!res.ok) throw new Error('Failed to send message');
-                    alert('Reply sent!');
-                    replyInput.value = '';
-                } catch (err) {
-                    console.error(err);
-                    alert('Failed to send reply.');
-                }
-            });
+            // View conversation button
+            const viewBtn = div.querySelector('.viewConversationBtn');
+            viewBtn.addEventListener('click', () => loadConversation(m.sender.id, m.sender.username));
         });
     } catch (err) {
         console.error(err);
@@ -158,6 +118,41 @@ async function loadMessages() {
     }
 }
 
+// Load full conversation
+async function loadConversation(otherUserId, otherUsername) {
+    try {
+        const res = await fetch(`${API_URL}/messages/conversation/${otherUserId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to fetch conversation');
+        const conversation = await res.json();
+
+        messagesList.innerHTML = `<h2>Conversation with ${otherUsername}</h2>`;
+
+        conversation.forEach(m => {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `
+                <h3>${m.sender.username}</h3>
+                <p>${m.content}</p>
+                <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
+            `;
+            messagesList.appendChild(div);
+        });
+
+        // Back to inbox
+        const backBtn = document.createElement('button');
+        backBtn.textContent = 'Back to Inbox';
+        backBtn.addEventListener('click', loadMessages);
+        messagesList.appendChild(backBtn);
+
+    } catch (err) {
+        console.error(err);
+        alert('Failed to load conversation.');
+    }
+}
+
+// Init
 window.addEventListener('load', loadMessages);
 </script>
 </body>
