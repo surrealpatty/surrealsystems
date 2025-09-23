@@ -127,10 +127,6 @@ const newServicePrice = document.getElementById('newServicePrice');
 
 let userId = localStorage.getItem('userId');
 
-// Show cached username immediately
-profileUsername.textContent = localStorage.getItem('username') || 'Loading username...';
-profileDescription.textContent = localStorage.getItem('description') || 'Loading description...';
-
 // ---------------- Load Profile ----------------
 async function loadProfile() {
     try {
@@ -146,6 +142,7 @@ async function loadProfile() {
         localStorage.setItem('username', user.username || '');
         localStorage.setItem('description', user.description || '');
 
+        // Set username and description immediately
         profileUsername.textContent = user.username || 'Unknown User';
         profileDescription.textContent = user.description || 'No description yet.';
     } catch (err) {
@@ -270,7 +267,7 @@ goToMessagesBtn.addEventListener('click', () => { window.location.href = 'messag
 
 // ---------------- Initialize ----------------
 window.addEventListener('load', async () => {
-    await loadProfile();
+    await loadProfile();  // Fetch username immediately
     await loadServices();
 });
 </script>
