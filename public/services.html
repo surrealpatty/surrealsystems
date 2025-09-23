@@ -104,21 +104,6 @@ goToProfileBtn.addEventListener('click', () => {
     window.location.href = 'profile.html';
 });
 
-// Fetch username by userId
-async function fetchUsername(uid) {
-    try {
-        const res = await fetch(`${API_URL}/users/${uid}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        if (!res.ok) throw new Error('Failed to fetch user');
-        const data = await res.json();
-        return data.username || 'Unknown';
-    } catch (e) {
-        console.error(e);
-        return 'Unknown';
-    }
-}
-
 // Load services
 async function loadServices() {
     try {
@@ -131,10 +116,8 @@ async function loadServices() {
         const services = await res.json();
         servicesList.innerHTML = '';
 
-        for (const s of services) {
-            // Get username either from backend or fetch by userId
-            let username = s.User?.username || await fetchUsername(s.userId);
-
+        services.forEach(s => {
+            const username = s.User?.username || 'Unknown'; // <- Will now work if backend includes User
             const div = document.createElement('div');
             div.className = 'service-card';
             div.innerHTML = `
@@ -144,8 +127,7 @@ async function loadServices() {
                 <p class="username">Posted by: ${username}</p>
             `;
             servicesList.appendChild(div);
-        }
-
+        });
     } catch (err) {
         console.error(err);
         servicesList.innerHTML = '<p class="error">Failed to load services</p>';
