@@ -175,8 +175,8 @@ async function loadServices() {
         const data = await res.json();
         const services = data.services || data;
 
-        // Filter only the logged-in user's services
-        const userServices = services.filter(s => s.user?.id === userId);
+        // Filter only the logged-in user's services (convert userId to number)
+        const userServices = services.filter(s => s.user?.id === Number(userId));
 
         servicesList.innerHTML = '';
         if (!userServices.length) {
