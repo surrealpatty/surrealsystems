@@ -32,10 +32,7 @@ body, html {
 }
 
 /* Headings */
-h1 {
-    color: #4e54c8;
-    margin-bottom: 1rem;
-}
+h1 { color: #4e54c8; margin-bottom: 1rem; }
 
 /* Services Grid */
 #services-list {
@@ -92,7 +89,7 @@ button:hover { background-color: #3b40a1; }
     flex-direction: column;
     gap: 10px;
 }
-#messageModal select, #messageModal textarea {
+#messageModal textarea {
     width: 100%;
     padding: 10px;
     border-radius: 8px;
@@ -121,7 +118,6 @@ button:hover { background-color: #3b40a1; }
 <div id="messageModal">
     <div class="modal-content">
         <h3>Send Message</h3>
-        <select id="recipientSelect"></select>
         <textarea id="messageContent" placeholder="Type your message here..."></textarea>
         <button type="button" id="sendMessageBtn">Send</button>
         <button type="button" id="closeModalBtn">Cancel</button>
@@ -129,28 +125,25 @@ button:hover { background-color: #3b40a1; }
 </div>
 
 <script>
-// ================= API & Auth =================
 const API_URL = 'https://codecrowds.onrender.com';
 const token = localStorage.getItem('token');
 const userId = localStorage.getItem('userId');
 
 if (!token || !userId) window.location.href = 'index.html';
 
-// DOM Elements
 const servicesList = document.getElementById('services-list');
 const goToProfileBtn = document.getElementById('goToProfileBtn');
 const messageModal = document.getElementById('messageModal');
-const recipientSelect = document.getElementById('recipientSelect');
 const messageContent = document.getElementById('messageContent');
 const sendMessageBtn = document.getElementById('sendMessageBtn');
 const closeModalBtn = document.getElementById('closeModalBtn');
 
-// Go back to profile
+let currentRecipientId = null;
+
 goToProfileBtn.addEventListener('click', () => {
     window.location.href = 'profile.html';
 });
 
-// Load services
 async function loadServices() {
     try {
         const res = await fetch(`${API_URL}/services`, { headers: { Authorization: `Bearer ${token}` }});
@@ -171,11 +164,11 @@ async function loadServices() {
             servicesList.appendChild(div);
         });
 
-        // Add event listeners for "Send Message" buttons
         document.querySelectorAll('.messageBtn').forEach(btn => {
             btn.addEventListener('click', () => {
-                const recipientId = btn.dataset.userid;
-                openMessageModal(recipientId);
+                currentRecipientId = btn.dataset.userid;
+                messageContent.value = '';
+                messageModal.style.display = 'flex';
             });
         });
     } catch (err) {
@@ -184,25 +177,11 @@ async function loadServices() {
     }
 }
 
-// Open message modal
-function openMessageModal(recipientId) {
-    recipientSelect.innerHTML = '';
-    const option = document.createElement('option');
-    option.value = recipientId;
-    option.textContent = 'Service Poster';
-    recipientSelect.appendChild(option);
-    messageContent.value = '';
-    messageModal.style.display = 'flex';
-}
-
-// Close message modal
 closeModalBtn.addEventListener('click', () => {
     messageModal.style.display = 'none';
 });
 
-// Send message
 sendMessageBtn.addEventListener('click', async () => {
-    const recipientId = recipientSelect.value;
     const content = messageContent.value.trim();
     if (!content) { alert('Message cannot be empty'); return; }
 
@@ -210,7 +189,7 @@ sendMessageBtn.addEventListener('click', async () => {
         const res = await fetch(`${API_URL}/messages`, {
             method: 'POST',
             headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ receiverId: recipientId, content })
+            body: JSON.stringify({ receiverId: currentRecipientId, content })
         });
         const data = await res.json();
         if (data.error) throw new Error(data.error);
@@ -222,7 +201,6 @@ sendMessageBtn.addEventListener('click', async () => {
     }
 });
 
-// Load on page load
 window.addEventListener('load', loadServices);
 </script>
 </body>
