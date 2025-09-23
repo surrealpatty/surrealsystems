@@ -131,11 +131,11 @@ async function loadProfile() {
             headers: { Authorization: `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to fetch user');
-        const user = await res.json();
+        const data = await res.json();
 
-        // Use the correct property from your API response
-        // If your API returns: { user: { username: 'Patty', description: '...' } }
-        // then replace `user.username` with `user.user.username`
+        // Handle both { user: {...} } and { ... } response formats
+        const user = data.user ? data.user : data;
+
         profileUsername.textContent = user.username || "Unknown User";
         profileDescription.textContent = user.description || "No description yet.";
     } catch (err) {
@@ -179,7 +179,10 @@ async function loadServices() {
             headers: { Authorization: `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to fetch services');
-        const services = await res.json();
+        const data = await res.json();
+
+        // Handle both { services: [...] } and [ ... ]
+        const services = data.services ? data.services : data;
 
         servicesList.innerHTML = '';
         services.forEach(s => {
@@ -205,14 +208,17 @@ async function loadMessages() {
             headers: { Authorization: `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to fetch messages');
-        const messages = await res.json();
+        const data = await res.json();
+
+        // Handle both { messages: [...] } and [ ... ]
+        const messages = data.messages ? data.messages : data;
 
         messagesList.innerHTML = '';
         messages.forEach(m => {
             const div = document.createElement('div');
             div.className = 'card';
             div.innerHTML = `
-                <p><strong>From:</strong> ${m.sender.username}</p>
+                <p><strong>From:</strong> ${m.sender?.username || "Unknown"}</p>
                 <p>${m.content}</p>
             `;
             messagesList.appendChild(div);
