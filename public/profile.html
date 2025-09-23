@@ -120,8 +120,7 @@ const logoutBtn = document.getElementById('logoutBtn');
 
 // Logout
 logoutBtn.addEventListener('click', () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userId');
+    localStorage.clear();
     window.location.href = 'index.html';
 });
 
@@ -134,8 +133,11 @@ async function loadProfile() {
         if (!res.ok) throw new Error('Failed to fetch user');
         const user = await res.json();
 
+        // Use the correct property from your API response
+        // If your API returns: { user: { username: 'Patty', description: '...' } }
+        // then replace `user.username` with `user.user.username`
         profileUsername.textContent = user.username || "Unknown User";
-        profileDescription.textContent = user.description || 'No description yet.';
+        profileDescription.textContent = user.description || "No description yet.";
     } catch (err) {
         console.error(err);
         profileUsername.textContent = 'Unknown User';
