@@ -6,14 +6,16 @@
 <title>Profile - CodeCrowds</title>
 <link rel="stylesheet" href="style.css">
 <style>
+/* ---------- Global ---------- */
 body, html {
+    height: 100%;
     margin: 0;
-    padding: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #4e54c8, #00aaff);
     color: #fff;
-    min-height: 100%;
 }
+
+/* ---------- Container ---------- */
 .container {
     max-width: 900px;
     width: 90%;
@@ -21,22 +23,46 @@ body, html {
     margin: 50px auto;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1.5rem;
     background: rgba(255,255,255,0.95);
     border-radius: 16px;
     box-shadow: 0 12px 30px rgba(0,0,0,0.15);
     color: #333;
     text-align: center;
 }
-h1 { color: #4e54c8; margin-bottom: 0.5rem; }
-#profile-description { margin-bottom: 10px; min-height: 50px; }
+
+/* ---------- Headings ---------- */
+h1, h2 {
+    color: #4e54c8;
+    margin-bottom: 0.5rem;
+}
+
+/* ---------- Description ---------- */
+#profile-description {
+    min-height: 50px;
+    margin-bottom: 10px;
+}
 #profile-description[contenteditable="true"] {
     border: 1px solid #4e54c8;
-    padding: 5px;
     border-radius: 8px;
+    padding: 5px;
     background-color: #f0f0f0;
     color: #333;
 }
+
+/* ---------- Button Group ---------- */
+.button-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.button-group button {
+    flex: 1;
+    max-width: 180px;
+}
+
+/* ---------- Buttons ---------- */
 button {
     padding: 10px 20px;
     font-size: 1rem;
@@ -49,6 +75,8 @@ button {
     transition: 0.3s;
 }
 button:hover { background-color: #3b40a1; }
+
+/* ---------- Services Grid ---------- */
 #services-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -61,41 +89,45 @@ button:hover { background-color: #3b40a1; }
     box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     transition: transform 0.2s;
     color: #333;
-    text-align: left;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    min-height: 180px;
 }
 .card:hover { transform: translateY(-5px); }
 .card h3 { margin-bottom: 10px; color: #4e54c8; }
 .card p { margin: 5px 0; color: #555; }
-.card input, .card textarea {
-    width: 100%;
-    margin-bottom: 5px;
-    padding: 5px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-}
+.card .edit-btn { background-color: #28a745; color: #fff; margin-top: 10px; width: 80%; }
+.card .edit-btn:hover { background-color: #1e7e34; }
+.card .delete-btn { background-color: #ff4d4f; color: #fff; margin-top: 10px; width: 80%; }
+.card .delete-btn:hover { background-color: #c30000; }
 
-/* Button Group at top */
-.button-group {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-}
-.button-group button { margin: 0; }
-
-/* New Service Section */
+/* ---------- New Service Section ---------- */
 #newServiceSection {
     display: none;
     flex-direction: column;
     gap: 10px;
     margin-top: 10px;
 }
-#newServiceSection input, #newServiceSection textarea {
+#newServiceSection input,
+#newServiceSection textarea {
     padding: 10px;
     border-radius: 8px;
     border: 1px solid #ccc;
     width: 100%;
+}
+
+/* ---------- Logout ---------- */
+.logout-btn { background-color: #ff4d4f; }
+.logout-btn:hover { background-color: #c30000; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+    .container { padding: 2rem 1rem; }
+    button { font-size: 0.9rem; padding: 8px 16px; }
 }
 </style>
 </head>
@@ -104,18 +136,15 @@ button:hover { background-color: #3b40a1; }
 <div class="container">
     <h1 id="profile-username">Loading username...</h1>
     <p id="profile-description">Loading description...</p>
-    <button type="button" id="editDescBtn">Edit Description</button>
 
     <div class="button-group">
+        <button type="button" id="editDescBtn">Edit Description</button>
         <button type="button" id="goToServicesBtn">Go to Services</button>
         <button type="button" id="goToMessagesBtn">Go to Messages</button>
         <button type="button" id="toggleNewServiceBtn">Add New Service</button>
     </div>
 
-    <h2>Your Services</h2>
-    <div id="services-list"><p>Loading services...</p></div>
-
-    <!-- Create Service Section -->
+    <!-- New Service Section -->
     <div id="newServiceSection">
         <input type="text" id="newServiceTitle" placeholder="Service Title">
         <textarea id="newServiceDesc" placeholder="Service Description"></textarea>
@@ -123,7 +152,10 @@ button:hover { background-color: #3b40a1; }
         <button type="button" id="createServiceBtn">Create Service</button>
     </div>
 
-    <button type="button" id="logoutBtn">Logout</button>
+    <h2>Your Services</h2>
+    <div id="services-list"><p>Loading services...</p></div>
+
+    <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
 </div>
 
 <script>
@@ -136,33 +168,27 @@ const profileDescription = document.getElementById('profile-description');
 const editDescBtn = document.getElementById('editDescBtn');
 const goToServicesBtn = document.getElementById('goToServicesBtn');
 const goToMessagesBtn = document.getElementById('goToMessagesBtn');
-const servicesList = document.getElementById('services-list');
-const logoutBtn = document.getElementById('logoutBtn');
-
 const toggleNewServiceBtn = document.getElementById('toggleNewServiceBtn');
 const newServiceSection = document.getElementById('newServiceSection');
 const createServiceBtn = document.getElementById('createServiceBtn');
 const newServiceTitle = document.getElementById('newServiceTitle');
 const newServiceDesc = document.getElementById('newServiceDesc');
 const newServicePrice = document.getElementById('newServicePrice');
+const servicesList = document.getElementById('services-list');
+const logoutBtn = document.getElementById('logoutBtn');
 
 let userId = localStorage.getItem('userId');
 
 // ---------------- Load Profile ----------------
 async function loadProfile() {
     try {
-        const res = await fetch(`${API_URL}/profile`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await fetch(`${API_URL}/profile`, { headers: { Authorization: `Bearer ${token}` } });
         if (!res.ok) throw new Error('Failed to fetch profile');
-        const userData = await res.json();
-        const user = userData.user ? userData.user : userData;
-
+        const user = await res.json();
         userId = user.id;
         localStorage.setItem('userId', userId);
         localStorage.setItem('username', user.username || '');
         localStorage.setItem('description', user.description || '');
-
         profileUsername.textContent = user.username || 'Unknown User';
         profileDescription.textContent = user.description || 'No description yet.';
     } catch (err) {
@@ -184,19 +210,13 @@ editDescBtn.addEventListener('click', async () => {
         try {
             const res = await fetch(`${API_URL}/users/${userId}`, {
                 method: 'PUT',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ description: newDesc })
             });
             if (!res.ok) throw new Error('Failed to update description');
             const data = await res.json();
-            const updatedUser = data.user ? data.user : data;
-
-            profileUsername.textContent = updatedUser.username || profileUsername.textContent;
-            profileDescription.textContent = updatedUser.description || newDesc;
-            localStorage.setItem('description', updatedUser.description || newDesc);
+            profileDescription.textContent = data.user?.description || newDesc;
+            localStorage.setItem('description', profileDescription.textContent);
         } catch (err) {
             console.error(err);
             profileDescription.textContent = localStorage.getItem('description') || 'Failed to save';
@@ -209,93 +229,48 @@ editDescBtn.addEventListener('click', async () => {
 async function loadServices() {
     if (!userId) return;
     try {
-        const res = await fetch(`${API_URL}/services`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await fetch(`${API_URL}/services`, { headers: { Authorization: `Bearer ${token}` } });
         if (!res.ok) throw new Error('Failed to fetch services');
         const data = await res.json();
-        const services = data.services || data;
-
-        const userServices = services.filter(s => s.user?.id == userId);
+        const userServices = data.services?.filter(s => s.user?.id == userId) || [];
 
         servicesList.innerHTML = '';
-        if (!userServices.length) {
-            servicesList.innerHTML = '<p>No services yet.</p>';
-            return;
-        }
+        if (!userServices.length) { servicesList.innerHTML = '<p>No services yet.</p>'; return; }
 
         userServices.forEach(s => {
             const div = document.createElement('div');
             div.className = 'card';
             div.innerHTML = `
-                <div class="service-display">
-                    <h3>${s.title}</h3>
-                    <p>${s.description}</p>
-                    <p><strong>Price:</strong> $${s.price}</p>
-                    <button class="editServiceBtn">Edit</button>
-                    <button class="deleteServiceBtn">Delete</button>
-                </div>
-                <div class="service-edit" style="display:none;">
-                    <input type="text" class="editTitle" value="${s.title}">
-                    <textarea class="editDesc">${s.description}</textarea>
-                    <input type="number" class="editPrice" value="${s.price}">
-                    <button class="saveServiceBtn">Save</button>
-                    <button class="cancelEditBtn">Cancel</button>
-                </div>
+                <h3>${s.title}</h3>
+                <p>${s.description}</p>
+                <p><strong>Price:</strong> $${s.price}</p>
+                <button class="edit-btn">Edit</button>
+                <button class="delete-btn">Delete</button>
             `;
-            servicesList.appendChild(div);
+            const editBtn = div.querySelector('.edit-btn');
+            const deleteBtn = div.querySelector('.delete-btn');
 
-            // Edit button
-            div.querySelector('.editServiceBtn').addEventListener('click', () => {
-                div.querySelector('.service-display').style.display = 'none';
-                div.querySelector('.service-edit').style.display = 'block';
+            editBtn.addEventListener('click', () => {
+                const newTitle = prompt('Edit Title:', s.title) || s.title;
+                const newDesc = prompt('Edit Description:', s.description) || s.description;
+                const newPrice = prompt('Edit Price:', s.price) || s.price;
+
+                fetch(`${API_URL}/services/${s.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ title: newTitle, description: newDesc, price: newPrice })
+                }).then(() => loadServices());
             });
 
-            // Cancel edit
-            div.querySelector('.cancelEditBtn').addEventListener('click', () => {
-                div.querySelector('.service-edit').style.display = 'none';
-                div.querySelector('.service-display').style.display = 'block';
-            });
-
-            // Save edit
-            div.querySelector('.saveServiceBtn').addEventListener('click', async () => {
-                const updated = {
-                    title: div.querySelector('.editTitle').value,
-                    description: div.querySelector('.editDesc').value,
-                    price: div.querySelector('.editPrice').value
-                };
-                try {
-                    const res = await fetch(`${API_URL}/services/${s.id}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${token}`
-                        },
-                        body: JSON.stringify(updated)
-                    });
-                    if (!res.ok) throw new Error('Failed to update service');
-                    await loadServices();
-                } catch (err) {
-                    console.error(err);
-                    alert('Failed to save service.');
-                }
-            });
-
-            // Delete button
-            div.querySelector('.deleteServiceBtn').addEventListener('click', async () => {
+            deleteBtn.addEventListener('click', () => {
                 if (!confirm('Are you sure you want to delete this service?')) return;
-                try {
-                    const res = await fetch(`${API_URL}/services/${s.id}`, {
-                        method: 'DELETE',
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    if (!res.ok) throw new Error('Failed to delete service');
-                    await loadServices();
-                } catch (err) {
-                    console.error(err);
-                    alert('Failed to delete service.');
-                }
+                fetch(`${API_URL}/services/${s.id}`, {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${token}` }
+                }).then(() => loadServices());
             });
+
+            servicesList.appendChild(div);
         });
     } catch (err) {
         console.error(err);
@@ -314,24 +289,17 @@ createServiceBtn.addEventListener('click', async () => {
     const description = newServiceDesc.value.trim();
     const price = newServicePrice.value.trim();
     if (!title || !description || !price) return alert('All fields are required.');
-
     try {
-        const res = await fetch(`${API_URL}/services`, {
+        await fetch(`${API_URL}/services`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-            },
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ title, description, price })
         });
-        if (!res.ok) throw new Error('Failed to create service');
-
-        alert('Service created successfully!');
         newServiceTitle.value = '';
         newServiceDesc.value = '';
         newServicePrice.value = '';
         newServiceSection.style.display = 'none';
-        await loadServices();
+        loadServices();
     } catch (err) {
         console.error(err);
         alert('Failed to create service.');
@@ -339,19 +307,16 @@ createServiceBtn.addEventListener('click', async () => {
 });
 
 // ---------------- Logout ----------------
-logoutBtn.addEventListener('click', () => {
-    localStorage.clear();
-    window.location.href = 'index.html';
-});
+logoutBtn.addEventListener('click', () => { localStorage.clear(); window.location.href = 'index.html'; });
 
-// ---------------- Go to other pages ----------------
-goToServicesBtn.addEventListener('click', () => { window.location.href = 'services.html'; });
-goToMessagesBtn.addEventListener('click', () => { window.location.href = 'messages.html'; });
+// ---------------- Navigate ----------------
+goToServicesBtn.addEventListener('click', () => window.location.href = 'services.html');
+goToMessagesBtn.addEventListener('click', () => window.location.href = 'messages.html');
 
 // ---------------- Initialize ----------------
 window.addEventListener('load', async () => {
     await loadProfile();
-    await loadServices();
+    loadServices();
 });
 </script>
 </body>
