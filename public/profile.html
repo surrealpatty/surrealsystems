@@ -99,7 +99,12 @@ const servicesList = document.getElementById('services-list');
 const messagesList = document.getElementById('messages-list');
 const logoutBtn = document.getElementById('logoutBtn');
 
-let userId = null;
+let userId = localStorage.getItem('userId'); // persist userId
+
+// Show cached username instantly
+if (localStorage.getItem('username')) {
+    profileUsername.textContent = localStorage.getItem('username');
+}
 
 // ---------------- Load Profile ----------------
 async function loadProfile() {
@@ -114,6 +119,7 @@ async function loadProfile() {
         userId = user.id;
         localStorage.setItem('userId', userId);
         localStorage.setItem('username', user.username || '');
+        localStorage.setItem('description', user.description || '');
 
         profileUsername.textContent = user.username || 'Unknown User';
         profileDescription.textContent = user.description || 'No description yet.';
@@ -148,6 +154,7 @@ editDescBtn.addEventListener('click', async () => {
 
             profileUsername.textContent = updatedUser.username || profileUsername.textContent;
             profileDescription.textContent = updatedUser.description || profileDescription.textContent;
+            localStorage.setItem('description', updatedUser.description || '');
             alert('Profile updated successfully!');
         } catch (err) {
             console.error(err);
@@ -160,22 +167,20 @@ editDescBtn.addEventListener('click', async () => {
 async function loadServices() {
     if (!userId) return;
     try {
-        const res = await fetch(`${API_URL}/services`, {
+        const res = await fetch(`${API_URL}/services?userId=${userId}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to fetch services');
         const data = await res.json();
-
-        const services = Array.isArray(data) ? data : data.services || [];
-        const userServices = services.filter(s => s.userId == userId || s.User?.id == userId);
+        const services = data.services || data;
 
         servicesList.innerHTML = '';
-        if (userServices.length === 0) {
+        if (!services.length) {
             servicesList.innerHTML = '<p>No services yet.</p>';
             return;
         }
 
-        userServices.forEach(s => {
+        services.forEach(s => {
             const div = document.createElement('div');
             div.className = 'card';
             div.innerHTML = `
@@ -195,22 +200,20 @@ async function loadServices() {
 async function loadMessages() {
     if (!userId) return;
     try {
-        const res = await fetch(`${API_URL}/messages`, {
+        const res = await fetch(`${API_URL}/messages?userId=${userId}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to fetch messages');
         const data = await res.json();
-        const messages = Array.isArray(data) ? data : data.messages || [];
-
-        const userMessages = messages.filter(m => m.receiverId == userId || m.userId == userId);
+        const messages = data.messages || data;
 
         messagesList.innerHTML = '';
-        if (userMessages.length === 0) {
+        if (!messages.length) {
             messagesList.innerHTML = '<p>No messages yet.</p>';
             return;
         }
 
-        userMessages.forEach(m => {
+        messages.forEach(m => {
             const div = document.createElement('div');
             div.className = 'card';
             div.innerHTML = `
@@ -233,9 +236,9 @@ logoutBtn.addEventListener('click', () => {
 
 // ---------------- Initialize ----------------
 window.addEventListener('load', async () => {
-    await loadProfile();   // userId is set here
-    await loadServices();  // now safe to load services
-    await loadMessages();  // now safe to load messages
+    await loadProfile();
+    await loadServices();
+    await loadMessages();
 });
 </script>
 </body>
