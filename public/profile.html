@@ -90,9 +90,8 @@ button:hover { background-color: #3b40a1; }
 <body>
 
 <div class="container">
-    <h1 id="profile-username"></h1>
-
-    <p id="profile-description"></p>
+    <h1 id="profile-username">Loading username...</h1>
+    <p id="profile-description">Loading description...</p>
     <button type="button" id="editDescBtn">Edit Description</button>
 
     <h2>Your Services</h2>
@@ -109,7 +108,9 @@ const API_URL = 'https://codecrowds.onrender.com';
 const token = localStorage.getItem('token');
 const userId = localStorage.getItem('userId');
 
-if (!token || !userId) window.location.href = 'index.html';
+if (!token || !userId) {
+    window.location.href = 'index.html';
+}
 
 const profileUsername = document.getElementById('profile-username');
 const profileDescription = document.getElementById('profile-description');
@@ -124,11 +125,8 @@ logoutBtn.addEventListener('click', () => {
     window.location.href = 'index.html';
 });
 
-// Load Profile
+// Load user profile
 async function loadProfile() {
-    profileUsername.textContent = 'Loading...';
-    profileDescription.textContent = '';
-
     try {
         const res = await fetch(`${API_URL}/users/${userId}`, {
             headers: { Authorization: `Bearer ${token}` }
@@ -136,30 +134,31 @@ async function loadProfile() {
         if (!res.ok) throw new Error('Failed to fetch user');
         const data = await res.json();
 
+        // Handle user object depending on API format
         const user = data.user ? data.user : data;
 
         profileUsername.textContent = user.username || "Unknown User";
-        profileDescription.textContent = user.description || "";
+        profileDescription.textContent = user.description || "No description yet.";
 
+        // Save to localStorage for consistency
         localStorage.setItem('username', user.username || '');
         localStorage.setItem('description', user.description || '');
+
     } catch (err) {
         console.error(err);
         profileUsername.textContent = 'Unknown User';
-        profileDescription.textContent = '';
+        profileDescription.textContent = 'Failed to load description';
     }
 }
 
-// Edit / Save Description
+// Edit / Save profile description
+let editing = false;
 editDescBtn.addEventListener('click', async () => {
-    if (editDescBtn.textContent === 'Edit Description') {
-        profileDescription.contentEditable = 'true';
-        profileDescription.focus();
-        editDescBtn.textContent = 'Save Description';
-    } else {
-        profileDescription.contentEditable = 'false';
-        editDescBtn.textContent = 'Edit Description';
+    editing = !editing;
+    profileDescription.contentEditable = editing ? 'true' : 'false';
+    editDescBtn.textContent = editing ? 'Save Description' : 'Edit Description';
 
+    if (!editing) {
         try {
             const res = await fetch(`${API_URL}/users/${userId}`, {
                 method: 'PUT',
@@ -170,7 +169,13 @@ editDescBtn.addEventListener('click', async () => {
                 body: JSON.stringify({ description: profileDescription.textContent.trim() })
             });
             if (!res.ok) throw new Error('Failed to update description');
-            alert('Description saved successfully!');
+
+            const data = await res.json();
+            const user = data.user ? data.user : data;
+            profileUsername.textContent = user.username || profileUsername.textContent;
+            profileDescription.textContent = user.description || profileDescription.textContent;
+            localStorage.setItem('description', user.description || '');
+            alert('Profile updated successfully!');
         } catch (err) {
             console.error(err);
             alert('Failed to save description.');
@@ -178,7 +183,7 @@ editDescBtn.addEventListener('click', async () => {
     }
 });
 
-// Load Services
+// Load user's services
 async function loadServices() {
     try {
         const res = await fetch(`${API_URL}/services?userId=${userId}`, {
@@ -205,7 +210,7 @@ async function loadServices() {
     }
 }
 
-// Load Messages
+// Load user's messages
 async function loadMessages() {
     try {
         const res = await fetch(`${API_URL}/messages?userId=${userId}`, {
@@ -231,7 +236,7 @@ async function loadMessages() {
     }
 }
 
-// Load everything on page load
+// Initialize
 window.addEventListener('load', () => {
     loadProfile();
     loadServices();
