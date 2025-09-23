@@ -65,9 +65,17 @@ button:hover { background-color: #3b40a1; }
 .card:hover { transform: translateY(-5px); }
 .card h3 { margin-bottom: 10px; color: #4e54c8; }
 .card p { margin: 5px 0; color: #555; }
-.card .username { font-style: italic; color: #888; }
-@media (max-width: 480px) {
-    .container { padding: 2rem 1rem; }
+#newServiceSection {
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+#newServiceSection input, #newServiceSection textarea {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    width: 100%;
 }
 </style>
 </head>
@@ -77,11 +85,18 @@ button:hover { background-color: #3b40a1; }
     <h1 id="profile-username">Loading username...</h1>
     <p id="profile-description">Loading description...</p>
     <button type="button" id="editDescBtn">Edit Description</button>
-    <button type="button" id="goToServicesBtn">Go to Services</button>
-    <button type="button" id="goToMessagesBtn">Go to Messages</button>
 
     <h2>Your Services</h2>
     <div id="services-list"><p>Loading services...</p></div>
+
+    <!-- New Service Section -->
+    <button type="button" id="toggleNewServiceBtn">Add New Service</button>
+    <div id="newServiceSection">
+        <input type="text" id="newServiceTitle" placeholder="Service Title">
+        <textarea id="newServiceDesc" placeholder="Service Description"></textarea>
+        <input type="number" id="newServicePrice" placeholder="Price in USD">
+        <button type="button" id="createServiceBtn">Create Service</button>
+    </div>
 
     <button type="button" id="logoutBtn">Logout</button>
 </div>
@@ -94,10 +109,15 @@ if (!token) window.location.href = 'index.html';
 const profileUsername = document.getElementById('profile-username');
 const profileDescription = document.getElementById('profile-description');
 const editDescBtn = document.getElementById('editDescBtn');
-const goToServicesBtn = document.getElementById('goToServicesBtn');
-const goToMessagesBtn = document.getElementById('goToMessagesBtn');
 const servicesList = document.getElementById('services-list');
 const logoutBtn = document.getElementById('logoutBtn');
+
+const toggleNewServiceBtn = document.getElementById('toggleNewServiceBtn');
+const newServiceSection = document.getElementById('newServiceSection');
+const createServiceBtn = document.getElementById('createServiceBtn');
+const newServiceTitle = document.getElementById('newServiceTitle');
+const newServiceDesc = document.getElementById('newServiceDesc');
+const newServicePrice = document.getElementById('newServicePrice');
 
 let userId = localStorage.getItem('userId');
 
@@ -105,7 +125,7 @@ let userId = localStorage.getItem('userId');
 profileUsername.textContent = localStorage.getItem('username') || 'Loading username...';
 profileDescription.textContent = localStorage.getItem('description') || 'Loading description...';
 
-// Load Profile
+// ---------------- Load Profile ----------------
 async function loadProfile() {
     try {
         const res = await fetch(`${API_URL}/profile`, {
@@ -129,7 +149,7 @@ async function loadProfile() {
     }
 }
 
-// Edit / Save Description
+// ---------------- Edit / Save Description ----------------
 let editing = false;
 editDescBtn.addEventListener('click', async () => {
     editing = !editing;
@@ -162,7 +182,7 @@ editDescBtn.addEventListener('click', async () => {
     }
 });
 
-// Load Services (only user's own)
+// ---------------- Load Services ----------------
 async function loadServices() {
     if (!userId) return;
     try {
@@ -173,7 +193,8 @@ async function loadServices() {
         const data = await res.json();
         const services = data.services || data;
 
-        const userServices = services.filter(s => s.user?.id == userId); // note double equals for string/number match
+        // Filter only the logged-in user's services
+        const userServices = services.filter(s => s.user?.id === userId);
 
         servicesList.innerHTML = '';
         if (!userServices.length) {
@@ -197,23 +218,48 @@ async function loadServices() {
     }
 }
 
-// Logout
+// ---------------- Toggle New Service Section ----------------
+toggleNewServiceBtn.addEventListener('click', () => {
+    newServiceSection.style.display = newServiceSection.style.display === 'flex' ? 'none' : 'flex';
+});
+
+// ---------------- Create New Service ----------------
+createServiceBtn.addEventListener('click', async () => {
+    const title = newServiceTitle.value.trim();
+    const description = newServiceDesc.value.trim();
+    const price = newServicePrice.value.trim();
+    if (!title || !description || !price) return alert('All fields are required.');
+
+    try {
+        const res = await fetch(`${API_URL}/services`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ title, description, price })
+        });
+        if (!res.ok) throw new Error('Failed to create service');
+
+        alert('Service created successfully!');
+        newServiceTitle.value = '';
+        newServiceDesc.value = '';
+        newServicePrice.value = '';
+        newServiceSection.style.display = 'none';
+        await loadServices();
+    } catch (err) {
+        console.error(err);
+        alert('Failed to create service.');
+    }
+});
+
+// ---------------- Logout ----------------
 logoutBtn.addEventListener('click', () => {
     localStorage.clear();
     window.location.href = 'index.html';
 });
 
-// Go to Services Page
-goToServicesBtn.addEventListener('click', () => {
-    window.location.href = 'services.html';
-});
-
-// Go to Messages Page
-goToMessagesBtn.addEventListener('click', () => {
-    window.location.href = 'messages.html';
-});
-
-// Initialize
+// ---------------- Initialize ----------------
 window.addEventListener('load', async () => {
     await loadProfile();
     await loadServices();
