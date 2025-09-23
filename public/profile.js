@@ -1,66 +1,82 @@
 // ================= API & Auth =================
 const API_URL = 'https://codecrowds.onrender.com';
 const token = localStorage.getItem('token');
-const userId = localStorage.getItem('userId');
 
-// Redirect to login if not authenticated
-if (!token || !userId) window.location.href = 'index.html';
+if (!token) window.location.href = 'index.html';
 
 // ================= DOM Elements =================
 const usernameDisplay = document.getElementById('usernameDisplay');
 const descriptionInput = document.getElementById('description');
-const profileForm = document.getElementById('profileForm');
 const editProfileBtn = document.getElementById('editProfileBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const goToServicesBtn = document.getElementById('goToServicesBtn');
 const servicesList = document.getElementById('services-list');
 
-// Load user info from localStorage
-usernameDisplay.textContent = localStorage.getItem('username') || 'User';
-descriptionInput.value = localStorage.getItem('description') || '';
+let userId = localStorage.getItem('userId'); // will be set after fetching profile
+
+// ================= Load Profile =================
+async function loadProfile() {
+    try {
+        const res = await fetch(`${API_URL}/profile`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to fetch profile');
+        const user = await res.json();
+
+        // Save userId in localStorage
+        userId = user.id;
+        localStorage.setItem('userId', userId);
+        localStorage.setItem('username', user.username);
+
+        // Update DOM
+        usernameDisplay.textContent = user.username || 'Unknown User';
+        descriptionInput.value = user.description || '';
+
+    } catch (err) {
+        console.error(err);
+        usernameDisplay.textContent = 'Unknown User';
+        descriptionInput.value = 'Failed to load description';
+    }
+}
 
 // ================= Profile Editing =================
 let editing = false;
-editProfileBtn.addEventListener('click', () => {
+editProfileBtn.addEventListener('click', async () => {
     editing = !editing;
     descriptionInput.readOnly = !editing;
     editProfileBtn.textContent = editing ? 'Save Profile' : 'Edit Profile';
 
     if (!editing) {
-        // Save profile when clicking "Save Profile"
         const description = descriptionInput.value.trim();
+        try {
+            const res = await fetch(`${API_URL}/users/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ description })
+            });
+            const data = await res.json();
 
-        fetch(`${API_URL}/users/${userId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify({ description })
-        })
-        .then(res => res.json())
-        .then(data => {
             if (data.user) {
-                localStorage.setItem('description', data.user.description || '');
+                descriptionInput.value = data.user.description || '';
                 usernameDisplay.textContent = data.user.username || usernameDisplay.textContent;
+                localStorage.setItem('description', data.user.description || '');
                 alert('Profile updated successfully!');
             } else {
                 alert(data.error || 'Failed to update profile');
             }
-        })
-        .catch(err => {
+        } catch (err) {
             console.error(err);
             alert('Network error: ' + err.message);
-        });
+        }
     }
 });
 
-// ================= Logout Button =================
+// ================= Logout =================
 logoutBtn.addEventListener('click', () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('username');
-    localStorage.removeItem('description');
+    localStorage.clear();
     window.location.href = 'index.html';
 });
 
@@ -77,14 +93,13 @@ async function loadUserServices() {
         const res = await fetch(`${API_URL}/services`, {
             headers: { Authorization: `Bearer ${token}` }
         });
-
         if (!res.ok) throw new Error('Failed to fetch services');
 
         const services = await res.json();
         servicesList.innerHTML = '';
 
         services
-            .filter(s => s.User?.id == userId) // Compare string to string
+            .filter(s => s.User?.id == userId)
             .forEach(s => {
                 const div = document.createElement('div');
                 div.className = 'service-card';
@@ -95,12 +110,14 @@ async function loadUserServices() {
                 `;
                 servicesList.appendChild(div);
             });
-
     } catch (err) {
         console.error(err);
         servicesList.innerHTML = '<p class="error">Failed to load services</p>';
     }
 }
 
-// Load services on page load
-window.addEventListener('load', loadUserServices);
+// ================= Load everything on page load =================
+window.addEventListener('load', () => {
+    loadProfile();
+    loadUserServices();
+});
