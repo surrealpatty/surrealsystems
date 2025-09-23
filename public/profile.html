@@ -91,7 +91,9 @@ button:hover { background-color: #3b40a1; }
 <body>
 
 <div class="container">
-    <h1 id="profile-username">Loading...</h1>
+    <!-- Username will show here -->
+    <h1 id="profile-username">Loading username...</h1>
+
     <p id="profile-description">Loading description...</p>
     <button type="button" id="editDescBtn">Edit Description</button>
 
@@ -132,11 +134,13 @@ async function loadProfile() {
             headers: { Authorization: `Bearer ${token}` }
         });
         const user = await res.json();
-        profileUsername.textContent = user.username;
+
+        // ✅ Show username at top
+        profileUsername.textContent = user.username || "Unknown User";
         profileDescription.textContent = user.description || 'No description yet.';
     } catch (err) {
         console.error(err);
-        profileUsername.textContent = 'Failed to load profile';
+        profileUsername.textContent = 'Failed to load username';
     }
 }
 
@@ -214,7 +218,7 @@ async function loadMessages() {
     }
 }
 
-// Load all data on page load
+// Load everything on page load
 window.addEventListener('load', () => {
     loadProfile();
     loadServices();
