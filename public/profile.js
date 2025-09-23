@@ -1,123 +1,150 @@
-// ================= API & Auth =================
 const API_URL = 'https://codecrowds.onrender.com';
 const token = localStorage.getItem('token');
-
 if (!token) window.location.href = 'index.html';
 
-// ================= DOM Elements =================
-const usernameDisplay = document.getElementById('usernameDisplay');
-const descriptionInput = document.getElementById('description');
-const editProfileBtn = document.getElementById('editProfileBtn');
-const logoutBtn = document.getElementById('logoutBtn');
+const profileUsername = document.getElementById('profile-username');
+const profileDescription = document.getElementById('profile-description');
+const editDescBtn = document.getElementById('editDescBtn');
 const goToServicesBtn = document.getElementById('goToServicesBtn');
+const goToMessagesBtn = document.getElementById('goToMessagesBtn');
 const servicesList = document.getElementById('services-list');
+const logoutBtn = document.getElementById('logoutBtn');
 
-let userId = localStorage.getItem('userId'); // will be set after fetching profile
+const toggleNewServiceBtn = document.getElementById('toggleNewServiceBtn');
+const newServiceSection = document.getElementById('newServiceSection');
+const createServiceBtn = document.getElementById('createServiceBtn');
+const newServiceTitle = document.getElementById('newServiceTitle');
+const newServiceDesc = document.getElementById('newServiceDesc');
+const newServicePrice = document.getElementById('newServicePrice');
 
-// ================= Load Profile =================
+let userId = localStorage.getItem('userId');
+
+// ---------------- Load Profile ----------------
 async function loadProfile() {
     try {
-        const res = await fetch(`${API_URL}/profile`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await fetch(`${API_URL}/profile`, { headers: { Authorization: `Bearer ${token}` } });
         if (!res.ok) throw new Error('Failed to fetch profile');
-        const user = await res.json();
+        const userData = await res.json();
+        const user = userData.user || userData;
 
-        // Save userId in localStorage
         userId = user.id;
         localStorage.setItem('userId', userId);
-        localStorage.setItem('username', user.username);
+        localStorage.setItem('username', user.username || '');
+        localStorage.setItem('description', user.description || '');
 
-        // Update DOM
-        usernameDisplay.textContent = user.username || 'Unknown User';
-        descriptionInput.value = user.description || '';
-
+        profileUsername.textContent = user.username || 'Unknown User';
+        profileDescription.textContent = user.description || 'No description yet.';
     } catch (err) {
         console.error(err);
-        usernameDisplay.textContent = 'Unknown User';
-        descriptionInput.value = 'Failed to load description';
+        profileUsername.textContent = 'Unknown User';
+        profileDescription.textContent = 'Failed to load description';
     }
 }
 
-// ================= Profile Editing =================
+// ---------------- Edit / Save Description ----------------
 let editing = false;
-editProfileBtn.addEventListener('click', async () => {
+editDescBtn.addEventListener('click', async () => {
     editing = !editing;
-    descriptionInput.readOnly = !editing;
-    editProfileBtn.textContent = editing ? 'Save Profile' : 'Edit Profile';
+    profileDescription.contentEditable = editing ? 'true' : 'false';
+    editDescBtn.textContent = editing ? 'Save Description' : 'Edit Description';
 
-    if (!editing) {
-        const description = descriptionInput.value.trim();
+    if (!editing && userId) {
+        const newDesc = profileDescription.textContent.trim();
         try {
             const res = await fetch(`${API_URL}/users/${userId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({ description })
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ description: newDesc })
             });
+            if (!res.ok) throw new Error('Failed to update description');
             const data = await res.json();
+            const updatedUser = data.user || data;
 
-            if (data.user) {
-                descriptionInput.value = data.user.description || '';
-                usernameDisplay.textContent = data.user.username || usernameDisplay.textContent;
-                localStorage.setItem('description', data.user.description || '');
-                alert('Profile updated successfully!');
-            } else {
-                alert(data.error || 'Failed to update profile');
-            }
+            profileUsername.textContent = updatedUser.username || profileUsername.textContent;
+            profileDescription.textContent = updatedUser.description || newDesc;
+            localStorage.setItem('description', updatedUser.description || newDesc);
+            alert('Profile updated successfully!');
         } catch (err) {
             console.error(err);
-            alert('Network error: ' + err.message);
+            profileDescription.textContent = localStorage.getItem('description') || 'Failed to save';
+            alert('Failed to save description.');
         }
     }
 });
 
-// ================= Logout =================
-logoutBtn.addEventListener('click', () => {
-    localStorage.clear();
-    window.location.href = 'index.html';
-});
-
-// ================= Go to Services Page =================
-goToServicesBtn.addEventListener('click', () => {
-    window.location.href = 'services.html';
-});
-
-// ================= Load User Services =================
-async function loadUserServices() {
-    if (!servicesList || !userId) return;
-
+// ---------------- Load Services ----------------
+async function loadServices() {
+    if (!userId) return;
     try {
-        const res = await fetch(`${API_URL}/services`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await fetch(`${API_URL}/services`, { headers: { Authorization: `Bearer ${token}` } });
         if (!res.ok) throw new Error('Failed to fetch services');
+        const data = await res.json();
+        const services = data.services || data;
 
-        const services = await res.json();
+        const userServices = services.filter(s => s.user?.id == userId);
         servicesList.innerHTML = '';
 
-        services
-            .filter(s => s.User?.id == userId)
-            .forEach(s => {
-                const div = document.createElement('div');
-                div.className = 'service-card';
-                div.innerHTML = `
-                    <h3>${s.title}</h3>
-                    <p>${s.description}</p>
-                    <p><strong>Price:</strong> $${s.price}</p>
-                `;
-                servicesList.appendChild(div);
-            });
+        if (!userServices.length) {
+            servicesList.innerHTML = '<p>No services yet.</p>';
+            return;
+        }
+
+        userServices.forEach(s => {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `<h3>${s.title}</h3><p>${s.description}</p><p><strong>Price:</strong> $${s.price}</p>`;
+            servicesList.appendChild(div);
+        });
     } catch (err) {
         console.error(err);
         servicesList.innerHTML = '<p class="error">Failed to load services</p>';
     }
 }
 
-// ================= Load everything on page load =================
+// ---------------- Toggle New Service Section ----------------
+toggleNewServiceBtn.addEventListener('click', () => {
+    newServiceSection.style.display = newServiceSection.style.display === 'flex' ? 'none' : 'flex';
+});
+
+// ---------------- Create New Service ----------------
+createServiceBtn.addEventListener('click', async () => {
+    const title = newServiceTitle.value.trim();
+    const description = newServiceDesc.value.trim();
+    const price = newServicePrice.value.trim();
+    if (!title || !description || !price) return alert('All fields are required.');
+
+    try {
+        const res = await fetch(`${API_URL}/services`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ title, description, price })
+        });
+        if (!res.ok) throw new Error('Failed to create service');
+
+        alert('Service created successfully!');
+        newServiceTitle.value = '';
+        newServiceDesc.value = '';
+        newServicePrice.value = '';
+        newServiceSection.style.display = 'none';
+        await loadServices();
+    } catch (err) {
+        console.error(err);
+        alert('Failed to create service.');
+    }
+});
+
+// ---------------- Logout ----------------
+logoutBtn.addEventListener('click', () => {
+    localStorage.clear();
+    window.location.href = 'index.html';
+});
+
+// ---------------- Go to other pages ----------------
+goToServicesBtn.addEventListener('click', () => { window.location.href = 'services.html'; });
+goToMessagesBtn.addEventListener('click', () => { window.location.href = 'messages.html'; });
+
+// ---------------- Initialize ----------------
 window.addEventListener('load', async () => {
-    await loadProfile(); // wait for profile to finish
-    loadUserServices();  // now userId is set, so services will load
+    await loadProfile();
+    await loadServices();
 });

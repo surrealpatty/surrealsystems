@@ -5,271 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Profile - CodeCrowds</title>
 <link rel="stylesheet" href="style.css">
-<style>
-body, html {
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #4e54c8, #00aaff);
-    color: #fff;
-    min-height: 100%;
-}
-.container {
-    max-width: 900px;
-    width: 90%;
-    padding: 2.5rem 2rem;
-    margin: 50px auto;
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-    background: rgba(255,255,255,0.95);
-    border-radius: 16px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-    color: #333;
-    text-align: center;
-}
-h1 { color: #4e54c8; margin-bottom: 0.5rem; }
-#profile-description { margin-bottom: 10px; min-height: 50px; }
-#profile-description[contenteditable="true"] {
-    border: 1px solid #4e54c8;
-    padding: 5px;
-    border-radius: 8px;
-    background-color: #f0f0f0;
-    color: #333;
-}
-button {
-    padding: 10px 20px;
-    font-size: 1rem;
-    color: #fff;
-    background-color: #4e54c8;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-top: 5px;
-    transition: 0.3s;
-}
-button:hover { background-color: #3b40a1; }
-#services-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-}
-.card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    transition: transform 0.2s;
-    color: #333;
-}
-.card:hover { transform: translateY(-5px); }
-.card h3 { margin-bottom: 10px; color: #4e54c8; }
-.card p { margin: 5px 0; color: #555; }
-
-/* New Service Section */
-#newServiceSection {
-    display: none;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 10px;
-}
-#newServiceSection input, #newServiceSection textarea {
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    width: 100%;
-}
-</style>
 </head>
 <body>
 
 <div class="container">
     <h1 id="profile-username">Loading username...</h1>
     <p id="profile-description">Loading description...</p>
-    <button type="button" id="editDescBtn">Edit Description</button>
-    <button type="button" id="goToServicesBtn">Go to Services</button>
-    <button type="button" id="goToMessagesBtn">Go to Messages</button>
+    <button id="editDescBtn">Edit Description</button>
+    <div class="button-group">
+        <button id="goToServicesBtn">Go to Services</button>
+        <button id="goToMessagesBtn">Go to Messages</button>
+    </div>
 
     <h2>Your Services</h2>
     <div id="services-list"><p>Loading services...</p></div>
 
-    <!-- Create Service Section -->
-    <button type="button" id="toggleNewServiceBtn">Add New Service</button>
+    <button id="toggleNewServiceBtn">Add New Service</button>
     <div id="newServiceSection">
         <input type="text" id="newServiceTitle" placeholder="Service Title">
         <textarea id="newServiceDesc" placeholder="Service Description"></textarea>
         <input type="number" id="newServicePrice" placeholder="Price in USD">
-        <button type="button" id="createServiceBtn">Create Service</button>
+        <button id="createServiceBtn">Create Service</button>
     </div>
 
-    <button type="button" id="logoutBtn">Logout</button>
+    <button id="logoutBtn" class="logout-btn">Logout</button>
 </div>
 
-<script>
-const API_URL = 'https://codecrowds.onrender.com';
-const token = localStorage.getItem('token');
-if (!token) window.location.href = 'index.html';
-
-const profileUsername = document.getElementById('profile-username');
-const profileDescription = document.getElementById('profile-description');
-const editDescBtn = document.getElementById('editDescBtn');
-const goToServicesBtn = document.getElementById('goToServicesBtn');
-const goToMessagesBtn = document.getElementById('goToMessagesBtn');
-const servicesList = document.getElementById('services-list');
-const logoutBtn = document.getElementById('logoutBtn');
-
-const toggleNewServiceBtn = document.getElementById('toggleNewServiceBtn');
-const newServiceSection = document.getElementById('newServiceSection');
-const createServiceBtn = document.getElementById('createServiceBtn');
-const newServiceTitle = document.getElementById('newServiceTitle');
-const newServiceDesc = document.getElementById('newServiceDesc');
-const newServicePrice = document.getElementById('newServicePrice');
-
-let userId = localStorage.getItem('userId');
-
-// ---------------- Load Profile ----------------
-async function loadProfile() {
-    try {
-        const res = await fetch(`${API_URL}/profile`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        if (!res.ok) throw new Error('Failed to fetch profile');
-        const userData = await res.json();
-        const user = userData.user ? userData.user : userData;
-
-        userId = user.id;
-        localStorage.setItem('userId', userId);
-        localStorage.setItem('username', user.username || '');
-        localStorage.setItem('description', user.description || '');
-
-        // Set username and description immediately
-        profileUsername.textContent = user.username || 'Unknown User';
-        profileDescription.textContent = user.description || 'No description yet.';
-    } catch (err) {
-        console.error(err);
-        profileUsername.textContent = 'Unknown User';
-        profileDescription.textContent = 'Failed to load description';
-    }
-}
-
-// ---------------- Edit / Save Description ----------------
-let editing = false;
-editDescBtn.addEventListener('click', async () => {
-    editing = !editing;
-    profileDescription.contentEditable = editing ? 'true' : 'false';
-    editDescBtn.textContent = editing ? 'Save Description' : 'Edit Description';
-
-    if (!editing && userId) {
-        const newDesc = profileDescription.textContent.trim();
-        try {
-            const res = await fetch(`${API_URL}/users/${userId}`, {
-                method: 'PUT',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({ description: newDesc })
-            });
-            if (!res.ok) throw new Error('Failed to update description');
-            const data = await res.json();
-            const updatedUser = data.user ? data.user : data;
-
-            profileUsername.textContent = updatedUser.username || profileUsername.textContent;
-            profileDescription.textContent = updatedUser.description || newDesc;
-            localStorage.setItem('description', updatedUser.description || newDesc);
-        } catch (err) {
-            console.error(err);
-            profileDescription.textContent = localStorage.getItem('description') || 'Failed to save';
-            alert('Failed to save description.');
-        }
-    }
-});
-
-// ---------------- Load Services ----------------
-async function loadServices() {
-    if (!userId) return;
-    try {
-        const res = await fetch(`${API_URL}/services`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        if (!res.ok) throw new Error('Failed to fetch services');
-        const data = await res.json();
-        const services = data.services || data;
-
-        const userServices = services.filter(s => s.user?.id == userId);
-
-        servicesList.innerHTML = '';
-        if (!userServices.length) {
-            servicesList.innerHTML = '<p>No services yet.</p>';
-            return;
-        }
-
-        userServices.forEach(s => {
-            const div = document.createElement('div');
-            div.className = 'card';
-            div.innerHTML = `
-                <h3>${s.title}</h3>
-                <p>${s.description}</p>
-                <p><strong>Price:</strong> $${s.price}</p>
-            `;
-            servicesList.appendChild(div);
-        });
-    } catch (err) {
-        console.error(err);
-        servicesList.innerHTML = '<p class="error">Failed to load services</p>';
-    }
-}
-
-// ---------------- Toggle New Service Section ----------------
-toggleNewServiceBtn.addEventListener('click', () => {
-    newServiceSection.style.display = newServiceSection.style.display === 'flex' ? 'none' : 'flex';
-});
-
-// ---------------- Create New Service ----------------
-createServiceBtn.addEventListener('click', async () => {
-    const title = newServiceTitle.value.trim();
-    const description = newServiceDesc.value.trim();
-    const price = newServicePrice.value.trim();
-    if (!title || !description || !price) return alert('All fields are required.');
-
-    try {
-        const res = await fetch(`${API_URL}/services`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify({ title, description, price })
-        });
-        if (!res.ok) throw new Error('Failed to create service');
-
-        alert('Service created successfully!');
-        newServiceTitle.value = '';
-        newServiceDesc.value = '';
-        newServicePrice.value = '';
-        newServiceSection.style.display = 'none';
-        await loadServices();
-    } catch (err) {
-        console.error(err);
-        alert('Failed to create service.');
-    }
-});
-
-// ---------------- Logout ----------------
-logoutBtn.addEventListener('click', () => {
-    localStorage.clear();
-    window.location.href = 'index.html';
-});
-
-// ---------------- Go to other pages ----------------
-goToServicesBtn.addEventListener('click', () => { window.location.href = 'services.html'; });
-goToMessagesBtn.addEventListener('click', () => { window.location.href = 'messages.html'; });
-
-// ---------------- Initialize ----------------
-window.addEventListener('load', async () => {
-    await loadProfile();  // Fetch username immediately
-    await loadServices();
-});
-</script>
+<script src="profile.js"></script>
 </body>
 </html>
