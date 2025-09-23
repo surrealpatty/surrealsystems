@@ -125,25 +125,19 @@ logoutBtn.addEventListener('click', () => {
     window.location.href = 'index.html';
 });
 
-// Load user profile
+// Load Profile
 async function loadProfile() {
     try {
         const res = await fetch(`${API_URL}/users/${userId}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to fetch user');
-        const data = await res.json();
 
-        // Handle user object depending on API format
-        const user = data.user ? data.user : data;
+        const data = await res.json();
+        const user = data.user || data;
 
         profileUsername.textContent = user.username || "Unknown User";
         profileDescription.textContent = user.description || "No description yet.";
-
-        // Save to localStorage for consistency
-        localStorage.setItem('username', user.username || '');
-        localStorage.setItem('description', user.description || '');
-
     } catch (err) {
         console.error(err);
         profileUsername.textContent = 'Unknown User';
@@ -151,14 +145,22 @@ async function loadProfile() {
     }
 }
 
-// Edit / Save profile description
+// Edit / Save Description
 let editing = false;
 editDescBtn.addEventListener('click', async () => {
-    editing = !editing;
-    profileDescription.contentEditable = editing ? 'true' : 'false';
-    editDescBtn.textContent = editing ? 'Save Description' : 'Edit Description';
-
     if (!editing) {
+        // Enter edit mode
+        editing = true;
+        profileDescription.contentEditable = 'true';
+        profileDescription.focus();
+        editDescBtn.textContent = 'Save Description';
+    } else {
+        // Save mode
+        editing = false;
+        profileDescription.contentEditable = 'false';
+        editDescBtn.textContent = 'Edit Description';
+
+        const newDesc = profileDescription.textContent.trim();
         try {
             const res = await fetch(`${API_URL}/users/${userId}`, {
                 method: 'PUT',
@@ -166,15 +168,14 @@ editDescBtn.addEventListener('click', async () => {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`
                 },
-                body: JSON.stringify({ description: profileDescription.textContent.trim() })
+                body: JSON.stringify({ description: newDesc })
             });
+
             if (!res.ok) throw new Error('Failed to update description');
 
             const data = await res.json();
-            const user = data.user ? data.user : data;
-            profileUsername.textContent = user.username || profileUsername.textContent;
-            profileDescription.textContent = user.description || profileDescription.textContent;
-            localStorage.setItem('description', user.description || '');
+            const user = data.user || data;
+            profileDescription.textContent = user.description || newDesc;
             alert('Profile updated successfully!');
         } catch (err) {
             console.error(err);
@@ -190,8 +191,9 @@ async function loadServices() {
             headers: { Authorization: `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to fetch services');
+
         const data = await res.json();
-        const services = data.services ? data.services : data;
+        const services = data.services || data;
 
         servicesList.innerHTML = '';
         services.forEach(s => {
@@ -217,8 +219,9 @@ async function loadMessages() {
             headers: { Authorization: `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to fetch messages');
+
         const data = await res.json();
-        const messages = data.messages ? data.messages : data;
+        const messages = data.messages || data;
 
         messagesList.innerHTML = '';
         messages.forEach(m => {
