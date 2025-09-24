@@ -165,6 +165,8 @@ const editDescBtn = document.getElementById('editDescBtn');
 const servicesList = document.getElementById('services-list');
 const logoutBtn = document.getElementById('logoutBtn');
 
+const goToServicesBtn = document.getElementById('goToServicesBtn');
+const goToMessagesBtn = document.getElementById('goToMessagesBtn');
 const toggleNewServiceBtn = document.getElementById('toggleNewServiceBtn');
 const newServiceSection = document.getElementById('newServiceSection');
 const createServiceBtn = document.getElementById('createServiceBtn');
@@ -172,10 +174,11 @@ const newServiceTitle = document.getElementById('newServiceTitle');
 const newServiceDesc = document.getElementById('newServiceDesc');
 const newServicePrice = document.getElementById('newServicePrice');
 
-const goToServicesBtn = document.getElementById('goToServicesBtn');
-const goToMessagesBtn = document.getElementById('goToMessagesBtn');
-
 let userId = localStorage.getItem('userId');
+
+// ---------------- Navigation Buttons ----------------
+goToServicesBtn.addEventListener('click', () => { window.location.href = 'services.html'; });
+goToMessagesBtn.addEventListener('click', () => { window.location.href = 'messages.html'; });
 
 // ---------------- Load Profile ----------------
 async function loadProfile() {
@@ -338,17 +341,13 @@ async function loadServices() {
     }
 }
 
-// ---------------- Navigation & Toggle Buttons ----------------
-goToServicesBtn.addEventListener('click', () => {
-    window.location.href = 'services.html';
-});
-
-goToMessagesBtn.addEventListener('click', () => {
-    window.location.href = 'messages.html';
-});
-
+// ---------------- Toggle New Service ----------------
 toggleNewServiceBtn.addEventListener('click', () => {
-    newServiceSection.style.display = newServiceSection.style.display === 'flex' ? 'none' : 'flex';
+    if (newServiceSection.style.display === 'flex' || newServiceSection.style.display === '') {
+        newServiceSection.style.display = 'none';
+    } else {
+        newServiceSection.style.display = 'flex';
+    }
 });
 
 // ---------------- Create Service ----------------
@@ -365,9 +364,15 @@ createServiceBtn.addEventListener('click', async () => {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${token}`
             },
-            body: JSON.stringify({ title, description, price })
+            body: JSON.stringify({ 
+                title, 
+                description, 
+                price, 
+                userId // include the logged-in user's ID
+            })
         });
         if (!res.ok) throw new Error('Failed to create service');
+
         newServiceTitle.value = '';
         newServiceDesc.value = '';
         newServicePrice.value = '';
