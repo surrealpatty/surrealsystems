@@ -89,6 +89,12 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 .logout-btn { background-color: #ff4d4f; }
 .logout-btn:hover { background-color: #c30000; }
 
+/* Save/Cancel buttons */
+.save-btn { background-color: #28a745; }
+.save-btn:hover { background-color: #1e7e34; }
+.cancel-btn { background-color: #dc3545; }
+.cancel-btn:hover { background-color: #a71d2a; }
+
 /* ---------- Services Grid ---------- */
 #services-list {
     display: grid;
@@ -272,7 +278,7 @@ editDescBtn.addEventListener('click', async () => {
     }
 });
 
-// ---------------- Load Services (Polished) ----------------
+// ---------------- Load Services (with Edit/Delete) ----------------
 async function loadServices() {
     servicesList.innerHTML = `<p><span class="spinner"></span> Loading services...</p>`;
 
@@ -288,7 +294,6 @@ async function loadServices() {
         if (!userServices.length) {
             const placeholder = document.createElement('div');
             placeholder.className = 'card fade-in';
-            placeholder.style.animationDelay = '0s';
             placeholder.innerHTML = `
                 <h3>No Services Yet</h3>
                 <p>Add your first service using the + Service button</p>
@@ -297,16 +302,89 @@ async function loadServices() {
             return;
         }
 
-        userServices.forEach((s, i) => {
+        userServices.forEach((s) => {
             const div = document.createElement('div');
             div.className = 'card fade-in';
-            div.style.animationDelay = `${i * 0.1}s`;
             div.innerHTML = `
-                <h3>${s.title}</h3>
-                <p>${s.description}</p>
-                <p><strong>Price:</strong> $${s.price}</p>
+                <h3 class="service-title">${s.title}</h3>
+                <p class="service-desc">${s.description}</p>
+                <p><strong>Price:</strong> $<span class="service-price">${s.price}</span></p>
+                <div class="service-buttons">
+                    <button class="edit-service-btn">Edit</button>
+                    <button class="delete-service-btn">Delete</button>
+                </div>
             `;
             servicesList.appendChild(div);
+
+            const editBtn = div.querySelector('.edit-service-btn');
+            const deleteBtn = div.querySelector('.delete-service-btn');
+
+            // --- Edit service ---
+            editBtn.addEventListener('click', () => {
+                const titleEl = div.querySelector('.service-title');
+                const descEl = div.querySelector('.service-desc');
+                const priceEl = div.querySelector('.service-price');
+                const origTitle = titleEl.textContent;
+                const origDesc = descEl.textContent;
+                const origPrice = priceEl.textContent;
+
+                titleEl.innerHTML = `<input type="text" value="${origTitle}" class="edit-title">`;
+                descEl.innerHTML = `<textarea class="edit-desc">${origDesc}</textarea>`;
+                priceEl.innerHTML = `<input type="number" value="${origPrice}" class="edit-price">`;
+
+                const buttonsDiv = div.querySelector('.service-buttons');
+                buttonsDiv.innerHTML = `
+                    <button class="save-btn">Save</button>
+                    <button class="cancel-btn">Cancel</button>
+                `;
+
+                // Save
+                buttonsDiv.querySelector('.save-btn').addEventListener('click', async () => {
+                    const updatedTitle = div.querySelector('.edit-title').value.trim();
+                    const updatedDesc = div.querySelector('.edit-desc').value.trim();
+                    const updatedPrice = div.querySelector('.edit-price').value.trim();
+                    if (!updatedTitle || !updatedDesc || !updatedPrice) return alert('All fields are required.');
+
+                    try {
+                        await fetch(`${API_URL}/services/${s.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                            body: JSON.stringify({ title: updatedTitle, description: updatedDesc, price: updatedPrice })
+                        });
+                        await loadServices();
+                    } catch (err) {
+                        console.error(err);
+                        alert('Failed to update service.');
+                    }
+                });
+
+                // Cancel
+                buttonsDiv.querySelector('.cancel-btn').addEventListener('click', () => {
+                    titleEl.textContent = origTitle;
+                    descEl.textContent = origDesc;
+                    priceEl.textContent = origPrice;
+                    buttonsDiv.innerHTML = `
+                        <button class="edit-service-btn">Edit</button>
+                        <button class="delete-service-btn">Delete</button>
+                    `;
+                    loadServices();
+                });
+            });
+
+            // --- Delete service ---
+            deleteBtn.addEventListener('click', async () => {
+                if (!confirm('Are you sure you want to delete this service?')) return;
+                try {
+                    await fetch(`${API_URL}/services/${s.id}`, {
+                        method: 'DELETE',
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    await loadServices();
+                } catch (err) {
+                    console.error(err);
+                    alert('Failed to delete service.');
+                }
+            });
         });
     } catch (err) {
         console.error(err);
