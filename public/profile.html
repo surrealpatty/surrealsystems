@@ -34,6 +34,30 @@ body, html {
 /* ---------- Headings ---------- */
 h1, h2 { color: #4e54c8; margin-bottom: 0.5rem; }
 
+/* ---------- Spinner ---------- */
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #ccc;
+    border-top-color: #4e54c8;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ---------- Fade-in ---------- */
+.fade-in {
+    animation: fadeIn 0.5s ease forwards;
+    opacity: 0;
+}
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+
 /* ---------- Description ---------- */
 #profile-description {
     min-height: 50px;
@@ -148,12 +172,12 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 <body>
 
 <div class="container">
-    <h1 id="profile-username">Loading username...</h1>
-    <p id="profile-description">Loading description...</p>
-    <button type="button" id="editDescBtn">Edit Description</button>
+    <h1 id="profile-username"><span class="spinner"></span> Loading username...</h1>
+    <p id="profile-description"><span class="spinner"></span> Loading description...</p>
+   <button type="button" id="editDescBtn">Edit Description</button>
 
     <h2>Your Services</h2>
-    <div id="services-list"><p>Loading services...</p></div>
+    <div id="services-list"><p><span class="spinner"></span> Loading services...</p></div>
 
     <div id="newServiceSection">
         <input type="text" id="newServiceTitle" placeholder="Service Title">
@@ -204,30 +228,21 @@ let userId = localStorage.getItem('profileUserId') || localStorage.getItem('user
 
 // ---------------- Load Profile ----------------
 async function loadProfile() {
-    if (!userId) {
-        profileUsername.textContent = 'Not logged in';
-        return;
-    }
     try {
         const res = await fetch(`${API_URL}/users/${userId}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
-        if (!res.ok) throw new Error('Failed to fetch profile');
         const user = await res.json();
+        profileUsername.innerHTML = user.username || 'Unknown User';
+        profileDescription.innerHTML = user.description || 'No description yet.';
+        profileUsername.classList.add('fade-in');
+        profileDescription.classList.add('fade-in');
 
-        profileUsername.textContent = user.username || 'Unknown User';
-        profileDescription.textContent = user.description || 'No description yet.';
-
-        if (user.id == localStorage.getItem('userId')) {
-            editDescBtn.style.display = 'inline-block';
-        } else {
-            editDescBtn.style.display = 'none';
-        }
+        if (user.id == localStorage.getItem('userId')) editDescBtn.style.display = 'inline-block';
     } catch (err) {
         console.error(err);
         profileUsername.textContent = 'Unknown User';
         profileDescription.textContent = 'Failed to load description';
-        editDescBtn.style.display = 'none';
     }
 }
 
@@ -235,7 +250,7 @@ async function loadProfile() {
 let editingDesc = false;
 editDescBtn.addEventListener('click', async () => {
     editingDesc = !editingDesc;
-    profileDescription.contentEditable = editingDesc ? 'true' : 'false';
+    profileDescription.contentEditable = editingDesc;
     editDescBtn.textContent = editingDesc ? 'Save Description' : 'Edit Description';
 
     if (!editingDesc) {
@@ -268,9 +283,10 @@ async function loadServices() {
             return;
         }
 
-        userServices.forEach(s => {
+        userServices.forEach((s, i) => {
             const div = document.createElement('div');
-            div.className = 'card';
+            div.className = 'card fade-in';
+            div.style.animationDelay = `${i * 0.1}s`; // staggered fade-in
             div.innerHTML = `<h3>${s.title}</h3><p>${s.description}</p><p><strong>Price:</strong> $${s.price}</p>`;
             servicesList.appendChild(div);
         });
@@ -312,12 +328,10 @@ createServiceBtn.addEventListener('click', async () => {
 });
 
 // ---------------- Navigation ----------------
-function goToServices() { window.location.href = 'services.html'; }
-function goToMessages() { window.location.href = 'messages.html'; }
-goToServicesBtn.addEventListener('click', goToServices);
-goToMessagesBtn.addEventListener('click', goToMessages);
-mobileServicesBtn.addEventListener('click', goToServices);
-mobileMessagesBtn.addEventListener('click', goToMessages);
+goToServicesBtn.addEventListener('click', () => window.location.href = 'services.html');
+goToMessagesBtn.addEventListener('click', () => window.location.href = 'messages.html');
+mobileServicesBtn.addEventListener('click', () => window.location.href = 'services.html');
+mobileMessagesBtn.addEventListener('click', () => window.location.href = 'messages.html');
 
 // ---------------- Logout ----------------
 logoutBtn.addEventListener('click', () => {
