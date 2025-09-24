@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Profile - CodeCrowds</title>
+<link rel="stylesheet" href="style.css">
 <style>
 /* ---------- Global ---------- */
 body, html {
@@ -51,11 +52,12 @@ h1, h2 { color: #4e54c8; margin-bottom: 0.5rem; }
 
 /* ---------- Fade-in ---------- */
 .fade-in {
-    animation: fadeIn 0.5s ease forwards;
     opacity: 0;
+    transform: translateY(10px);
+    animation: fadeIn 0.5s ease forwards;
 }
 @keyframes fadeIn {
-    to { opacity: 1; }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* ---------- Description ---------- */
@@ -174,7 +176,7 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 <div class="container">
     <h1 id="profile-username"><span class="spinner"></span> Loading username...</h1>
     <p id="profile-description"><span class="spinner"></span> Loading description...</p>
-   <button type="button" id="editDescBtn">Edit Description</button>
+    <button type="button" id="editDescBtn">Edit Description</button>
 
     <h2>Your Services</h2>
     <div id="services-list"><p><span class="spinner"></span> Loading services...</p></div>
@@ -270,24 +272,40 @@ editDescBtn.addEventListener('click', async () => {
     }
 });
 
-// ---------------- Load Services ----------------
+// ---------------- Load Services (Polished) ----------------
 async function loadServices() {
+    servicesList.innerHTML = `<p><span class="spinner"></span> Loading services...</p>`;
+
     try {
-        const res = await fetch(`${API_URL}/services`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(`${API_URL}/services`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
         const services = await res.json();
         const userServices = services.filter(s => s.user?.id == userId);
+
         servicesList.innerHTML = '';
 
         if (!userServices.length) {
-            servicesList.innerHTML = '<p>No services yet.</p>';
+            const placeholder = document.createElement('div');
+            placeholder.className = 'card fade-in';
+            placeholder.style.animationDelay = '0s';
+            placeholder.innerHTML = `
+                <h3>No Services Yet</h3>
+                <p>Add your first service using the + Service button</p>
+            `;
+            servicesList.appendChild(placeholder);
             return;
         }
 
         userServices.forEach((s, i) => {
             const div = document.createElement('div');
             div.className = 'card fade-in';
-            div.style.animationDelay = `${i * 0.1}s`; // staggered fade-in
-            div.innerHTML = `<h3>${s.title}</h3><p>${s.description}</p><p><strong>Price:</strong> $${s.price}</p>`;
+            div.style.animationDelay = `${i * 0.1}s`;
+            div.innerHTML = `
+                <h3>${s.title}</h3>
+                <p>${s.description}</p>
+                <p><strong>Price:</strong> $${s.price}</p>
+            `;
             servicesList.appendChild(div);
         });
     } catch (err) {
