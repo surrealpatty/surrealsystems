@@ -189,7 +189,7 @@ const newServicePrice = document.getElementById('newServicePrice');
 
 let userId = localStorage.getItem('userId');
 
-// ✅ Fixed: Load profile using /users/:id
+// 🔹 Fixed: Load profile using /users/:id and handle nested 'user' object
 async function loadProfile() {
     if (!userId) {
         profileUsername.textContent = 'Not logged in';
@@ -201,7 +201,9 @@ async function loadProfile() {
             headers: { Authorization: `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to fetch profile');
-        const user = await res.json();
+
+        const data = await res.json();
+        const user = data.user || data;  // handle nested object or flat
 
         userId = user.id;
         localStorage.setItem('userId', userId);
@@ -251,7 +253,8 @@ async function loadServices() {
     try {
         const res = await fetch(`${API_URL}/services`, { headers: { Authorization: `Bearer ${token}` } });
         if (!res.ok) throw new Error('Failed to fetch services');
-        const services = await res.json();
+        const data = await res.json();
+        const services = data.services || data;
 
         const userServices = services.filter(s => s.user?.id == userId);
         servicesList.innerHTML = '';

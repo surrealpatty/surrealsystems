@@ -54,6 +54,20 @@ exports.getUsers = async (req, res) => {
     }
 };
 
+// Get single user by ID
+exports.getUserById = async (req, res) => {
+    try {
+        const user = await User.findByPk(req.params.id, {
+            attributes: ['id', 'username', 'email', 'description']
+        });
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        res.json(user);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch user' });
+    }
+};
+
 // Update profile
 exports.updateProfile = async (req, res) => {
     try {
