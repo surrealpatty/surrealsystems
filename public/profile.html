@@ -19,7 +19,7 @@ body, html {
 .container {
     max-width: 900px;
     width: 90%;
-    padding: 2.5rem 2rem 120px 2rem; /* space for mobile buttons */
+    padding: 2.5rem 2rem 120px 2rem;
     margin: 50px auto 0 auto;
     display: flex;
     flex-direction: column;
@@ -171,7 +171,6 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 </div>
 
 <script>
-// JS remains unchanged
 const API_URL = 'https://codecrowds.onrender.com';
 const token = localStorage.getItem('token');
 if (!token) window.location.href = 'index.html';
@@ -190,12 +189,19 @@ const newServicePrice = document.getElementById('newServicePrice');
 
 let userId = localStorage.getItem('userId');
 
+// ✅ Fixed: Load profile using /users/:id
 async function loadProfile() {
+    if (!userId) {
+        profileUsername.textContent = 'Not logged in';
+        return;
+    }
     try {
-        const res = await fetch(`${API_URL}/profile`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(`${API_URL}/users/${userId}`, {
+            method: 'GET',
+            headers: { Authorization: `Bearer ${token}` }
+        });
         if (!res.ok) throw new Error('Failed to fetch profile');
-        const userData = await res.json();
-        const user = userData.user || userData;
+        const user = await res.json();
 
         userId = user.id;
         localStorage.setItem('userId', userId);
@@ -229,8 +235,7 @@ editDescBtn.addEventListener('click', async () => {
                 body: JSON.stringify({ description: newDesc })
             });
             if (!res.ok) throw new Error('Failed to update description');
-            const data = await res.json();
-            const updatedUser = data.user || data;
+            const updatedUser = await res.json();
             profileDescription.textContent = updatedUser.description || newDesc;
             localStorage.setItem('description', updatedUser.description || newDesc);
         } catch (err) {
@@ -246,8 +251,7 @@ async function loadServices() {
     try {
         const res = await fetch(`${API_URL}/services`, { headers: { Authorization: `Bearer ${token}` } });
         if (!res.ok) throw new Error('Failed to fetch services');
-        const data = await res.json();
-        const services = data.services || data;
+        const services = await res.json();
 
         const userServices = services.filter(s => s.user?.id == userId);
         servicesList.innerHTML = '';
