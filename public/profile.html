@@ -6,6 +6,7 @@
 <title>Profile - CodeCrowds</title>
 <link rel="stylesheet" href="style.css">
 <style>
+/* ---------- Global ---------- */
 body, html {
     margin: 0;
     padding: 0;
@@ -14,6 +15,8 @@ body, html {
     color: #fff;
     min-height: 100%;
 }
+
+/* ---------- Container ---------- */
 .container {
     max-width: 900px;
     width: 90%;
@@ -28,7 +31,11 @@ body, html {
     color: #333;
     text-align: center;
 }
+
+/* ---------- Headings ---------- */
 h1 { color: #4e54c8; margin-bottom: 0.5rem; }
+
+/* ---------- Profile Description ---------- */
 #profile-description { margin-bottom: 10px; min-height: 50px; }
 #profile-description[contenteditable="true"] {
     border: 1px solid #4e54c8;
@@ -37,6 +44,8 @@ h1 { color: #4e54c8; margin-bottom: 0.5rem; }
     background-color: #f0f0f0;
     color: #333;
 }
+
+/* ---------- Buttons ---------- */
 button {
     padding: 10px 20px;
     font-size: 1rem;
@@ -58,6 +67,7 @@ button:hover { background-color: #3b40a1; }
     margin-bottom: 20px;
 }
 
+/* ---------- Services Grid ---------- */
 #services-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -70,26 +80,30 @@ button:hover { background-color: #3b40a1; }
     box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     transition: transform 0.2s;
     color: #333;
-    text-align: left;
+    text-align: center; /* center all text inside the bubble */
 }
 .card:hover { transform: translateY(-5px); }
 .card h3 { margin-bottom: 10px; color: #4e54c8; }
 .card p { margin: 5px 0; color: #555; }
+
 .card input, .card textarea {
     width: 100%;
     margin-bottom: 5px;
     padding: 5px;
     border-radius: 6px;
     border: 1px solid #ccc;
+    text-align: center;
 }
+
 .card-buttons {
     margin-top: 10px;
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+    justify-content: center;
 }
 
-/* New Service Section */
+/* ---------- New Service Section ---------- */
 #newServiceSection {
     display: none;
     flex-direction: column;
@@ -101,9 +115,10 @@ button:hover { background-color: #3b40a1; }
     border-radius: 8px;
     border: 1px solid #ccc;
     width: 100%;
+    text-align: center;
 }
 
-/* Logout */
+/* ---------- Logout ---------- */
 .logout-btn { background-color: #ff4d4f; }
 .logout-btn:hover { background-color: #c30000; }
 
@@ -136,7 +151,7 @@ button:hover { background-color: #3b40a1; }
         <button type="button" id="createServiceBtn">Create Service</button>
     </div>
 
-    <button type="button" id="logoutBtn">Logout</button>
+    <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
 </div>
 
 <script>
@@ -147,8 +162,6 @@ if (!token) window.location.href = 'index.html';
 const profileUsername = document.getElementById('profile-username');
 const profileDescription = document.getElementById('profile-description');
 const editDescBtn = document.getElementById('editDescBtn');
-const goToServicesBtn = document.getElementById('goToServicesBtn');
-const goToMessagesBtn = document.getElementById('goToMessagesBtn');
 const servicesList = document.getElementById('services-list');
 const logoutBtn = document.getElementById('logoutBtn');
 
@@ -204,7 +217,6 @@ editDescBtn.addEventListener('click', async () => {
             if (!res.ok) throw new Error('Failed to update description');
             const data = await res.json();
             const updatedUser = data.user || data;
-            profileUsername.textContent = updatedUser.username || profileUsername.textContent;
             profileDescription.textContent = updatedUser.description || newDesc;
             localStorage.setItem('description', updatedUser.description || newDesc);
         } catch (err) {
@@ -345,7 +357,6 @@ createServiceBtn.addEventListener('click', async () => {
             body: JSON.stringify({ title, description, price })
         });
         if (!res.ok) throw new Error('Failed to create service');
-        alert('Service created successfully!');
         newServiceTitle.value = '';
         newServiceDesc.value = '';
         newServicePrice.value = '';
@@ -362,10 +373,6 @@ logoutBtn.addEventListener('click', () => {
     localStorage.clear();
     window.location.href = 'index.html';
 });
-
-// ---------------- Go To Pages ----------------
-goToServicesBtn.addEventListener('click', () => { window.location.href = 'services.html'; });
-goToMessagesBtn.addEventListener('click', () => { window.location.href = 'messages.html'; });
 
 // ---------------- Initialize ----------------
 window.addEventListener('load', async () => {
