@@ -80,7 +80,7 @@ button:hover { background-color: #3b40a1; }
     box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     transition: transform 0.2s;
     color: #333;
-    text-align: center; /* center all text inside the bubble */
+    text-align: center;
 }
 .card:hover { transform: translateY(-5px); }
 .card h3 { margin-bottom: 10px; color: #4e54c8; }
@@ -171,6 +171,9 @@ const createServiceBtn = document.getElementById('createServiceBtn');
 const newServiceTitle = document.getElementById('newServiceTitle');
 const newServiceDesc = document.getElementById('newServiceDesc');
 const newServicePrice = document.getElementById('newServicePrice');
+
+const goToServicesBtn = document.getElementById('goToServicesBtn');
+const goToMessagesBtn = document.getElementById('goToMessagesBtn');
 
 let userId = localStorage.getItem('userId');
 
@@ -335,7 +338,15 @@ async function loadServices() {
     }
 }
 
-// ---------------- Toggle New Service ----------------
+// ---------------- Navigation & Toggle Buttons ----------------
+goToServicesBtn.addEventListener('click', () => {
+    window.location.href = 'services.html';
+});
+
+goToMessagesBtn.addEventListener('click', () => {
+    window.location.href = 'messages.html';
+});
+
 toggleNewServiceBtn.addEventListener('click', () => {
     newServiceSection.style.display = newServiceSection.style.display === 'flex' ? 'none' : 'flex';
 });
