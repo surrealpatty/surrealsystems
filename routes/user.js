@@ -5,7 +5,7 @@ const {
     registerUser,
     loginUser,
     getUsers,
-    getUserById,      // 👈 added
+    getUserById,
     updateProfile
 } = require('../controllers/userController');
 
@@ -13,7 +13,7 @@ const {
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.get('/', authenticateToken, getUsers);
-router.get('/:id', authenticateToken, getUserById); // 👈 new route
+router.get('/:id', authenticateToken, getUserById); // fetch single user
 router.put('/:id', authenticateToken, updateProfile);
 
 module.exports = router;

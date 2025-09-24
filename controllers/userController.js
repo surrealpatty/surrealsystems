@@ -17,10 +17,7 @@ exports.registerUser = async (req, res) => {
 
         const token = jwt.sign({ id: newUser.id, username: newUser.username }, JWT_SECRET, { expiresIn: '7d' });
         res.status(201).json({ token, user: newUser });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Registration failed' });
-    }
+    } catch (err) { console.error(err); res.status(500).json({ error: 'Registration failed' }); }
 };
 
 // Login
@@ -37,10 +34,7 @@ exports.loginUser = async (req, res) => {
 
         const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
         res.json({ token, user });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Login failed' });
-    }
+    } catch (err) { console.error(err); res.status(500).json({ error: 'Login failed' }); }
 };
 
 // Get all users
@@ -48,24 +42,16 @@ exports.getUsers = async (req, res) => {
     try {
         const users = await User.findAll({ attributes: ['id', 'username', 'email', 'description'] });
         res.json(users);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to fetch users' });
-    }
+    } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to fetch users' }); }
 };
 
 // Get single user by ID
 exports.getUserById = async (req, res) => {
     try {
-        const user = await User.findByPk(req.params.id, {
-            attributes: ['id', 'username', 'email', 'description']
-        });
+        const user = await User.findByPk(req.params.id, { attributes: ['id', 'username', 'email', 'description'] });
         if (!user) return res.status(404).json({ error: 'User not found' });
         res.json(user);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to fetch user' });
-    }
+    } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to fetch user' }); }
 };
 
 // Update profile
@@ -80,8 +66,5 @@ exports.updateProfile = async (req, res) => {
 
         await user.save();
         res.json({ user });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to update profile' });
-    }
+    } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to update profile' }); }
 };

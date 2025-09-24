@@ -57,7 +57,6 @@ button {
     transition: transform 0.3s, opacity 0.3s;
 }
 button:hover { transform: translateY(-5px); opacity: 0.9; }
-
 .logout-btn { background-color: #ff4d4f; }
 .logout-btn:hover { background-color: #c30000; }
 
@@ -189,27 +188,13 @@ const newServicePrice = document.getElementById('newServicePrice');
 
 let userId = localStorage.getItem('userId');
 
-// 🔹 Fixed: Load profile using /users/:id and handle nested 'user' object
 async function loadProfile() {
-    if (!userId) {
-        profileUsername.textContent = 'Not logged in';
-        return;
-    }
+    if (!userId) { profileUsername.textContent = 'Not logged in'; return; }
     try {
-        const res = await fetch(`${API_URL}/users/${userId}`, {
-            method: 'GET',
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await fetch(`${API_URL}/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
         if (!res.ok) throw new Error('Failed to fetch profile');
 
-        const data = await res.json();
-        const user = data.user || data;  // handle nested object or flat
-
-        userId = user.id;
-        localStorage.setItem('userId', userId);
-        localStorage.setItem('username', user.username || '');
-        localStorage.setItem('description', user.description || '');
-
+        const user = await res.json();
         profileUsername.textContent = user.username || 'Unknown User';
         profileDescription.textContent = user.description || 'No description yet.';
     } catch (err) {
@@ -225,60 +210,44 @@ editDescBtn.addEventListener('click', async () => {
     profileDescription.contentEditable = editingDesc ? 'true' : 'false';
     editDescBtn.textContent = editingDesc ? 'Save Description' : 'Edit Description';
 
-    if (!editingDesc && userId) {
+    if (!editingDesc) {
         const newDesc = profileDescription.textContent.trim();
         try {
             const res = await fetch(`${API_URL}/users/${userId}`, {
                 method: 'PUT',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify({ description: newDesc })
             });
-            if (!res.ok) throw new Error('Failed to update description');
             const updatedUser = await res.json();
-            profileDescription.textContent = updatedUser.description || newDesc;
-            localStorage.setItem('description', updatedUser.description || newDesc);
+            profileDescription.textContent = updatedUser.user?.description || newDesc;
         } catch (err) {
             console.error(err);
-            profileDescription.textContent = localStorage.getItem('description') || 'Failed to save';
             alert('Failed to save description.');
         }
     }
 });
 
 async function loadServices() {
-    if (!userId) return;
     try {
         const res = await fetch(`${API_URL}/services`, { headers: { Authorization: `Bearer ${token}` } });
-        if (!res.ok) throw new Error('Failed to fetch services');
-        const data = await res.json();
-        const services = data.services || data;
-
+        const services = await res.json();
         const userServices = services.filter(s => s.user?.id == userId);
         servicesList.innerHTML = '';
 
-        if (!userServices.length) {
-            servicesList.innerHTML = '<p>No services yet.</p>';
-            return;
-        }
+        if (!userServices.length) { servicesList.innerHTML = '<p>No services yet.</p>'; return; }
 
         userServices.forEach(s => {
             const div = document.createElement('div');
             div.className = 'card';
-            div.innerHTML = `
-                <div class="service-content">
-                    <h3>${s.title}</h3>
-                    <p>${s.description}</p>
-                    <p><strong>Price:</strong> $${s.price}</p>
-                </div>
-            `;
+            div.innerHTML = `<h3>${s.title}</h3><p>${s.description}</p><p><strong>Price:</strong> $${s.price}</p>`;
             servicesList.appendChild(div);
         });
     } catch (err) {
         console.error(err);
-        servicesList.innerHTML = '<p class="error">Failed to load services</p>';
+        servicesList.innerHTML = '<p>Failed to load services</p>';
     }
 }
 
@@ -295,24 +264,17 @@ createServiceBtn.addEventListener('click', async () => {
     if (!title || !description || !price) return alert('All fields are required.');
 
     try {
-        const res = await fetch(`${API_URL}/services`, {
+        await fetch(`${API_URL}/services`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-            },
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ title, description, price })
         });
-        if (!res.ok) throw new Error('Failed to create service');
         newServiceTitle.value = '';
         newServiceDesc.value = '';
         newServicePrice.value = '';
         newServiceSection.style.display = 'none';
         await loadServices();
-    } catch (err) {
-        console.error(err);
-        alert('Failed to create service.');
-    }
+    } catch (err) { console.error(err); alert('Failed to create service.'); }
 });
 
 function goToServices() { window.location.href = 'services.html'; }
@@ -322,15 +284,9 @@ document.getElementById('goToMessagesBtn').addEventListener('click', goToMessage
 document.getElementById('mobileServicesBtn').addEventListener('click', goToServices);
 document.getElementById('mobileMessagesBtn').addEventListener('click', goToMessages);
 
-logoutBtn.addEventListener('click', () => {
-    localStorage.clear();
-    window.location.href = 'index.html';
-});
+logoutBtn.addEventListener('click', () => { localStorage.clear(); window.location.href = 'index.html'; });
 
-window.addEventListener('load', async () => {
-    await loadProfile();
-    await loadServices();
-});
+window.addEventListener('load', async () => { await loadProfile(); await loadServices(); });
 </script>
 </body>
 </html>
