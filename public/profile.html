@@ -222,9 +222,8 @@ editDescBtn.addEventListener('click', async () => {
             });
             if (!res.ok) throw new Error('Failed to update description');
             const data = await res.json();
-            const updatedUser = data.user || data;
-            profileDescription.textContent = updatedUser.description || newDesc;
-            localStorage.setItem('description', updatedUser.description || newDesc);
+            profileDescription.textContent = data.user?.description || newDesc;
+            localStorage.setItem('description', data.user?.description || newDesc);
         } catch (err) {
             console.error(err);
             profileDescription.textContent = localStorage.getItem('description') || 'Failed to save';
@@ -235,7 +234,6 @@ editDescBtn.addEventListener('click', async () => {
 
 // ---------------- Load Services ----------------
 async function loadServices() {
-    if (!userId) return;
     try {
         const res = await fetch(`${API_URL}/services`, {
             headers: { Authorization: `Bearer ${token}` }
@@ -275,7 +273,7 @@ async function loadServices() {
             `;
             servicesList.appendChild(div);
 
-            // Edit
+            // Edit, Cancel, Save, Delete same as before
             div.querySelector('.editServiceBtn').addEventListener('click', () => {
                 div.querySelector('.service-content').style.display = 'none';
                 div.querySelector('.service-edit').style.display = 'block';
@@ -284,8 +282,6 @@ async function loadServices() {
                 div.querySelector('.saveServiceBtn').style.display = 'inline-block';
                 div.querySelector('.cancelEditBtn').style.display = 'inline-block';
             });
-
-            // Cancel Edit
             div.querySelector('.cancelEditBtn').addEventListener('click', () => {
                 div.querySelector('.service-content').style.display = 'block';
                 div.querySelector('.service-edit').style.display = 'none';
@@ -294,8 +290,6 @@ async function loadServices() {
                 div.querySelector('.saveServiceBtn').style.display = 'none';
                 div.querySelector('.cancelEditBtn').style.display = 'none';
             });
-
-            // Save Edit
             div.querySelector('.saveServiceBtn').addEventListener('click', async () => {
                 const updated = {
                     title: div.querySelector('.editTitle').value,
@@ -318,8 +312,6 @@ async function loadServices() {
                     alert('Failed to save service.');
                 }
             });
-
-            // Delete
             div.querySelector('.deleteServiceBtn').addEventListener('click', async () => {
                 if (!confirm('Are you sure you want to delete this service?')) return;
                 try {
@@ -343,11 +335,7 @@ async function loadServices() {
 
 // ---------------- Toggle New Service ----------------
 toggleNewServiceBtn.addEventListener('click', () => {
-    if (newServiceSection.style.display === 'flex' || newServiceSection.style.display === '') {
-        newServiceSection.style.display = 'none';
-    } else {
-        newServiceSection.style.display = 'flex';
-    }
+    newServiceSection.style.display = newServiceSection.style.display === 'flex' ? 'none' : 'flex';
 });
 
 // ---------------- Create Service ----------------
@@ -364,12 +352,7 @@ createServiceBtn.addEventListener('click', async () => {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${token}`
             },
-            body: JSON.stringify({ 
-                title, 
-                description, 
-                price, 
-                userId // include the logged-in user's ID
-            })
+            body: JSON.stringify({ title, description, price }) // remove userId
         });
         if (!res.ok) throw new Error('Failed to create service');
 
