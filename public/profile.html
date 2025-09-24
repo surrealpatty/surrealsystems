@@ -56,8 +56,12 @@ button {
     margin-top: 5px;
     transition: 0.3s;
 }
+button:hover { opacity: 0.85; }
 
-/* ---------- Floating Buttons on Side ---------- */
+.logout-btn { background-color: #ff4d4f; }
+.logout-btn:hover { background-color: #c30000; }
+
+/* ---------- Floating Buttons ---------- */
 .floating-btn {
     position: fixed;
     right: 20px;
@@ -66,19 +70,18 @@ button {
     border-radius: 50px;
     padding: 15px;
     font-weight: bold;
+    display: block;
+    color: #fff;
 }
 #goToServicesBtn { background-color: #28a745; bottom: 160px; }
 #goToMessagesBtn { background-color: #17a2b8; bottom: 100px; }
 #addNewServiceBtn { background-color: #ffc107; bottom: 40px; }
-
-.floating-btn:hover { opacity: 0.85; }
 
 /* ---------- Services Grid ---------- */
 #services-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
-    position: relative;
 }
 .card {
     background: #fff;
@@ -101,7 +104,6 @@ button {
     border: 1px solid #ccc;
     text-align: center;
 }
-
 .card-buttons {
     margin-top: 10px;
     display: flex;
@@ -110,13 +112,44 @@ button {
     justify-content: center;
 }
 
-/* ---------- Logout ---------- */
-.logout-btn { background-color: #ff4d4f; }
-.logout-btn:hover { background-color: #c30000; }
+/* ---------- New Service Section ---------- */
+#newServiceSection {
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+#newServiceSection input, #newServiceSection textarea {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    width: 100%;
+    text-align: center;
+}
 
+/* ---------- Mobile Adjustments ---------- */
 @media (max-width: 480px) {
     .container { padding: 2rem 1rem; }
-    .floating-btn { width: 120px; padding: 12px; right: 10px; }
+
+    .floating-btn {
+        position: static;
+        width: auto;
+        transform: none;
+        display: inline-block;
+        margin: 5px 0;
+    }
+
+    .mobile-button-row {
+        position: fixed;
+        bottom: 10px;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: space-around;
+        padding: 0 10px;
+        box-sizing: border-box;
+        gap: 5px;
+    }
 }
 </style>
 </head>
@@ -130,16 +163,29 @@ button {
     <h2>Your Services</h2>
     <div id="services-list"><p>Loading services...</p></div>
 
+    <div id="newServiceSection">
+        <input type="text" id="newServiceTitle" placeholder="Service Title">
+        <textarea id="newServiceDesc" placeholder="Service Description"></textarea>
+        <input type="number" id="newServicePrice" placeholder="Price in USD">
+        <button type="button" id="createServiceBtn">Create Service</button>
+    </div>
+
     <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
 </div>
 
-<!-- Floating Buttons -->
-<button type="button" id="goToServicesBtn" class="floating-btn">Services</button>
-<button type="button" id="goToMessagesBtn" class="floating-btn">Messages</button>
+<!-- Floating Buttons for Desktop -->
+<button id="goToServicesBtn" class="floating-btn">Services</button>
+<button id="goToMessagesBtn" class="floating-btn">Messages</button>
 <button id="addNewServiceBtn" class="floating-btn">+ Add Service</button>
 
+<!-- Mobile Button Row -->
+<div class="mobile-button-row">
+    <button id="mobServicesBtn">Services</button>
+    <button id="mobMessagesBtn">Messages</button>
+    <button id="mobAddServiceBtn">+ Service</button>
+</div>
+
 <script>
-// ---------------- Constants ----------------
 const API_URL = 'https://codecrowds.onrender.com';
 const token = localStorage.getItem('token');
 if (!token) window.location.href = 'index.html';
@@ -150,17 +196,22 @@ const editDescBtn = document.getElementById('editDescBtn');
 const servicesList = document.getElementById('services-list');
 const logoutBtn = document.getElementById('logoutBtn');
 
+const toggleNewServiceBtn = document.getElementById('addNewServiceBtn');
+const mobAddServiceBtn = document.getElementById('mobAddServiceBtn');
+const newServiceSection = document.getElementById('newServiceSection');
+const createServiceBtn = document.getElementById('createServiceBtn');
+const newServiceTitle = document.getElementById('newServiceTitle');
+const newServiceDesc = document.getElementById('newServiceDesc');
+const newServicePrice = document.getElementById('newServicePrice');
+
 const goToServicesBtn = document.getElementById('goToServicesBtn');
 const goToMessagesBtn = document.getElementById('goToMessagesBtn');
-const addNewServiceBtn = document.getElementById('addNewServiceBtn');
+const mobServicesBtn = document.getElementById('mobServicesBtn');
+const mobMessagesBtn = document.getElementById('mobMessagesBtn');
 
 let userId = localStorage.getItem('userId');
 
-// ---------------- Navigation ----------------
-goToServicesBtn.addEventListener('click', () => { window.location.href = 'services.html'; });
-goToMessagesBtn.addEventListener('click', () => { window.location.href = 'messages.html'; });
-
-// ---------------- Load Profile ----------------
+// ------------- Load Profile ----------------
 async function loadProfile() {
     try {
         const res = await fetch(`${API_URL}/profile`, { headers: { Authorization: `Bearer ${token}` } });
@@ -182,7 +233,7 @@ async function loadProfile() {
     }
 }
 
-// ---------------- Edit / Save Description ----------------
+// ------------- Edit Description ----------------
 let editingDesc = false;
 editDescBtn.addEventListener('click', async () => {
     editingDesc = !editingDesc;
@@ -202,8 +253,9 @@ editDescBtn.addEventListener('click', async () => {
             });
             if (!res.ok) throw new Error('Failed to update description');
             const data = await res.json();
-            profileDescription.textContent = data.user?.description || newDesc;
-            localStorage.setItem('description', data.user?.description || newDesc);
+            const updatedUser = data.user || data;
+            profileDescription.textContent = updatedUser.description || newDesc;
+            localStorage.setItem('description', updatedUser.description || newDesc);
         } catch (err) {
             console.error(err);
             profileDescription.textContent = localStorage.getItem('description') || 'Failed to save';
@@ -212,8 +264,9 @@ editDescBtn.addEventListener('click', async () => {
     }
 });
 
-// ---------------- Load Services ----------------
+// ------------- Load Services ----------------
 async function loadServices() {
+    if (!userId) return;
     try {
         const res = await fetch(`${API_URL}/services`, {
             headers: { Authorization: `Bearer ${token}` }
@@ -231,8 +284,83 @@ async function loadServices() {
         }
 
         userServices.forEach(s => {
-            const div = createServiceCard(s);
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `
+                <div class="service-content">
+                    <h3>${s.title}</h3>
+                    <p>${s.description}</p>
+                    <p><strong>Price:</strong> $${s.price}</p>
+                </div>
+                <div class="service-edit" style="display:none;">
+                    <input type="text" class="editTitle" value="${s.title}">
+                    <textarea class="editDesc">${s.description}</textarea>
+                    <input type="number" class="editPrice" value="${s.price}">
+                </div>
+                <div class="card-buttons">
+                    <button class="editServiceBtn">Edit</button>
+                    <button class="deleteServiceBtn">Delete</button>
+                    <button class="saveServiceBtn" style="display:none;">Save</button>
+                    <button class="cancelEditBtn" style="display:none;">Cancel</button>
+                </div>
+            `;
             servicesList.appendChild(div);
+
+            div.querySelector('.editServiceBtn').addEventListener('click', () => {
+                div.querySelector('.service-content').style.display = 'none';
+                div.querySelector('.service-edit').style.display = 'block';
+                div.querySelector('.editServiceBtn').style.display = 'none';
+                div.querySelector('.deleteServiceBtn').style.display = 'none';
+                div.querySelector('.saveServiceBtn').style.display = 'inline-block';
+                div.querySelector('.cancelEditBtn').style.display = 'inline-block';
+            });
+
+            div.querySelector('.cancelEditBtn').addEventListener('click', () => {
+                div.querySelector('.service-content').style.display = 'block';
+                div.querySelector('.service-edit').style.display = 'none';
+                div.querySelector('.editServiceBtn').style.display = 'inline-block';
+                div.querySelector('.deleteServiceBtn').style.display = 'inline-block';
+                div.querySelector('.saveServiceBtn').style.display = 'none';
+                div.querySelector('.cancelEditBtn').style.display = 'none';
+            });
+
+            div.querySelector('.saveServiceBtn').addEventListener('click', async () => {
+                const updated = {
+                    title: div.querySelector('.editTitle').value,
+                    description: div.querySelector('.editDesc').value,
+                    price: div.querySelector('.editPrice').value
+                };
+                try {
+                    const res = await fetch(`${API_URL}/services/${s.id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify(updated)
+                    });
+                    if (!res.ok) throw new Error('Failed to update service');
+                    await loadServices();
+                } catch (err) {
+                    console.error(err);
+                    alert('Failed to save service.');
+                }
+            });
+
+            div.querySelector('.deleteServiceBtn').addEventListener('click', async () => {
+                if (!confirm('Are you sure you want to delete this service?')) return;
+                try {
+                    const res = await fetch(`${API_URL}/services/${s.id}`, {
+                        method: 'DELETE',
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (!res.ok) throw new Error('Failed to delete service');
+                    await loadServices();
+                } catch (err) {
+                    console.error(err);
+                    alert('Failed to delete service.');
+                }
+            });
         });
     } catch (err) {
         console.error(err);
@@ -240,132 +368,56 @@ async function loadServices() {
     }
 }
 
-// ---------------- Service Card Creation ----------------
-function createServiceCard(service) {
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.innerHTML = `
-        <div class="service-content">
-            <h3>${service.title}</h3>
-            <p>${service.description}</p>
-            <p><strong>Price:</strong> $${service.price}</p>
-        </div>
-        <div class="service-edit" style="display:none;">
-            <input type="text" class="editTitle" value="${service.title || ''}" placeholder="Service Title">
-            <textarea class="editDesc" placeholder="Service Description">${service.description || ''}</textarea>
-            <input type="number" class="editPrice" value="${service.price || ''}" placeholder="Price">
-        </div>
-        <div class="card-buttons">
-            <button class="editServiceBtn">${service.id ? 'Edit' : 'Save'}</button>
-            ${service.id ? `<button class="deleteServiceBtn">Delete</button>` : `<button class="cancelEditBtn">Cancel</button>`}
-            <button class="saveServiceBtn" style="display:none;">Save</button>
-            <button class="cancelEditBtn" style="display:none;">Cancel</button>
-        </div>
-    `;
-
-    const editBtn = div.querySelector('.editServiceBtn');
-    const deleteBtn = div.querySelector('.deleteServiceBtn');
-    const saveBtn = div.querySelector('.saveServiceBtn');
-    const cancelBtn = div.querySelectorAll('.cancelEditBtn')[0];
-
-    if (!service.id) {
-        editBtn.addEventListener('click', async () => {
-            const title = div.querySelector('.editTitle').value.trim();
-            const description = div.querySelector('.editDesc').value.trim();
-            const price = div.querySelector('.editPrice').value.trim();
-            if (!title || !description || !price) return alert('All fields are required.');
-
-            try {
-                const res = await fetch(`${API_URL}/services`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ title, description, price })
-                });
-                if (!res.ok) throw new Error('Failed to create service');
-                await loadServices();
-            } catch (err) {
-                console.error(err);
-                alert('Failed to create service.');
-            }
-        });
-        cancelBtn.addEventListener('click', () => { div.remove(); });
-    } else {
-        editBtn.addEventListener('click', () => {
-            div.querySelector('.service-content').style.display = 'none';
-            div.querySelector('.service-edit').style.display = 'block';
-            editBtn.style.display = 'none';
-            deleteBtn.style.display = 'none';
-            saveBtn.style.display = 'inline-block';
-            cancelBtn.style.display = 'inline-block';
-        });
-        cancelBtn.addEventListener('click', () => {
-            div.querySelector('.service-content').style.display = 'block';
-            div.querySelector('.service-edit').style.display = 'none';
-            editBtn.style.display = 'inline-block';
-            deleteBtn.style.display = 'inline-block';
-            saveBtn.style.display = 'none';
-            cancelBtn.style.display = 'none';
-        });
-        saveBtn.addEventListener('click', async () => {
-            const updated = {
-                title: div.querySelector('.editTitle').value,
-                description: div.querySelector('.editDesc').value,
-                price: div.querySelector('.editPrice').value
-            };
-            try {
-                const res = await fetch(`${API_URL}/services/${service.id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`
-                    },
-                    body: JSON.stringify(updated)
-                });
-                if (!res.ok) throw new Error('Failed to update service');
-                await loadServices();
-            } catch (err) {
-                console.error(err);
-                alert('Failed to save service.');
-            }
-        });
-        deleteBtn.addEventListener('click', async () => {
-            if (!confirm('Are you sure you want to delete this service?')) return;
-            try {
-                const res = await fetch(`${API_URL}/services/${service.id}`, {
-                    method: 'DELETE',
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                if (!res.ok) throw new Error('Failed to delete service');
-                await loadServices();
-            } catch (err) {
-                console.error(err);
-                alert('Failed to delete service.');
-            }
-        });
-    }
-
-    return div;
+// ------------- Add New Service ----------------
+function toggleNewService() {
+    newServiceSection.style.display = newServiceSection.style.display === 'flex' ? 'none' : 'flex';
 }
+toggleNewServiceBtn.addEventListener('click', toggleNewService);
+mobAddServiceBtn.addEventListener('click', toggleNewService);
 
-// ---------------- Add Blank Service ----------------
-addNewServiceBtn.addEventListener('click', () => {
-    const newCard = createServiceCard({ title:'', description:'', price:'' });
-    servicesList.prepend(newCard); 
-    newCard.querySelector('.service-edit').style.display = 'block';
-    newCard.querySelector('.editServiceBtn').textContent = 'Save';
-    newCard.querySelector('.cancelEditBtn').style.display = 'inline-block';
+createServiceBtn.addEventListener('click', async () => {
+    const title = newServiceTitle.value.trim();
+    const description = newServiceDesc.value.trim();
+    const price = newServicePrice.value.trim();
+    if (!title || !description || !price) return alert('All fields are required.');
+
+    try {
+        const res = await fetch(`${API_URL}/services`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ title, description, price })
+        });
+        if (!res.ok) throw new Error('Failed to create service');
+        newServiceTitle.value = '';
+        newServiceDesc.value = '';
+        newServicePrice.value = '';
+        newServiceSection.style.display = 'none';
+        await loadServices();
+    } catch (err) {
+        console.error(err);
+        alert('Failed to create service.');
+    }
 });
 
-// ---------------- Logout ----------------
+// ------------- Navigation ----------------
+function goToServices() { window.location.href = 'services.html'; }
+function goToMessages() { window.location.href = 'messages.html'; }
+
+goToServicesBtn.addEventListener('click', goToServices);
+goToMessagesBtn.addEventListener('click', goToMessages);
+mobServicesBtn.addEventListener('click', goToServices);
+mobMessagesBtn.addEventListener('click', goToMessages);
+
+// ------------- Logout ----------------
 logoutBtn.addEventListener('click', () => {
     localStorage.clear();
     window.location.href = 'index.html';
 });
 
-// ---------------- Initialize ----------------
+// ------------- Initialize ----------------
 window.addEventListener('load', async () => {
     await loadProfile();
     await loadServices();
