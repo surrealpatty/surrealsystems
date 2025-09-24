@@ -272,9 +272,9 @@ editDescBtn.addEventListener('click', async () => {
     }
 });
 
-// ---------------- Load Services (Polished with Spinners) ----------------
+// ---------------- Load Services (Polished) ----------------
 async function loadServices() {
-    servicesList.innerHTML = '';
+    servicesList.innerHTML = `<p><span class="spinner"></span> Loading services...</p>`;
 
     try {
         const res = await fetch(`${API_URL}/services`, {
@@ -283,9 +283,12 @@ async function loadServices() {
         const services = await res.json();
         const userServices = services.filter(s => s.user?.id == userId);
 
+        servicesList.innerHTML = '';
+
         if (!userServices.length) {
             const placeholder = document.createElement('div');
             placeholder.className = 'card fade-in';
+            placeholder.style.animationDelay = '0s';
             placeholder.innerHTML = `
                 <h3>No Services Yet</h3>
                 <p>Add your first service using the + Service button</p>
@@ -294,28 +297,17 @@ async function loadServices() {
             return;
         }
 
-        // Show each card with fade-in
         userServices.forEach((s, i) => {
-            const card = document.createElement('div');
-            card.className = 'card fade-in';
-            card.style.animationDelay = `${i * 0.1}s`;
-            card.innerHTML = `<div class="spinner"></div>`; // initial spinner
-            servicesList.appendChild(card);
-        });
-
-        // Short delay to show spinner effect
-        await new Promise(r => setTimeout(r, 300));
-
-        const cards = document.querySelectorAll('#services-list .card');
-        userServices.forEach((s, i) => {
-            const card = cards[i];
-            card.innerHTML = `
+            const div = document.createElement('div');
+            div.className = 'card fade-in';
+            div.style.animationDelay = `${i * 0.1}s`;
+            div.innerHTML = `
                 <h3>${s.title}</h3>
                 <p>${s.description}</p>
                 <p><strong>Price:</strong> $${s.price}</p>
             `;
+            servicesList.appendChild(div);
         });
-
     } catch (err) {
         console.error(err);
         servicesList.innerHTML = '<p>Failed to load services</p>';

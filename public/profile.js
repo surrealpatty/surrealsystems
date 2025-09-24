@@ -5,35 +5,36 @@ if (!token) window.location.href = 'index.html';
 const profileUsername = document.getElementById('profile-username');
 const profileDescription = document.getElementById('profile-description');
 const editDescBtn = document.getElementById('editDescBtn');
-const goToServicesBtn = document.getElementById('goToServicesBtn');
-const goToMessagesBtn = document.getElementById('goToMessagesBtn');
 const servicesList = document.getElementById('services-list');
 const logoutBtn = document.getElementById('logoutBtn');
-
-const toggleNewServiceBtn = document.getElementById('toggleNewServiceBtn');
 const newServiceSection = document.getElementById('newServiceSection');
 const createServiceBtn = document.getElementById('createServiceBtn');
 const newServiceTitle = document.getElementById('newServiceTitle');
 const newServiceDesc = document.getElementById('newServiceDesc');
 const newServicePrice = document.getElementById('newServicePrice');
 
-let userId = localStorage.getItem('userId');
+const goToServicesBtn = document.getElementById('goToServicesBtn');
+const goToMessagesBtn = document.getElementById('goToMessagesBtn');
+const addNewServiceBtn = document.getElementById('addNewServiceBtn');
+const mobileServicesBtn = document.getElementById('mobileServicesBtn');
+const mobileMessagesBtn = document.getElementById('mobileMessagesBtn');
+const mobileAddServiceBtn = document.getElementById('mobileAddServiceBtn');
+
+let userId = localStorage.getItem('profileUserId') || localStorage.getItem('userId');
 
 // ---------------- Load Profile ----------------
 async function loadProfile() {
     try {
-        const res = await fetch(`${API_URL}/profile`, { headers: { Authorization: `Bearer ${token}` } });
-        if (!res.ok) throw new Error('Failed to fetch profile');
-        const userData = await res.json();
-        const user = userData.user || userData;
-
-        userId = user.id;
-        localStorage.setItem('userId', userId);
-        localStorage.setItem('username', user.username || '');
-        localStorage.setItem('description', user.description || '');
-
+        const res = await fetch(`${API_URL}/users/${userId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const user = await res.json();
         profileUsername.textContent = user.username || 'Unknown User';
         profileDescription.textContent = user.description || 'No description yet.';
+        profileUsername.classList.add('fade-in');
+        profileDescription.classList.add('fade-in');
+
+        if (user.id == localStorage.getItem('userId')) editDescBtn.classList.remove('hidden');
     } catch (err) {
         console.error(err);
         profileUsername.textContent = 'Unknown User';
@@ -42,13 +43,13 @@ async function loadProfile() {
 }
 
 // ---------------- Edit / Save Description ----------------
-let editing = false;
+let editingDesc = false;
 editDescBtn.addEventListener('click', async () => {
-    editing = !editing;
-    profileDescription.contentEditable = editing ? 'true' : 'false';
-    editDescBtn.textContent = editing ? 'Save Description' : 'Edit Description';
+    editingDesc = !editingDesc;
+    profileDescription.contentEditable = editingDesc;
+    editDescBtn.textContent = editingDesc ? 'Save Description' : 'Edit Description';
 
-    if (!editing && userId) {
+    if (!editingDesc) {
         const newDesc = profileDescription.textContent.trim();
         try {
             const res = await fetch(`${API_URL}/users/${userId}`, {
@@ -56,17 +57,10 @@ editDescBtn.addEventListener('click', async () => {
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ description: newDesc })
             });
-            if (!res.ok) throw new Error('Failed to update description');
-            const data = await res.json();
-            const updatedUser = data.user || data;
-
-            profileUsername.textContent = updatedUser.username || profileUsername.textContent;
-            profileDescription.textContent = updatedUser.description || newDesc;
-            localStorage.setItem('description', updatedUser.description || newDesc);
-            alert('Profile updated successfully!');
+            const updatedUser = await res.json();
+            profileDescription.textContent = updatedUser.user?.description || newDesc;
         } catch (err) {
             console.error(err);
-            profileDescription.textContent = localStorage.getItem('description') || 'Failed to save';
             alert('Failed to save description.');
         }
     }
@@ -74,37 +68,56 @@ editDescBtn.addEventListener('click', async () => {
 
 // ---------------- Load Services ----------------
 async function loadServices() {
-    if (!userId) return;
-    try {
-        const res = await fetch(`${API_URL}/services`, { headers: { Authorization: `Bearer ${token}` } });
-        if (!res.ok) throw new Error('Failed to fetch services');
-        const data = await res.json();
-        const services = data.services || data;
+    servicesList.innerHTML = '';
 
+    try {
+        const res = await fetch(`${API_URL}/services`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const services = await res.json();
         const userServices = services.filter(s => s.user?.id == userId);
-        servicesList.innerHTML = '';
 
         if (!userServices.length) {
-            servicesList.innerHTML = '<p>No services yet.</p>';
+            const placeholder = document.createElement('div');
+            placeholder.className = 'card fade-in';
+            placeholder.innerHTML = `
+                <h3>No Services Yet</h3>
+                <p>Add your first service using the + Service button</p>
+            `;
+            servicesList.appendChild(placeholder);
             return;
         }
 
-        userServices.forEach(s => {
-            const div = document.createElement('div');
-            div.className = 'card';
-            div.innerHTML = `<h3>${s.title}</h3><p>${s.description}</p><p><strong>Price:</strong> $${s.price}</p>`;
-            servicesList.appendChild(div);
+        userServices.forEach((s, i) => {
+            const card = document.createElement('div');
+            card.className = 'card fade-in';
+            card.style.animationDelay = `${i * 0.1}s`;
+            card.innerHTML = `<div class="spinner"></div>`;
+            servicesList.appendChild(card);
+        });
+
+        await new Promise(r => setTimeout(r, 300));
+
+        const cards = document.querySelectorAll('#services-list .card');
+        userServices.forEach((s, i) => {
+            cards[i].innerHTML = `
+                <h3>${s.title}</h3>
+                <p>${s.description}</p>
+                <p><strong>Price:</strong> $${s.price}</p>
+            `;
         });
     } catch (err) {
         console.error(err);
-        servicesList.innerHTML = '<p class="error">Failed to load services</p>';
+        servicesList.innerHTML = '<p>Failed to load services</p>';
     }
 }
 
 // ---------------- Toggle New Service Section ----------------
-toggleNewServiceBtn.addEventListener('click', () => {
+function toggleNewService() {
     newServiceSection.style.display = newServiceSection.style.display === 'flex' ? 'none' : 'flex';
-});
+}
+addNewServiceBtn.addEventListener('click', toggleNewService);
+mobileAddServiceBtn.addEventListener('click', toggleNewService);
 
 // ---------------- Create New Service ----------------
 createServiceBtn.addEventListener('click', async () => {
@@ -114,14 +127,11 @@ createServiceBtn.addEventListener('click', async () => {
     if (!title || !description || !price) return alert('All fields are required.');
 
     try {
-        const res = await fetch(`${API_URL}/services`, {
+        await fetch(`${API_URL}/services`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ title, description, price })
         });
-        if (!res.ok) throw new Error('Failed to create service');
-
-        alert('Service created successfully!');
         newServiceTitle.value = '';
         newServiceDesc.value = '';
         newServicePrice.value = '';
@@ -133,15 +143,17 @@ createServiceBtn.addEventListener('click', async () => {
     }
 });
 
+// ---------------- Navigation ----------------
+goToServicesBtn.addEventListener('click', () => window.location.href = 'services.html');
+goToMessagesBtn.addEventListener('click', () => window.location.href = 'messages.html');
+mobileServicesBtn.addEventListener('click', () => window.location.href = 'services.html');
+mobileMessagesBtn.addEventListener('click', () => window.location.href = 'messages.html');
+
 // ---------------- Logout ----------------
 logoutBtn.addEventListener('click', () => {
     localStorage.clear();
     window.location.href = 'index.html';
 });
-
-// ---------------- Go to other pages ----------------
-goToServicesBtn.addEventListener('click', () => { window.location.href = 'services.html'; });
-goToMessagesBtn.addEventListener('click', () => { window.location.href = 'messages.html'; });
 
 // ---------------- Initialize ----------------
 window.addEventListener('load', async () => {
