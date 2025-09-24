@@ -38,6 +38,8 @@ h1, h2 { color: #4e54c8; margin-bottom: 0.5rem; }
 #profile-description {
     min-height: 50px;
     margin-bottom: 10px;
+    opacity: 0;
+    transition: opacity 0.5s ease-in;
 }
 #profile-description[contenteditable="true"] {
     border: 1px solid #4e54c8;
@@ -68,6 +70,8 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
+    opacity: 0;
+    transition: opacity 0.5s ease-in;
 }
 .card {
     background: #fff;
@@ -137,6 +141,22 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 }
 .mobile-button-row button:hover { transform: translateY(-5px); opacity: 0.9; }
 
+/* ---------- Spinner ---------- */
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #4e54c8;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+    animation: spin 1s linear infinite;
+    vertical-align: middle;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* ---------- Fade-in ---------- */
+.fade-in { opacity: 1; }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 480px) {
     .floating-btn { display: none; }
@@ -148,12 +168,12 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 <body>
 
 <div class="container">
-    <h1 id="profile-username">Loading username...</h1>
-    <p id="profile-description">Loading description...</p>
+    <h1 id="profile-username"><span class="spinner"></span></h1>
+    <p id="profile-description"><span class="spinner"></span></p>
     <button type="button" id="editDescBtn">Edit Description</button>
 
     <h2>Your Services</h2>
-    <div id="services-list"><p>Loading services...</p></div>
+    <div id="services-list"><span class="spinner"></span></div>
 
     <div id="newServiceSection">
         <input type="text" id="newServiceTitle" placeholder="Service Title">
@@ -218,6 +238,10 @@ async function loadProfile() {
         profileUsername.textContent = user.username || 'Unknown User';
         profileDescription.textContent = user.description || 'No description yet.';
 
+        // Fade-in after load
+        profileUsername.classList.add('fade-in');
+        profileDescription.classList.add('fade-in');
+
         if (user.id == localStorage.getItem('userId')) {
             editDescBtn.style.display = 'inline-block';
         } else {
@@ -274,6 +298,8 @@ async function loadServices() {
             div.innerHTML = `<h3>${s.title}</h3><p>${s.description}</p><p><strong>Price:</strong> $${s.price}</p>`;
             servicesList.appendChild(div);
         });
+
+        servicesList.classList.add('fade-in');
     } catch (err) {
         console.error(err);
         servicesList.innerHTML = '<p>Failed to load services</p>';
