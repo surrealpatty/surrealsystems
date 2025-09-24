@@ -35,7 +35,11 @@ body, html {
 h1, h2 { color: #4e54c8; margin-bottom: 0.5rem; }
 
 /* ---------- Description ---------- */
-#profile-description { min-height: 50px; margin-bottom: 10px; }
+#profile-description {
+    min-height: 50px;
+    margin-bottom: 10px;
+    cursor: text;
+}
 #profile-description[contenteditable="true"] {
     border: 1px solid #4e54c8;
     border-radius: 8px;
@@ -142,7 +146,6 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 <div class="container">
     <h1 id="profile-username">Loading username...</h1>
     <p id="profile-description">Loading description...</p>
-    <button type="button" id="editDescBtn">Edit Description</button>
 
     <h2>Your Services</h2>
     <div id="services-list"><p>Loading services...</p></div>
@@ -176,7 +179,6 @@ if (!token) window.location.href = 'index.html';
 
 const profileUsername = document.getElementById('profile-username');
 const profileDescription = document.getElementById('profile-description');
-const editDescBtn = document.getElementById('editDescBtn');
 const servicesList = document.getElementById('services-list');
 const logoutBtn = document.getElementById('logoutBtn');
 
@@ -188,15 +190,16 @@ const newServicePrice = document.getElementById('newServicePrice');
 
 let userId = localStorage.getItem('userId');
 
+// ---------- Load Profile ----------
 async function loadProfile() {
     if (!userId) { profileUsername.textContent = 'Not logged in'; return; }
     try {
         const res = await fetch(`${API_URL}/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
         if (!res.ok) throw new Error('Failed to fetch profile');
-
         const user = await res.json();
         profileUsername.textContent = user.username || 'Unknown User';
         profileDescription.textContent = user.description || 'No description yet.';
+        localStorage.setItem('description', user.description || '');
     } catch (err) {
         console.error(err);
         profileUsername.textContent = 'Unknown User';
@@ -204,32 +207,46 @@ async function loadProfile() {
     }
 }
 
-let editingDesc = false;
-editDescBtn.addEventListener('click', async () => {
-    editingDesc = !editingDesc;
-    profileDescription.contentEditable = editingDesc ? 'true' : 'false';
-    editDescBtn.textContent = editingDesc ? 'Save Description' : 'Edit Description';
+// ---------- Inline Editing ----------
+profileDescription.addEventListener('click', () => {
+    profileDescription.contentEditable = 'true';
+    profileDescription.focus();
+});
 
-    if (!editingDesc) {
-        const newDesc = profileDescription.textContent.trim();
-        try {
-            const res = await fetch(`${API_URL}/users/${userId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({ description: newDesc })
-            });
-            const updatedUser = await res.json();
-            profileDescription.textContent = updatedUser.user?.description || newDesc;
-        } catch (err) {
-            console.error(err);
-            alert('Failed to save description.');
-        }
+// Save on blur
+profileDescription.addEventListener('blur', async () => {
+    profileDescription.contentEditable = 'false';
+    const newDesc = profileDescription.textContent.trim();
+    if (!newDesc) return;
+
+    try {
+        const res = await fetch(`${API_URL}/users/${userId}`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ description: newDesc })
+        });
+        const updatedUser = await res.json();
+        profileDescription.textContent = updatedUser.user?.description || newDesc;
+        localStorage.setItem('description', updatedUser.user?.description || newDesc);
+    } catch (err) {
+        console.error(err);
+        profileDescription.textContent = localStorage.getItem('description') || 'Failed to save';
+        alert('Failed to save description.');
     }
 });
 
+// Save on Enter key
+profileDescription.addEventListener('keydown', async (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        profileDescription.blur();
+    }
+});
+
+// ---------- Services ----------
 async function loadServices() {
     try {
         const res = await fetch(`${API_URL}/services`, { headers: { Authorization: `Bearer ${token}` } });
@@ -251,6 +268,7 @@ async function loadServices() {
     }
 }
 
+// ---------- New Service ----------
 function toggleNewService() {
     newServiceSection.style.display = newServiceSection.style.display === 'flex' ? 'none' : 'flex';
 }
@@ -277,6 +295,7 @@ createServiceBtn.addEventListener('click', async () => {
     } catch (err) { console.error(err); alert('Failed to create service.'); }
 });
 
+// ---------- Navigation ----------
 function goToServices() { window.location.href = 'services.html'; }
 function goToMessages() { window.location.href = 'messages.html'; }
 document.getElementById('goToServicesBtn').addEventListener('click', goToServices);
@@ -284,8 +303,10 @@ document.getElementById('goToMessagesBtn').addEventListener('click', goToMessage
 document.getElementById('mobileServicesBtn').addEventListener('click', goToServices);
 document.getElementById('mobileMessagesBtn').addEventListener('click', goToMessages);
 
+// ---------- Logout ----------
 logoutBtn.addEventListener('click', () => { localStorage.clear(); window.location.href = 'index.html'; });
 
+// ---------- Initialize ----------
 window.addEventListener('load', async () => { await loadProfile(); await loadServices(); });
 </script>
 </body>
