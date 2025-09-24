@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Profile - CodeCrowds</title>
-<link rel="stylesheet" href="style.css">
 <style>
 /* ---------- Global ---------- */
 body, html {
@@ -30,6 +29,7 @@ body, html {
     box-shadow: 0 12px 30px rgba(0,0,0,0.15);
     color: #333;
     text-align: center;
+    padding-bottom: 80px; /* space for mobile buttons */
 }
 
 /* ---------- Headings ---------- */
@@ -120,14 +120,15 @@ button:hover { opacity: 0.9; }
 /* ---------- Mobile Bottom Row Buttons ---------- */
 .mobile-button-row {
     display: none;
-    position: fixed; /* <-- FIXED TO BOTTOM */
-    bottom: 10px;
+    position: fixed;
+    bottom: 0;
     left: 0;
     width: 100%;
     justify-content: space-around;
     padding: 10px 0;
     box-sizing: border-box;
     gap: 5px;
+    background-color: rgba(255,255,255,0.95);
     z-index: 100;
 }
 .mobile-button-row button {
@@ -140,6 +141,7 @@ button:hover { opacity: 0.9; }
     .floating-btn { display: none; }
     .mobile-button-row { display: flex; }
     button { font-size: 0.9rem; padding: 8px 16px; }
+    .container { padding-bottom: 90px; }
 }
 </style>
 </head>
@@ -176,12 +178,10 @@ button:hover { opacity: 0.9; }
 </div>
 
 <script>
-// ---------------- AUTH ----------------
 const API_URL = 'https://codecrowds.onrender.com';
 const token = localStorage.getItem('token');
 if (!token) window.location.href = 'index.html';
 
-// ---------------- DOM ----------------
 const profileUsername = document.getElementById('profile-username');
 const profileDescription = document.getElementById('profile-description');
 const editDescBtn = document.getElementById('editDescBtn');
