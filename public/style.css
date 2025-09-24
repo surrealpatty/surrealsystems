@@ -1,10 +1,11 @@
 /* ---------- Global ---------- */
 body, html {
-    height: 100%;
     margin: 0;
+    padding: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #4e54c8, #00aaff);
     color: #fff;
+    min-height: 100%;
 }
 
 /* ---------- Container ---------- */
@@ -27,9 +28,9 @@ body, html {
 h1, h2 { color: #4e54c8; margin-bottom: 0.5rem; }
 
 /* ---------- Description ---------- */
-#profile-description { 
-    min-height: 50px; 
-    margin-bottom: 10px; 
+#profile-description {
+    min-height: 50px;
+    margin-bottom: 10px;
 }
 #profile-description[contenteditable="true"] {
     border: 1px solid #4e54c8;
@@ -37,11 +38,6 @@ h1, h2 { color: #4e54c8; margin-bottom: 0.5rem; }
     padding: 5px;
     background-color: #f0f0f0;
     color: #333;
-}
-
-/* ---------- Edit Description Button ---------- */
-#editDescBtn {
-    display: none; /* hidden by default; JS will show if user owns profile */
 }
 
 /* ---------- Buttons ---------- */
@@ -57,7 +53,6 @@ button {
     transition: transform 0.3s, opacity 0.3s;
 }
 button:hover { transform: translateY(-5px); opacity: 0.9; }
-
 .logout-btn { background-color: #ff4d4f; }
 .logout-btn:hover { background-color: #c30000; }
 

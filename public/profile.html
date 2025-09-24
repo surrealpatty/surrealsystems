@@ -187,16 +187,22 @@ const profileDescription = document.getElementById('profile-description');
 const editDescBtn = document.getElementById('editDescBtn');
 const servicesList = document.getElementById('services-list');
 const logoutBtn = document.getElementById('logoutBtn');
-
 const newServiceSection = document.getElementById('newServiceSection');
 const createServiceBtn = document.getElementById('createServiceBtn');
 const newServiceTitle = document.getElementById('newServiceTitle');
 const newServiceDesc = document.getElementById('newServiceDesc');
 const newServicePrice = document.getElementById('newServicePrice');
 
+const goToServicesBtn = document.getElementById('goToServicesBtn');
+const goToMessagesBtn = document.getElementById('goToMessagesBtn');
+const addNewServiceBtn = document.getElementById('addNewServiceBtn');
+const mobileServicesBtn = document.getElementById('mobileServicesBtn');
+const mobileMessagesBtn = document.getElementById('mobileMessagesBtn');
+const mobileAddServiceBtn = document.getElementById('mobileAddServiceBtn');
+
 let userId = localStorage.getItem('profileUserId') || localStorage.getItem('userId');
 
-// Load profile
+// ---------------- Load Profile ----------------
 async function loadProfile() {
     if (!userId) {
         profileUsername.textContent = 'Not logged in';
@@ -225,7 +231,7 @@ async function loadProfile() {
     }
 }
 
-// Edit description
+// ---------------- Edit / Save Description ----------------
 let editingDesc = false;
 editDescBtn.addEventListener('click', async () => {
     editingDesc = !editingDesc;
@@ -237,10 +243,7 @@ editDescBtn.addEventListener('click', async () => {
         try {
             const res = await fetch(`${API_URL}/users/${userId}`, {
                 method: 'PUT',
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    Authorization: `Bearer ${token}` 
-                },
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ description: newDesc })
             });
             const updatedUser = await res.json();
@@ -252,7 +255,7 @@ editDescBtn.addEventListener('click', async () => {
     }
 });
 
-// Load services
+// ---------------- Load Services ----------------
 async function loadServices() {
     try {
         const res = await fetch(`${API_URL}/services`, { headers: { Authorization: `Bearer ${token}` } });
@@ -277,14 +280,14 @@ async function loadServices() {
     }
 }
 
-// Toggle New Service
+// ---------------- Toggle New Service Section ----------------
 function toggleNewService() {
     newServiceSection.style.display = newServiceSection.style.display === 'flex' ? 'none' : 'flex';
 }
-document.getElementById('addNewServiceBtn').addEventListener('click', toggleNewService);
-document.getElementById('mobileAddServiceBtn').addEventListener('click', toggleNewService);
+addNewServiceBtn.addEventListener('click', toggleNewService);
+mobileAddServiceBtn.addEventListener('click', toggleNewService);
 
-// Create service
+// ---------------- Create New Service ----------------
 createServiceBtn.addEventListener('click', async () => {
     const title = newServiceTitle.value.trim();
     const description = newServiceDesc.value.trim();
@@ -308,18 +311,21 @@ createServiceBtn.addEventListener('click', async () => {
     }
 });
 
-// Navigation
+// ---------------- Navigation ----------------
 function goToServices() { window.location.href = 'services.html'; }
 function goToMessages() { window.location.href = 'messages.html'; }
-document.getElementById('goToServicesBtn').addEventListener('click', goToServices);
-document.getElementById('goToMessagesBtn').addEventListener('click', goToMessages);
-document.getElementById('mobileServicesBtn').addEventListener('click', goToServices);
-document.getElementById('mobileMessagesBtn').addEventListener('click', goToMessages);
+goToServicesBtn.addEventListener('click', goToServices);
+goToMessagesBtn.addEventListener('click', goToMessages);
+mobileServicesBtn.addEventListener('click', goToServices);
+mobileMessagesBtn.addEventListener('click', goToMessages);
 
-// Logout
-logoutBtn.addEventListener('click', () => { localStorage.clear(); window.location.href = 'index.html'; });
+// ---------------- Logout ----------------
+logoutBtn.addEventListener('click', () => {
+    localStorage.clear();
+    window.location.href = 'index.html';
+});
 
-// On load
+// ---------------- Initialize ----------------
 window.addEventListener('load', async () => {
     await loadProfile();
     await loadServices();
