@@ -6,9 +6,11 @@ const User = sequelize.define('User', {
     email: { type: DataTypes.STRING, allowNull: false, unique: true },
     password: { type: DataTypes.STRING, allowNull: false },
     description: { type: DataTypes.TEXT, defaultValue: '' },
+
+    // 👇 new field for account type
     tier: { 
-        type: DataTypes.ENUM('free', 'paid'), // Free or Paid account
-        defaultValue: 'free' // default for new users
+        type: DataTypes.ENUM('free', 'paid'),
+        defaultValue: 'free'
     }
 }, {
     tableName: 'users',
