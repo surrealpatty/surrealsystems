@@ -1,19 +1,16 @@
 const express = require('express');
 const router = express.Router();
+const { register, login, getProfile, upgradeToPaid } = require('../controllers/userController');
 const authenticateToken = require('../middlewares/authenticateToken');
-const {
-    registerUser,
-    loginUser,
-    getUsers,
-    getUserById,
-    updateProfile
-} = require('../controllers/userController');
 
-// Routes
-router.post('/register', registerUser);
-router.post('/login', loginUser);
-router.get('/', authenticateToken, getUsers);
-router.get('/:id', authenticateToken, getUserById); // fetch single user
-router.put('/:id', authenticateToken, updateProfile);
+// Auth routes
+router.post('/register', register);
+router.post('/login', login);
+
+// Profile route
+router.get('/profile', authenticateToken, getProfile);
+
+// Upgrade account
+router.patch('/upgrade', authenticateToken, upgradeToPaid);
 
 module.exports = router;
