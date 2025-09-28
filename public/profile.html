@@ -16,11 +16,6 @@ body, html {
     min-height: 100%;
 }
 
-/* ---------- Hidden Class ---------- */
-.hidden {
-    display: none !important;
-}
-
 /* ---------- Container ---------- */
 .container {
     max-width: 900px;
@@ -91,15 +86,15 @@ button {
     transition: transform 0.3s, opacity 0.3s;
 }
 button:hover { transform: translateY(-5px); opacity: 0.9; }
-
 .logout-btn { background-color: #ff4d4f; }
 .logout-btn:hover { background-color: #c30000; }
-
 .save-btn { background-color: #28a745; }
 .save-btn:hover { background-color: #1e7e34; }
-
 .cancel-btn { background-color: #dc3545; }
 .cancel-btn:hover { background-color: #a71d2a; }
+
+/* ---------- Hidden class ---------- */
+.hidden { display: none; }
 
 /* ---------- Services Grid ---------- */
 #services-list {
@@ -121,7 +116,7 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 
 /* ---------- New Service Section ---------- */
 #newServiceSection {
-    display: flex;
+    display: none;
     flex-direction: column;
     gap: 10px;
     margin-top: 10px;
@@ -193,7 +188,7 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
     <h2>Your Services</h2>
     <div id="services-list"><p><span class="spinner"></span> Loading services...</p></div>
 
-    <div id="newServiceSection" class="hidden">
+    <div id="newServiceSection">
         <input type="text" id="newServiceTitle" placeholder="Service Title">
         <textarea id="newServiceDesc" placeholder="Service Description"></textarea>
         <input type="number" id="newServicePrice" placeholder="Price in USD">
@@ -238,12 +233,13 @@ const mobileServicesBtn = document.getElementById('mobileServicesBtn');
 const mobileMessagesBtn = document.getElementById('mobileMessagesBtn');
 const mobileAddServiceBtn = document.getElementById('mobileAddServiceBtn');
 
-let userId = localStorage.getItem('profileUserId') || localStorage.getItem('userId');
+const loggedInUserId = localStorage.getItem('userId');
+const profileUserId = localStorage.getItem('profileUserId') || loggedInUserId;
 
 // ---------------- Load Profile ----------------
 async function loadProfile() {
     try {
-        const res = await fetch(`${API_URL}/users/${userId}`, {
+        const res = await fetch(`${API_URL}/users/${profileUserId}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         const user = await res.json();
@@ -253,7 +249,7 @@ async function loadProfile() {
         profileUsername.classList.add('fade-in');
         profileDescription.classList.add('fade-in');
 
-        if (user.id == localStorage.getItem('userId')) {
+        if (loggedInUserId === user.id.toString()) {
             editDescBtn.classList.remove('hidden');
         }
     } catch (err) {
@@ -273,7 +269,7 @@ editDescBtn.addEventListener('click', async () => {
     if (!editingDesc) {
         const newDesc = profileDescription.textContent.trim();
         try {
-            const res = await fetch(`${API_URL}/users/${userId}`, {
+            const res = await fetch(`${API_URL}/users/${profileUserId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ description: newDesc })
@@ -295,7 +291,7 @@ async function loadServices() {
             headers: { Authorization: `Bearer ${token}` }
         });
         const services = await res.json();
-        const userServices = services.filter(s => s.user?.id == userId);
+        const userServices = services.filter(s => s.user?.id == profileUserId);
 
         servicesList.innerHTML = '';
 
@@ -314,67 +310,66 @@ async function loadServices() {
                 <h3 class="service-title">${s.title}</h3>
                 <p class="service-desc">${s.description}</p>
                 <p><strong>Price:</strong> $<span class="service-price">${s.price}</span></p>
+                ${loggedInUserId === profileUserId ? `
                 <div class="service-buttons">
                     <button class="edit-service-btn">Edit</button>
                     <button class="delete-service-btn">Delete</button>
-                </div>
+                </div>` : ''}
             `;
             servicesList.appendChild(div);
 
-            const editBtn = div.querySelector('.edit-service-btn');
-            const deleteBtn = div.querySelector('.delete-service-btn');
+            if (loggedInUserId === profileUserId) {
+                const editBtn = div.querySelector('.edit-service-btn');
+                const deleteBtn = div.querySelector('.delete-service-btn');
 
-            // Edit service
-            editBtn.addEventListener('click', () => {
-                const titleEl = div.querySelector('.service-title');
-                const descEl = div.querySelector('.service-desc');
-                const priceEl = div.querySelector('.service-price');
-                const origTitle = titleEl.textContent;
-                const origDesc = descEl.textContent;
-                const origPrice = priceEl.textContent;
+                editBtn.addEventListener('click', () => {
+                    const titleEl = div.querySelector('.service-title');
+                    const descEl = div.querySelector('.service-desc');
+                    const priceEl = div.querySelector('.service-price');
+                    const origTitle = titleEl.textContent;
+                    const origDesc = descEl.textContent;
+                    const origPrice = priceEl.textContent;
 
-                titleEl.innerHTML = `<input type="text" value="${origTitle}" class="edit-title">`;
-                descEl.innerHTML = `<textarea class="edit-desc">${origDesc}</textarea>`;
-                priceEl.innerHTML = `<input type="number" value="${origPrice}" class="edit-price">`;
+                    titleEl.innerHTML = `<input type="text" value="${origTitle}" class="edit-title">`;
+                    descEl.innerHTML = `<textarea class="edit-desc">${origDesc}</textarea>`;
+                    priceEl.innerHTML = `<input type="number" value="${origPrice}" class="edit-price">`;
 
-                const buttonsDiv = div.querySelector('.service-buttons');
-                buttonsDiv.innerHTML = `<button class="save-btn">Save</button><button class="cancel-btn">Cancel</button>`;
+                    const buttonsDiv = div.querySelector('.service-buttons');
+                    buttonsDiv.innerHTML = `<button class="save-btn">Save</button><button class="cancel-btn">Cancel</button>`;
 
-                // Save
-                buttonsDiv.querySelector('.save-btn').addEventListener('click', async () => {
-                    const updatedTitle = div.querySelector('.edit-title').value.trim();
-                    const updatedDesc = div.querySelector('.edit-desc').value.trim();
-                    const updatedPrice = div.querySelector('.edit-price').value.trim();
-                    if (!updatedTitle || !updatedDesc || !updatedPrice) return alert('All fields are required.');
+                    buttonsDiv.querySelector('.save-btn').addEventListener('click', async () => {
+                        const updatedTitle = div.querySelector('.edit-title').value.trim();
+                        const updatedDesc = div.querySelector('.edit-desc').value.trim();
+                        const updatedPrice = div.querySelector('.edit-price').value.trim();
+                        if (!updatedTitle || !updatedDesc || !updatedPrice) return alert('All fields are required.');
 
+                        try {
+                            await fetch(`${API_URL}/services/${s.id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                body: JSON.stringify({ title: updatedTitle, description: updatedDesc, price: updatedPrice })
+                            });
+                            await loadServices();
+                        } catch (err) {
+                            console.error(err);
+                            alert('Failed to update service.');
+                        }
+                    });
+
+                    buttonsDiv.querySelector('.cancel-btn').addEventListener('click', () => loadServices());
+                });
+
+                deleteBtn.addEventListener('click', async () => {
+                    if (!confirm('Are you sure you want to delete this service?')) return;
                     try {
-                        await fetch(`${API_URL}/services/${s.id}`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                            body: JSON.stringify({ title: updatedTitle, description: updatedDesc, price: updatedPrice })
-                        });
+                        await fetch(`${API_URL}/services/${s.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
                         await loadServices();
                     } catch (err) {
                         console.error(err);
-                        alert('Failed to update service.');
+                        alert('Failed to delete service.');
                     }
                 });
-
-                // Cancel
-                buttonsDiv.querySelector('.cancel-btn').addEventListener('click', () => loadServices());
-            });
-
-            // Delete service
-            deleteBtn.addEventListener('click', async () => {
-                if (!confirm('Are you sure you want to delete this service?')) return;
-                try {
-                    await fetch(`${API_URL}/services/${s.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-                    await loadServices();
-                } catch (err) {
-                    console.error(err);
-                    alert('Failed to delete service.');
-                }
-            });
+            }
         });
     } catch (err) {
         console.error(err);
@@ -382,14 +377,14 @@ async function loadServices() {
     }
 }
 
-// ---------------- Toggle New Service Section ----------------
+// Toggle New Service Section
 function toggleNewService() {
-    newServiceSection.classList.toggle('hidden');
+    newServiceSection.style.display = newServiceSection.style.display === 'flex' ? 'none' : 'flex';
 }
 addNewServiceBtn.addEventListener('click', toggleNewService);
 mobileAddServiceBtn.addEventListener('click', toggleNewService);
 
-// ---------------- Create New Service ----------------
+// Create New Service
 createServiceBtn.addEventListener('click', async () => {
     const title = newServiceTitle.value.trim();
     const description = newServiceDesc.value.trim();
@@ -405,7 +400,7 @@ createServiceBtn.addEventListener('click', async () => {
         newServiceTitle.value = '';
         newServiceDesc.value = '';
         newServicePrice.value = '';
-        newServiceSection.classList.add('hidden');
+        newServiceSection.style.display = 'none';
         await loadServices();
     } catch (err) {
         console.error(err);
@@ -413,19 +408,19 @@ createServiceBtn.addEventListener('click', async () => {
     }
 });
 
-// ---------------- Navigation ----------------
+// Navigation
 goToServicesBtn.addEventListener('click', () => window.location.href = 'services.html');
 goToMessagesBtn.addEventListener('click', () => window.location.href = 'messages.html');
 mobileServicesBtn.addEventListener('click', () => window.location.href = 'services.html');
 mobileMessagesBtn.addEventListener('click', () => window.location.href = 'messages.html');
 
-// ---------------- Logout ----------------
+// Logout
 logoutBtn.addEventListener('click', () => {
     localStorage.clear();
     window.location.href = 'index.html';
 });
 
-// ---------------- Initialize ----------------
+// Initialize
 window.addEventListener('load', async () => {
     await loadProfile();
     await loadServices();
