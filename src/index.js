@@ -19,17 +19,24 @@ app.use(cors());
 app.use(express.json());
 
 // ---------- API Routes ----------
-// Use /api prefix to avoid conflict with frontend routes
 app.post('/api/register', register);
 app.post('/api/login', login);
 app.get('/api/profile/:id?', getProfile);
 app.put('/api/profile', updateProfile);
 app.post('/api/upgrade', upgradeToPaid);
 
+// (You probably also want services + messages here)
+const serviceController = require('./controllers/serviceController');
+const messageController = require('./controllers/messageController');
+
+app.get('/api/services', serviceController.getAllServices);
+app.post('/api/services', serviceController.createService);
+app.post('/api/messages', messageController.sendMessage);
+
 // ---------- Serve Frontend ----------
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Catch-all route for SPA frontend routing
+// Catch-all (for SPA)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -37,8 +44,8 @@ app.get('*', (req, res) => {
 // ---------- Start Server ----------
 (async () => {
   try {
-    await testConnection();  // Test DB connection
-    await sequelize.sync();  // Sync models
+    await testConnection();
+    await sequelize.sync();
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
     });

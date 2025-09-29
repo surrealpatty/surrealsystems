@@ -14,7 +14,7 @@ if (signupForm) {
         const password = document.getElementById('registerPassword').value.trim();
 
         try {
-            const res = await fetch(`${API_URL}/register`, {  // ✅ Matches backend
+            const res = await fetch(`${API_URL}/api/register`, {   // ✅ fixed
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, email, password })
@@ -23,12 +23,10 @@ if (signupForm) {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Signup failed');
 
-            // Save token & user info (backend must return token!)
             localStorage.setItem('token', data.token);
             localStorage.setItem('userId', data.user.id);
             localStorage.setItem('username', data.user.username);
 
-            // Redirect to profile
             window.location.href = 'profile.html';
         } catch (err) {
             const msg = document.getElementById('registerMessage');
@@ -47,7 +45,7 @@ if (loginForm) {
         const password = document.getElementById('loginPassword').value.trim();
 
         try {
-            const res = await fetch(`${API_URL}/login`, {  // ✅ Matches backend
+            const res = await fetch(`${API_URL}/api/login`, {   // ✅ fixed
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
@@ -56,12 +54,10 @@ if (loginForm) {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Login failed');
 
-            // Save token & user info
             localStorage.setItem('token', data.token);
             localStorage.setItem('userId', data.user.id);
             localStorage.setItem('username', data.user.username);
 
-            // Redirect to profile
             window.location.href = 'profile.html';
         } catch (err) {
             const msg = document.getElementById('loginMessage');
@@ -72,15 +68,13 @@ if (loginForm) {
 
 // ================= Service Listing =================
 const servicesList = document.getElementById('servicesList');
-
-// Redirect if not logged in and servicesList exists
 if (!token && servicesList) window.location.href = 'index.html';
 
 async function loadServices() {
     if (!servicesList) return;
 
     try {
-        const res = await fetch(`${API_URL}/services`, {
+        const res = await fetch(`${API_URL}/api/services`, {   // ✅ fixed
             headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -128,7 +122,7 @@ async function loadServices() {
                 if (!message) return;
 
                 try {
-                    const res = await fetch(`${API_URL}/messages`, {
+                    const res = await fetch(`${API_URL}/api/messages`, {   // ✅ fixed
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
