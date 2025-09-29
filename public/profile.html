@@ -209,7 +209,7 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 </div>
 
 <script>
-const API_URL = 'https://codecrowds.onrender.com';
+const API_URL = 'https://codecrowds.onrender.com/users'; // backend URL
 const token = localStorage.getItem('token');
 if (!token) window.location.href = 'index.html';
 
@@ -234,16 +234,23 @@ const mobileAddServiceBtn = document.getElementById('mobileAddServiceBtn');
 const loggedInUserId = localStorage.getItem('userId');
 const profileUserId = localStorage.getItem('profileUserId') || loggedInUserId;
 
+if (!profileUserId) {
+    alert('No user logged in.');
+    window.location.href = 'index.html';
+}
+
 // ---------------- Load Profile ----------------
 async function loadProfile() {
     try {
-        const res = await fetch(`${API_URL}/users/${profileUserId}`, {
+        const res = await fetch(`${API_URL}/${profileUserId}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
-        const user = await res.json();
-        const actualUser = user.user || user;
+        if (!res.ok) throw new Error('Failed to fetch profile');
 
-        console.log('Loaded user:', actualUser); // debug
+        const data = await res.json();
+        const actualUser = data.user;
+
+        console.log('Loaded user:', actualUser);
 
         profileUsername.textContent = actualUser.username || 'Unknown User';
         profileDescription.textContent = actualUser.description || 'No description yet.';
@@ -270,11 +277,12 @@ editDescBtn.addEventListener('click', async () => {
     if (!editingDesc) {
         const newDesc = profileDescription.textContent.trim();
         try {
-            const res = await fetch(`${API_URL}/users/${profileUserId}`, {
+            const res = await fetch(`${API_URL}/${profileUserId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ description: newDesc })
             });
+            if (!res.ok) throw new Error('Failed to update description');
             const updatedUser = await res.json();
             profileDescription.textContent = updatedUser.user?.description || newDesc;
         } catch (err) {
@@ -288,15 +296,15 @@ editDescBtn.addEventListener('click', async () => {
 async function loadServices() {
     servicesList.innerHTML = `<p><span class="spinner"></span> Loading services...</p>`;
     try {
-        const res = await fetch(`${API_URL}/services`, {
+        const res = await fetch(`${API_URL}/${profileUserId}/services`, {
             headers: { Authorization: `Bearer ${token}` }
         });
-        const services = await res.json();
-        const userServices = services.filter(s => s.user?.id.toString() === profileUserId);
+        if (!res.ok) throw new Error('Failed to fetch services');
 
+        const services = await res.json();
         servicesList.innerHTML = '';
 
-        if (!userServices.length) {
+        if (!services.length) {
             const placeholder = document.createElement('div');
             placeholder.className = 'card fade-in';
             placeholder.innerHTML = `<h3>No Services Yet</h3><p>Add your first service using the + Service button</p>`;
@@ -304,7 +312,7 @@ async function loadServices() {
             return;
         }
 
-        userServices.forEach((s) => {
+        services.forEach((s) => {
             const div = document.createElement('div');
             div.className = 'card fade-in';
             div.innerHTML = `
