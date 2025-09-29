@@ -1,33 +1,28 @@
 require('dotenv').config();
 const express = require('express');
-const app = express();
-
+const cors = require('cors');
 const { sequelize, testConnection } = require('./models/database');
-const { User } = require('./models/User');       // Import User model
-const { Service } = require('./models/Service'); // Import Service model
-const userRoutes = require('./routes/user');
-const serviceRoutes = require('./routes/service');
+const { register, login, getProfile, updateProfile, upgradeToPaid } = require('./controllers/userController');
 
+const app = express();
+const PORT = process.env.PORT || 10000;
+
+// Middleware
+app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use('/api/users', userRoutes);
-app.use('/api/services', serviceRoutes);
-
-// Test route
-app.get('/', (req, res) => res.send('CodeCrowds API is running!'));
+app.post('/register', register);
+app.post('/login', login);
+app.get('/profile/:id?', getProfile);
+app.put('/profile', updateProfile);
+app.post('/upgrade', upgradeToPaid);
 
 // Start server after DB connection
-const PORT = process.env.PORT || 5000;
-
-const startServer = async () => {
-    await testConnection(); // Make sure DB is reachable
-
-    // ✅ Sync models to MySQL (creates tables if they don't exist)
-    await sequelize.sync({ alter: true });
-    console.log('✅ Models synced with MySQL');
-
-    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-};
-
-startServer();
+(async () => {
+  await testConnection(); // ✅ Test MySQL connection before starting
+  await sequelize.sync();  // Sync models
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  });
+})();
