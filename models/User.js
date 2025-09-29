@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database');
+const { sequelize } = require('./database');
 
 const User = sequelize.define('User', {
     username: { type: DataTypes.STRING, allowNull: false, unique: true },
@@ -7,9 +7,6 @@ const User = sequelize.define('User', {
     password: { type: DataTypes.STRING, allowNull: false },
     description: { type: DataTypes.TEXT, defaultValue: '' },
     tier: { type: DataTypes.ENUM('free', 'paid'), defaultValue: 'free' }
-}, {
-    tableName: 'users',
-    timestamps: true
-});
+}, { timestamps: true });
 
 module.exports = User;
