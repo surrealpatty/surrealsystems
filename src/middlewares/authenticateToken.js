@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { User } = require('../models/User');
+const { User } = require('../models/user'); // lowercase to match the file name
 require('dotenv').config();
 
 module.exports = async (req, res, next) => {
