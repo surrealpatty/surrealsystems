@@ -3,7 +3,7 @@ const router = express.Router();
 const { getAllServices, createService } = require('../controllers/serviceController');
 const authenticateToken = require('../middlewares/authenticateToken');
 
-router.get('/', authenticateToken, getAllServices);
+router.get('/', getAllServices);
 router.post('/', authenticateToken, createService);
 
 module.exports = router;

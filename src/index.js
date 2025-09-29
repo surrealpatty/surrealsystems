@@ -1,21 +1,33 @@
-const express = require('express');
-const app = express();
-const bodyParser = require('body-parser');
-const userRoutes = require('./routes/user');
-const serviceRoutes = require('./routes/service');
+// src/models/index.js
+const { Sequelize, DataTypes } = require('sequelize');
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+const { DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT } = process.env;
 
-// Routes
-app.use('/api/users', userRoutes);
-app.use('/api/services', serviceRoutes);
-
-// Health check
-app.get('/', (req, res) => res.send('API is running'));
-
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, async () => {
-  console.log(`Server running on port ${PORT}`);
+const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
+  host: DB_HOST,
+  port: DB_PORT,
+  dialect: 'mysql',
+  logging: false
 });
+
+// User model
+const User = sequelize.define('User', {
+  username: { type: DataTypes.STRING, allowNull: false, unique: true },
+  email: { type: DataTypes.STRING, allowNull: false, unique: true },
+  password: { type: DataTypes.STRING, allowNull: false },
+  description: { type: DataTypes.TEXT, defaultValue: '' },
+  tier: { type: DataTypes.ENUM('free', 'paid'), defaultValue: 'free' }
+}, { tableName: 'users', timestamps: true });
+
+// Service model
+const Service = sequelize.define('Service', {
+  title: { type: DataTypes.STRING, allowNull: false },
+  description: { type: DataTypes.TEXT, allowNull: false },
+  price: { type: DataTypes.FLOAT, allowNull: false }
+}, { tableName: 'services', timestamps: true });
+
+// Associations
+User.hasMany(Service, { as: 'services', foreignKey: 'userId' });
+Service.belongsTo(User, { as: 'user', foreignKey: 'userId' });
+
+module.exports = { sequelize, User, Service };
