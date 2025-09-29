@@ -1,6 +1,6 @@
 const { Service, User } = require('../models');
 
-// Get all services
+// GET all services
 const getAllServices = async (req, res) => {
   try {
     const services = await Service.findAll({
@@ -14,11 +14,12 @@ const getAllServices = async (req, res) => {
   }
 };
 
-// Create service
+// CREATE a service
 const createService = async (req, res) => {
   try {
     const { title, description, price } = req.body;
-    if (!title || price === undefined) return res.status(400).json({ error: 'Title and price required' });
+    if (!title || price === undefined)
+      return res.status(400).json({ error: 'Title and price required' });
 
     const service = await Service.create({ title, description, price, userId: req.user.id });
     res.status(201).json({ service });

@@ -2,7 +2,7 @@ const { User, Service } = require('../models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-// Register
+// ---------------- Register ----------------
 const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -23,7 +23,7 @@ const register = async (req, res) => {
   }
 };
 
-// Login
+// ---------------- Login ----------------
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -43,7 +43,7 @@ const login = async (req, res) => {
   }
 };
 
-// Get Profile
+// ---------------- Get Profile ----------------
 const getProfile = async (req, res) => {
   try {
     const userId = req.params.id || req.user.id;
@@ -51,6 +51,7 @@ const getProfile = async (req, res) => {
       attributes: ['id', 'username', 'email', 'description', 'tier'],
       include: [{ model: Service, as: 'services' }]
     });
+
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({ user });
   } catch (err) {
@@ -59,7 +60,7 @@ const getProfile = async (req, res) => {
   }
 };
 
-// Update Profile
+// ---------------- Update Profile ----------------
 const updateProfile = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
@@ -74,7 +75,7 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// Upgrade Account
+// ---------------- Upgrade Account ----------------
 const upgradeToPaid = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
