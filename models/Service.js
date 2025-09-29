@@ -1,20 +1,31 @@
-const { DataTypes, Model } = require('sequelize');
-const { sequelize } = require('../config/database');
-const User = require('./User'); // ✅ import directly, watch case sensitivity
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../models/database');
+const { User } = require('./User'); // ✅ make sure the path is correct
 
-class Service extends Model {}
-
-Service.init(
-  {
-    title: { type: DataTypes.STRING, allowNull: false },
-    description: { type: DataTypes.TEXT, allowNull: false },
-    price: { type: DataTypes.FLOAT, allowNull: false }
+const Service = sequelize.define('Service', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
   },
-  { sequelize, modelName: 'Service' }
-);
+  title: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  description: {
+    type: DataTypes.TEXT
+  },
+  price: {
+    type: DataTypes.FLOAT,
+    defaultValue: 0
+  }
+}, {
+  tableName: 'services',
+  timestamps: true
+});
 
-// ✅ Define associations directly
-Service.belongsTo(User, { foreignKey: 'userId' });
-User.hasMany(Service, { foreignKey: 'userId' });
+// Association
+Service.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(Service, { foreignKey: 'userId', as: 'services' });
 
-module.exports = Service;
+module.exports = { Service };

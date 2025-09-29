@@ -8,13 +8,13 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
-    dialect: 'postgres',
+    dialect: 'mysql',       // ✅ change this to MySQL
     logging: true,
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false
-      }
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
     }
   }
 );
@@ -22,9 +22,9 @@ const sequelize = new Sequelize(
 async function testConnection() {
   try {
     await sequelize.authenticate();
-    console.log('✅ Database connection successful!');
+    console.log('✅ MySQL connection successful!');
   } catch (err) {
-    console.error('❌ Database connection failed:', err);
+    console.error('❌ MySQL connection failed:', err.message);
   } finally {
     await sequelize.close();
   }

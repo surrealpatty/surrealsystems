@@ -1,17 +1,37 @@
-const { DataTypes, Model } = require('sequelize');
-const { sequelize } = require('../config/database');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../models/database');
 
-class User extends Model {}
-
-User.init(
-  {
-    username: { type: DataTypes.STRING, allowNull: false },
-    email: { type: DataTypes.STRING, allowNull: false, unique: true },
-    password: { type: DataTypes.STRING, allowNull: false },
-    description: { type: DataTypes.TEXT, allowNull: true },
-    tier: { type: DataTypes.STRING, defaultValue: 'free' }
+const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
   },
-  { sequelize, modelName: 'User' }
-);
+  username: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  description: {
+    type: DataTypes.TEXT,
+    defaultValue: ''
+  },
+  tier: {
+    type: DataTypes.ENUM('free', 'paid'),
+    defaultValue: 'free'
+  }
+}, {
+  tableName: 'users',
+  timestamps: true
+});
 
-module.exports = User;
+module.exports = { User };
