@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const path = require('path'); 
+const path = require('path');
 const { sequelize, testConnection } = require('./models/database');
 const {
   register,
@@ -19,17 +19,18 @@ app.use(cors());
 app.use(express.json());
 
 // ---------- API Routes ----------
-// Make sure these come FIRST
-app.post('/register', register);
-app.post('/login', login);
-app.get('/profile/:id?', getProfile);
-app.put('/profile', updateProfile);
-app.post('/upgrade', upgradeToPaid);
+// Always define API routes BEFORE static middleware
+app.post('/api/register', register);
+app.post('/api/login', login);
+app.get('/api/profile/:id?', getProfile);
+app.put('/api/profile', updateProfile);
+app.post('/api/upgrade', upgradeToPaid);
 
 // ---------- Serve Frontend ----------
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/', (req, res) => {
+// Catch-all route to serve index.html for frontend routing (SPA support)
+app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
