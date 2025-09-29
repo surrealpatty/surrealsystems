@@ -13,22 +13,29 @@ const {
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Middleware
+// ---------- Middleware ----------
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// ---------- Routes ----------
+
+// Homepage route
+app.get('/', (req, res) => {
+  res.send('<h1>🚀 CodeCrowds API is running!</h1><p>Use the API routes to interact with the server.</p>');
+});
+
+// User routes
 app.post('/register', register);
 app.post('/login', login);
 app.get('/profile/:id?', getProfile);
 app.put('/profile', updateProfile);
 app.post('/upgrade', upgradeToPaid);
 
-// Start server after DB connection
+// ---------- Start server after DB connection ----------
 (async () => {
   try {
-    await testConnection();
-    await sequelize.sync();
+    await testConnection();   // Test DB connection
+    await sequelize.sync();   // Sync models
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
