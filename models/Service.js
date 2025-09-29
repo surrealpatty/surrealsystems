@@ -3,26 +3,11 @@ const { sequelize } = require('../config/database');
 const User = require('./User');
 
 const Service = sequelize.define('Service', {
-    title: { 
-        type: DataTypes.STRING, 
-        allowNull: false 
-    },
-    description: { 
-        type: DataTypes.TEXT, 
-        allowNull: false 
-    },
-    price: { 
-        type: DataTypes.FLOAT, 
-        allowNull: false 
-    },
-    featured: { 
-        type: DataTypes.BOOLEAN, 
-        defaultValue: false // services are not featured by default
-    },
-    hidden: { 
-        type: DataTypes.BOOLEAN, 
-        defaultValue: false // services are visible by default
-    }
+    title: { type: DataTypes.STRING, allowNull: false },
+    description: { type: DataTypes.TEXT, allowNull: false },
+    price: { type: DataTypes.FLOAT, allowNull: false },
+    featured: { type: DataTypes.BOOLEAN, defaultValue: false },
+    hidden: { type: DataTypes.BOOLEAN, defaultValue: false }
 }, {
     tableName: 'services',
     timestamps: true

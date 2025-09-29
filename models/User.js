@@ -6,7 +6,7 @@ const User = sequelize.define('User', {
     email: { type: DataTypes.STRING, allowNull: false, unique: true },
     password: { type: DataTypes.STRING, allowNull: false },
     description: { type: DataTypes.TEXT, defaultValue: '' },
-    tier: { type: DataTypes.ENUM('free', 'paid'), defaultValue: 'free' } // 👈 free/paid
+    tier: { type: DataTypes.ENUM('free', 'paid'), defaultValue: 'free' }
 }, {
     tableName: 'users',
     timestamps: true

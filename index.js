@@ -7,12 +7,12 @@ const { sequelize } = require('./config/database');
 // Models
 require('./models/User');
 require('./models/Service');
-require('./models/Message');
+require('./models/Message'); // if you have this model
 
 // Routes
 const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/service');
-const messageRoutes = require('./routes/message'); // Make sure file name is message.js
+const messageRoutes = require('./routes/message');
 
 const app = express();
 
@@ -20,20 +20,20 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve all files inside 'public' folder
+// Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API Routes
+// API routes
 app.use('/users', userRoutes);
 app.use('/services', serviceRoutes);
 app.use('/messages', messageRoutes);
 
-// Root route -> serves index.html
+// Root route
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// 404 for API routes
+// 404 for API
 app.use((req, res, next) => {
     if (req.path.startsWith('/users') || req.path.startsWith('/services') || req.path.startsWith('/messages')) {
         return res.status(404).json({ error: 'API route not found' });
@@ -44,14 +44,14 @@ app.use((req, res, next) => {
 // Start server after syncing DB
 const PORT = process.env.PORT || 3000;
 
-sequelize.sync({ alter: true })
+sequelize.authenticate()
+    .then(() => console.log('✅ PostgreSQL connected'))
+    .then(() => sequelize.sync({ alter: true }))
     .then(() => {
         console.log('✅ DB synced');
-        app.listen(PORT, () => {
-            console.log(`🚀 Server running on port ${PORT}`);
-        });
+        app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
     })
     .catch(err => {
-        console.error('❌ DB sync failed', err);
+        console.error('❌ DB connection/sync failed', err);
         process.exit(1);
     });
