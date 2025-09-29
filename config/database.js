@@ -1,17 +1,13 @@
-const { Sequelize } = require('sequelize');
+// src/config/database.js
+const { sequelize } = require('./database'); // adjust path as needed
 
-const sequelize = new Sequelize(
-    process.env.DATABASE_URL ||
-    `postgres://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
-    {
-        dialect: 'postgres',
-        dialectOptions: { ssl: { rejectUnauthorized: false } }, 
-        logging: false
+async function testConnection() {
+    try {
+        await sequelize.authenticate();
+        console.log('✅ MySQL connection successful');
+    } catch (err) {
+        console.error('❌ MySQL connection failed:', err);
     }
-);
+}
 
-sequelize.authenticate()
-    .then(() => console.log('✅ PostgreSQL connected'))
-    .catch(err => console.error('❌ PostgreSQL connection failed:', err));
-
-module.exports = { sequelize };
+module.exports = { sequelize, testConnection }; // <-- export it

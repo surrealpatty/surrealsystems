@@ -1,19 +1,22 @@
 const { Sequelize } = require('sequelize');
 
 const sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASSWORD,
+    process.env.DATABASE_URL ||
+    `mysql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`, // switched to MySQL
     {
-        host: process.env.DB_HOST,
-        port: process.env.DB_PORT || 3306,
-        dialect: 'mysql',
+        dialect: 'mysql', // ✅ change dialect to mysql
         logging: false
     }
 );
 
-sequelize.authenticate()
-    .then(() => console.log('✅ MySQL connected'))
-    .catch(err => console.error('❌ MySQL connection failed:', err));
+// Test connection function
+async function testConnection() {
+    try {
+        await sequelize.authenticate();
+        console.log('✅ MySQL connected');
+    } catch (err) {
+        console.error('❌ MySQL connection failed:', err);
+    }
+}
 
-module.exports = { sequelize };
+module.exports = { sequelize, testConnection };
