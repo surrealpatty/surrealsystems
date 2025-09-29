@@ -1,8 +1,14 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { sequelize, testConnection } = require('./models/database'); // adjust path
-const { register, login, getProfile, updateProfile, upgradeToPaid } = require('./controllers/userController');
+const { sequelize, testConnection } = require('./src/models/database'); // ✅ Adjust path if needed
+const {
+    register,
+    login,
+    getProfile,
+    updateProfile,
+    upgradeToPaid
+} = require('./controllers/userController');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -21,7 +27,7 @@ app.post('/upgrade', upgradeToPaid);
 // Start server after DB connection
 (async () => {
     try {
-        await testConnection();   // ✅ Test MySQL connection
+        await testConnection();   // ✅ Test Postgres connection
         await sequelize.sync();   // ✅ Sync models
         app.listen(PORT, () => {
             console.log(`🚀 Server running on http://localhost:${PORT}`);
