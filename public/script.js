@@ -1,4 +1,4 @@
-const API_URL = 'https://codecrowds.onrender.com/users'; // ⚠ Corrected URL
+const API_URL = 'https://codecrowds.onrender.com/users'; // ⚡ matches backend
 const token = localStorage.getItem('token');
 
 // ---------------- Signup ----------------
@@ -11,7 +11,7 @@ if (signupForm) {
     const password = document.getElementById('registerPassword').value.trim();
 
     try {
-      const res = await fetch(`${API_URL}/register`, { // ✅ match backend
+      const res = await fetch(`${API_URL}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password })
@@ -40,7 +40,7 @@ if (loginForm) {
     const password = document.getElementById('loginPassword').value.trim();
 
     try {
-      const res = await fetch(`${API_URL}/login`, { // ✅ match backend
+      const res = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -60,3 +60,24 @@ if (loginForm) {
     }
   });
 }
+
+// ---------------- Load Profile ----------------
+async function loadProfile() {
+  const profileEl = document.getElementById('profileContent');
+  if (!profileEl) return;
+
+  try {
+    const res = await fetch('https://codecrowds.onrender.com/users/profile', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to load profile');
+
+    profileEl.textContent = `Username: ${data.user.username}\nEmail: ${data.user.email}\nTier: ${data.user.tier}\nDescription: ${data.user.description || 'N/A'}`;
+  } catch (err) {
+    profileEl.textContent = 'Error loading profile: ' + err.message;
+  }
+}
+
+// Run on profile page
+if (document.getElementById('profileContent')) loadProfile();

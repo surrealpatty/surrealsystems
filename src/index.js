@@ -14,14 +14,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve frontend
+// API routes
+app.use('/users', userRoutes);        // ✅ API prefix matches frontend
+app.use('/services', serviceRoutes);  // ✅ API prefix matches frontend
+
+// Serve frontend files
 app.use(express.static(path.join(__dirname, '../public')));
 
-// API routes
-app.use('/api/users', userRoutes);
-app.use('/api/services', serviceRoutes);
-
-// Fallback for SPA
+// SPA fallback
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
