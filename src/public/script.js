@@ -14,18 +14,16 @@ if (signupForm) {
         const password = document.getElementById('registerPassword').value.trim();
 
         try {
-            // ✅ Updated route
-            const res = await fetch(`${API_URL}/register`, {
+            const res = await fetch(`${API_URL}/register`, {  // ✅ Matches backend
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, email, password })
             });
 
             const data = await res.json();
-
             if (!res.ok) throw new Error(data.error || 'Signup failed');
 
-            // Save token & user info
+            // Save token & user info (backend must return token!)
             localStorage.setItem('token', data.token);
             localStorage.setItem('userId', data.user.id);
             localStorage.setItem('username', data.user.username);
@@ -49,15 +47,13 @@ if (loginForm) {
         const password = document.getElementById('loginPassword').value.trim();
 
         try {
-            // ✅ Updated route
-            const res = await fetch(`${API_URL}/login`, {
+            const res = await fetch(`${API_URL}/login`, {  // ✅ Matches backend
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
             });
 
             const data = await res.json();
-
             if (!res.ok) throw new Error(data.error || 'Login failed');
 
             // Save token & user info
@@ -115,20 +111,17 @@ async function loadServices() {
             const button = form.querySelector('button');
             const responseMsg = form.querySelector('.response');
 
-            // Toggle form visibility
             card.addEventListener('click', e => {
                 if (!e.target.closest('button') && !e.target.closest('textarea')) {
                     form.style.display = form.style.display === 'none' ? 'flex' : 'none';
                 }
             });
 
-            // Clear response when typing
             textarea.addEventListener('input', () => {
                 responseMsg.textContent = '';
                 responseMsg.className = 'response';
             });
 
-            // Send message
             button.addEventListener('click', async e => {
                 e.stopPropagation();
                 const message = textarea.value.trim();
@@ -145,7 +138,6 @@ async function loadServices() {
                     });
 
                     const data = await res.json();
-
                     if (res.ok) {
                         responseMsg.textContent = 'Message sent!';
                         responseMsg.className = 'response success';
@@ -169,5 +161,4 @@ async function loadServices() {
     }
 }
 
-// Load services when page loads
 window.addEventListener('load', loadServices);
