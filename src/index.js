@@ -13,11 +13,11 @@ app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 
 // Serve frontend files
-const publicPath = path.join(__dirname, 'public'); // __dirname is src/
+const publicPath = path.join(__dirname, '..', 'public'); // public folder at project root
 app.use(express.static(publicPath));
 
-// Catch-all route for SPA
-app.get('*', (req, res) => {
+// SPA routing for frontend (everything not starting with /api)
+app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(publicPath, 'index.html'));
 });
 

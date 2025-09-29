@@ -1,4 +1,4 @@
-require('dotenv').config(); // load .env first
+require('dotenv').config();
 const { Sequelize } = require('sequelize');
 
 const sequelize = new Sequelize(
@@ -9,9 +9,7 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     dialect: 'postgres',
-    dialectOptions: {
-      ssl: { require: true, rejectUnauthorized: false } // Render requires SSL
-    },
+    dialectOptions: { ssl: { require: true, rejectUnauthorized: false } },
     logging: false
   }
 );
