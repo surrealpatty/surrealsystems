@@ -4,13 +4,13 @@ const { register, login, getProfile, updateProfile, upgradeToPaid } = require('.
 const authenticateToken = require('../middlewares/authenticateToken');
 
 // Auth
-router.post('/register', register);
-router.post('/login', login);
+router.post('/register', register); // POST /users/register
+router.post('/login', login);       // POST /users/login
 
 // Profile
-router.get('/profile', authenticateToken, getProfile);      // own profile
-router.get('/:id', authenticateToken, getProfile);          // any user by ID
-router.put('/profile', authenticateToken, updateProfile);   // update own profile
+router.get('/profile', authenticateToken, getProfile);  // GET /users/profile -> own profile
+router.get('/:id', authenticateToken, getProfile);     // GET /users/:id -> any user
+router.put('/profile', authenticateToken, updateProfile); // PUT /users/profile -> update own profile
 
 // Upgrade
 router.patch('/upgrade', authenticateToken, upgradeToPaid);

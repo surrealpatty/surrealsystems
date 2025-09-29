@@ -1,6 +1,5 @@
-const API_URL = 'https://codecrowds.onrender.com';
+const API_URL = 'https://codecrowds.onrender.com/users'; // ⚠ Corrected URL
 const token = localStorage.getItem('token');
-const userId = localStorage.getItem('userId');
 
 // ---------------- Signup ----------------
 const signupForm = document.getElementById('registerForm');
@@ -12,7 +11,7 @@ if (signupForm) {
     const password = document.getElementById('registerPassword').value.trim();
 
     try {
-      const res = await fetch(`${API_URL}/api/register`, {
+      const res = await fetch(`${API_URL}/register`, { // ✅ match backend
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password })
@@ -41,7 +40,7 @@ if (loginForm) {
     const password = document.getElementById('loginPassword').value.trim();
 
     try {
-      const res = await fetch(`${API_URL}/api/login`, {
+      const res = await fetch(`${API_URL}/login`, { // ✅ match backend
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
