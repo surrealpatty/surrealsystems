@@ -1,5 +1,6 @@
-const { Service } = require('../models/service'); // lowercase
-const { User } = require('./models/user');       // lowercase
+// src/controllers/serviceController.js
+const { Service } = require('../models/service');
+const { User } = require('../models/user');
 
 // GET all services
 exports.getAllServices = async (req, res) => {

@@ -1,17 +1,15 @@
-const express = require('express');
-const {
-  getAllServices,
-  createService,
-  updateService,
-  deleteService,
-} = require('../controllers/serviceController');
-const authenticateToken = require('../middlewares/authenticateToken');
+// src/models/service.js
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database'); 
+const { User } = require('./user'); // lowercase, relative to service.js
 
-const router = express.Router();
+const Service = sequelize.define('Service', {
+  title: { type: DataTypes.STRING, allowNull: false },
+  description: { type: DataTypes.TEXT, allowNull: false },
+  price: { type: DataTypes.FLOAT, allowNull: false },
+});
 
-router.get('/', authenticateToken, getAllServices);
-router.post('/', authenticateToken, createService);
-router.put('/:id', authenticateToken, updateService);
-router.delete('/:id', authenticateToken, deleteService);
+Service.belongsTo(User, { foreignKey: 'userId' });
+User.hasMany(Service, { foreignKey: 'userId' });
 
-module.exports = router;
+module.exports = { Service };
