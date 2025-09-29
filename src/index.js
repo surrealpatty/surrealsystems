@@ -1,40 +1,29 @@
-require('dotenv').config();
 const express = require('express');
-const path = require('path');
+const cors = require('cors');
 const { sequelize, testConnection } = require('./config/database');
-const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/service');
+const { User } = require('./models/User');
+const { Service } = require('./models/Service');
+
+require('dotenv').config();
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
-// ---------------- API Routes ----------------
-app.use('/api/users', userRoutes);
-app.use('/api/services', serviceRoutes);
+// Routes
+app.use('/services', serviceRoutes);
 
-// ---------------- Serve Frontend ----------------
-// public folder is at project root
-const publicPath = path.join(__dirname, '..', 'public');
-app.use(express.static(publicPath));
-
-// SPA routing: all non-API routes serve index.html
-app.get(/^\/(?!api).*/, (req, res) => {
-  res.sendFile(path.join(publicPath, 'index.html'));
-});
-
-// ---------------- Start Server ----------------
-const PORT = process.env.PORT || 5000;
-
-const startServer = async () => {
+// Test DB and sync
+(async () => {
   try {
     await testConnection();
-    await sequelize.sync(); // ensures tables exist
-    app.listen(PORT, () =>
-      console.log(`🚀 CodeCrowds API & frontend running on port ${PORT}`)
-    );
+    await sequelize.sync({ alter: true });
+    console.log('✅ Database synced successfully.');
   } catch (err) {
-    console.error('Server failed to start:', err);
+    console.error(err);
   }
-};
+})();
 
-startServer();
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

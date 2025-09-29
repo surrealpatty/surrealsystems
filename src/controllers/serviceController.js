@@ -1,79 +1,79 @@
-const { Service, User } = require('../models'); // adjust the path to your models
+const { Service } = require('../models/Service');
+const { User } = require('../models/User');
 
 // GET all services
 exports.getAllServices = async (req, res) => {
-    try {
-        const services = await Service.findAll({
-            include: [{ model: User, attributes: ['id', 'username'] }]
-        });
-        res.json({ services });
-    } catch (err) {
-        console.error('Error fetching services:', err);
-        res.status(500).json({ error: 'Failed to fetch services' });
-    }
+  try {
+    const services = await Service.findAll({
+      include: [{ model: User, attributes: ['id', 'username'] }],
+    });
+    res.json({ services });
+  } catch (err) {
+    console.error('Error fetching services:', err);
+    res.status(500).json({ error: 'Failed to fetch services' });
+  }
 };
 
 // CREATE a new service
 exports.createService = async (req, res) => {
-    try {
-        const { title, description, price } = req.body;
-        const userId = req.user.id; // set by authenticateToken middleware
-        if (!title || !description || !price) {
-            return res.status(400).json({ error: 'All fields are required' });
-        }
+  try {
+    const { title, description, price } = req.body;
+    const userId = req.user.id;
 
-        const newService = await Service.create({
-            title,
-            description,
-            price,
-            userId
-        });
-
-        res.status(201).json({ service: newService });
-    } catch (err) {
-        console.error('Error creating service:', err);
-        res.status(500).json({ error: 'Failed to create service' });
+    if (!title || !description || !price) {
+      return res.status(400).json({ error: 'All fields are required' });
     }
+
+    const newService = await Service.create({
+      title,
+      description,
+      price: parseFloat(price),
+      userId,
+    });
+
+    res.status(201).json({ service: newService });
+  } catch (err) {
+    console.error('Error creating service:', err);
+    res.status(500).json({ error: 'Failed to create service' });
+  }
 };
 
 // UPDATE a service
 exports.updateService = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { title, description, price } = req.body;
+  try {
+    const { id } = req.params;
+    const { title, description, price } = req.body;
 
-        const service = await Service.findByPk(id);
-        if (!service) return res.status(404).json({ error: 'Service not found' });
+    const service = await Service.findByPk(id);
+    if (!service) return res.status(404).json({ error: 'Service not found' });
 
-        // Only allow owner to update
-        if (service.userId !== req.user.id) {
-            return res.status(403).json({ error: 'Unauthorized' });
-        }
-
-        await service.update({ title, description, price });
-        res.json({ service });
-    } catch (err) {
-        console.error('Error updating service:', err);
-        res.status(500).json({ error: 'Failed to update service' });
+    if (service.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized' });
     }
+
+    await service.update({ title, description, price });
+    res.json({ service });
+  } catch (err) {
+    console.error('Error updating service:', err);
+    res.status(500).json({ error: 'Failed to update service' });
+  }
 };
 
 // DELETE a service
 exports.deleteService = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const service = await Service.findByPk(id);
-        if (!service) return res.status(404).json({ error: 'Service not found' });
+  try {
+    const { id } = req.params;
+    const service = await Service.findByPk(id);
+    if (!service) return res.status(404).json({ error: 'Service not found' });
 
-        // Only allow owner to delete
-        if (service.userId !== req.user.id) {
-            return res.status(403).json({ error: 'Unauthorized' });
-        }
-
-        await service.destroy();
-        res.json({ message: 'Service deleted' });
-    } catch (err) {
-        console.error('Error deleting service:', err);
-        res.status(500).json({ error: 'Failed to delete service' });
+    if (service.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized' });
     }
+
+    await service.destroy();
+    res.json({ message: 'Service deleted' });
+  } catch (err) {
+    console.error('Error deleting service:', err);
+    res.status(500).json({ error: 'Failed to delete service' });
+  }
 };
