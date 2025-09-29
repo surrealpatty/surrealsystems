@@ -1,14 +1,17 @@
-const { Sequelize } = require('sequelize');
+const { DataTypes, Model } = require('sequelize');
+const { sequelize } = require('../config/database');
 
-const sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASS,
-    {
-        host: process.env.DB_HOST || 'localhost',
-        dialect: 'postgres', // or 'sqlite'
-        logging: false
-    }
+class User extends Model {}
+
+User.init(
+  {
+    username: { type: DataTypes.STRING, allowNull: false },
+    email: { type: DataTypes.STRING, allowNull: false, unique: true },
+    password: { type: DataTypes.STRING, allowNull: false },
+    description: { type: DataTypes.TEXT, allowNull: true },
+    tier: { type: DataTypes.STRING, defaultValue: 'free' }
+  },
+  { sequelize, modelName: 'User' }
 );
 
-module.exports = { sequelize };
+module.exports = User;

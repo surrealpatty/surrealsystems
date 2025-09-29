@@ -1,16 +1,20 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('./database');
-const User = require('./User');
+const { DataTypes, Model } = require('sequelize');
+const { sequelize } = require('../config/database');
+const User = require('./User'); // ✅ import directly, watch case sensitivity
 
-const Service = sequelize.define('Service', {
+class Service extends Model {}
+
+Service.init(
+  {
     title: { type: DataTypes.STRING, allowNull: false },
     description: { type: DataTypes.TEXT, allowNull: false },
-    price: { type: DataTypes.FLOAT, allowNull: false },
-    featured: { type: DataTypes.BOOLEAN, defaultValue: false },
-    hidden: { type: DataTypes.BOOLEAN, defaultValue: false }
-}, { timestamps: true });
+    price: { type: DataTypes.FLOAT, allowNull: false }
+  },
+  { sequelize, modelName: 'Service' }
+);
 
-Service.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-User.hasMany(Service, { foreignKey: 'userId', as: 'services' });
+// ✅ Define associations directly
+Service.belongsTo(User, { foreignKey: 'userId' });
+User.hasMany(Service, { foreignKey: 'userId' });
 
 module.exports = Service;
