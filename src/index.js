@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { sequelize, testConnection } = require('./models/database'); // ✅ fixed path
+const { sequelize, testConnection } = require('./models/database'); 
 const {
     register,
     login,
@@ -27,8 +27,8 @@ app.post('/upgrade', upgradeToPaid);
 // Start server after DB connection
 (async () => {
     try {
-        await testConnection();   // ✅ Test Postgres connection
-        await sequelize.sync();   // ✅ Sync models
+        await testConnection();   // Test DB connection
+        await sequelize.sync();   // Sync models
         app.listen(PORT, () => {
             console.log(`🚀 Server running on http://localhost:${PORT}`);
         });
