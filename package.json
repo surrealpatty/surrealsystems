@@ -1,7 +1,7 @@
 {
   "name": "codecrowds",
   "version": "1.0.0",
-  "description": "CodeCrowds is a Fiverr-like platform where users can sell their skills, post services, and hire others for tasks.",
+  "description": "CodeCrowds is a Fiverr-like platform for users to sell skills, post services, and hire others.",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
@@ -10,19 +10,15 @@
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
-    "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.14.5",
     "pg": "^8.16.3",
     "pg-hstore": "^2.3.4",
-    "sequelize": "^6.32.1",
-    "sqlite3": "^5.1.6"
+    "sequelize": "^6.32.1"
   },
   "devDependencies": {
-    "@types/bcrypt": "^6.0.0",
     "nodemon": "^3.0.2"
   },
   "repository": {
@@ -34,10 +30,9 @@
     "freelance",
     "marketplace",
     "Node.js",
-    "MySQL",
+    "Postgres",
     "Sequelize"
   ],
-  "author": "",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/surrealpatty/CodeCrowds/issues"
