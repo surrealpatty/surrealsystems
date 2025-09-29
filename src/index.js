@@ -13,9 +13,10 @@ app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 
 // Serve frontend static files
-app.use(express.static(path.resolve(__dirname, 'public')));
+const publicPath = path.join(process.cwd(), 'src/public'); // ensures correct path on Render
+app.use(express.static(publicPath));
 app.get('*', (req, res) => {
-  res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(publicPath, 'index.html'));
 });
 
 const PORT = process.env.PORT || 5000;
