@@ -3,13 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { sequelize, testConnection } = require('./models/database');
-const {
-  register,
-  login,
-  getProfile,
-  updateProfile,
-  upgradeToPaid
-} = require('./controllers/userController');
+const { register, login, getProfile, updateProfile, upgradeToPaid } = require('./controllers/userController');
+const authenticateToken = require('./middlewares/authenticateToken');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -21,14 +16,14 @@ app.use(express.json());
 // ---------- API Routes ----------
 app.post('/api/register', register);
 app.post('/api/login', login);
-app.get('/api/profile/:id?', getProfile);
-app.put('/api/profile', updateProfile);
-app.post('/api/upgrade', upgradeToPaid);
+app.get('/api/profile/:id?', authenticateToken, getProfile);
+app.put('/api/profile', authenticateToken, updateProfile);
+app.post('/api/upgrade', authenticateToken, upgradeToPaid);
 
 // ---------- Serve Frontend ----------
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Catch-all route (for frontend routing)
+// Catch-all route for SPA frontend routing
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
