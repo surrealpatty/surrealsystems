@@ -19,7 +19,7 @@ app.use(cors());
 app.use(express.json());
 
 // ---------- API Routes ----------
-// Always define API routes BEFORE static middleware
+// Use /api prefix to avoid conflict with frontend routes
 app.post('/api/register', register);
 app.post('/api/login', login);
 app.get('/api/profile/:id?', getProfile);
@@ -29,7 +29,7 @@ app.post('/api/upgrade', upgradeToPaid);
 // ---------- Serve Frontend ----------
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Catch-all route to serve index.html for frontend routing (SPA support)
+// Catch-all route for SPA frontend routing
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -37,8 +37,8 @@ app.get('*', (req, res) => {
 // ---------- Start Server ----------
 (async () => {
   try {
-    await testConnection();
-    await sequelize.sync();
+    await testConnection();  // Test DB connection
+    await sequelize.sync();  // Sync models
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
