@@ -1,6 +1,13 @@
-// src/models/index.js
 const { Sequelize, DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database');
+const { DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT } = process.env;
+
+// Initialize Sequelize
+const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
+  host: DB_HOST,
+  port: DB_PORT,
+  dialect: 'mysql',   // or 'postgres' if you change
+  logging: false
+});
 
 // Define User
 const User = sequelize.define('User', {
