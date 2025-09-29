@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const path = require('path'); // for serving frontend files
+const path = require('path');
 const { sequelize, testConnection } = require('./config/database');
 const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/service');
@@ -8,26 +8,24 @@ const serviceRoutes = require('./routes/service');
 const app = express();
 app.use(express.json());
 
-// Serve API routes
-app.use('/api/users', userRoutes);
-app.use('/api/services', serviceRoutes);
-
-// Serve frontend files
-const publicPath = path.join(__dirname, 'public'); // assuming your HTML/CSS/JS is in src/public
+// Serve frontend
+const publicPath = path.join(__dirname, 'public');
 app.use(express.static(publicPath));
-
-// Fallback to index.html for SPA (optional)
 app.get('*', (req, res) => {
   res.sendFile(path.join(publicPath, 'index.html'));
 });
+
+// API routes
+app.use('/api/users', userRoutes);
+app.use('/api/services', serviceRoutes);
 
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
     await testConnection();
-    await sequelize.sync(); // ensures tables exist
-    app.listen(PORT, () => console.log(`🚀 CodeCrowds API is running on port ${PORT}!`));
+    await sequelize.sync();
+    app.listen(PORT, () => console.log(`🚀 CodeCrowds API running on port ${PORT}`));
   } catch (err) {
     console.error('Server failed to start:', err);
   }
