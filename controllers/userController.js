@@ -2,6 +2,7 @@ const { User } = require('../models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
+// ---------------- Register ----------------
 const register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -21,6 +22,7 @@ const register = async (req, res) => {
     }
 };
 
+// ---------------- Login ----------------
 const login = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -39,6 +41,7 @@ const login = async (req, res) => {
     }
 };
 
+// ---------------- Get Profile ----------------
 const getProfile = async (req, res) => {
     try {
         const userId = req.params.id || req.user.id;
@@ -54,6 +57,7 @@ const getProfile = async (req, res) => {
     }
 };
 
+// ---------------- Update Profile ----------------
 const updateProfile = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -72,6 +76,7 @@ const updateProfile = async (req, res) => {
     }
 };
 
+// ---------------- Upgrade Account ----------------
 const upgradeToPaid = async (req, res) => {
     try {
         const user = await User.findByPk(req.user.id);

@@ -1,96 +1,29 @@
-const { User } = require('../models');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+require('dotenv').config(); // load .env variables
+const express = require('express');
+const app = express();
+const { sequelize } = require('./config/database'); // connect DB
+const userRoutes = require('./routes/user');
 
-// ---------------- Register ----------------
-const register = async (req, res) => {
-    try {
-        const { username, email, password } = req.body;
-        const hashedPassword = await bcrypt.hash(password, 10);
+// Middleware
+app.use(express.json()); // parse JSON
+app.use(express.urlencoded({ extended: true })); // parse URL-encoded
+// Optional: enable CORS if frontend is on a different domain
+const cors = require('cors');
+app.use(cors());
 
-        const user = await User.create({
-            username,
-            email,
-            password: hashedPassword,
-            tier: 'free'
-        });
+// Routes
+app.use('/api/users', userRoutes);
 
-        res.status(201).json({ message: 'User registered successfully', user });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Registration failed' });
-    }
-};
+// Root route
+app.get('/', (req, res) => {
+    res.send('🚀 CodeCrowds API is running!');
+});
 
-// ---------------- Login ----------------
-const login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ where: { email } });
-        if (!user) return res.status(404).json({ error: 'User not found' });
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ error: 'Invalid credentials' });
-
-        const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
-
-        res.json({ token, user });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Login failed' });
-    }
-};
-
-// ---------------- Get Profile ----------------
-const getProfile = async (req, res) => {
-    try {
-        const userId = req.params.id || req.user.id;
-        const user = await User.findByPk(userId, {
-            attributes: ['id', 'username', 'description', 'tier']
-        });
-        if (!user) return res.status(404).json({ error: 'User not found' });
-
-        res.json({ user });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to load profile' });
-    }
-};
-
-// ---------------- Update Profile ----------------
-const updateProfile = async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const { description } = req.body;
-
-        const user = await User.findByPk(userId);
-        if (!user) return res.status(404).json({ error: 'User not found' });
-
-        user.description = description;
-        await user.save();
-
-        res.json({ user });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to update profile' });
-    }
-};
-
-// ---------------- Upgrade Account ----------------
-const upgradeToPaid = async (req, res) => {
-    try {
-        const user = await User.findByPk(req.user.id);
-        if (!user) return res.status(404).json({ error: 'User not found' });
-
-        user.tier = 'paid';
-        await user.save();
-
-        res.json({ message: 'Account upgraded to paid', user });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to upgrade account' });
-    }
-};
-
-// ✅ Correct export
-module.exports = { register, login, getProfile, updateProfile, upgradeToPaid };
+// Sync DB and start server
+const PORT = process.env.PORT || 10000;
+sequelize.sync({ alter: true }) // auto-create/alter tables
+    .then(() => {
+        console.log('✅ Database synced');
+        app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    })
+    .catch(err => console.error('❌ DB sync failed:', err));

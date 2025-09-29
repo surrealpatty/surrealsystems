@@ -1,13 +1,12 @@
 const { Sequelize } = require('sequelize');
 
-// Use DATABASE_URL if available, fallback to individual vars
 const sequelize = new Sequelize(
     process.env.DATABASE_URL ||
     `postgres://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
     {
         dialect: 'postgres',
-        dialectOptions: { ssl: { rejectUnauthorized: false } }, // required for Render
-        logging: false,
+        dialectOptions: { ssl: { rejectUnauthorized: false } }, 
+        logging: false
     }
 );
 
