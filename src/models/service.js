@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
-const { User } = require('./user'); // ✅ fixed lowercase
+const { User } = require('../user'); // lowercase!
 
 const Service = sequelize.define('Service', {
   title: { type: DataTypes.STRING, allowNull: false },
