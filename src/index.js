@@ -1,44 +1,35 @@
-require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
 const path = require('path');
-
-// ---------- Database ----------
-const { sequelize, testConnection } = require('./config/database');
-
-// ---------- Routes ----------
+const cors = require('cors');
+require('dotenv').config();
+const { sequelize } = require('./config/database');
 const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/service');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// ---------- Middleware ----------
+// Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// ---------- API Routes ----------
-app.use('/api/users', userRoutes);        // /api/users/register, /api/users/login, etc.
-app.use('/api/services', serviceRoutes);  // /api/services/
-
-// ---------- Serve Frontend ----------
+// Serve frontend
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Catch-all route for SPA frontend routing
+// API routes
+app.use('/api/users', userRoutes);
+app.use('/api/services', serviceRoutes);
+
+// Fallback for SPA
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public', 'index.html'));
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// ---------- Start Server ----------
-(async () => {
-  try {
-    await testConnection();   // Test DB connection
-    await sequelize.sync();   // Sync models
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
-    });
-  } catch (err) {
-    console.error('❌ Server failed to start:', err);
-    process.exit(1);
-  }
-})();
+// Start server
+sequelize.authenticate()
+  .then(() => {
+    console.log('✅ Database connected');
+    app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+  })
+  .catch(err => console.error('❌ Database connection failed', err));
