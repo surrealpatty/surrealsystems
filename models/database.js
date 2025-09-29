@@ -8,14 +8,8 @@ const sequelize = new Sequelize(
     {
         host: process.env.DB_HOST,
         port: process.env.DB_PORT,
-        dialect: 'postgres',
-        logging: false, // turn off SQL logs
-        dialectOptions: {
-            ssl: {
-                require: true,
-                rejectUnauthorized: false
-            }
-        },
+        dialect: 'mysql',   // ✅ change this from 'postgres' to 'mysql'
+        logging: false,
         pool: {
             max: 5,
             min: 0,
@@ -25,24 +19,22 @@ const sequelize = new Sequelize(
     }
 );
 
-// Retry connection until DB is ready
-const waitForDb = async (retries = 10, delay = 5000) => {
+const testConnection = async (retries = 5, delay = 5000) => {
     for (let i = 0; i < retries; i++) {
         try {
             await sequelize.authenticate();
-            console.log('✅ PostgreSQL connected');
-            return true;
+            console.log('✅ MySQL connected');
+            return;
         } catch (err) {
-            console.warn(`⚠️ Database connection failed (attempt ${i + 1}): ${err.message}`);
+            console.error(`❌ Database connection failed (attempt ${i + 1}):`, err.message);
             if (i < retries - 1) {
-                console.log(`⏳ Retrying in ${delay / 1000}s...`);
+                console.log(`Retrying in ${delay / 1000} seconds...`);
                 await new Promise(r => setTimeout(r, delay));
             } else {
-                console.error('❌ Could not connect to database after multiple attempts.');
-                process.exit(1); // stop app if DB never connects
+                console.error('❌ Could not connect to MySQL after multiple attempts.');
             }
         }
     }
 };
 
-module.exports = { sequelize, waitForDb };
+module.exports = { sequelize, testConnection };
