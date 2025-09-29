@@ -3,10 +3,16 @@ const router = express.Router();
 const { register, login, getProfile, updateProfile, upgradeToPaid } = require('../controllers/userController');
 const authenticateToken = require('../middlewares/authenticateToken');
 
+// Auth
 router.post('/register', register);
 router.post('/login', login);
-router.get('/profile/:id?', authenticateToken, getProfile);
-router.put('/profile', authenticateToken, updateProfile);
+
+// Profile
+router.get('/profile', authenticateToken, getProfile);      // own profile
+router.get('/:id', authenticateToken, getProfile);          // any user by ID
+router.put('/profile', authenticateToken, updateProfile);   // update own profile
+
+// Upgrade
 router.patch('/upgrade', authenticateToken, upgradeToPaid);
 
 module.exports = router;
