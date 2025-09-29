@@ -1,8 +1,8 @@
-const User = require('../models/User');
+const { User } = require('../models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-// User registration
+// ---------------- Register ----------------
 exports.register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -12,7 +12,7 @@ exports.register = async (req, res) => {
             username,
             email,
             password: hashedPassword,
-            tier: 'free' // new users start free
+            tier: 'free'
         });
 
         res.status(201).json({ message: 'User registered successfully', user });
@@ -22,7 +22,7 @@ exports.register = async (req, res) => {
     }
 };
 
-// User login
+// ---------------- Login ----------------
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -42,21 +42,42 @@ exports.login = async (req, res) => {
     }
 };
 
-// Get profile
+// ---------------- Get Profile ----------------
 exports.getProfile = async (req, res) => {
     try {
-        const user = await User.findByPk(req.user.id, {
-            attributes: ['id', 'username', 'description', 'tier'] // 👈 include username
+        const userId = req.params.id || req.user.id;
+        const user = await User.findByPk(userId, {
+            attributes: ['id', 'username', 'description', 'tier']
         });
         if (!user) return res.status(404).json({ error: 'User not found' });
-        res.json(user);
+
+        res.json({ user });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to load profile' });
     }
 };
 
-// Upgrade account to paid
+// ---------------- Update Profile ----------------
+exports.updateProfile = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { description } = req.body;
+
+        const user = await User.findByPk(userId);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        user.description = description;
+        await user.save();
+
+        res.json({ user });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to update profile' });
+    }
+};
+
+// ---------------- Upgrade Account ----------------
 exports.upgradeToPaid = async (req, res) => {
     try {
         const user = await User.findByPk(req.user.id);
@@ -71,3 +92,5 @@ exports.upgradeToPaid = async (req, res) => {
         res.status(500).json({ error: 'Failed to upgrade account' });
     }
 };
+
+module.exports = { register, login, getProfile, updateProfile, upgradeToPaid };
