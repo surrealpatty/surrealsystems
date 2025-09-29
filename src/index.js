@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path'); // ✅ Add this
 const { sequelize, testConnection } = require('./models/database');
 const {
   register,
@@ -17,25 +18,25 @@ const PORT = process.env.PORT || 10000;
 app.use(cors());
 app.use(express.json());
 
-// ---------- Routes ----------
+// ---------- Serve Frontend ----------
+app.use(express.static(path.join(__dirname, 'public'))); // serve static files
 
-// Homepage route
 app.get('/', (req, res) => {
-  res.send('<h1>🚀 CodeCrowds API is running!</h1><p>Use the API routes to interact with the server.</p>');
+  res.sendFile(path.join(__dirname, 'public', 'index.html')); // serve homepage
 });
 
-// User routes
+// ---------- API Routes ----------
 app.post('/register', register);
 app.post('/login', login);
 app.get('/profile/:id?', getProfile);
 app.put('/profile', updateProfile);
 app.post('/upgrade', upgradeToPaid);
 
-// ---------- Start server after DB connection ----------
+// ---------- Start Server ----------
 (async () => {
   try {
-    await testConnection();   // Test DB connection
-    await sequelize.sync();   // Sync models
+    await testConnection();
+    await sequelize.sync();
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
