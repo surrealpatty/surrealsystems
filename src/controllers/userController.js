@@ -1,4 +1,5 @@
 const { User } = require('../models/User');
+const { Service } = require('../models/Service');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -7,36 +8,19 @@ const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // Basic validation
     if (!username || !email || !password) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    // Check if email is already taken
     const existing = await User.findOne({ where: { email } });
-    if (existing) {
-      return res.status(400).json({ error: 'Email already in use' });
-    }
+    if (existing) return res.status(400).json({ error: 'Email already in use' });
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
-    const user = await User.create({
-      username,
-      email,
-      password: hashedPassword,
-      tier: 'free'
-    });
+    const user = await User.create({ username, email, password: hashedPassword, tier: 'free' });
 
-    // Generate token
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
+    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-    // Remove sensitive info
     const safeUser = {
       id: user.id,
       username: user.username,
@@ -57,31 +41,16 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Basic validation
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
-    }
+    if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
 
-    // Find user
     const user = await User.findOne({ where: { email } });
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
-    // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ error: 'Invalid credentials' });
-    }
+    if (!isMatch) return res.status(400).json({ error: 'Invalid credentials' });
 
-    // Generate token
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
+    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-    // Safe user object
     const safeUser = {
       id: user.id,
       username: user.username,
@@ -102,12 +71,11 @@ const getProfile = async (req, res) => {
   try {
     const userId = req.params.id || req.user.id;
     const user = await User.findByPk(userId, {
-      attributes: ['id', 'username', 'email', 'description', 'tier']
+      attributes: ['id', 'username', 'email', 'description', 'tier'],
+      include: [{ model: Service, as: 'services' }]
     });
 
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
     res.json({ user });
   } catch (err) {
@@ -123,9 +91,7 @@ const updateProfile = async (req, res) => {
     const { description } = req.body;
 
     const user = await User.findByPk(userId);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
     user.description = description || user.description;
     await user.save();
@@ -141,9 +107,7 @@ const updateProfile = async (req, res) => {
 const upgradeToPaid = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
     user.tier = 'paid';
     await user.save();
@@ -155,10 +119,40 @@ const upgradeToPaid = async (req, res) => {
   }
 };
 
+// ---------------- Services ----------------
+const getAllServices = async (req, res) => {
+  try {
+    const services = await Service.findAll({
+      include: [{ model: User, as: 'user', attributes: ['id', 'username', 'email'] }]
+    });
+    res.json({ services });
+  } catch (err) {
+    console.error('❌ Get services error:', err);
+    res.status(500).json({ error: 'Failed to load services' });
+  }
+};
+
+const createService = async (req, res) => {
+  try {
+    const { title, description, price } = req.body;
+    const userId = req.user.id;
+
+    if (!title || !price) return res.status(400).json({ error: 'Title and price are required' });
+
+    const service = await Service.create({ title, description, price, userId });
+    res.status(201).json({ message: 'Service created', service });
+  } catch (err) {
+    console.error('❌ Create service error:', err);
+    res.status(500).json({ error: 'Failed to create service' });
+  }
+};
+
 module.exports = {
   register,
   login,
   getProfile,
   updateProfile,
-  upgradeToPaid
+  upgradeToPaid,
+  getAllServices,
+  createService
 };
