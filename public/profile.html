@@ -75,8 +75,8 @@ h1, h2 { color: #4e54c8; margin-bottom: 0.5rem; }
 
 /* ---------- Buttons ---------- */
 button {
-    padding: 10px 20px;
-    font-size: 1rem;
+    padding: 12px 24px;
+    font-size: 1.1rem;
     color: #fff;
     background-color: #4e54c8;
     border: none;
@@ -130,11 +130,12 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 .floating-btn {
     position: fixed;
     right: 20px;
-    width: 150px;
+    width: 180px;
     text-align: center;
-    padding: 12px;
+    padding: 14px;
     border-radius: 50px;
     font-weight: bold;
+    font-size: 1.2rem;
     color: #fff;
     display: block;
     z-index: 100;
@@ -158,10 +159,10 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 }
 .mobile-button-row button {
     flex: 1;
-    border-radius: 8px;
+    border-radius: 12px;
     font-weight: bold;
-    font-size: 1rem;
-    padding: 10px;
+    font-size: 1.1rem;
+    padding: 14px;
     background-color: #4e54c8;
     color: #fff;
     transition: transform 0.3s, opacity 0.3s;
@@ -172,7 +173,7 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 @media (max-width: 480px) {
     .floating-btn { display: none; }
     .mobile-button-row { display: flex; }
-    button { font-size: 0.9rem; padding: 8px 16px; }
+    button { font-size: 1rem; padding: 12px 20px; }
 }
 </style>
 </head>
@@ -209,12 +210,29 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 </div>
 
 <script>
-const API_URL = '/api'; // Use relative path
+const API_URL = '/api'; 
 const token = localStorage.getItem('token');
 const loggedInUserId = localStorage.getItem('userId');
 const profileUserId = localStorage.getItem('profileUserId') || loggedInUserId;
 
 if (!token) window.location.href = 'index.html';
+
+const profileUsername = document.getElementById('profile-username');
+const profileDescription = document.getElementById('profile-description');
+const editDescBtn = document.getElementById('editDescBtn');
+const servicesList = document.getElementById('services-list');
+const newServiceSection = document.getElementById('newServiceSection');
+const newServiceTitle = document.getElementById('newServiceTitle');
+const newServiceDesc = document.getElementById('newServiceDesc');
+const newServicePrice = document.getElementById('newServicePrice');
+const createServiceBtn = document.getElementById('createServiceBtn');
+const addNewServiceBtn = document.getElementById('addNewServiceBtn');
+const mobileAddServiceBtn = document.getElementById('mobileAddServiceBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const goToServicesBtn = document.getElementById('goToServicesBtn');
+const goToMessagesBtn = document.getElementById('goToMessagesBtn');
+const mobileServicesBtn = document.getElementById('mobileServicesBtn');
+const mobileMessagesBtn = document.getElementById('mobileMessagesBtn');
 
 // ---------------- Load Profile ----------------
 async function loadProfile() {
@@ -271,7 +289,8 @@ async function loadServices() {
         const res = await fetch(`${API_URL}/services`, {
             headers: { Authorization: `Bearer ${token}` }
         });
-        const services = await res.json();
+        const servicesData = await res.json();
+        const services = servicesData.services || servicesData;
         const userServices = services.filter(s => s.user?.id.toString() === profileUserId);
 
         servicesList.innerHTML = '';
@@ -298,11 +317,8 @@ async function loadServices() {
             `;
             servicesList.appendChild(div);
 
-            const editBtn = div.querySelector('.edit-service-btn');
-            const deleteBtn = div.querySelector('.delete-service-btn');
-
-            editBtn.addEventListener('click', () => editService(div, s));
-            deleteBtn.addEventListener('click', () => deleteService(s.id));
+            div.querySelector('.edit-service-btn').addEventListener('click', () => editService(div, s));
+            div.querySelector('.delete-service-btn').addEventListener('click', () => deleteService(s.id));
         });
     } catch (err) {
         console.error(err);
