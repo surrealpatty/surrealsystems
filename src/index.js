@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { sequelize, testConnection } = require('../database'); // ✅ go up one folder to root
+const { sequelize, testConnection } = require('../database');
 const {
     register,
     login,
