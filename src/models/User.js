@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database'); // ✅ FIXED import
+const sequelize = require('../config/database'); // ✅ Import the Sequelize instance correctly
 
+// Define the User model
 const User = sequelize.define('User', {
   username: {
     type: DataTypes.STRING,
@@ -24,6 +25,9 @@ const User = sequelize.define('User', {
     type: DataTypes.ENUM('free', 'paid'),
     defaultValue: 'free'
   }
+}, {
+  tableName: 'users',      // Optional: explicitly name the table
+  timestamps: true         // Adds createdAt and updatedAt
 });
 
 module.exports = { User };

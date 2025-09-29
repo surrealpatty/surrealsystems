@@ -1,3 +1,4 @@
+// src/config/database.js
 const { Sequelize } = require('sequelize');
 
 const sequelize = new Sequelize(
@@ -9,14 +10,14 @@ const sequelize = new Sequelize(
     port: process.env.DB_PORT,
     dialect: 'postgres',
     dialectOptions: {
-      ssl: { require: true, rejectUnauthorized: false }, // Render requires SSL
+      ssl: { require: true, rejectUnauthorized: false } // Render requires SSL
     },
-    logging: false,
+    logging: false
   }
 );
 
 sequelize.authenticate()
   .then(() => console.log('✅ PostgreSQL connection established successfully.'))
-  .catch((err) => console.error('❌ PostgreSQL connection failed:', err));
+  .catch(err => console.error('❌ PostgreSQL connection failed:', err));
 
 module.exports = sequelize;
