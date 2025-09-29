@@ -12,9 +12,11 @@ app.use(express.json());
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 
-// Serve frontend static files
-const publicPath = path.join(process.cwd(), 'src/public'); // ensures correct path on Render
+// Serve frontend files
+const publicPath = path.join(__dirname, 'public'); // __dirname is src/
 app.use(express.static(publicPath));
+
+// Catch-all route for SPA
 app.get('*', (req, res) => {
   res.sendFile(path.join(publicPath, 'index.html'));
 });
@@ -24,8 +26,10 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   try {
     await testConnection();
-    await sequelize.sync(); // ensures tables exist
-    app.listen(PORT, () => console.log(`🚀 CodeCrowds API running on port ${PORT}`));
+    await sequelize.sync();
+    app.listen(PORT, () =>
+      console.log(`🚀 CodeCrowds API & frontend running on port ${PORT}`)
+    );
   } catch (err) {
     console.error('Server failed to start:', err);
   }
