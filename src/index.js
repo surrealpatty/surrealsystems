@@ -25,18 +25,10 @@ app.get('/api/profile/:id?', getProfile);
 app.put('/api/profile', updateProfile);
 app.post('/api/upgrade', upgradeToPaid);
 
-// (You probably also want services + messages here)
-const serviceController = require('./controllers/serviceController');
-const messageController = require('./controllers/messageController');
-
-app.get('/api/services', serviceController.getAllServices);
-app.post('/api/services', serviceController.createService);
-app.post('/api/messages', messageController.sendMessage);
-
 // ---------- Serve Frontend ----------
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Catch-all (for SPA)
+// Catch-all route (for frontend routing)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

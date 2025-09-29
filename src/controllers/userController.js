@@ -15,7 +15,14 @@ const register = async (req, res) => {
       tier: 'free'
     });
 
-    res.status(201).json({ message: 'User registered successfully', user });
+    // ✅ Issue token on signup (same as login)
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    res.status(201).json({ token, user });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Registration failed' });
