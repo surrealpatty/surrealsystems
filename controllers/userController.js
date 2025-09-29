@@ -1,4 +1,4 @@
-const { User } = require('../models');
+const { User } = require('../models'); // now works with models/index.js
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
