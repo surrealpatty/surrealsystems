@@ -2,8 +2,7 @@ const { User } = require('../models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-// ---------------- Register ----------------
-exports.register = async (req, res) => {
+const register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -22,12 +21,10 @@ exports.register = async (req, res) => {
     }
 };
 
-// ---------------- Login ----------------
-exports.login = async (req, res) => {
+const login = async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ where: { email } });
-
         if (!user) return res.status(404).json({ error: 'User not found' });
 
         const isMatch = await bcrypt.compare(password, user.password);
@@ -42,8 +39,7 @@ exports.login = async (req, res) => {
     }
 };
 
-// ---------------- Get Profile ----------------
-exports.getProfile = async (req, res) => {
+const getProfile = async (req, res) => {
     try {
         const userId = req.params.id || req.user.id;
         const user = await User.findByPk(userId, {
@@ -58,8 +54,7 @@ exports.getProfile = async (req, res) => {
     }
 };
 
-// ---------------- Update Profile ----------------
-exports.updateProfile = async (req, res) => {
+const updateProfile = async (req, res) => {
     try {
         const userId = req.user.id;
         const { description } = req.body;
@@ -77,8 +72,7 @@ exports.updateProfile = async (req, res) => {
     }
 };
 
-// ---------------- Upgrade Account ----------------
-exports.upgradeToPaid = async (req, res) => {
+const upgradeToPaid = async (req, res) => {
     try {
         const user = await User.findByPk(req.user.id);
         if (!user) return res.status(404).json({ error: 'User not found' });
