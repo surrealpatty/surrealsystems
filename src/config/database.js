@@ -1,5 +1,6 @@
 const { Sequelize } = require('sequelize');
 
+// ---------- Initialize Sequelize ----------
 const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,
@@ -15,8 +16,16 @@ const sequelize = new Sequelize(
   }
 );
 
-sequelize.authenticate()
-  .then(() => console.log('✅ PostgreSQL connection established successfully.'))
-  .catch(err => console.error('❌ PostgreSQL connection failed:', err));
+// ---------- Test DB Connection ----------
+const testConnection = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ PostgreSQL connection established successfully.');
+  } catch (err) {
+    console.error('❌ PostgreSQL connection failed:', err);
+    throw err;
+  }
+};
 
-module.exports = sequelize;
+// ---------- Export ----------
+module.exports = { sequelize, testConnection };

@@ -2,9 +2,13 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { sequelize, testConnection } = require('./models/database');
-const { register, login, getProfile, updateProfile, upgradeToPaid } = require('./controllers/userController');
-const authenticateToken = require('./middlewares/authenticateToken');
+
+// ---------- Database ----------
+const { sequelize, testConnection } = require('./config/database');
+
+// ---------- Routes ----------
+const userRoutes = require('./routes/user');
+const serviceRoutes = require('./routes/service');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -14,11 +18,8 @@ app.use(cors());
 app.use(express.json());
 
 // ---------- API Routes ----------
-app.post('/api/register', register);
-app.post('/api/login', login);
-app.get('/api/profile/:id?', authenticateToken, getProfile);
-app.put('/api/profile', authenticateToken, updateProfile);
-app.post('/api/upgrade', authenticateToken, upgradeToPaid);
+app.use('/api/users', userRoutes);        // /api/users/register, /api/users/login, etc.
+app.use('/api/services', serviceRoutes);  // /api/services/
 
 // ---------- Serve Frontend ----------
 app.use(express.static(path.join(__dirname, 'public')));
@@ -31,8 +32,8 @@ app.get('*', (req, res) => {
 // ---------- Start Server ----------
 (async () => {
   try {
-    await testConnection();
-    await sequelize.sync();
+    await testConnection();   // Check DB connection
+    await sequelize.sync();   // Sync models
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
