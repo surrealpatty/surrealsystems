@@ -126,7 +126,7 @@ button:hover { background-color: #3b40a1; }
 </div>
 
 <script>
-const API_URL = 'https://codecrowds.onrender.com';
+const API_URL = '/api'; // Make sure this points to your backend
 const token = localStorage.getItem('token');
 const userId = localStorage.getItem('userId');
 
@@ -141,7 +141,7 @@ const closeModalBtn = document.getElementById('closeModalBtn');
 
 let currentRecipientId = null;
 
-// Go to profile page
+// Navigation
 goToProfileBtn.addEventListener('click', () => {
     window.location.href = 'profile.html';
 });
@@ -149,8 +149,11 @@ goToProfileBtn.addEventListener('click', () => {
 // Load services
 async function loadServices() {
     try {
-        const res = await fetch(`${API_URL}/services`, { headers: { Authorization: `Bearer ${token}` }});
+        const res = await fetch(`${API_URL}/services`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
         if (!res.ok) throw new Error('Failed to fetch services');
+
         const data = await res.json();
         const services = data.services || data;
 
@@ -169,12 +172,12 @@ async function loadServices() {
                 <p>${s.description}</p>
                 <p><strong>Price:</strong> $${s.price}</p>
                 <p class="username">Posted by: ${s.user?.username || 'Unknown'}</p>
-                <button type="button" class="messageBtn" data-userid="${s.user?.id}">Send Message</button>
+                ${s.user?.id !== userId ? `<button type="button" class="messageBtn" data-userid="${s.user?.id}">Send Message</button>` : ''}
             `;
             servicesList.appendChild(div);
         });
 
-        // Add message button events
+        // Attach message events
         document.querySelectorAll('.messageBtn').forEach(btn => {
             btn.addEventListener('click', () => {
                 currentRecipientId = btn.dataset.userid;
@@ -182,6 +185,7 @@ async function loadServices() {
                 messageModal.style.display = 'flex';
             });
         });
+
     } catch(err) {
         console.error(err);
         servicesList.innerHTML = '<p class="error">Failed to load services</p>';
