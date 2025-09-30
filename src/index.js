@@ -1,4 +1,3 @@
-// src/index.js
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -14,8 +13,8 @@ app.use(cors());
 app.use(express.json());
 
 // ----------------- API routes -----------------
-app.use('/api/users', userRoutes);  // Users API
-app.use('/api/services', serviceRoutes); // Services API (add /api prefix)
+app.use('/api/users', userRoutes);  
+app.use('/api/services', serviceRoutes); 
 
 // ----------------- Serve frontend -----------------
 app.use(express.static(path.join(__dirname, '..', 'public')));
@@ -25,7 +24,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
-// Catch-all for frontend routes (profile.html, register.html, etc.)
+// Catch-all for frontend routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
@@ -33,8 +32,8 @@ app.get('*', (req, res) => {
 // ----------------- Database connection -----------------
 (async () => {
   try {
-    await testConnection(); // Tests DB connection
-    await sequelize.sync({ alter: true }); // Sync models
+    await testConnection();
+    await sequelize.sync({ alter: true });
     console.log('✅ Database synced successfully.');
   } catch (err) {
     console.error('❌ Database sync failed:', err);
