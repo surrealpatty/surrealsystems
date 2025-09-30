@@ -1,4 +1,6 @@
-const API_URL = '/api/users'; // ✅ Use relative path for Render deployment
+// public/script.js
+
+const API_URL = '/api/users'; // matches backend prefix
 const token = localStorage.getItem('token');
 
 // ---------------- Signup ----------------
@@ -65,7 +67,7 @@ async function loadProfile() {
     if (!profileEl) return;
 
     try {
-        const res = await fetch(`/api/users/${localStorage.getItem('userId')}`, {
+        const res = await fetch(`${API_URL}/${localStorage.getItem('userId')}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -74,7 +76,7 @@ async function loadProfile() {
         profileEl.textContent = `
 Username: ${data.user.username}
 Email: ${data.user.email}
-Tier: ${data.user.tier}
+Tier: ${data.user.tier || 'Free'}
 Description: ${data.user.description || 'N/A'}
         `;
     } catch (err) {
