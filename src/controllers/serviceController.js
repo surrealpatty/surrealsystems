@@ -1,5 +1,6 @@
-const Service = require('../models/services'); // ✅ lowercase
-const { User } = require('../models/user');   // ✅ lowercase
+// src/controllers/serviceController.js
+const Service = require('../models/services'); // ✅ import model
+const { User } = require('../models/user');   // ✅ import model
 
 // GET all services
 exports.getAllServices = async (req, res) => {
@@ -17,6 +18,8 @@ exports.getAllServices = async (req, res) => {
 // CREATE a new service
 exports.createService = async (req, res) => {
   try {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' }); // ✅ check user
+
     const { title, description, price } = req.body;
     const userId = req.user.id;
 
@@ -41,6 +44,8 @@ exports.createService = async (req, res) => {
 // UPDATE a service
 exports.updateService = async (req, res) => {
   try {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+
     const { id } = req.params;
     const { title, description, price } = req.body;
 
@@ -62,6 +67,8 @@ exports.updateService = async (req, res) => {
 // DELETE a service
 exports.deleteService = async (req, res) => {
   try {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+
     const { id } = req.params;
     const service = await Service.findByPk(id);
     if (!service) return res.status(404).json({ error: 'Service not found' });
