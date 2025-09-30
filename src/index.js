@@ -4,7 +4,7 @@ const path = require('path');
 const { sequelize, testConnection } = require('./config/database');
 const serviceRoutes = require('./routes/service');
 const userRoutes = require('./routes/user');
-const messageRoutes = require('./routes/messages'); // ✅ add messages route
+const messageRoutes = require('./routes/message'); // ✅ matches file name
 require('dotenv').config();
 
 const app = express();
