@@ -8,4 +8,4 @@ const Service = sequelize.define('Service', {
   userId: { type: DataTypes.INTEGER, allowNull: false },
 });
 
-module.exports = Service; // ✅ must export directly
+module.exports = Service;
