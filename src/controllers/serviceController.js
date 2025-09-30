@@ -1,5 +1,5 @@
-const Service = require('../models/services');
-const { User } = require('../models/user');
+const Service = require('../models/services'); // ✅ lowercase
+const { User } = require('../models/user');   // ✅ lowercase
 
 // GET all services
 exports.getAllServices = async (req, res) => {
