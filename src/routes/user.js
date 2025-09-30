@@ -58,13 +58,49 @@ router.post('/login', async (req, res) => {
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: ['id', 'username', 'email'],
+      attributes: ['id', 'username', 'email', 'description'],
     });
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({ user });
   } catch (err) {
     console.error('Get user error:', err);
     res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
+// ---------------- Get user by ID ----------------
+router.get('/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findByPk(id, {
+      attributes: ['id', 'username', 'description'],
+    });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ user }); // frontend expects { user }
+  } catch (err) {
+    console.error('Get user by ID error:', err);
+    res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
+// ---------------- Update user description ----------------
+router.put('/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { description } = req.body;
+
+    if (req.user.id !== parseInt(id)) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const user = await User.findByPk(id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    await user.update({ description });
+    res.json({ user });
+  } catch (err) {
+    console.error('Update user error:', err);
+    res.status(500).json({ error: 'Failed to update user' });
   }
 });
 
