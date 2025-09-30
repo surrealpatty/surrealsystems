@@ -15,7 +15,7 @@ app.use(express.json());
 
 // ----------------- API routes -----------------
 app.use('/api/users', userRoutes);  // Users API
-app.use('/services', serviceRoutes); // Services API
+app.use('/api/services', serviceRoutes); // Services API (add /api prefix)
 
 // ----------------- Serve frontend -----------------
 app.use(express.static(path.join(__dirname, '..', 'public')));
