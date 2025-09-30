@@ -31,10 +31,8 @@ body, html {
     text-align: center;
 }
 
-/* Headings */
 h1 { color: #4e54c8; margin-bottom: 1rem; }
 
-/* Buttons */
 button {
     padding: 12px 25px;
     font-size: 1rem;
@@ -48,14 +46,12 @@ button {
 }
 button:hover { background-color: #3b40a1; }
 
-/* Messages Grid */
 #messages-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
 }
 
-/* Message Card */
 .card {
     background: #fff;
     border-radius: 12px;
@@ -70,7 +66,6 @@ button:hover { background-color: #3b40a1; }
 .card p { margin: 5px 0; color: #555; }
 .card .timestamp { font-size: 0.8rem; color: #999; }
 
-/* Responsive */
 @media (max-width: 480px) {
     .container { padding: 2rem 1rem; }
 }
@@ -85,7 +80,7 @@ button:hover { background-color: #3b40a1; }
 </div>
 
 <script>
-const API_URL = 'https://codecrowds.onrender.com/api'; // make sure this matches your backend
+const API_URL = 'https://codecrowds.onrender.com'; // match your working services page
 const token = localStorage.getItem('token');
 const userId = localStorage.getItem('userId');
 
@@ -98,24 +93,14 @@ goBackBtn.addEventListener('click', () => {
     window.location.href = 'profile.html';
 });
 
-// Utility to safely parse JSON
-async function fetchJSON(url, options = {}) {
-    const res = await fetch(url, options);
-    const contentType = res.headers.get('content-type') || '';
-    const text = await res.text();
-    if (!contentType.includes('application/json')) {
-        throw new Error(`Server returned non-JSON: ${text}`);
-    }
-    return JSON.parse(text);
-}
-
-// Load inbox messages
 async function loadMessages() {
-    messagesList.innerHTML = '<p>Loading messages...</p>';
     try {
-        const messages = await fetchJSON(`${API_URL}/messages`, {
+        const res = await fetch(`${API_URL}/api/messages`, { // make sure /api/messages exists on backend
             headers: { Authorization: `Bearer ${token}` }
         });
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        const data = await res.json();
+        const messages = data.messages || data;
 
         messagesList.innerHTML = '';
         if (!messages.length) {
@@ -130,57 +115,17 @@ async function loadMessages() {
                 <h3>From: ${m.sender?.username || 'Unknown'}</h3>
                 <p>${m.content}</p>
                 <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
-                <button class="viewConversationBtn" data-userid="${m.sender?.id}" data-username="${m.sender?.username}">View Conversation</button>
             `;
             messagesList.appendChild(div);
         });
 
-        document.querySelectorAll('.viewConversationBtn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                loadConversation(btn.dataset.userid, btn.dataset.username);
-            });
-        });
-
-    } catch(err) {
+    } catch (err) {
         console.error(err);
         messagesList.innerHTML = `<p class="error">Failed to load messages: ${err.message}</p>`;
     }
 }
 
-// Load full conversation
-async function loadConversation(otherUserId, otherUsername) {
-    messagesList.innerHTML = '<p>Loading conversation...</p>';
-    try {
-        const conversation = await fetchJSON(`${API_URL}/messages/conversation/${otherUserId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-
-        messagesList.innerHTML = `<h2>Conversation with ${otherUsername}</h2>`;
-
-        conversation.forEach(m => {
-            const div = document.createElement('div');
-            div.className = 'card';
-            div.innerHTML = `
-                <h3>${m.sender.username}</h3>
-                <p>${m.content}</p>
-                <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
-            `;
-            messagesList.appendChild(div);
-        });
-
-        const backBtn = document.createElement('button');
-        backBtn.textContent = 'Back to Inbox';
-        backBtn.addEventListener('click', loadMessages);
-        messagesList.appendChild(backBtn);
-
-    } catch(err) {
-        console.error(err);
-        alert('Failed to load conversation: ' + err.message);
-    }
-}
-
 window.addEventListener('load', loadMessages);
 </script>
-
 </body>
 </html>
