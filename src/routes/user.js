@@ -1,6 +1,7 @@
+// src/routes/user.js
 const express = require('express');
 const router = express.Router();
-const { User } = require('../models/user'); // ✅ import correctly
+const { User, Service } = require('../models'); // ✅ Import your models
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const authenticateToken = require('../middlewares/authenticateToken');
@@ -20,9 +21,18 @@ router.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await User.create({ username, email, password: hashedPassword });
 
+    const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
     res.status(201).json({
       message: 'User registered',
-      user: { id: newUser.id, username: newUser.username, email: newUser.email },
+      token,
+      user: {
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        description: newUser.description || '',
+        tier: newUser.tier || 'free'
+      },
     });
   } catch (err) {
     console.error('Register error:', err);
@@ -42,11 +52,18 @@ router.post('/login', async (req, res) => {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
     res.json({
       message: 'Login successful',
       token,
-      user: { id: user.id, username: user.username, email: user.email },
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        description: user.description || '',
+        tier: user.tier || 'free'
+      },
     });
   } catch (err) {
     console.error('Login error:', err);
@@ -58,9 +75,11 @@ router.post('/login', async (req, res) => {
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: ['id', 'username', 'email', 'description'],
+      attributes: ['id', 'username', 'email', 'description', 'tier'],
+      include: [{ model: Service, as: 'services' }]
     });
     if (!user) return res.status(404).json({ error: 'User not found' });
+
     res.json({ user });
   } catch (err) {
     console.error('Get user error:', err);
@@ -73,10 +92,12 @@ router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const user = await User.findByPk(id, {
-      attributes: ['id', 'username', 'description'],
+      attributes: ['id', 'username', 'description', 'tier'],
+      include: [{ model: Service, as: 'services' }]
     });
     if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json({ user }); // frontend expects { user }
+
+    res.json({ user });
   } catch (err) {
     console.error('Get user by ID error:', err);
     res.status(500).json({ error: 'Failed to fetch user' });
@@ -101,6 +122,27 @@ router.put('/:id', authenticateToken, async (req, res) => {
   } catch (err) {
     console.error('Update user error:', err);
     res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+// ---------------- Upgrade account to paid ----------------
+router.put('/:id/upgrade', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (req.user.id !== parseInt(id)) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const user = await User.findByPk(id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    user.tier = 'paid';
+    await user.save();
+
+    res.json({ message: 'Account upgraded to paid', user });
+  } catch (err) {
+    console.error('Upgrade user error:', err);
+    res.status(500).json({ error: 'Failed to upgrade account' });
   }
 });
 
