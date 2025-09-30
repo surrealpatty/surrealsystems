@@ -7,4 +7,4 @@ const User = sequelize.define('User', {
   password: { type: DataTypes.STRING, allowNull: false },
 });
 
-module.exports = User; // ✅ export the model directly
+module.exports = { User };

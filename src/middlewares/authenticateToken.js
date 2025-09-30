@@ -1,11 +1,10 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/user'); // ✅ import model directly
+const { User } = require('../models/user');
 require('dotenv').config();
 
 module.exports = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-
   if (!token) return res.status(401).json({ error: 'No token provided' });
 
   try {

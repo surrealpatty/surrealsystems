@@ -1,5 +1,5 @@
-const Service = require('../models/services'); // ✅ import model directly
-const User = require('../models/user');       // ✅ import model directly
+const Service = require('../models/services');
+const { User } = require('../models/user');
 
 // GET all services
 exports.getAllServices = async (req, res) => {
