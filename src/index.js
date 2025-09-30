@@ -11,23 +11,22 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve static frontend files (CSS, JS, images)
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static frontend files
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
-// Root route → serve index.html
+// Root route
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
 // API routes
 app.use('/services', serviceRoutes);
 
-// Test DB connection and sync models
+// Test DB and sync
 (async () => {
   try {
     await testConnection();
-    // Use { alter: true } to update tables safely
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ alter: true }); // change to { force: true } if you want to clear tables
     console.log('✅ Database synced successfully.');
   } catch (err) {
     console.error('❌ Database sync failed:', err);
