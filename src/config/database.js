@@ -8,8 +8,14 @@ const sequelize = new Sequelize(
   process.env.DB_PASSWORD,
   {
     host: process.env.DB_HOST,
-    port: process.env.DB_PORT || 3306, // default MySQL port
-    dialect: 'mysql',
+    port: process.env.DB_PORT || 5432, // PostgreSQL default port
+    dialect: 'postgres',               // change to postgres
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false      // required for Render Postgres
+      }
+    },
     logging: false
   }
 );
@@ -18,9 +24,9 @@ const sequelize = new Sequelize(
 const testConnection = async () => {
   try {
     await sequelize.authenticate();
-    console.log('✅ MySQL connection established successfully.');
+    console.log('✅ PostgreSQL connection established successfully.');
   } catch (error) {
-    console.error('❌ Unable to connect to MySQL:', error);
+    console.error('❌ Unable to connect to PostgreSQL:', error);
   }
 };
 
