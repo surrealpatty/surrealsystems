@@ -9,19 +9,20 @@ require('dotenv').config();
 
 const app = express();
 
+// ----------------- Middleware -----------------
 app.use(cors());
 app.use(express.json());
 
 // ----------------- API Routes -----------------
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
-app.use('/api/messages', messageRoutes); // ✅ mount messages route
+app.use('/api/messages', messageRoutes);
 
 // ----------------- Serve frontend -----------------
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-// Optional: redirect frontend routes to index.html
-app.get('/', (req, res) => {
+// Serve index.html for all non-API frontend routes
+app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
@@ -36,5 +37,6 @@ app.get('/', (req, res) => {
   }
 })();
 
+// ----------------- Start server -----------------
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
