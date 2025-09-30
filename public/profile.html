@@ -217,10 +217,10 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
     <button type="button" id="mobileAddServiceBtn">+ Service</button>
 </div>
 <script>
-const API_URL = '/api'; 
+const API_URL = '/api';
 const token = localStorage.getItem('token');
-const loggedInUserId = localStorage.getItem('userId');
-const profileUserId = localStorage.getItem('profileUserId') || loggedInUserId;
+const loggedInUserId = localStorage.getItem('userId')?.toString();
+const profileUserId = (localStorage.getItem('profileUserId') || loggedInUserId)?.toString();
 
 if (!token) window.location.href = 'index.html';
 
@@ -245,23 +245,20 @@ const mobileMessagesBtn = document.getElementById('mobileMessagesBtn');
 // ---------------- Load Profile ----------------
 async function loadProfile() {
     try {
-        // Fetch current logged-in user or specific profile
-        const url = profileUserId === loggedInUserId ? `${API_URL}/users/me` : `${API_URL}/users/${profileUserId}`;
-        const res = await fetch(url, {
+        const res = await fetch(`${API_URL}/users/${profileUserId}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
+        if (!res.ok) throw new Error('Failed to fetch profile');
+
         const data = await res.json();
-        const actualUser = data.user;
+        const actualUser = data.user || data;
 
-        if (!actualUser) throw new Error('User not found');
-
-        // Update DOM
         profileUsername.textContent = actualUser.username || 'Unknown User';
         profileDescription.textContent = actualUser.description || 'No description yet.';
         profileUsername.classList.add('fade-in');
         profileDescription.classList.add('fade-in');
 
-        // Show edit button only for own profile
+        // Show edit button if viewing own profile
         if (actualUser.id.toString() === loggedInUserId) {
             editDescBtn.classList.remove('hidden');
         }
@@ -282,7 +279,7 @@ editDescBtn.addEventListener('click', async () => {
     if (!editingDesc) {
         const newDesc = profileDescription.textContent.trim();
         try {
-            const res = await fetch(`${API_URL}/users/${loggedInUserId}`, {
+            const res = await fetch(`${API_URL}/users/${profileUserId}`, {
                 method: 'PUT',
                 headers: { 
                     'Content-Type': 'application/json', 
@@ -290,8 +287,8 @@ editDescBtn.addEventListener('click', async () => {
                 },
                 body: JSON.stringify({ description: newDesc })
             });
-            const updatedData = await res.json();
-            profileDescription.textContent = updatedData.user?.description || newDesc;
+            const updatedUser = await res.json();
+            profileDescription.textContent = updatedUser.user?.description || updatedUser.description || newDesc;
         } catch (err) {
             console.error(err);
             alert('Failed to save description.');
@@ -308,7 +305,7 @@ async function loadServices() {
         });
         const data = await res.json();
         const services = data.services || data;
-        const userServices = services.filter(s => s.user?.id.toString() === profileUserId);
+        const userServices = services.filter(s => s.user?.id?.toString() === profileUserId);
 
         servicesList.innerHTML = '';
 
@@ -328,15 +325,14 @@ async function loadServices() {
                 <p class="service-desc">${s.description}</p>
                 <p><strong>Price:</strong> $<span class="service-price">${s.price}</span></p>
                 <div class="service-buttons">
-                    ${loggedInUserId === profileUserId ? '<button class="edit-service-btn">Edit</button><button class="delete-service-btn">Delete</button>' : ''}
+                    <button class="edit-service-btn">Edit</button>
+                    <button class="delete-service-btn">Delete</button>
                 </div>
             `;
             servicesList.appendChild(div);
 
-            if (loggedInUserId === profileUserId) {
-                div.querySelector('.edit-service-btn').addEventListener('click', () => editService(div, s));
-                div.querySelector('.delete-service-btn').addEventListener('click', () => deleteService(s.id));
-            }
+            div.querySelector('.edit-service-btn').addEventListener('click', () => editService(div, s));
+            div.querySelector('.delete-service-btn').addEventListener('click', () => deleteService(s.id));
         });
     } catch (err) {
         console.error(err);
@@ -344,14 +340,69 @@ async function loadServices() {
     }
 }
 
-// ---------------- Toggle New Service Section ----------------
+// ---------------- Edit / Delete Service ----------------
+async function editService(div, service) {
+    const titleEl = div.querySelector('.service-title');
+    const descEl = div.querySelector('.service-desc');
+    const priceEl = div.querySelector('.service-price');
+
+    const origTitle = titleEl.textContent;
+    const origDesc = descEl.textContent;
+    const origPrice = priceEl.textContent;
+
+    titleEl.innerHTML = `<input type="text" value="${origTitle}" class="edit-title">`;
+    descEl.innerHTML = `<textarea class="edit-desc">${origDesc}</textarea>`;
+    priceEl.innerHTML = `<input type="number" value="${origPrice}" class="edit-price">`;
+
+    const buttonsDiv = div.querySelector('.service-buttons');
+    buttonsDiv.innerHTML = `<button class="save-btn">Save</button><button class="cancel-btn">Cancel</button>`;
+
+    buttonsDiv.querySelector('.save-btn').addEventListener('click', async () => {
+        const updatedTitle = div.querySelector('.edit-title').value.trim();
+        const updatedDesc = div.querySelector('.edit-desc').value.trim();
+        const updatedPrice = div.querySelector('.edit-price').value.trim();
+        if (!updatedTitle || !updatedDesc || !updatedPrice) return alert('All fields are required.');
+
+        try {
+            await fetch(`${API_URL}/services/${service.id}`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    Authorization: `Bearer ${token}` 
+                },
+                body: JSON.stringify({ title: updatedTitle, description: updatedDesc, price: updatedPrice })
+            });
+            await loadServices();
+        } catch (err) {
+            console.error(err);
+            alert('Failed to update service.');
+        }
+    });
+
+    buttonsDiv.querySelector('.cancel-btn').addEventListener('click', loadServices);
+}
+
+async function deleteService(serviceId) {
+    if (!confirm('Are you sure you want to delete this service?')) return;
+    try {
+        await fetch(`${API_URL}/services/${serviceId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        await loadServices();
+    } catch (err) {
+        console.error(err);
+        alert('Failed to delete service.');
+    }
+}
+
+// ---------------- Toggle / Create New Service ----------------
 function toggleNewService() {
     newServiceSection.style.display = newServiceSection.style.display === 'flex' ? 'none' : 'flex';
 }
 addNewServiceBtn.addEventListener('click', toggleNewService);
 mobileAddServiceBtn.addEventListener('click', toggleNewService);
 
-// ---------------- Create New Service ----------------
 createServiceBtn.addEventListener('click', async () => {
     const title = newServiceTitle.value.trim();
     const description = newServiceDesc.value.trim();
@@ -361,10 +412,7 @@ createServiceBtn.addEventListener('click', async () => {
     try {
         await fetch(`${API_URL}/services`, {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json', 
-                Authorization: `Bearer ${token}` 
-            },
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ title, description, price })
         });
         newServiceTitle.value = '';
