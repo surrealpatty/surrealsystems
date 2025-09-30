@@ -1,19 +1,25 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { sequelize, testConnection } = require('./config/database');
 const serviceRoutes = require('./routes/service');
-const { User } = require('./models/user'); // lowercase
-const { Service } = require('./models/service'); // lowercase
+const { User } = require('./models/user');
+const { Service } = require('./models/service');
 require('dotenv').config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Root route (optional)
-app.get('/', (req, res) => res.send('Welcome to CodeCrowds API!'));
+// Serve static frontend files
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Service routes
+// Root route → serve index.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Service API routes
 app.use('/services', serviceRoutes);
 
 // Test DB and sync
