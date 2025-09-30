@@ -1,10 +1,11 @@
+// src/index.js
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { sequelize, testConnection } = require('./config/database');
 const serviceRoutes = require('./routes/service');
 const userRoutes = require('./routes/user');
-const messageRoutes = require('./routes/message'); // ✅ matches file name
+const messageRoutes = require('./routes/message'); // ✅ fixed file name
 require('dotenv').config();
 
 const app = express();
