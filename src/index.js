@@ -1,4 +1,3 @@
-// src/index.js
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -15,7 +14,7 @@ const app = express();
 
 // ----------------- Middleware -----------------
 app.use(cors());
-app.use(express.json()); // Parse JSON bodies
+app.use(express.json());
 
 // ----------------- API Routes -----------------
 app.use('/api/users', userRoutes);
@@ -24,10 +23,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/ratings', ratingRoutes);
 
 // ----------------- Serve frontend -----------------
-// Make sure your 'public' folder exists at the root
 app.use(express.static(path.join(__dirname, '..', 'public')));
-
-// Serve index.html for all non-API routes
 app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
@@ -35,8 +31,8 @@ app.get(/^\/(?!api).*/, (req, res) => {
 // ----------------- Database connection -----------------
 (async () => {
   try {
-    await testConnection();               // Test DB connection first
-    await sequelize.sync({ alter: true }); // Sync tables
+    await testConnection();
+    await sequelize.sync({ alter: true }); // automatically updates tables
     console.log('✅ Database synced successfully.');
   } catch (err) {
     console.error('❌ Database sync failed:', err);
