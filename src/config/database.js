@@ -7,9 +7,14 @@ const sequelize = new Sequelize(
   process.env.DB_PASSWORD,
   {
     host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT) || 5432,
+    port: Number(process.env.DB_PORT) || 5432, // Ensure port is a number
     dialect: 'postgres',
-    dialectOptions: { ssl: true }, // Simplified SSL for Render
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false // Needed for Render Postgres
+      }
+    },
     logging: false
   }
 );
