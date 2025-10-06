@@ -56,10 +56,6 @@ h1 { color: #4e54c8; margin-bottom: 1rem; }
 .service-card p { margin: 5px 0; color: #555; }
 .service-card .username { font-style: italic; color: #888; margin-bottom:10px; }
 
-/* Ratings */
-.rating-list { margin-top: 10px; font-size: 0.9rem; }
-.rating-list p { margin: 3px 0; }
-
 /* Buttons */
 button {
     padding: 12px 25px;
@@ -103,11 +99,6 @@ button:hover { background-color: #3b40a1; }
     box-sizing: border-box;
 }
 
-/* Rating Form */
-.rating-form { margin-top: 10px; }
-.rating-form input, .rating-form textarea { width: 100%; padding: 8px; margin-top: 5px; border-radius: 6px; border: 1px solid #ccc; }
-.rating-form button { margin-top: 5px; }
-
 /* Responsive */
 @media (max-width: 480px) {
     .container { padding: 2rem 1rem; }
@@ -135,7 +126,7 @@ button:hover { background-color: #3b40a1; }
 </div>
 
 <script>
-const API_URL = '/api'; 
+const API_URL = 'https://codecrowds.onrender.com';
 const token = localStorage.getItem('token');
 const userId = localStorage.getItem('userId');
 
@@ -150,7 +141,7 @@ const closeModalBtn = document.getElementById('closeModalBtn');
 
 let currentRecipientId = null;
 
-// Navigation
+// Go to profile page
 goToProfileBtn.addEventListener('click', () => {
     window.location.href = 'profile.html';
 });
@@ -158,11 +149,8 @@ goToProfileBtn.addEventListener('click', () => {
 // Load services
 async function loadServices() {
     try {
-        const res = await fetch(`${API_URL}/services`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await fetch(`${API_URL}/services`, { headers: { Authorization: `Bearer ${token}` }});
         if (!res.ok) throw new Error('Failed to fetch services');
-
         const data = await res.json();
         const services = data.services || data;
 
@@ -176,52 +164,17 @@ async function loadServices() {
         services.forEach(s => {
             const div = document.createElement('div');
             div.className = 'service-card';
-
-            // Service HTML with ratings section
             div.innerHTML = `
                 <h3>${s.title}</h3>
                 <p>${s.description}</p>
                 <p><strong>Price:</strong> $${s.price}</p>
                 <p class="username">Posted by: ${s.user?.username || 'Unknown'}</p>
-                ${s.user?.id !== userId ? `<button type="button" class="messageBtn" data-userid="${s.user?.id}">Send Message</button>` : ''}
-                <div class="rating-list" id="ratings-${s.id}"><p>Loading ratings...</p></div>
-                <form class="rating-form" id="ratingForm-${s.id}">
-                    <input type="number" id="ratingInput-${s.id}" min="1" max="5" placeholder="Rating (1-5)" required>
-                    <textarea id="commentInput-${s.id}" placeholder="Comment (optional)"></textarea>
-                    <button type="submit">Submit Rating</button>
-                </form>
+                <button type="button" class="messageBtn" data-userid="${s.user?.id}">Send Message</button>
             `;
             servicesList.appendChild(div);
-
-            // Load ratings for this service
-            loadRatings(s.id);
-
-            // Rating submission
-            document.getElementById(`ratingForm-${s.id}`).addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const rating = document.getElementById(`ratingInput-${s.id}`).value;
-                const comment = document.getElementById(`commentInput-${s.id}`).value;
-
-                const res = await fetch(`${API_URL}/ratings`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ serviceId: s.id, rating, comment })
-                });
-
-                const data = await res.json();
-                if (data.success) {
-                    loadRatings(s.id);
-                    document.getElementById(`ratingForm-${s.id}`).reset();
-                } else {
-                    alert(data.message);
-                }
-            });
         });
 
-        // Attach message events
+        // Add message button events
         document.querySelectorAll('.messageBtn').forEach(btn => {
             btn.addEventListener('click', () => {
                 currentRecipientId = btn.dataset.userid;
@@ -229,26 +182,9 @@ async function loadServices() {
                 messageModal.style.display = 'flex';
             });
         });
-
     } catch(err) {
         console.error(err);
         servicesList.innerHTML = '<p class="error">Failed to load services</p>';
-    }
-}
-
-// Load ratings for a service
-async function loadRatings(serviceId) {
-    try {
-        const res = await fetch(`${API_URL}/ratings/${serviceId}`);
-        const data = await res.json();
-        const ratingsDiv = document.getElementById(`ratings-${serviceId}`);
-        if (!data.data || !data.data.length) {
-            ratingsDiv.innerHTML = '<p>No ratings yet.</p>';
-            return;
-        }
-        ratingsDiv.innerHTML = data.data.map(r => `<p><strong>${r.User.username}</strong>: ${r.rating} ⭐ - ${r.comment || ''}</p>`).join('');
-    } catch(err) {
-        console.error(err);
     }
 }
 

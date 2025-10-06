@@ -1,37 +1,33 @@
-// src/models/database.js
-const { Sequelize } = require('sequelize');
 require('dotenv').config();
+const { Sequelize } = require('sequelize');
 
-const isProduction = process.env.NODE_ENV === 'production';
-
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
-  dialect: 'postgres',
-  protocol: 'postgres',
-  logging: false,
-  dialectOptions: isProduction
-    ? { ssl: { require: true, rejectUnauthorized: false } }
-    : {},
-  pool: { max: 10, min: 0, acquire: 30000, idle: 10000 },
-});
-
-const testConnection = async () => {
-  let connected = false;
-  let retries = 0;
-  const maxRetries = 10;
-
-  while (!connected && retries < maxRetries) {
-    try {
-      await sequelize.authenticate();
-      console.log('✅ PostgreSQL connection established.');
-      connected = true;
-    } catch (err) {
-      retries++;
-      console.error(`❌ Connection attempt ${retries} failed. Retrying in 5s...`, err.message);
-      await new Promise((res) => setTimeout(res, 5000));
-    }
+// PostgreSQL connection
+const sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
+  {
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT || 5432,
+    dialect: 'postgres',
+    dialectOptions: {
+      ssl: {
+        rejectUnauthorized: false
+      }
+    },
+    logging: false
   }
+);
 
-  if (!connected) throw new Error('Database connection failed');
+// Test DB connection
+const testConnection = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Database connection established');
+  } catch (err) {
+    console.error('❌ Unable to connect to database:', err);
+    throw err;
+  }
 };
 
 module.exports = { sequelize, testConnection };

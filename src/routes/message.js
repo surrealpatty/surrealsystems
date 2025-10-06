@@ -1,8 +1,8 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
-const Message = require('../models/Message'); // ✅ matches filename
-const User = require('../models/user');       // ✅ lowercase
+const Message = require('../models/Message');
+const User = require('../models/User');
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
@@ -22,7 +22,7 @@ function authenticateToken(req, res, next) {
     }
 }
 
-// GET inbox
+// GET inbox (messages received by logged-in user)
 router.get('/', authenticateToken, async (req, res) => {
     try {
         const messages = await Message.findAll({
@@ -37,7 +37,7 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-// GET conversation with another user
+// GET conversation history with another user
 router.get('/conversation/:otherUserId', authenticateToken, async (req, res) => {
     const otherUserId = req.params.otherUserId;
     try {
@@ -51,6 +51,7 @@ router.get('/conversation/:otherUserId', authenticateToken, async (req, res) => 
             include: [{ model: User, as: 'sender', attributes: ['id', 'username'] }],
             order: [['createdAt', 'ASC']]
         });
+
         res.json(messages);
     } catch (err) {
         console.error(err);

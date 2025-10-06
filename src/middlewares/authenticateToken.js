@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/user'); // direct import
+const User = require('../models/user'); // ✅ direct import
 require('dotenv').config();
 
 const authenticateToken = async (req, res, next) => {
@@ -18,7 +18,7 @@ const authenticateToken = async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid token user.' });
     }
 
-    req.user = { id: user.id, username: user.username, email: user.email }; // attach user to req
+    req.user = { id: user.id, username: user.username, email: user.email }; // ✅ attach user to req
     next();
   } catch (err) {
     console.error('JWT error:', err);
@@ -26,5 +26,4 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
-// ✅ Export directly (no braces needed)
 module.exports = authenticateToken;
