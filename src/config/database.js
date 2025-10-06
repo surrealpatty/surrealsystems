@@ -3,7 +3,7 @@ require('dotenv').config();
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Use the DATABASE_URL from Render
+// Create Sequelize instance with proper SSL for Render
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialect: 'postgres',
   protocol: 'postgres',
@@ -12,7 +12,7 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
     ? {
         ssl: {
           require: true,
-          rejectUnauthorized: false, // Render requires this for SSL
+          rejectUnauthorized: false, // Required by Render
         },
       }
     : {},
@@ -24,6 +24,7 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
   },
 });
 
+// Function to test DB connection with retries
 const testConnection = async () => {
   let connected = false;
   let retries = 0;
