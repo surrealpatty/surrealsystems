@@ -1,22 +1,22 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-// Use a proper connection string for Render
+// Create Sequelize instance
 const sequelize = new Sequelize(
-  process.env.DB_NAME,          // database
-  process.env.DB_USER,          // username
-  process.env.DB_PASSWORD,      // password
+  process.env.DB_NAME,        // Database name
+  process.env.DB_USER,        // Username
+  process.env.DB_PASSWORD,    // Password
   {
-    host: process.env.DB_HOST,  // host
-    port: Number(process.env.DB_PORT) || 5432,
-    dialect: 'postgres',
+    host: process.env.DB_HOST,          // DB host from Render
+    port: Number(process.env.DB_PORT),  // Port (usually 5432)
+    dialect: 'postgres',                // Postgres dialect
     dialectOptions: {
       ssl: {
-        require: true,
-        rejectUnauthorized: false, // must be false for Render
-      },
+        require: true,                  // Render requires SSL
+        rejectUnauthorized: false       // Important: must be false
+      }
     },
-    logging: false,
+    logging: false                      // Disable SQL logging
   }
 );
 
