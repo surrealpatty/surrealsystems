@@ -2,22 +2,23 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-// Use a connection string if available (Render sets DATABASE_URL automatically)
-const connectionString = process.env.DATABASE_URL || 
-  `postgres://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("❌ DATABASE_URL is not set in environment variables");
+}
 
 const sequelize = new Sequelize(connectionString, {
   dialect: 'postgres',
   dialectOptions: {
     ssl: {
       require: true,
-      rejectUnauthorized: false, // Needed for Render
+      rejectUnauthorized: false,
     },
   },
   logging: false,
 });
 
-// Test DB connection
 const testConnection = async () => {
   try {
     await sequelize.authenticate();
