@@ -2,20 +2,25 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-// Use Render's DATABASE_URL for connection
+// Make sure DATABASE_URL exists in your environment variables
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable not set');
+}
+
+// Create Sequelize instance using the full URL
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialect: 'postgres',
   protocol: 'postgres',
   dialectOptions: {
     ssl: {
       require: true,
-      rejectUnauthorized: false, // ✅ required for Render
+      rejectUnauthorized: false, // must be false on Render
     },
   },
-  logging: false, // optional: set true to see SQL queries
+  logging: false,
 });
 
-// Test the DB connection
+// Test the connection
 const testConnection = async () => {
   try {
     await sequelize.authenticate();
