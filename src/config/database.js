@@ -2,25 +2,26 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME,     // database name
-  process.env.DB_USER,     // username
-  process.env.DB_PASSWORD, // password
-  {
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT || 3306, // MySQL default port
-    dialect: 'mysql',                  // MySQL dialect
-    logging: false,
-  }
-);
+// Connect via DATABASE_URL (Render PostgreSQL)
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+  dialect: 'postgres',
+  protocol: 'postgres',
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false // Required for Render
+    }
+  },
+  logging: false
+});
 
 // Test connection
 const testConnection = async () => {
   try {
     await sequelize.authenticate();
-    console.log('✅ MySQL connection established successfully.');
+    console.log('✅ PostgreSQL connection established successfully.');
   } catch (error) {
-    console.error('❌ Unable to connect to MySQL:', error);
+    console.error('❌ Unable to connect to PostgreSQL:', error);
   }
 };
 
