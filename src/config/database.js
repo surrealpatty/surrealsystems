@@ -1,4 +1,3 @@
-// src/config/database.js
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
@@ -9,10 +8,10 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialectOptions: {
     ssl: {
       require: true,
-      rejectUnauthorized: false // Required for Render
-    }
+      rejectUnauthorized: false, // Required for Render
+    },
   },
-  logging: false
+  logging: false,
 });
 
 // Test connection
