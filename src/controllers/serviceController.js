@@ -1,5 +1,5 @@
 // src/controllers/serviceController.js
-const Service = require('../models/services');
+const Service = require('../models/service');
 const User = require('../models/user'); // ✅ fixed import
 
 // GET all services
