@@ -3,7 +3,6 @@ require('dotenv').config();
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Connect via DATABASE_URL
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialect: 'postgres',
   protocol: 'postgres',
@@ -11,20 +10,31 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
     ? {
         ssl: {
           require: true,
-          rejectUnauthorized: false, // Render requires this for PostgreSQL
+          rejectUnauthorized: false, // Required for Render
         },
       }
     : {},
   logging: false,
 });
 
-// Test connection
 const testConnection = async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('✅ PostgreSQL connection established successfully.');
-  } catch (error) {
-    console.error('❌ Unable to connect to PostgreSQL:', error);
+  const maxRetries = 5;
+  let retries = 0;
+
+  while (retries < maxRetries) {
+    try {
+      await sequelize.authenticate();
+      console.log('✅ PostgreSQL connection established successfully.');
+      return;
+    } catch (error) {
+      retries++;
+      console.error(`❌ Connection attempt ${retries} failed. Retrying in 5s...`);
+      if (retries === maxRetries) {
+        console.error('❌ Unable to connect to PostgreSQL after multiple attempts:', error);
+        throw error;
+      }
+      await new Promise((res) => setTimeout(res, 5000));
+    }
   }
 };
 
