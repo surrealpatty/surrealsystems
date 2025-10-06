@@ -1,3 +1,4 @@
+// src/index.js
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -31,11 +32,13 @@ app.get('*', (req, res) => {
 // ---------------- Database connection ----------------
 (async () => {
   try {
+    console.log('🔄 Testing database connection...');
     await testConnection();                   // test DB connection
+    console.log('🔄 Syncing database...');
     await sequelize.sync({ alter: true });    // sync models safely
     console.log('✅ Database synced successfully.');
   } catch (err) {
-    console.error('❌ Database sync failed:', err.message); // show error message
+    console.error('❌ Database sync failed:', err.message); // show error message only
   }
 })();
 
