@@ -28,10 +28,10 @@ app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
-// ----------------- Database connection -----------------
+// ----------------- Database connection & sync -----------------
 (async () => {
   try {
-    await testConnection();
+    await testConnection();           // keeps retrying until it connects
     await sequelize.sync({ alter: true }); // automatically updates tables
     console.log('✅ Database synced successfully.');
   } catch (err) {
