@@ -6,12 +6,9 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialect: 'postgres',
   protocol: 'postgres',
   dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false, // Required for Render
-    },
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
   },
-  logging: false, // disable SQL query logging
+  logging: false,
 });
 
 // Test connection
