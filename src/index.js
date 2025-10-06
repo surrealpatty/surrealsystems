@@ -5,8 +5,8 @@ const path = require('path');
 const { sequelize, testConnection } = require('./config/database');
 const serviceRoutes = require('./routes/service');
 const userRoutes = require('./routes/user');
-const messageRoutes = require('./routes/message'); // ✅ fixed file name
-const ratingRoutes = require('./routes/rating'); // ✅ add rating routes
+const messageRoutes = require('./routes/message');
+const ratingRoutes = require('./routes/rating');
 require('dotenv').config();
 
 const app = express();
@@ -19,7 +19,7 @@ app.use(express.json());
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/messages', messageRoutes);
-app.use('/api/ratings', ratingRoutes); // ✅ register rating routes
+app.use('/api/ratings', ratingRoutes);
 
 // ----------------- Serve frontend -----------------
 app.use(express.static(path.join(__dirname, '..', 'public')));
@@ -33,7 +33,7 @@ app.get(/^\/(?!api).*/, (req, res) => {
 (async () => {
   try {
     await testConnection();
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ alter: true }); // auto-sync tables
     console.log('✅ Database synced successfully.');
   } catch (err) {
     console.error('❌ Database sync failed:', err);
