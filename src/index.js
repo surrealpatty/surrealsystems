@@ -11,9 +11,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// API routes
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 
+// Serve frontend
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.get('/', (req, res) => {
@@ -27,8 +29,8 @@ app.get('*', (req, res) => {
 // ----------------- Database connection -----------------
 (async () => {
   try {
-    await testConnection();
-    await sequelize.sync({ alter: true }); // ✅ sync safely with Postgres
+    await testConnection(); // test DB connection
+    await sequelize.sync({ alter: true }); // sync models safely
     console.log('✅ Database synced successfully.');
   } catch (err) {
     console.error('❌ Database sync failed:', err);
