@@ -1,31 +1,26 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME,         // code_crowds_u7ul
-  process.env.DB_USER,         // code_crowds_u7ul_user
-  process.env.DB_PASSWORD,     // 0EEVjHJ74PDqPa68AhTbT0zI0c33TKw5
-  {
-    host: process.env.DB_HOST, // dpg-d3in8togjchc73efsma0-a.oregon-postgres.render.com
-    port: Number(process.env.DB_PORT) || 5432,
-    dialect: 'postgres',
-    logging: false,
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: true // ✅ important: true for Render's managed DB
-      }
+// Create Sequelize instance using DATABASE_URL
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+  dialect: 'postgres',
+  logging: false,
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false, // Required for Render
     },
-    pool: {
-      max: 5,
-      min: 0,
-      acquire: 30000,
-      idle: 10000,
-    },
-    keepAlive: true
-  }
-);
+  },
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000,
+  },
+  keepAlive: true,
+});
 
+// Test DB connection
 const testConnection = async () => {
   try {
     await sequelize.authenticate();
