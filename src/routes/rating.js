@@ -1,47 +1,37 @@
 const express = require('express');
 const router = express.Router();
 const Rating = require('../models/rating');
-const User = require('../models/user');
-const Service = require('../models/services');
-const authenticateToken = require('../middlewares/authenticateToken'); // ✅ direct import, no destructure
+const authenticateToken = require('../middlewares/authenticateToken');
 
-// Add a new rating
+// Add a rating
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const { serviceId, rating, comment } = req.body;
+    const { serviceId, score, comment } = req.body;
+    if (!serviceId || !score) return res.status(400).json({ error: 'Service ID and score required' });
 
-    if (!serviceId || !rating) {
-      return res.status(400).json({ success: false, message: 'Service ID and rating are required' });
-    }
-
-    const newRating = await Rating.create({
+    const rating = await Rating.create({
       userId: req.user.id,
       serviceId,
-      rating,
+      score,
       comment
     });
-
-    res.status(201).json({ success: true, data: newRating });
+    res.status(201).json({ rating });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ error: 'Failed to add rating' });
   }
 });
 
-// Get all ratings for a service
+// Get ratings for a service
 router.get('/:serviceId', async (req, res) => {
   try {
-    const { serviceId } = req.params;
-
     const ratings = await Rating.findAll({
-      where: { serviceId },
-      include: [{ model: User, attributes: ['id', 'username'] }]
+      where: { serviceId: req.params.serviceId }
     });
-
-    res.status(200).json({ success: true, data: ratings });
+    res.json(ratings);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ error: 'Failed to fetch ratings' });
   }
 });
 

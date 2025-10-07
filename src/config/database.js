@@ -1,11 +1,11 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-// Create Sequelize instance with SSL
+// Create Sequelize instance with SSL for Render
 const sequelize = new Sequelize(
-  process.env.DB_NAME,       // database name
-  process.env.DB_USER,       // username
-  process.env.DB_PASSWORD,   // password
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
   {
     host: process.env.DB_HOST,
     port: Number(process.env.DB_PORT) || 5432,
@@ -13,9 +13,9 @@ const sequelize = new Sequelize(
     logging: false,
     dialectOptions: {
       ssl: {
-        require: true,          // Render requires SSL
-        rejectUnauthorized: false, // allows self-signed certs
-      },
+        require: true,
+        rejectUnauthorized: false
+      }
     },
     pool: {
       max: 5,
@@ -23,7 +23,7 @@ const sequelize = new Sequelize(
       acquire: 30000,
       idle: 10000,
     },
-    keepAlive: true, // helps prevent connection termination
+    keepAlive: true
   }
 );
 
@@ -40,6 +40,7 @@ const testConnection = async (retries = 5, delay = 3000) => {
     }
   }
   console.error('❌ Could not connect to PostgreSQL after multiple attempts.');
+  throw new Error('Database connection failed');
 };
 
 module.exports = { sequelize, testConnection };

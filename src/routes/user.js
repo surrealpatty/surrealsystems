@@ -10,9 +10,8 @@ require('dotenv').config();
 router.post('/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
-    if (!username || !email || !password) {
+    if (!username || !email || !password) 
       return res.status(400).json({ error: 'All fields are required' });
-    }
 
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) return res.status(400).json({ error: 'Email already used' });
@@ -57,12 +56,29 @@ router.post('/login', async (req, res) => {
 // ---------------- Get current user ----------------
 router.get('/me', authenticateToken, async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.id, { attributes: ['id', 'username', 'email'] });
+    const user = await User.findByPk(req.user.id, { attributes: ['id', 'username', 'email', 'description', 'tier'] });
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({ user });
   } catch (err) {
     console.error('Get user error:', err);
     res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
+// ---------------- Update Profile ----------------
+router.put('/:id', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    user.username = req.body.username || user.username;
+    user.description = req.body.description || user.description;
+    await user.save();
+
+    res.json({ user });
+  } catch (err) {
+    console.error('Update user error:', err);
+    res.status(500).json({ error: 'Failed to update profile' });
   }
 });
 
