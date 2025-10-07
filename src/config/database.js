@@ -5,7 +5,7 @@ const sequelize = process.env.DATABASE_URL
   ? new Sequelize(process.env.DATABASE_URL, {
       dialect: 'postgres',
       dialectOptions: { ssl: { rejectUnauthorized: false } },
-      logging: false
+      logging: false,
     })
   : new Sequelize(
       process.env.DB_NAME,
@@ -16,7 +16,7 @@ const sequelize = process.env.DATABASE_URL
         port: Number(process.env.DB_PORT) || 5432,
         dialect: 'postgres',
         dialectOptions: { ssl: { require: true, rejectUnauthorized: false } },
-        logging: false
+        logging: false,
       }
     );
 

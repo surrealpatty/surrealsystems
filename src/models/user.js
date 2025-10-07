@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
-const Service = require('./service'); // import Service for associations
 
 const User = sequelize.define('User', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
@@ -10,8 +9,5 @@ const User = sequelize.define('User', {
   description: { type: DataTypes.TEXT, defaultValue: '' },
   tier: { type: DataTypes.ENUM('free', 'paid'), defaultValue: 'free' }
 }, { tableName: 'users', timestamps: true });
-
-// Association
-User.hasMany(Service, { as: 'services', foreignKey: 'userId' });
 
 module.exports = User;
