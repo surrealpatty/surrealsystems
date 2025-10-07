@@ -1,4 +1,3 @@
-// src/index.js
 const express = require('express');
 const cors = require('cors');
 const { sequelize, testConnection } = require('./config/database');
@@ -18,11 +17,8 @@ app.use('/api/users', userRoutes);
 // ---------------- Start server ----------------
 app.listen(PORT, async () => {
   console.log(`🚀 Server running on port ${PORT}`);
-
-  // Test database connection with retry
   await testConnection();
 
-  // Sync models (optional: set { force: true } only for dev)
   try {
     await sequelize.sync();
     console.log('✅ Database synchronized successfully.');
