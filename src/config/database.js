@@ -2,24 +2,23 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-// PostgreSQL connection using individual credentials
-const sequelize = new Sequelize(
-  process.env.DB_NAME,       // database
-  process.env.DB_USER,       // username
-  process.env.DB_PASSWORD,   // password
-  {
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT) || 5432,
-    dialect: 'postgres',
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false,
-      },
+// Use the full DATABASE_URL provided by Render
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error('❌ DATABASE_URL is not set in environment variables');
+}
+
+const sequelize = new Sequelize(connectionString, {
+  dialect: 'postgres',
+  dialectOptions: {
+    ssl: {
+      require: true,           // Render requires SSL
+      rejectUnauthorized: false,
     },
-    logging: false,
-  }
-);
+  },
+  logging: false,
+});
 
 // Test DB connection with retry
 const testConnection = async (retries = 5, delay = 3000) => {
