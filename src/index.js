@@ -12,6 +12,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ----------------- Root Route -----------------
+app.get('/', (req, res) => {
+  res.send('🚀 Server is running!');
+});
+
 // ----------------- Routes -----------------
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
