@@ -1,10 +1,11 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
+// Create Sequelize instance with SSL
 const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
+  process.env.DB_NAME,       // database name
+  process.env.DB_USER,       // username
+  process.env.DB_PASSWORD,   // password
   {
     host: process.env.DB_HOST,
     port: Number(process.env.DB_PORT) || 5432,
@@ -12,13 +13,21 @@ const sequelize = new Sequelize(
     logging: false,
     dialectOptions: {
       ssl: {
-        require: true,
-        rejectUnauthorized: false, // allow self-signed certs
+        require: true,          // Render requires SSL
+        rejectUnauthorized: false, // allows self-signed certs
       },
     },
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000,
+    },
+    keepAlive: true, // helps prevent connection termination
   }
 );
 
+// Test DB connection with retry
 const testConnection = async (retries = 5, delay = 3000) => {
   for (let i = 0; i < retries; i++) {
     try {
