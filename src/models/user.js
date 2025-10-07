@@ -1,18 +1,17 @@
-// src/models/user.js
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
+const Service = require('./service'); // import Service for associations
 
-const User = sequelize.define(
-  'User',
-  {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    username: { type: DataTypes.STRING, allowNull: false, unique: true },
-    email: { type: DataTypes.STRING, allowNull: false, unique: true },
-    password: { type: DataTypes.STRING, allowNull: false },
-    description: { type: DataTypes.TEXT, defaultValue: '' },
-    tier: { type: DataTypes.ENUM('free', 'paid'), defaultValue: 'free' },
-  },
-  { tableName: 'users', timestamps: true }
-);
+const User = sequelize.define('User', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  username: { type: DataTypes.STRING, allowNull: false, unique: true },
+  email: { type: DataTypes.STRING, allowNull: false, unique: true },
+  password: { type: DataTypes.STRING, allowNull: false },
+  description: { type: DataTypes.TEXT, defaultValue: '' },
+  tier: { type: DataTypes.ENUM('free', 'paid'), defaultValue: 'free' }
+}, { tableName: 'users', timestamps: true });
+
+// Association
+User.hasMany(Service, { as: 'services', foreignKey: 'userId' });
 
 module.exports = User;

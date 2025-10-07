@@ -10,8 +10,7 @@ const Service = sequelize.define('Service', {
   userId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'users', key: 'id' } }
 }, { tableName: 'services', timestamps: true });
 
-// Associations
-User.hasMany(Service, { foreignKey: 'userId', as: 'services' });
-Service.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+// Association
+Service.belongsTo(User, { as: 'user', foreignKey: 'userId' });
 
 module.exports = Service;
