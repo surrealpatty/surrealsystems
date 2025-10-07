@@ -1,6 +1,7 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
+// Use the full DATABASE_URL provided by Render
 const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
@@ -11,14 +12,14 @@ const sequelize = new Sequelize(connectionString, {
   dialect: 'postgres',
   dialectOptions: {
     ssl: {
-      require: true,
-      rejectUnauthorized: false, // This is required for Render
+      require: true,           // Render requires SSL
+      rejectUnauthorized: false,
     },
   },
   logging: false,
 });
 
-// Retry connection
+// Retry DB connection
 const testConnection = async (retries = 5, delay = 3000) => {
   for (let i = 0; i < retries; i++) {
     try {
