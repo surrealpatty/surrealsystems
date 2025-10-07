@@ -1,4 +1,3 @@
-// src/config/database.js
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
@@ -8,19 +7,18 @@ if (!connectionString) {
   throw new Error('❌ DATABASE_URL is not set in environment variables');
 }
 
-// Use Sequelize with full DATABASE_URL
 const sequelize = new Sequelize(connectionString, {
   dialect: 'postgres',
   dialectOptions: {
     ssl: {
-      require: true,           // Render requires SSL
-      rejectUnauthorized: false,
+      require: true,
+      rejectUnauthorized: false, // This is required for Render
     },
   },
   logging: false,
 });
 
-// Test DB connection with retry
+// Retry connection
 const testConnection = async (retries = 5, delay = 3000) => {
   for (let i = 0; i < retries; i++) {
     try {
