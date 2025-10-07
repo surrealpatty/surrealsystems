@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const path = require('path'); // <-- add this
 require('dotenv').config();
 
 const { sequelize, testConnection } = require('./config/database');
@@ -9,26 +8,18 @@ const serviceRoutes = require('./routes/service');
 
 const app = express();
 
-// ----------------- Middleware -----------------
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// ----------------- Serve frontend -----------------
-app.use(express.static(path.join(__dirname, '../public')));
-
-// Serve index.html for any unknown routes (for SPAs)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
-});
-
-// ----------------- Routes -----------------
+// Routes
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 
-// ----------------- Start server -----------------
+// Start server
 const startServer = async () => {
   try {
-    await testConnection();
+    await testConnection(); // test DB connection
 
     const PORT = process.env.PORT || 10000;
     app.listen(PORT, () => {
