@@ -1,31 +1,34 @@
 const express = require('express');
 const cors = require('cors');
+require('dotenv').config();
+
 const { sequelize, testConnection } = require('./config/database');
 const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/service');
-require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 10000;
 
-// Middleware
+// ----------------- Middleware -----------------
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// ----------------- Routes -----------------
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 
-// Start server after DB connection
+// ----------------- Start server -----------------
 const startServer = async () => {
   try {
+    // Test DB connection first
     await testConnection();
-    await sequelize.sync();
-    console.log('✅ Database synchronized successfully.');
-    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+    const PORT = process.env.PORT || 10000;
+    app.listen(PORT, () => {
+      console.log(`🚀 Server is running on port ${PORT}`);
+    });
   } catch (err) {
-    console.error('❌ Failed to start server:', err.message);
-    process.exit(1);
+    console.error('❌ Server failed to start due to database error.');
+    process.exit(1); // Exit process if DB connection fails
   }
 };
 
