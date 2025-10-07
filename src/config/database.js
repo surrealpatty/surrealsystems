@@ -1,20 +1,24 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-// PostgreSQL connection using Render credentials
 const sequelize = new Sequelize(
-  process.env.DB_NAME,       // database name
-  process.env.DB_USER,       // username
-  process.env.DB_PASSWORD,   // password
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
   {
     host: process.env.DB_HOST,
     port: Number(process.env.DB_PORT) || 5432,
-    dialect: 'postgres',     // PostgreSQL
-    logging: false,          // disable SQL logging
+    dialect: 'postgres',
+    logging: false,
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false, // allow self-signed certs
+      },
+    },
   }
 );
 
-// Test DB connection with retry
 const testConnection = async (retries = 5, delay = 3000) => {
   for (let i = 0; i < retries; i++) {
     try {
