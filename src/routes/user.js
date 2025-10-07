@@ -1,4 +1,3 @@
-// src/routes/user.js
 const express = require('express');
 const router = express.Router();
 const { User } = require('../models/user');
@@ -22,7 +21,7 @@ router.post('/register', async (req, res) => {
     const newUser = await User.create({ username, email, password: hashedPassword });
 
     res.status(201).json({
-      message: 'User registered',
+      message: 'User registered successfully',
       user: { id: newUser.id, username: newUser.username, email: newUser.email },
     });
   } catch (err) {
@@ -44,6 +43,7 @@ router.post('/login', async (req, res) => {
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
     res.json({
       message: 'Login successful',
       token,
@@ -58,7 +58,9 @@ router.post('/login', async (req, res) => {
 // ---------------- Get current user ----------------
 router.get('/me', authenticateToken, async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.id, { attributes: ['id', 'username', 'email'] });
+    const user = await User.findByPk(req.user.id, {
+      attributes: ['id', 'username', 'email'],
+    });
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({ user });
   } catch (err) {
