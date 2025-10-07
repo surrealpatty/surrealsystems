@@ -1,4 +1,4 @@
-const Service = require('../models/services');
+const Service = require('../models/service');
 const { User } = require('../models/user');
 
 // GET all services
