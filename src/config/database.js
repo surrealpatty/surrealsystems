@@ -1,4 +1,3 @@
-// src/config/database.js
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
@@ -20,7 +19,7 @@ const sequelize = new Sequelize(connectionString, {
   logging: false,
 });
 
-// Test DB connection with retry
+// Test DB connection with retry logic
 const testConnection = async (retries = 5, delay = 3000) => {
   for (let i = 0; i < retries; i++) {
     try {
@@ -28,7 +27,7 @@ const testConnection = async (retries = 5, delay = 3000) => {
       console.log('✅ PostgreSQL connection established successfully.');
       return;
     } catch (err) {
-      console.error(`❌ Unable to connect to PostgreSQL: ${err.message}. Retrying in ${delay/1000}s...`);
+      console.error(`❌ Unable to connect to PostgreSQL: ${err.message}. Retrying in ${delay / 1000}s...`);
       await new Promise(r => setTimeout(r, delay));
     }
   }
