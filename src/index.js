@@ -15,15 +15,23 @@ app.use(express.json());
 app.use('/api/users', userRoutes);
 
 // ---------------- Start server ----------------
-app.listen(PORT, async () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  await testConnection();
-
-  // Sync models (optional: set { force: true } only for dev)
+const startServer = async () => {
   try {
+    // First, test DB connection
+    await testConnection();
+
+    // Sync models (optional: { force: true } only for dev)
     await sequelize.sync();
     console.log('✅ Database synchronized successfully.');
+
+    // Only start server AFTER DB is ready
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
   } catch (err) {
-    console.error('❌ Database sync failed:', err.message);
+    console.error('❌ Failed to start server:', err.message);
+    process.exit(1); // stop process if DB connection fails
   }
-});
+};
+
+startServer();
