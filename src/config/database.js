@@ -19,7 +19,7 @@ const sequelize = new Sequelize(connectionString, {
   logging: false,
 });
 
-// Retry DB connection
+// Test DB connection with retry logic
 const testConnection = async (retries = 5, delay = 3000) => {
   for (let i = 0; i < retries; i++) {
     try {

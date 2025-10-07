@@ -17,11 +17,9 @@ app.use('/api/users', userRoutes);
 // ---------------- Start server ----------------
 app.listen(PORT, async () => {
   console.log(`🚀 Server running on port ${PORT}`);
-
-  // Test DB connection
   await testConnection();
 
-  // Sync models
+  // Sync models (optional: set { force: true } only for dev)
   try {
     await sequelize.sync();
     console.log('✅ Database synchronized successfully.');
