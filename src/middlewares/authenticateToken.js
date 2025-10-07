@@ -18,7 +18,7 @@ const authenticateToken = async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid token user.' });
     }
 
-    req.user = { id: user.id, username: user.username, email: user.email }; // ✅ attach user to req
+    req.user = { id: user.id, username: user.username, email: user.email };
     next();
   } catch (err) {
     console.error('JWT error:', err);
