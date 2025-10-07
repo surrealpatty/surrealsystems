@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path'); // <-- add this
 require('dotenv').config();
 
 const { sequelize, testConnection } = require('./config/database');
@@ -12,9 +13,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ----------------- Root Route -----------------
-app.get('/', (req, res) => {
-  res.send('🚀 Server is running!');
+// ----------------- Serve frontend -----------------
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Serve index.html for any unknown routes (for SPAs)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // ----------------- Routes -----------------
@@ -24,7 +28,6 @@ app.use('/api/services', serviceRoutes);
 // ----------------- Start server -----------------
 const startServer = async () => {
   try {
-    // Test DB connection first
     await testConnection();
 
     const PORT = process.env.PORT || 10000;
@@ -33,7 +36,7 @@ const startServer = async () => {
     });
   } catch (err) {
     console.error('❌ Server failed to start due to database error.');
-    process.exit(1); // Exit process if DB connection fails
+    process.exit(1);
   }
 };
 
