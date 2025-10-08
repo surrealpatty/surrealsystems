@@ -1,4 +1,3 @@
-// src/models/user.js
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 
@@ -8,7 +7,14 @@ const User = sequelize.define('User', {
   email: { type: DataTypes.STRING, allowNull: false, unique: true, validate: { isEmail: true } },
   password: { type: DataTypes.STRING, allowNull: false },
   description: { type: DataTypes.TEXT, defaultValue: '' },
-  tier: { type: DataTypes.ENUM('free', 'paid'), defaultValue: 'free' }
-}, { tableName: 'users', timestamps: true });
+  tier: { type: DataTypes.ENUM('free', 'paid'), defaultValue: 'free' },
+}, {
+  tableName: 'users',
+  timestamps: true,
+});
+
+User.associate = (models) => {
+  User.hasMany(models.Service, { foreignKey: 'userId', as: 'services', onDelete: 'CASCADE' });
+};
 
 module.exports = User;
