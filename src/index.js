@@ -20,10 +20,11 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 
-// ----------------- Fallback for SPA routing -----------------
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
-});
+// ----------------- Optional SPA fallback -----------------
+// Uncomment only if you later use SPA routing like React/Vue
+// app.get('*', (req, res) => {
+//   res.sendFile(path.join(__dirname, '../public/index.html'));
+// });
 
 // ----------------- Start server -----------------
 const startServer = async () => {
