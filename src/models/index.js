@@ -1,8 +1,11 @@
+// src/models/index.js
 const User = require('./user');
-const Service = require('./service');
+const Service = require('./service'); // make sure this file exists
 
-// Associations
-User.hasMany(Service, { as: 'services', foreignKey: 'userId' });
-Service.belongsTo(User, { as: 'user', foreignKey: 'userId' });
+// Setup associations
+User.associate({ Service });
+Service.associate = (models) => {
+  Service.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+};
 
 module.exports = { User, Service };
