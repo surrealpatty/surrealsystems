@@ -1,63 +1,14 @@
+// src/models/user.js
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 
-// ====================
-// User Model Definition
-// ====================
 const User = sequelize.define('User', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  username: { type: DataTypes.STRING, allowNull: false, unique: true },
+  email: { type: DataTypes.STRING, allowNull: false, unique: true, validate: { isEmail: true } },
+  password: { type: DataTypes.STRING, allowNull: false },
+  description: { type: DataTypes.TEXT, defaultValue: '' },
+  tier: { type: DataTypes.ENUM('free', 'paid'), defaultValue: 'free' }
+}, { tableName: 'users', timestamps: true });
 
-  username: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true
-  },
-
-  email: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-    validate: {
-      isEmail: true
-    }
-  },
-
-  password: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-
-  description: {
-    type: DataTypes.TEXT,
-    defaultValue: ''
-  },
-
-  tier: {
-    type: DataTypes.ENUM('free', 'paid'),
-    defaultValue: 'free'
-  }
-
-}, {
-  tableName: 'users',
-  timestamps: true
-});
-
-// ====================
-// Associations
-// ====================
-User.associate = (models) => {
-  User.hasMany(models.Service, {
-    foreignKey: 'userId',
-    as: 'services',
-    onDelete: 'CASCADE'
-  });
-};
-
-// ====================
-// Export the model
-// ====================
 module.exports = User;
