@@ -3,7 +3,7 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
-const { sequelize, testConnection } = require('./config/database'); // import sequelize
+const { sequelize, testConnection } = require('./config/database');
 const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/service');
 
@@ -20,19 +20,13 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 
-// ----------------- Optional SPA fallback -----------------
-// Uncomment only if you later use SPA routing like React/Vue
-// app.get('*', (req, res) => {
-//   res.sendFile(path.join(__dirname, '../public/index.html'));
-// });
-
 // ----------------- Start server -----------------
 const startServer = async () => {
   try {
     await testConnection();
 
-    // ✅ Sync database tables (add missing columns)
-    await sequelize.sync({ alter: true }); // ⚠️ only use alter: true in dev
+    // ✅ Ensure database table has all columns
+    await sequelize.sync({ alter: true });
 
     const PORT = process.env.PORT || 10000;
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
