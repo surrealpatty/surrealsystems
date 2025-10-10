@@ -73,4 +73,25 @@ router.get('/me', authenticateToken, async (req, res) => {
   }
 });
 
+// ---------------- Update Description ----------------
+router.put('/me/description', authenticateToken, async (req, res) => {
+  try {
+    const { description } = req.body;
+    if (typeof description !== 'string') {
+      return res.status(400).json({ error: 'Description must be a string' });
+    }
+
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    user.description = description;
+    await user.save();
+
+    res.json({ message: 'Description updated successfully', user });
+  } catch (err) {
+    console.error('Update description error:', err);
+    res.status(500).json({ error: 'Failed to save description' });
+  }
+});
+
 module.exports = router;

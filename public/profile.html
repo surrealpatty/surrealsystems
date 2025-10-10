@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Profile - CodeCrowds</title>
-<link rel="stylesheet" href="style.css">
 <style>
 /* ---------- Global ---------- */
 body, html {
@@ -45,26 +44,10 @@ h1, h2 { color: #4e54c8; margin-bottom: 0.5rem; }
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* ---------- Fade-in ---------- */
-.fade-in {
-    opacity: 0;
-    transform: translateY(10px);
-    animation: fadeIn 0.5s ease forwards;
-}
-@keyframes fadeIn {
-    to { opacity: 1; transform: translateY(0); }
-}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 /* ---------- Description ---------- */
-#profile-description {
-    min-height: 50px;
-    margin-bottom: 10px;
-}
+#profile-description { min-height: 50px; margin-bottom: 10px; }
 #profile-description[contenteditable="true"] {
     border: 1px solid #4e54c8;
     border-radius: 8px;
@@ -179,20 +162,13 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 </head>
 <body>
 <div class="container">
-    <!-- Profile Username -->
     <h1 id="profile-username"><span class="spinner"></span> Loading username...</h1>
-
-    <!-- Profile Description -->
     <p id="profile-description"><span class="spinner"></span> Loading description...</p>
     <button type="button" id="editDescBtn" class="hidden">Edit Description</button>
 
-    <!-- Services Section -->
     <h2>Your Services</h2>
-    <div id="services-list">
-        <p><span class="spinner"></span> Loading services...</p>
-    </div>
+    <div id="services-list"><p><span class="spinner"></span> Loading services...</p></div>
 
-    <!-- New Service Section -->
     <div id="newServiceSection">
         <input type="text" id="newServiceTitle" placeholder="Service Title">
         <textarea id="newServiceDesc" placeholder="Service Description"></textarea>
@@ -200,22 +176,18 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
         <button type="button" id="createServiceBtn">Create Service</button>
     </div>
 
-    <!-- Logout Button -->
     <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
 </div>
 
-<!-- Desktop Floating Buttons -->
 <button type="button" class="floating-btn" id="goToServicesBtn">Services</button>
 <button type="button" class="floating-btn" id="goToMessagesBtn">Messages</button>
 <button type="button" class="floating-btn" id="addNewServiceBtn">+ Service</button>
 
-<!-- Mobile Bottom Row Buttons -->
 <div class="mobile-button-row">
     <button type="button" id="mobileServicesBtn">Services</button>
     <button type="button" id="mobileMessagesBtn">Messages</button>
     <button type="button" id="mobileAddServiceBtn">+ Service</button>
 </div>
-
 <script>
 const API_URL = '/api';
 const token = localStorage.getItem('token');
@@ -266,8 +238,6 @@ async function loadProfile() {
 
         profileUsername.textContent = actualUser.username || 'Unknown User';
         profileDescription.textContent = actualUser.description || 'No description yet.';
-        profileUsername.classList.add('fade-in');
-        profileDescription.classList.add('fade-in');
 
         if (actualUser.id.toString() === loggedInUserId) {
             editDescBtn.classList.remove('hidden');
@@ -302,7 +272,6 @@ editDescBtn.addEventListener('click', async () => {
         }
     }
 });
-
 // ---------------- Load Services ----------------
 async function loadServices() {
     servicesList.innerHTML = `<p><span class="spinner"></span> Loading services...</p>`;
@@ -316,7 +285,7 @@ async function loadServices() {
 
         if (!userServices.length) {
             const placeholder = document.createElement('div');
-            placeholder.className = 'card fade-in';
+            placeholder.className = 'card';
             placeholder.innerHTML = `<h3>No Services Yet</h3><p>Add your first service using the + Service button</p>`;
             servicesList.appendChild(placeholder);
             return;
@@ -324,7 +293,7 @@ async function loadServices() {
 
         userServices.forEach((s) => {
             const div = document.createElement('div');
-            div.className = 'card fade-in';
+            div.className = 'card';
             div.innerHTML = `
                 <h3 class="service-title">${s.title}</h3>
                 <p class="service-desc">${s.description}</p>
@@ -387,7 +356,10 @@ async function editService(div, service) {
 async function deleteService(serviceId) {
     if (!confirm('Are you sure you want to delete this service?')) return;
     try {
-        await fetch(`${API_URL}/services/${serviceId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        await fetch(`${API_URL}/services/${serviceId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+        });
         await loadServices();
     } catch (err) {
         console.error(err);
@@ -395,29 +367,27 @@ async function deleteService(serviceId) {
     }
 }
 
-// ---------------- Toggle / Create New Service ----------------
-function toggleNewService() {
-    newServiceSection.style.display = newServiceSection.style.display === 'flex' ? 'none' : 'flex';
-}
-addNewServiceBtn.addEventListener('click', toggleNewService);
-mobileAddServiceBtn.addEventListener('click', toggleNewService);
+// ---------------- Create New Service ----------------
+function toggleNewServiceSection() { newServiceSection.style.display = newServiceSection.style.display === 'flex' ? 'none' : 'flex'; }
+addNewServiceBtn.addEventListener('click', toggleNewServiceSection);
+mobileAddServiceBtn.addEventListener('click', toggleNewServiceSection);
 
 createServiceBtn.addEventListener('click', async () => {
     const title = newServiceTitle.value.trim();
-    const description = newServiceDesc.value.trim();
+    const desc = newServiceDesc.value.trim();
     const price = newServicePrice.value.trim();
-    if (!title || !description || !price) return alert('All fields are required.');
+    if (!title || !desc || !price) return alert('All fields are required.');
 
     try {
         await fetch(`${API_URL}/services`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ title, description, price })
+            body: JSON.stringify({ title, description: desc, price })
         });
         newServiceTitle.value = '';
         newServiceDesc.value = '';
         newServicePrice.value = '';
-        newServiceSection.style.display = 'none';
+        toggleNewServiceSection();
         await loadServices();
     } catch (err) {
         console.error(err);
@@ -425,7 +395,7 @@ createServiceBtn.addEventListener('click', async () => {
     }
 });
 
-// ---------------- Navigation ----------------
+// ---------------- Navigation Buttons ----------------
 goToServicesBtn.addEventListener('click', () => window.location.href = 'services.html');
 goToMessagesBtn.addEventListener('click', () => window.location.href = 'messages.html');
 mobileServicesBtn.addEventListener('click', () => window.location.href = 'services.html');
@@ -437,7 +407,7 @@ logoutBtn.addEventListener('click', () => {
     window.location.href = 'index.html';
 });
 
-// ---------------- Initial Load ----------------
+// ---------------- Initialize ----------------
 loadProfile();
 loadServices();
 </script>
