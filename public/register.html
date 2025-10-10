@@ -37,7 +37,7 @@ h2 {
 }
 
 /* ---------- Form Inputs ---------- */
-input {
+input, textarea {
     width: 100%;
     padding: 12px 15px;
     margin: 10px 0;
@@ -89,6 +89,8 @@ p a:hover {
         <input id="registerUsername" type="text" placeholder="Username" required>
         <input id="registerEmail" type="email" placeholder="Email" required>
         <input id="registerPassword" type="password" placeholder="Password" required>
+        <!-- Added description field -->
+        <textarea id="registerDescription" placeholder="Tell us about yourself..." rows="3"></textarea>
         <button type="submit" class="btn">Sign Up</button>
     </form>
     <p id="registerMessage" class="message"></p>
@@ -106,6 +108,7 @@ registerForm.addEventListener('submit', async (e) => {
     const username = document.getElementById('registerUsername').value.trim();
     const email = document.getElementById('registerEmail').value.trim();
     const password = document.getElementById('registerPassword').value.trim();
+    const description = document.getElementById('registerDescription').value.trim(); // ✅ get description
 
     if (!username || !email || !password) {
         registerMessage.textContent = 'Please fill in all fields.';
@@ -117,7 +120,7 @@ registerForm.addEventListener('submit', async (e) => {
         const res = await fetch(`${API_URL}/users/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, password })
+            body: JSON.stringify({ username, email, password, description }) // ✅ send description
         });
 
         const data = await res.json();
