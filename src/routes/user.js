@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { User, Service } = require('../models');
+const { User } = require('../models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const authenticateToken = require('../middlewares/authenticateToken');
@@ -9,8 +9,9 @@ const authenticateToken = require('../middlewares/authenticateToken');
 router.post('/register', async (req, res) => {
   try {
     const { username, email, password, description } = req.body;
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: 'All fields required' });
+
+    if (!username || !email || !password || !description) {
+      return res.status(400).json({ error: 'All fields including description are required' });
     }
 
     const existingEmail = await User.findOne({ where: { email } });
@@ -25,14 +26,14 @@ router.post('/register', async (req, res) => {
       username,
       email,
       password: hashedPassword,
-      description: description || '' // ✅ fallback to empty string
+      description, // ✅ ensure it gets saved
     });
 
     const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     res.status(201).json({ token, user: newUser });
   } catch (err) {
-    console.error(err);
+    console.error('Register error:', err);
     res.status(500).json({ error: 'Registration failed' });
   }
 });
@@ -60,7 +61,7 @@ router.post('/login', async (req, res) => {
 // ---------------- Profile ----------------
 router.get('/me', authenticateToken, async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.id, { include: [{ model: Service, as: 'services' }] });
+    const user = await User.findByPk(req.user.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({ user });
   } catch (err) {
