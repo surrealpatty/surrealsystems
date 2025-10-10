@@ -6,11 +6,11 @@ const User = sequelize.define('User', {
   username: { type: DataTypes.STRING, allowNull: false, unique: true },
   email: { type: DataTypes.STRING, allowNull: false, unique: true, validate: { isEmail: true } },
   password: { type: DataTypes.STRING, allowNull: false },
-  description: { type: DataTypes.TEXT, allowNull: false, defaultValue: '' }, // ✅ make sure allowNull is false
+  description: { type: DataTypes.TEXT, allowNull: false, defaultValue: '' }, // ✅ required
   tier: { type: DataTypes.ENUM('free', 'paid'), defaultValue: 'free' },
 }, {
   tableName: 'users',
-  timestamps: true, // ✅ ensures createdAt and updatedAt are automatically set
+  timestamps: true, // ✅ ensures createdAt & updatedAt auto-set
 });
 
 module.exports = User;

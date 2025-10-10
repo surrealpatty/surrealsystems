@@ -10,7 +10,7 @@ router.post('/register', async (req, res) => {
   try {
     const { username, email, password, description } = req.body;
 
-    if (!username || !email || !password || !description) {
+    if (!username || !email || !password) {
       return res.status(400).json({ error: 'All fields including description are required' });
     }
 
@@ -26,7 +26,7 @@ router.post('/register', async (req, res) => {
       username,
       email,
       password: hashedPassword,
-      description, // ✅ ensure it gets saved
+      description: description || '', // ✅ ensures default value if empty
     });
 
     const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -42,7 +42,8 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, username, password } = req.body;
-    if ((!email && !username) || !password) return res.status(400).json({ error: 'Email/username and password required' });
+    if ((!email && !username) || !password)
+      return res.status(400).json({ error: 'Email/username and password required' });
 
     const user = await User.findOne({ where: email ? { email } : { username } });
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });

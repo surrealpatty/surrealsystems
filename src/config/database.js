@@ -6,10 +6,7 @@ const sequelize = process.env.DATABASE_URL
       dialect: 'postgres',
       protocol: 'postgres',
       dialectOptions: {
-        ssl: {
-          require: true,
-          rejectUnauthorized: false,
-        },
+        ssl: { require: true, rejectUnauthorized: false },
       },
       logging: false,
     })
@@ -21,9 +18,7 @@ const sequelize = process.env.DATABASE_URL
         host: process.env.DB_HOST,
         port: Number(process.env.DB_PORT) || 5432,
         dialect: 'postgres',
-        dialectOptions: {
-          ssl: { require: true, rejectUnauthorized: false },
-        },
+        dialectOptions: { ssl: { require: true, rejectUnauthorized: false } },
         logging: false,
       }
     );
