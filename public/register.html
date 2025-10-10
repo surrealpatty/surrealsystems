@@ -5,81 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CodeCrowds - Register</title>
 <style>
-/* ---------- Global ---------- */
-body, html {
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #4e54c8, #00aaff);
-    color: #fff;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* ---------- Container ---------- */
-.login-container {
-    background: rgba(255,255,255,0.95);
-    padding: 40px 30px;
-    border-radius: 16px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.2);
-    width: 100%;
-    max-width: 400px;
-    text-align: center;
-    color: #333;
-}
-
-/* ---------- Headings ---------- */
-h2 {
-    margin-bottom: 30px;
-    color: #4e54c8;
-}
-
-/* ---------- Form Inputs ---------- */
-input, textarea {
-    width: 100%;
-    padding: 12px 15px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 1rem;
-    box-sizing: border-box;
-}
-
-/* ---------- Buttons ---------- */
-button.btn {
-    width: 100%;
-    padding: 12px;
-    background-color: #4e54c8;
-    color: #fff;
-    font-size: 1.1rem;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-top: 10px;
-    transition: transform 0.2s, opacity 0.2s;
-}
-button.btn:hover {
-    transform: translateY(-3px);
-    opacity: 0.9;
-}
-
-/* ---------- Messages ---------- */
-.message {
-    margin-top: 15px;
-    font-weight: bold;
-}
-
-/* ---------- Links ---------- */
-p a {
-    color: #4e54c8;
-    text-decoration: none;
-    font-weight: bold;
-}
-p a:hover {
-    text-decoration: underline;
-}
+/* Your styles here, same as your current CSS */
 </style>
 </head>
 <body>
@@ -89,7 +15,6 @@ p a:hover {
         <input id="registerUsername" type="text" placeholder="Username" required>
         <input id="registerEmail" type="email" placeholder="Email" required>
         <input id="registerPassword" type="password" placeholder="Password" required>
-        <!-- Added description field -->
         <textarea id="registerDescription" placeholder="Tell us about yourself..." rows="3"></textarea>
         <button type="submit" class="btn">Sign Up</button>
     </form>
@@ -108,7 +33,9 @@ registerForm.addEventListener('submit', async (e) => {
     const username = document.getElementById('registerUsername').value.trim();
     const email = document.getElementById('registerEmail').value.trim();
     const password = document.getElementById('registerPassword').value.trim();
-    const description = document.getElementById('registerDescription').value.trim(); // ✅ get description
+    const description = document.getElementById('registerDescription').value.trim();
+
+    console.log('Submitting registration:', { username, email, password, description });
 
     if (!username || !email || !password) {
         registerMessage.textContent = 'Please fill in all fields.';
@@ -120,7 +47,7 @@ registerForm.addEventListener('submit', async (e) => {
         const res = await fetch(`${API_URL}/users/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, password, description }) // ✅ send description
+            body: JSON.stringify({ username, email, password, description })
         });
 
         const data = await res.json();
