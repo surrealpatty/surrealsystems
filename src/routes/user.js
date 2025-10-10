@@ -9,7 +9,9 @@ const authenticateToken = require('../middlewares/authenticateToken');
 router.post('/register', async (req, res) => {
   try {
     const { username, email, password, description } = req.body;
-    if (!username || !email || !password) return res.status(400).json({ error: 'All fields required' });
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: 'All fields required' });
+    }
 
     const existingEmail = await User.findOne({ where: { email } });
     if (existingEmail) return res.status(400).json({ error: 'Email already used' });
@@ -18,7 +20,13 @@ router.post('/register', async (req, res) => {
     if (existingUsername) return res.status(400).json({ error: 'Username already taken' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ username, email, password: hashedPassword, description });
+
+    const newUser = await User.create({
+      username,
+      email,
+      password: hashedPassword,
+      description: description || '' // ✅ fallback to empty string
+    });
 
     const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
