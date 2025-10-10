@@ -3,7 +3,7 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
-const { testConnection } = require('./config/database');
+const { sequelize, testConnection } = require('./config/database'); // import sequelize
 const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/service');
 
@@ -30,6 +30,10 @@ app.use('/api/services', serviceRoutes);
 const startServer = async () => {
   try {
     await testConnection();
+
+    // ✅ Sync database tables (add missing columns)
+    await sequelize.sync({ alter: true }); // ⚠️ only use alter: true in dev
+
     const PORT = process.env.PORT || 10000;
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   } catch (err) {
