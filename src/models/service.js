@@ -1,4 +1,3 @@
-// src/models/service.js
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 const User = require('./user');
@@ -10,8 +9,7 @@ const Service = sequelize.define('Service', {
   userId: { type: DataTypes.INTEGER, allowNull: false }
 }, { tableName: 'services', timestamps: true });
 
-// Define associations
+// ✅ Association defined here
 Service.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-User.hasMany(Service, { foreignKey: 'userId' });
 
 module.exports = Service;
