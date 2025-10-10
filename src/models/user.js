@@ -13,8 +13,4 @@ const User = sequelize.define('User', {
   timestamps: true,
 });
 
-User.associate = (models) => {
-  User.hasMany(models.Service, { foreignKey: 'userId', as: 'services', onDelete: 'CASCADE' });
-};
-
 module.exports = User;
