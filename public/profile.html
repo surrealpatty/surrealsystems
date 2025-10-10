@@ -4,75 +4,238 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Profile - CodeCrowds</title>
+
+<!-- ---------- Styles ---------- -->
 <style>
-/* Global Styles */
-body, html { margin:0; padding:0; font-family:'Segoe UI', sans-serif; background:linear-gradient(135deg,#4e54c8,#00aaff); color:#fff; min-height:100%; }
-.container { max-width:900px; width:90%; margin:50px auto; padding:2rem; display:flex; flex-direction:column; gap:2rem; background:rgba(255,255,255,0.95); border-radius:16px; box-shadow:0 12px 30px rgba(0,0,0,0.15); color:#333; text-align:center; }
-h1,h2 { color:#4e54c8; margin-bottom:0.5rem; }
-.spinner { display:inline-block; width:20px; height:20px; border:3px solid #ccc; border-top-color:#4e54c8; border-radius:50%; animation:spin 0.8s linear infinite; }
-@keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
-.fade-in { opacity:0; transform:translateY(10px); animation:fadeIn 0.5s ease forwards; }
-@keyframes fadeIn { to{opacity:1; transform:translateY(0);} }
-#profile-description { min-height:50px; margin-bottom:10px; }
-#profile-description[contenteditable="true"] { border:1px solid #4e54c8; border-radius:8px; padding:5px; background-color:#f0f0f0; color:#333; }
-button { padding:12px 24px; font-size:1.1rem; color:#fff; border:none; border-radius:8px; cursor:pointer; margin-top:5px; transition: transform 0.3s, opacity 0.3s; }
-button:hover { transform:translateY(-5px); opacity:0.9; }
-.logout-btn { background-color:#ff4d4f; }
-.save-btn { background-color:#28a745; }
-.cancel-btn { background-color:#dc3545; }
-.hidden { display:none; }
-#services-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:20px; }
-.card { background:#fff; border-radius:12px; padding:20px; box-shadow:0 8px 20px rgba(0,0,0,0.15); color:#333; transition:transform 0.2s; }
-.card:hover { transform:translateY(-5px); }
-.card h3 { margin-bottom:10px; color:#4e54c8; }
-.card p { margin:5px 0; color:#555; }
-#newServiceSection { display:none; flex-direction:column; gap:10px; margin-top:10px; }
-#newServiceSection input, #newServiceSection textarea { padding:10px; border-radius:8px; border:1px solid #ccc; width:100%; }
-.floating-btn { position:fixed; right:20px; width:180px; text-align:center; padding:14px; border-radius:50px; font-weight:bold; font-size:1.2rem; color:#fff; z-index:100; }
-#goToServicesBtn { background-color:#28a745; bottom:160px; }
-#goToMessagesBtn { background-color:#17a2b8; bottom:100px; }
-#addNewServiceBtn { background-color:#ffc107; color:#333; bottom:40px; }
-.mobile-button-row { display:none; position:fixed; bottom:0; left:0; width:100%; justify-content:space-around; padding:10px 0; gap:5px; background-color:rgba(255,255,255,0.95); z-index:9999; }
-.mobile-button-row button { flex:1; border-radius:12px; font-weight:bold; font-size:1.1rem; padding:14px; background-color:#4e54c8; color:#fff; }
-@media (max-width:480px){ .floating-btn{display:none;} .mobile-button-row{display:flex;} button{font-size:1rem; padding:12px 20px;} }
+/* ---------- Global Styles ---------- */
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #4e54c8, #00aaff);
+    color: #fff;
+    min-height: 100%;
+}
+
+/* ---------- Container ---------- */
+.container {
+    max-width: 900px;
+    width: 90%;
+    padding: 2.5rem 2rem 120px 2rem;
+    margin: 50px auto 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    color: #333;
+    text-align: center;
+}
+
+/* ---------- Headings ---------- */
+h1, h2 {
+    color: #4e54c8;
+    margin-bottom: 0.5rem;
+}
+
+/* ---------- Spinner ---------- */
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #ccc;
+    border-top-color: #4e54c8;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ---------- Fade-in ---------- */
+.fade-in {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeIn 0.5s ease forwards;
+}
+@keyframes fadeIn {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Profile Description ---------- */
+#profile-description {
+    min-height: 50px;
+    margin-bottom: 10px;
+}
+#profile-description[contenteditable="true"] {
+    border: 1px solid #4e54c8;
+    border-radius: 8px;
+    padding: 5px;
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+/* ---------- Buttons ---------- */
+button {
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    color: #fff;
+    background-color: #4e54c8;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 5px;
+    transition: transform 0.3s, opacity 0.3s;
+}
+button:hover { transform: translateY(-5px); opacity: 0.9; }
+.logout-btn { background-color: #ff4d4f; }
+.logout-btn:hover { background-color: #c30000; }
+.save-btn { background-color: #28a745; }
+.save-btn:hover { background-color: #1e7e34; }
+.cancel-btn { background-color: #dc3545; }
+.cancel-btn:hover { background-color: #a71d2a; }
+.hidden { display: none; }
+
+/* ---------- Services Grid ---------- */
+#services-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+.card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    color: #333;
+    transition: transform 0.2s;
+}
+.card:hover { transform: translateY(-5px); }
+.card h3 { margin-bottom: 10px; color: #4e54c8; }
+.card p { margin: 5px 0; color: #555; }
+
+/* ---------- New Service Section ---------- */
+#newServiceSection {
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+#newServiceSection input, #newServiceSection textarea {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    width: 100%;
+}
+
+/* ---------- Floating Buttons ---------- */
+.floating-btn {
+    position: fixed;
+    right: 20px;
+    width: 180px;
+    text-align: center;
+    padding: 14px;
+    border-radius: 50px;
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: #fff;
+    display: block;
+    z-index: 100;
+}
+#goToServicesBtn { background-color: #28a745; bottom: 160px; }
+#goToMessagesBtn { background-color: #17a2b8; bottom: 100px; }
+#addNewServiceBtn { background-color: #ffc107; color: #333; bottom: 40px; }
+
+/* ---------- Mobile Bottom Row ---------- */
+.mobile-button-row {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    justify-content: space-around;
+    padding: 10px 0;
+    gap: 5px;
+    background-color: rgba(255,255,255,0.95);
+    z-index: 9999;
+}
+.mobile-button-row button {
+    flex: 1;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    padding: 14px;
+    background-color: #4e54c8;
+    color: #fff;
+    transition: transform 0.3s, opacity 0.3s;
+}
+.mobile-button-row button:hover { transform: translateY(-5px); opacity: 0.9; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+    .floating-btn { display: none; }
+    .mobile-button-row { display: flex; }
+    button { font-size: 1rem; padding: 12px 20px; }
+}
 </style>
 </head>
 <body>
+
+<!-- ---------- Container ---------- -->
 <div class="container">
+    <!-- Profile Username -->
     <h1 id="profile-username"><span class="spinner"></span> Loading username...</h1>
+
+    <!-- Profile Description -->
     <p id="profile-description"><span class="spinner"></span> Loading description...</p>
-    <button id="editDescBtn" class="hidden">Edit Description</button>
+    <button type="button" id="editDescBtn" class="hidden">Edit Description</button>
 
+    <!-- Services Section -->
     <h2>Your Services</h2>
-    <div id="services-list"><p><span class="spinner"></span> Loading services...</p></div>
+    <div id="services-list">
+        <p><span class="spinner"></span> Loading services...</p>
+    </div>
 
+    <!-- New Service Section -->
     <div id="newServiceSection">
         <input type="text" id="newServiceTitle" placeholder="Service Title">
         <textarea id="newServiceDesc" placeholder="Service Description"></textarea>
         <input type="number" id="newServicePrice" placeholder="Price in USD">
-        <button id="createServiceBtn">Create Service</button>
+        <button type="button" id="createServiceBtn">Create Service</button>
     </div>
 
-    <button id="logoutBtn" class="logout-btn">Logout</button>
+    <!-- Logout Button -->
+    <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
 </div>
 
-<button class="floating-btn" id="goToServicesBtn">Services</button>
-<button class="floating-btn" id="goToMessagesBtn">Messages</button>
-<button class="floating-btn" id="addNewServiceBtn">+ Service</button>
+<!-- Desktop Floating Buttons -->
+<button type="button" class="floating-btn" id="goToServicesBtn">Services</button>
+<button type="button" class="floating-btn" id="goToMessagesBtn">Messages</button>
+<button type="button" class="floating-btn" id="addNewServiceBtn">+ Service</button>
 
+<!-- Mobile Bottom Row Buttons -->
 <div class="mobile-button-row">
-    <button id="mobileServicesBtn">Services</button>
-    <button id="mobileMessagesBtn">Messages</button>
-    <button id="mobileAddServiceBtn">+ Service</button>
+    <button type="button" id="mobileServicesBtn">Services</button>
+    <button type="button" id="mobileMessagesBtn">Messages</button>
+    <button type="button" id="mobileAddServiceBtn">+ Service</button>
 </div>
 
+<!-- ---------- Scripts ---------- -->
 <script>
 const API_URL = '/api';
 const token = localStorage.getItem('token');
-const userId = localStorage.getItem('userId');
-if(!token || !userId) window.location.href='index.html';
+const loggedInUserId = localStorage.getItem('userId')?.toString();
+const profileUserId = (localStorage.getItem('profileUserId') || loggedInUserId)?.toString();
 
-// DOM
+// ---------------- Check login ----------------
+if (!token || !loggedInUserId) {
+    alert('You must log in first');
+    window.location.href = 'index.html';
+}
+
+// ---------------- DOM Elements ----------------
 const profileUsername = document.getElementById('profile-username');
 const profileDescription = document.getElementById('profile-description');
 const editDescBtn = document.getElementById('editDescBtn');
@@ -85,141 +248,206 @@ const createServiceBtn = document.getElementById('createServiceBtn');
 const addNewServiceBtn = document.getElementById('addNewServiceBtn');
 const mobileAddServiceBtn = document.getElementById('mobileAddServiceBtn');
 const logoutBtn = document.getElementById('logoutBtn');
+const goToServicesBtn = document.getElementById('goToServicesBtn');
+const goToMessagesBtn = document.getElementById('goToMessagesBtn');
+const mobileServicesBtn = document.getElementById('mobileServicesBtn');
+const mobileMessagesBtn = document.getElementById('mobileMessagesBtn');
 
-// Load Profile
+// ---------------- Load Profile ----------------
 async function loadProfile() {
     try {
-        const res = await fetch(`${API_URL}/users/me`, { headers:{ Authorization:`Bearer ${token}` }});
+        const endpoint = profileUserId === loggedInUserId 
+            ? `${API_URL}/users/me` 
+            : `${API_URL}/users/${profileUserId}`;
+        const res = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
+
+        if (!res.ok) {
+            console.error('Fetch failed:', res.status, res.statusText);
+            profileUsername.textContent = 'Unknown User';
+            profileDescription.textContent = 'Failed to load profile';
+            return;
+        }
+
         const data = await res.json();
-        const user = data.user || data;
-        profileUsername.textContent = user.username || 'Unknown User';
-        profileDescription.textContent = user.description || 'No description yet.';
-        editDescBtn.classList.remove('hidden');
-    } catch(err){ console.error(err); profileUsername.textContent='Unknown User'; profileDescription.textContent='Failed to load profile'; }
+        const actualUser = data.user || data;
+
+        profileUsername.textContent = actualUser.username || 'Unknown User';
+        profileDescription.textContent = actualUser.description || 'No description yet.';
+        profileUsername.classList.add('fade-in');
+        profileDescription.classList.add('fade-in');
+
+        if (actualUser.id.toString() === loggedInUserId) {
+            editDescBtn.classList.remove('hidden');
+        }
+    } catch (err) {
+        console.error('Error loading profile:', err);
+        profileUsername.textContent = 'Unknown User';
+        profileDescription.textContent = 'Failed to load profile';
+    }
 }
 
-// Edit Description
-let editing=false;
-editDescBtn.addEventListener('click', async ()=>{
-    editing=!editing;
-    profileDescription.contentEditable=editing;
-    editDescBtn.textContent = editing?'Save':'Edit';
-    if(!editing){
-        try{
-            const newDesc = profileDescription.textContent.trim();
-            const res = await fetch(`${API_URL}/users/${userId}`,{
-                method:'PUT',
-                headers:{'Content-Type':'application/json', Authorization:`Bearer ${token}`},
-                body: JSON.stringify({ description:newDesc })
+// ---------------- Edit / Save Description ----------------
+let editingDesc = false;
+editDescBtn.addEventListener('click', async () => {
+    editingDesc = !editingDesc;
+    profileDescription.contentEditable = editingDesc;
+    editDescBtn.textContent = editingDesc ? 'Save Description' : 'Edit Description';
+
+    if (!editingDesc) {
+        const newDesc = profileDescription.textContent.trim();
+        try {
+            const res = await fetch(`${API_URL}/users/${loggedInUserId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ description: newDesc })
             });
-            const data = await res.json();
-            profileDescription.textContent = data.user?.description || newDesc;
-        } catch(e){ console.error(e); alert('Failed to save description'); }
+            const updatedUser = await res.json();
+            profileDescription.textContent = updatedUser.user?.description || newDesc;
+        } catch (err) {
+            console.error(err);
+            alert('Failed to save description.');
+        }
     }
 });
 
-// Load Services
-async function loadServices(){
-    servicesList.innerHTML = '<p><span class="spinner"></span> Loading services...</p>';
+// ---------------- Load Services ----------------
+async function loadServices() {
+    servicesList.innerHTML = `<p><span class="spinner"></span> Loading services...</p>`;
     try {
-        const res = await fetch(`${API_URL}/services`,{ headers:{ Authorization:`Bearer ${token}` }});
+        const res = await fetch(`${API_URL}/services`, { headers: { Authorization: `Bearer ${token}` } });
         const data = await res.json();
-        servicesList.innerHTML='';
-        const services = data.services || [];
-        const userServices = services.filter(s=> s.user?.id?.toString()===userId);
-        if(userServices.length===0){ servicesList.innerHTML='<p>No services yet.</p>'; return; }
+        const services = data.services || data;
+        const userServices = services.filter(s => s.user?.id?.toString() === profileUserId);
 
-        userServices.forEach(s=>{
+        servicesList.innerHTML = '';
+
+        if (!userServices.length) {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'card fade-in';
+            placeholder.innerHTML = `<h3>No Services Yet</h3><p>Add your first service using the + Service button</p>`;
+            servicesList.appendChild(placeholder);
+            return;
+        }
+
+        userServices.forEach((s) => {
             const div = document.createElement('div');
-            div.className='card fade-in';
-            div.innerHTML=`
-                <h3>${s.title}</h3>
-                <p>${s.description}</p>
-                <p><strong>Price:</strong> $${s.price}</p>
-                <button class="edit-btn">Edit</button>
-                <button class="delete-btn">Delete</button>
+            div.className = 'card fade-in';
+            div.innerHTML = `
+                <h3 class="service-title">${s.title}</h3>
+                <p class="service-desc">${s.description}</p>
+                <p><strong>Price:</strong> $<span class="service-price">${s.price}</span></p>
+                <div class="service-buttons">
+                    <button class="edit-service-btn">Edit</button>
+                    <button class="delete-service-btn">Delete</button>
+                </div>
             `;
             servicesList.appendChild(div);
 
-            div.querySelector('.edit-btn').addEventListener('click',()=>editService(div,s));
-            div.querySelector('.delete-btn').addEventListener('click',()=>deleteService(s.id));
+            div.querySelector('.edit-service-btn').addEventListener('click', () => editService(div, s));
+            div.querySelector('.delete-service-btn').addEventListener('click', () => deleteService(s.id));
         });
-    } catch(e){ console.error(e); servicesList.innerHTML='<p>Failed to load services</p>'; }
+    } catch (err) {
+        console.error(err);
+        servicesList.innerHTML = '<p>Failed to load services</p>';
+    }
 }
 
-// Edit/Delete Service
-async function editService(div, s){
-    const titleEl = div.querySelector('h3');
-    const descEl = div.querySelector('p:nth-of-type(1)');
-    const priceEl = div.querySelector('p:nth-of-type(2)');
+// ---------------- Edit / Delete Service ----------------
+async function editService(div, service) {
+    const titleEl = div.querySelector('.service-title');
+    const descEl = div.querySelector('.service-desc');
+    const priceEl = div.querySelector('.service-price');
 
-    titleEl.innerHTML=`<input value="${s.title}">`;
-    descEl.innerHTML=`<textarea>${s.description}</textarea>`;
-    priceEl.innerHTML=`<input type="number" value="${s.price}">`;
+    const origTitle = titleEl.textContent;
+    const origDesc = descEl.textContent;
+    const origPrice = priceEl.textContent;
 
-    const editBtn = div.querySelector('.edit-btn');
-    const deleteBtn = div.querySelector('.delete-btn');
-    editBtn.textContent='Save'; deleteBtn.textContent='Cancel';
+    titleEl.innerHTML = `<input type="text" value="${origTitle}" class="edit-title">`;
+    descEl.innerHTML = `<textarea class="edit-desc">${origDesc}</textarea>`;
+    priceEl.innerHTML = `<input type="number" value="${origPrice}" class="edit-price">`;
 
-    editBtn.onclick = async ()=>{
+    const buttonsDiv = div.querySelector('.service-buttons');
+    buttonsDiv.innerHTML = `<button class="save-btn">Save</button><button class="cancel-btn">Cancel</button>`;
+
+    buttonsDiv.querySelector('.save-btn').addEventListener('click', async () => {
+        const updatedTitle = div.querySelector('.edit-title').value.trim();
+        const updatedDesc = div.querySelector('.edit-desc').value.trim();
+        const updatedPrice = div.querySelector('.edit-price').value.trim();
+        if (!updatedTitle || !updatedDesc || !updatedPrice) return alert('All fields are required.');
+
         try {
-            await fetch(`${API_URL}/services/${s.id}`,{
-                method:'PUT',
-                headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${token}` },
-                body: JSON.stringify({
-                    title: titleEl.querySelector('input').value,
-                    description: descEl.querySelector('textarea').value,
-                    price: Number(priceEl.querySelector('input').value)
-                })
+            await fetch(`${API_URL}/services/${service.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ title: updatedTitle, description: updatedDesc, price: updatedPrice })
             });
             await loadServices();
-        } catch(e){ console.error(e); alert('Failed to save service'); }
-    };
-    deleteBtn.onclick = loadServices;
+        } catch (err) {
+            console.error(err);
+            alert('Failed to update service.');
+        }
+    });
+
+    buttonsDiv.querySelector('.cancel-btn').addEventListener('click', loadServices);
 }
 
-// Delete Service
-async function deleteService(id){
-    if(!confirm('Delete service?')) return;
-    try{
-        await fetch(`${API_URL}/services/${id}`,{ method:'DELETE', headers:{ Authorization:`Bearer ${token}` }});
+async function deleteService(serviceId) {
+    if (!confirm('Are you sure you want to delete this service?')) return;
+    try {
+        await fetch(`${API_URL}/services/${serviceId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
         await loadServices();
-    } catch(e){ console.error(e); alert('Failed to delete service'); }
+    } catch (err) {
+        console.error(err);
+        alert('Failed to delete service.');
+    }
 }
 
-// New Service
-function toggleNewService(){ newServiceSection.style.display=newServiceSection.style.display==='flex'?'none':'flex'; }
+// ---------------- Toggle / Create New Service ----------------
+function toggleNewService() {
+    newServiceSection.style.display = newServiceSection.style.display === 'flex' ? 'none' : 'flex';
+}
 addNewServiceBtn.addEventListener('click', toggleNewService);
 mobileAddServiceBtn.addEventListener('click', toggleNewService);
 
-createServiceBtn.addEventListener('click', async ()=>{
-    const title=newServiceTitle.value.trim();
-    const description=newServiceDesc.value.trim();
-    const price=newServicePrice.value.trim();
-    if(!title||!description||!price) return alert('All fields required');
+createServiceBtn.addEventListener('click', async () => {
+    const title = newServiceTitle.value.trim();
+    const description = newServiceDesc.value.trim();
+    const price = newServicePrice.value.trim();
+    if (!title || !description || !price) return alert('All fields are required.');
 
-    try{
-        await fetch(`${API_URL}/services`,{
-            method:'POST',
-            headers:{'Content-Type':'application/json', Authorization:`Bearer ${token}`},
-            body: JSON.stringify({ title, description, price: Number(price) })
+    try {
+        await fetch(`${API_URL}/services`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ title, description, price })
         });
-        newServiceTitle.value=''; newServiceDesc.value=''; newServicePrice.value='';
-        newServiceSection.style.display='none';
+        newServiceTitle.value = '';
+        newServiceDesc.value = '';
+        newServicePrice.value = '';
+        newServiceSection.style.display = 'none';
         await loadServices();
-    } catch(e){ console.error(e); alert('Failed to create service'); }
+    } catch (err) {
+        console.error(err);
+        alert('Failed to create service.');
+    }
 });
 
-// Navigation & Logout
-document.getElementById('goToServicesBtn').onclick=()=>window.location.href='services.html';
-document.getElementById('goToMessagesBtn').onclick=()=>window.location.href='messages.html';
-document.getElementById('mobileServicesBtn').onclick=()=>window.location.href='services.html';
-document.getElementById('mobileMessagesBtn').onclick=()=>window.location.href='messages.html';
-logoutBtn.onclick=()=>{ localStorage.clear(); window.location.href='index.html'; };
+// ---------------- Navigation ----------------
+goToServicesBtn.addEventListener('click', () => window.location.href = 'services.html');
+goToMessagesBtn.addEventListener('click', () => window.location.href = 'messages.html');
+mobileServicesBtn.addEventListener('click', () => window.location.href = 'services.html');
+mobileMessagesBtn.addEventListener('click', () => window.location.href = 'messages.html');
 
-// Initial Load
+// ---------------- Logout ----------------
+logoutBtn.addEventListener('click', () => {
+    localStorage.clear();
+    window.location.href = 'index.html';
+});
+
+// ---------------- Initial Load ----------------
 loadProfile();
 loadServices();
 </script>
+
 </body>
 </html>
