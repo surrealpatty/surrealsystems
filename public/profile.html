@@ -4,117 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Profile - CodeCrowds</title>
-<style>
-/* ---------- Global ---------- */
-body, html {
-  margin: 0; padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #4e54c8, #00aaff);
-  color: #fff; min-height: 100%;
-}
-
-/* ---------- Container ---------- */
-.container {
-  max-width: 900px; width: 90%;
-  padding: 2.5rem 2rem 140px 2rem; margin: 50px auto 0 auto;
-  display: flex; flex-direction: column; gap: 2rem;
-  background: rgba(255,255,255,0.95);
-  border-radius: 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-  color: #333; text-align: center;
-}
-
-/* ---------- Headings ---------- */
-h1, h2 { color: #4e54c8; margin-bottom: 0.5rem; }
-.section-subtle { color:#666; margin-top:-10px; }
-
-/* ---------- Spinner ---------- */
-.spinner {
-  display: inline-block; width:20px; height:20px;
-  border:3px solid #ccc; border-top-color:#4e54c8; border-radius:50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
-
-/* ---------- Fade-in ---------- */
-.fade-in { opacity:0; transform: translateY(10px); animation: fadeIn 0.5s ease forwards; }
-@keyframes fadeIn { to { opacity:1; transform: translateY(0); } }
-
-/* ---------- Description ---------- */
-#profile-description { min-height: 50px; margin-bottom: 10px; }
-#profile-description[contenteditable="true"] {
-  border: 1px solid #4e54c8; border-radius: 8px; padding: 8px; background:#f0f0f0; color:#333;
-}
-#descControls { display:flex; gap:10px; justify-content:center; }
-
-/* ---------- Buttons ---------- */
-button {
-  padding: 12px 24px; font-size: 1.05rem; color: #fff; background-color: #4e54c8;
-  border: none; border-radius: 10px; cursor: pointer; margin-top: 5px;
-  transition: transform 0.3s, opacity 0.3s;
-}
-button:hover { transform: translateY(-5px); opacity: 0.9; }
-.logout-btn { background-color: #ff4d4f; }
-.logout-btn:hover { background-color: #c30000; }
-.save-btn { background-color: #28a745; }
-.save-btn:hover { background-color: #1e7e34; }
-.cancel-btn { background-color: #dc3545; }
-.cancel-btn:hover { background-color: #a71d2a; }
-.hidden { display: none !important; }
-
-/* ---------- Services Grid ---------- */
-#services-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-.card {
-  background: #fff; border-radius: 12px; padding: 20px; text-align:left;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15); color: #333; transition: transform 0.2s;
-}
-.card:hover { transform: translateY(-5px); }
-.card h3 { margin-bottom: 10px; color: #4e54c8; }
-.card p { margin: 5px 0; color: #555; }
-.card .muted { color:#777; font-size: 0.95rem; }
-
-/* ---------- New Service Section ---------- */
-#newServiceSection { display:none; flex-direction: column; gap: 10px; margin-top: 10px; text-align:left; }
-#newServiceSection input, #newServiceSection textarea {
-  padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 100%;
-}
-
-/* ---------- Reviews ---------- */
-#reviews-summary { display:flex; align-items:center; justify-content:center; gap:12px; }
-.stars { font-size: 1.4rem; letter-spacing: 2px; }
-.stars .dim { color:#ddd; }
-.review-list { display:grid; grid-template-columns: 1fr; gap:14px; text-align:left; }
-.review {
-  background:#fff; color:#333; border-radius:12px; padding:16px; box-shadow:0 8px 20px rgba(0,0,0,0.15);
-}
-.review .meta { display:flex; align-items:center; gap:10px; color:#666; font-size:0.95rem; }
-.review .meta .badge { background:#eef2ff; color:#4e54c8; padding:3px 8px; border-radius:999px; font-weight:600; }
-
-/* ---------- Floating Buttons ---------- */
-.floating-btn {
-  position: fixed; right: 20px; width: 180px; text-align: center; padding: 14px;
-  border-radius: 50px; font-weight: bold; font-size: 1.1rem; color: #fff; display: block; z-index: 100;
-}
-#goToServicesBtn { background-color: #28a745; bottom: 200px; }
-#goToMessagesBtn { background-color: #17a2b8; bottom: 140px; }
-#addNewServiceBtn { background-color: #ffc107; color: #333; bottom: 80px; }
-#editDescBtnFloat { background-color:#6f42c1; bottom: 20px; }
-
-/* ---------- Mobile Bottom Row ---------- */
-.mobile-button-row {
-  display: none; position: fixed; bottom: 0; left: 0; width: 100%;
-  justify-content: space-around; padding: 10px 0; gap: 5px;
-  background-color: rgba(255,255,255,0.95); z-index: 9999;
-}
-.mobile-button-row button { flex: 1; border-radius: 12px; font-weight: bold; font-size: 1.05rem; padding: 14px; background-color: #4e54c8; color: #fff; }
-.mobile-button-row button:hover { transform: translateY(-5px); opacity: 0.9; }
-
-/* ---------- Responsive ---------- */
-@media (max-width: 480px) {
-  .floating-btn { display: none; }
-  .mobile-button-row { display: flex; }
-  button { font-size: 1rem; padding: 12px 20px; }
-}
-</style>
+<link rel="stylesheet" href="profile.css" />
 </head>
 <body>
   <div class="container">
@@ -127,11 +17,11 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
     </header>
 
     <section>
-      <h2>Your Services</h2>
-      <p class="section-subtle">Offerings shown here also appear on the Services page.</p>
+      <h2>User's Services</h2>
+      <p class="section-subtle">These also appear on the Services page.</p>
       <div id="services-list"><p><span class="spinner"></span> Loading services...</p></div>
 
-      <div id="newServiceSection">
+      <div id="newServiceSection" class="new-service">
         <input type="text" id="newServiceTitle" placeholder="Service Title" />
         <textarea id="newServiceDesc" placeholder="Service Description"></textarea>
         <input type="number" id="newServicePrice" placeholder="Price in USD" />
@@ -141,14 +31,44 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 
     <section>
       <h2>Ratings & Reviews</h2>
-      <div id="reviews-summary"><span class="spinner"></span> Loading ratings...</div>
-      <div id="reviews-list" class="review-list"></div>
+
+      <!-- Summary -->
+      <div id="ratings-summary" class="card">
+        <p>
+          <strong><span id="avg-stars">0.0</span> / 5.0</strong>
+          •
+          <span id="ratings-count">0</span> ratings
+        </p>
+      </div>
+
+      <!-- Rate (only when viewing someone else) -->
+      <div id="rate-form" class="card hidden" aria-labelledby="rateFormTitle">
+        <h3 id="rateFormTitle">Leave a rating</h3>
+
+        <div class="row row-center row-gap-8">
+          <label for="rateStars">Stars</label>
+          <select id="rateStars" title="Select stars">
+            <option value="5">5</option><option value="4">4</option>
+            <option value="3">3</option><option value="2">2</option>
+            <option value="1">1</option>
+          </select>
+        </div>
+
+        <textarea id="rateComment" class="w-full" placeholder="Say something helpful (optional)" rows="3"></textarea>
+        <button type="button" id="submitRatingBtn">Submit Rating</button>
+        <p id="rateMsg" class="muted"></p>
+      </div>
+
+      <!-- List -->
+      <div id="ratings-list" class="review-list">
+        <p><span class="spinner"></span> Loading ratings...</p>
+      </div>
     </section>
 
     <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
   </div>
 
-  <!-- Floating shortcuts (hidden on other profiles) -->
+  <!-- Floating shortcuts (only on your own profile) -->
   <button type="button" class="floating-btn hidden" id="goToServicesBtn">Services</button>
   <button type="button" class="floating-btn hidden" id="goToMessagesBtn">Messages</button>
   <button type="button" class="floating-btn hidden" id="addNewServiceBtn">+ Service</button>
@@ -164,236 +84,215 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 const API_URL = '/api';
 const token = localStorage.getItem('token');
 const loggedInUserId = localStorage.getItem('userId')?.toString();
-const profileUserId = (localStorage.getItem('profileUserId') || loggedInUserId)?.toString();
 
-// ---------------- Guard: must be logged in ----------------
+// Use userId from URL (fallback to own)
+const params = new URLSearchParams(window.location.search);
+const qsUserId = params.get('userId');
+const profileUserId = (qsUserId || loggedInUserId)?.toString();
+
+// Kill old key that used to override navigation
+localStorage.removeItem('profileUserId');
+
+// Require login (remove this block if you allow public view)
 if (!token || !loggedInUserId) {
   alert('You must log in first');
   window.location.href = 'index.html';
 }
 
-// ---------------- DOM Elements ----------------
+// ------- DOM
 const profileUsername = document.getElementById('profile-username');
 const profileDescription = document.getElementById('profile-description');
 const descControls = document.getElementById('descControls');
 const editDescBtn = document.getElementById('editDescBtn');
+
 const servicesList = document.getElementById('services-list');
 const newServiceSection = document.getElementById('newServiceSection');
 const newServiceTitle = document.getElementById('newServiceTitle');
 const newServiceDesc = document.getElementById('newServiceDesc');
 const newServicePrice = document.getElementById('newServicePrice');
 const createServiceBtn = document.getElementById('createServiceBtn');
-const addNewServiceBtn = document.getElementById('addNewServiceBtn');
-const editDescBtnFloat = document.getElementById('editDescBtnFloat');
-const mobileAddServiceBtn = document.getElementById('mobileAddServiceBtn');
-const logoutBtn = document.getElementById('logoutBtn');
+
 const goToServicesBtn = document.getElementById('goToServicesBtn');
 const goToMessagesBtn = document.getElementById('goToMessagesBtn');
+const addNewServiceBtn = document.getElementById('addNewServiceBtn');
+const editDescBtnFloat = document.getElementById('editDescBtnFloat');
 const mobileServicesBtn = document.getElementById('mobileServicesBtn');
 const mobileMessagesBtn = document.getElementById('mobileMessagesBtn');
+const mobileAddServiceBtn = document.getElementById('mobileAddServiceBtn');
 const mobileRow = document.getElementById('mobileRow');
-const reviewsSummary = document.getElementById('reviews-summary');
-const reviewsList = document.getElementById('reviews-list');
 
-// ---------------- Helpers ----------------
-function showOwnerShortcuts(isOwner) {
-  // Floating buttons and mobile row only for the owner
-  [goToServicesBtn, goToMessagesBtn, addNewServiceBtn, editDescBtnFloat].forEach(el => {
-    el.classList.toggle('hidden', !isOwner);
-  });
-  mobileRow.classList.toggle('hidden', !isOwner);
-  // Controls for description and new service
-  descControls.classList.toggle('hidden', !isOwner);
+const ratingsList = document.getElementById('ratings-list');
+const avgStarsEl = document.getElementById('avg-stars');
+const ratingsCountEl = document.getElementById('ratings-count');
+const rateForm = document.getElementById('rate-form');
+const rateStars = document.getElementById('rateStars');
+const rateComment = document.getElementById('rateComment');
+const submitRatingBtn = document.getElementById('submitRatingBtn');
+const rateMsg = document.getElementById('rateMsg');
+
+// ------- Helpers
+function showOwnerUI(isOwner) {
+  [goToServicesBtn, goToMessagesBtn, addNewServiceBtn, editDescBtnFloat, mobileRow, descControls, newServiceSection]
+    .forEach(el => el.classList.toggle('hidden', !isOwner));
 }
 
-function renderStars(avg) {
-  const full = Math.round(avg * 2) / 2; // nearest 0.5
-  let out = '';
-  for (let i = 1; i <= 5; i++) {
-    if (full >= i) out += '★';
-    else if (full >= i - 0.5) out += '☆';
-    else out += '<span class="dim">☆</span>';
-  }
-  return `<span class="stars" aria-label="Rating ${avg} out of 5">${out}</span>`;
+function esc(s) { return String(s ?? '').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function starText(n) {
+  const r = Math.round(n);
+  return '★'.repeat(r) + '☆'.repeat(5 - r);
 }
 
-// ---------------- Load Profile ----------------
+// ------- Profile
 async function loadProfile() {
   try {
-    const endpoint = profileUserId === loggedInUserId ? `${API_URL}/users/me` : `${API_URL}/users/${profileUserId}`;
+    const viewingSelf = profileUserId === loggedInUserId;
+    const endpoint = viewingSelf ? `${API_URL}/users/me` : `${API_URL}/users/${profileUserId}`;
     const res = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
-
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-
     const data = await res.json();
-    const actualUser = data.user || data;
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
-    profileUsername.textContent = actualUser.username || 'Unknown User';
-    profileDescription.textContent = actualUser.description || 'No description yet.';
-    profileUsername.classList.add('fade-in');
-    profileDescription.classList.add('fade-in');
-
-    const isOwner = actualUser.id?.toString() === loggedInUserId;
-    showOwnerShortcuts(isOwner);
+    const u = data.user || data;
+    profileUsername.textContent = u.username || 'Unknown User';
+    profileDescription.textContent = u.description || 'No description yet.';
+    showOwnerUI(viewingSelf);
   } catch (err) {
     console.error('Error loading profile:', err);
     profileUsername.textContent = 'Unknown User';
     profileDescription.textContent = 'Failed to load profile';
-    showOwnerShortcuts(false);
+    showOwnerUI(false);
   }
 }
 
-// ---------------- Edit / Save Description ----------------
+// ------- Edit / Save Description (owner only)
 let editingDesc = false;
-function toggleDescEdit(forceState) {
-  editingDesc = typeof forceState === 'boolean' ? forceState : !editingDesc;
+function toggleDescEdit(force) {
+  editingDesc = typeof force === 'boolean' ? force : !editingDesc;
   profileDescription.contentEditable = editingDesc;
-  if (editingDesc) {
-    profileDescription.focus();
-    editDescBtn.textContent = 'Save Description';
-    editDescBtn.classList.add('save-btn');
-  } else {
-    editDescBtn.textContent = 'Edit Description';
-    editDescBtn.classList.remove('save-btn');
-    profileDescription.blur();
-  }
+  editDescBtn.textContent = editingDesc ? 'Save Description' : 'Edit Description';
+  if (editingDesc) profileDescription.focus(); else profileDescription.blur();
 }
-
 async function saveDescription() {
   const newDesc = profileDescription.textContent.trim();
   try {
-    const res = await fetch(`${API_URL}/users/${loggedInUserId}`, {
+    const res = await fetch(`${API_URL}/users/me/description`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ description: newDesc })
     });
     const json = await res.json();
-    if (!res.ok) throw new Error(json.message || 'Failed to save description');
+    if (!res.ok) throw new Error(json.error || 'Failed to save description');
     profileDescription.textContent = json.user?.description || newDesc;
   } catch (err) {
-    console.error(err); alert('Failed to save description.');
+    alert('Failed to save description'); console.error(err);
   } finally {
-    toggleDescEdit(false); // lock it back
+    toggleDescEdit(false);
   }
 }
+editDescBtn.addEventListener('click', () => !editingDesc ? toggleDescEdit(true) : saveDescription());
+editDescBtnFloat.addEventListener('click', () => !editingDesc ? toggleDescEdit(true) : saveDescription());
 
-editDescBtn.addEventListener('click', () => {
-  if (!editingDesc) toggleDescEdit(true);
-  else saveDescription();
-});
-editDescBtnFloat.addEventListener('click', () => {
-  if (!editingDesc) toggleDescEdit(true);
-  else saveDescription();
-});
-
-// ---------------- Load Services ----------------
+// ------- Services
 async function loadServices() {
-  servicesList.innerHTML = `<p><span class="spinner"></span> Loading services...</p>`;
+  servicesList.innerHTML = '<p><span class="spinner"></span> Loading services...</p>';
   try {
-    const res = await fetch(`${API_URL}/services`, { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`${API_URL}/services`);
     const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
-    const services = data.services || data || [];
-    const userServices = services.filter(s => s.user?.id?.toString() === profileUserId);
+    const all = data.services || data || [];
+    const mine = all.filter(s => s.user?.id?.toString() === profileUserId);
 
     servicesList.innerHTML = '';
-
-    if (!userServices.length) {
-      const placeholder = document.createElement('div');
-      placeholder.className = 'card fade-in';
-      placeholder.innerHTML = `<h3>No Services Yet</h3><p class="muted">Add your first service using the + Service button</p>`;
-      servicesList.appendChild(placeholder);
+    if (!mine.length) {
+      servicesList.innerHTML = '<div class="card"><h3>No Services Yet</h3><p class="muted">Nothing posted yet.</p></div>';
       return;
     }
 
-    userServices.forEach((s) => {
+    mine.forEach((s) => {
+      const isOwner = loggedInUserId === (s.user?.id?.toString() || '');
       const div = document.createElement('div');
-      div.className = 'card fade-in';
+      div.className = 'card';
       div.innerHTML = `
-        <h3 class="service-title"></h3>
-        <p class="service-desc"></p>
-        <p><strong>Price:</strong> $<span class="service-price"></span></p>
-        <div class="service-buttons">
+        <h3>${esc(s.title)}</h3>
+        <p>${esc(s.description)}</p>
+        <p><strong>Price:</strong> $${Number(s.price).toLocaleString(undefined,{maximumFractionDigits:2})}</p>
+        <div class="service-buttons ${isOwner ? '' : 'hidden'}">
           <button class="edit-service-btn">Edit</button>
           <button class="delete-service-btn">Delete</button>
         </div>
       `;
-
-      div.querySelector('.service-title').textContent = s.title;
-      div.querySelector('.service-desc').textContent = s.description;
-      div.querySelector('.service-price').textContent = s.price;
-
-      const isOwner = loggedInUserId === s.user?.id?.toString();
-      div.querySelector('.service-buttons').classList.toggle('hidden', !isOwner);
-
       servicesList.appendChild(div);
 
-      div.querySelector('.edit-service-btn')?.addEventListener('click', () => editService(div, s));
-      div.querySelector('.delete-service-btn')?.addEventListener('click', () => deleteService(s.id));
+      if (isOwner) {
+        div.querySelector('.edit-service-btn').addEventListener('click', () => editService(div, s));
+        div.querySelector('.delete-service-btn').addEventListener('click', () => deleteService(s.id));
+      }
     });
   } catch (err) {
     console.error(err);
-    servicesList.innerHTML = '<p>Failed to load services. Check console for details.</p>';
+    servicesList.innerHTML = '<p>Failed to load services.</p>';
   }
 }
 
-// ---------------- Edit / Delete Service ----------------
-async function editService(div, service) {
-  const titleEl = div.querySelector('.service-title');
-  const descEl = div.querySelector('.service-desc');
-  const priceEl = div.querySelector('.service-price');
+async function editService(card, service) {
+  const titleEl = card.querySelector('h3');
+  const descEl = card.querySelector('p');
+  const priceWrap = card.querySelector('p + p');
 
   const origTitle = titleEl.textContent;
   const origDesc = descEl.textContent;
-  const origPrice = priceEl.textContent;
+  const origPrice = (service.price ?? '').toString();
 
-  titleEl.innerHTML = `<input type="text" value="${origTitle.replace(/"/g, '&quot;')}" class="edit-title">`;
-  descEl.innerHTML = `<textarea class="edit-desc">${origDesc.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>`;
-  priceEl.innerHTML = `<input type="number" value="${origPrice.replace(/"/g, '&quot;')}" class="edit-price">`;
+  // Replace with editors (no inline styles)
+  titleEl.innerHTML = `<input type="text" class="edit-title input" value="${esc(origTitle)}">`;
+  descEl.innerHTML = `<textarea class="edit-desc textarea">${esc(origDesc)}</textarea>`;
+  priceWrap.innerHTML = `<strong>Price:</strong> $ <input type="number" class="edit-price input input-number" value="${esc(origPrice)}">`;
 
-  const buttonsDiv = div.querySelector('.service-buttons');
-  buttonsDiv.innerHTML = `<button class="save-btn">Save</button><button class="cancel-btn">Cancel</button>`;
+  const btns = card.querySelector('.service-buttons');
+  btns.innerHTML = `<button class="save-btn">Save</button> <button class="cancel-btn">Cancel</button>`;
 
-  buttonsDiv.querySelector('.save-btn').addEventListener('click', async () => {
-    const updatedTitle = div.querySelector('.edit-title').value.trim();
-    const updatedDesc = div.querySelector('.edit-desc').value.trim();
-    const updatedPrice = div.querySelector('.edit-price').value.trim();
-    if (!updatedTitle || !updatedDesc || !updatedPrice) return alert('All fields are required.');
+  btns.querySelector('.save-btn').addEventListener('click', async () => {
+    const updatedTitle = card.querySelector('.edit-title').value.trim();
+    const updatedDesc = card.querySelector('.edit-desc').value.trim();
+    const updatedPrice = card.querySelector('.edit-price').value.trim();
+    if (!updatedTitle || !updatedDesc || !updatedPrice) { alert('All fields required'); return; }
 
     try {
       const res = await fetch(`${API_URL}/services/${service.id}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ title: updatedTitle, description: updatedDesc, price: updatedPrice })
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.message || 'Failed to update service');
+      if (!res.ok) throw new Error(json.error || 'Failed to update');
       await loadServices();
     } catch (err) {
       console.error(err); alert('Failed to update service.');
     }
   });
 
-  buttonsDiv.querySelector('.cancel-btn').addEventListener('click', loadServices);
+  btns.querySelector('.cancel-btn').addEventListener('click', loadServices);
 }
 
-async function deleteService(serviceId) {
-  if (!confirm('Are you sure you want to delete this service?')) return;
+async function deleteService(id) {
+  if (!confirm('Delete this service?')) return;
   try {
-    const res = await fetch(`${API_URL}/services/${serviceId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`${API_URL}/services/${id}`, {
+      method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+    });
     const json = await res.json();
-    if (!res.ok) throw new Error(json.message || 'Failed to delete service');
+    if (!res.ok) throw new Error(json.error || 'Failed to delete');
     await loadServices();
   } catch (err) {
-    console.error(err); alert('Failed to delete service.');
+    console.error(err); alert('Failed to delete.');
   }
 }
 
-// ---------------- Toggle / Create New Service ----------------
 function toggleNewService() {
-  newServiceSection.style.display = newServiceSection.style.display === 'flex' ? 'none' : 'flex';
+  newServiceSection.classList.toggle('show-flex');
 }
-addNewServiceBtn.addEventListener('click', toggleNewService);
-mobileAddServiceBtn.addEventListener('click', toggleNewService);
+document.getElementById('addNewServiceBtn').addEventListener('click', toggleNewService);
+document.getElementById('mobileAddServiceBtn').addEventListener('click', toggleNewService);
 
 createServiceBtn.addEventListener('click', async () => {
   const title = newServiceTitle.value.trim();
@@ -403,90 +302,100 @@ createServiceBtn.addEventListener('click', async () => {
 
   try {
     const res = await fetch(`${API_URL}/services`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ title, description, price })
     });
     const json = await res.json();
-    if (!res.ok) throw new Error(json.message || 'Failed to create service');
-
-    newServiceTitle.value = '';
-    newServiceDesc.value = '';
-    newServicePrice.value = '';
-    newServiceSection.style.display = 'none';
-    await loadServices(); // reflects on profile immediately; Services page reads same API
+    if (!res.ok) throw new Error(json.error || 'Failed to create');
+    newServiceTitle.value = ''; newServiceDesc.value=''; newServicePrice.value='';
+    newServiceSection.classList.remove('show-flex');
+    await loadServices();
   } catch (err) {
     console.error(err); alert('Failed to create service.');
   }
 });
 
-// ---------------- Reviews & Ratings ----------------
-async function loadReviews() {
-  reviewsSummary.innerHTML = `<span class="spinner"></span> Loading ratings...`;
-  reviewsList.innerHTML = '';
+// ------- Ratings
+function renderStars(n) { return starText(n); }
+
+async function loadRatings(userId) {
+  ratingsList.innerHTML = '<p><span class="spinner"></span> Loading ratings...</p>';
   try {
-    // Try a couple of common endpoints for flexibility
-    let res = await fetch(`${API_URL}/users/${profileUserId}/reviews`, { headers: { Authorization: `Bearer ${token}` } });
-    if (!res.ok) {
-      // Fallback to a query param style
-      res = await fetch(`${API_URL}/reviews?userId=${encodeURIComponent(profileUserId)}`, { headers: { Authorization: `Bearer ${token}` } });
-    }
-    if (!res.ok) throw new Error('Failed to load reviews');
-
+    const res = await fetch(`${API_URL}/ratings/user/${userId}`);
     const data = await res.json();
-    const reviews = data.reviews || data || [];
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
-    if (!reviews.length) {
-      reviewsSummary.innerHTML = '<span class="muted">No ratings yet.</span>';
-      reviewsList.innerHTML = '';
+    const avg = data.summary?.average ?? 0;
+    const count = data.summary?.count ?? 0;
+    avgStarsEl.textContent = Number(avg).toFixed(1);
+    ratingsCountEl.textContent = count;
+
+    const ratings = data.ratings || [];
+    if (!ratings.length) {
+      ratingsList.innerHTML = '<p class="muted">No ratings yet.</p>';
       return;
     }
 
-    const ratings = reviews.map(r => Number(r.rating) || 0).filter(n => n > 0);
-    const avg = ratings.length ? ratings.reduce((a,b)=>a+b,0) / ratings.length : 0;
-    const summaryHtml = `
-      ${renderStars(avg)}
-      <strong>${avg.toFixed(1)}</strong>/5 from <strong>${ratings.length}</strong> rating${ratings.length!==1?'s':''}
-    `;
-    reviewsSummary.innerHTML = summaryHtml;
-
-    reviews.forEach(r => {
-      const div = document.createElement('div');
-      div.className = 'review fade-in';
-      const author = r.author?.username || r.reviewer?.username || r.authorName || 'Anonymous';
-      const created = r.createdAt ? new Date(r.createdAt).toLocaleString() : '';
-      const stars = renderStars(Number(r.rating) || 0);
-      const comment = (r.comment || '').toString();
-      div.innerHTML = `
-        <div class="meta">${stars} <span class="badge">${(Number(r.rating)||0).toFixed(1)}</span> • <span>${created}</span> • <span>by <strong>${author}</strong></span></div>
-        <p>${comment.replace(/</g,'&lt;').replace(/>/g,'&gt;') || '<span class="muted">No comment</span>'}</p>
-      `;
-      reviewsList.appendChild(div);
-    });
+    ratingsList.innerHTML = ratings.map(r => `
+      <div class="review">
+        <div class="meta-row">
+          <strong>${esc(r.rater?.username || ('User '+r.raterId))}</strong>
+          <span class="stars">${renderStars(r.stars)}</span>
+          <span class="badge">${Number(r.stars).toFixed(1)}</span>
+          <span class="muted">${new Date(r.createdAt).toLocaleString()}</span>
+        </div>
+        ${r.comment ? `<p>${esc(r.comment)}</p>` : '<p class="muted">No comment</p>'}
+      </div>
+    `).join('');
   } catch (err) {
     console.error(err);
-    reviewsSummary.textContent = 'Failed to load ratings';
+    ratingsList.innerHTML = '<p class="muted">Failed to load ratings.</p>';
   }
 }
 
-// ---------------- Navigation ----------------
-function bindNav() {
-  goToServicesBtn.addEventListener('click', () => window.location.href = 'services.html');
-  goToMessagesBtn.addEventListener('click', () => window.location.href = 'messages.html');
-  mobileServicesBtn.addEventListener('click', () => window.location.href = 'services.html');
-  mobileMessagesBtn.addEventListener('click', () => window.location.href = 'messages.html');
+function initRateForm() {
+  const viewingSelf = profileUserId === loggedInUserId;
+  rateForm.classList.toggle('hidden', !(token && !viewingSelf));
+
+  submitRatingBtn.addEventListener('click', async () => {
+    rateMsg.textContent = '';
+    const stars = parseInt(rateStars.value, 10);
+    const comment = rateComment.value.trim();
+    try {
+      const res = await fetch(`${API_URL}/ratings`, {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ rateeId: profileUserId, stars, comment })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      rateMsg.textContent = data.message || 'Saved!';
+      rateComment.value = '';
+      await loadRatings(profileUserId);
+    } catch (err) {
+      console.error(err);
+      rateMsg.textContent = err.message;
+    }
+  });
 }
 
-// ---------------- Logout ----------------
-logoutBtn.addEventListener('click', () => {
+// ------- Nav + Logout
+goToServicesBtn.addEventListener('click', () => window.location.href = 'services.html');
+goToMessagesBtn.addEventListener('click', () => window.location.href = 'messages.html');
+mobileServicesBtn.addEventListener('click', () => window.location.href = 'services.html');
+mobileMessagesBtn.addEventListener('click', () => window.location.href = 'messages.html');
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
   localStorage.clear();
   window.location.href = 'index.html';
 });
 
-// ---------------- Initial Load ----------------
-bindNav();
+// ------- Initial load
 loadProfile();
 loadServices();
-loadReviews();
+initRateForm();
+loadRatings(profileUserId);
 </script>
 </body>
 </html>
