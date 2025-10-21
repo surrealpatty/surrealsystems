@@ -1,9 +1,10 @@
+// routes/service.js
 const express = require('express');
 const router = express.Router();
 const { Service, User } = require('../models');
 const authenticateToken = require('../middlewares/authenticateToken');
 
-// Get all services
+// GET all services (public)
 router.get('/', async (req, res) => {
   try {
     const services = await Service.findAll({
@@ -11,46 +12,74 @@ router.get('/', async (req, res) => {
     });
     res.json({ services });
   } catch (err) {
-    console.error(err);
+    console.error('Fetch services error:', err);
     res.status(500).json({ error: 'Failed to fetch services' });
   }
 });
 
-// Create a service
+// CREATE a service (auth required)
 router.post('/', authenticateToken, async (req, res) => {
   try {
     const { title, description, price } = req.body;
-    if (!title || !description || !price) return res.status(400).json({ error: 'All fields are required' });
+
+    if (!title || !description) {
+      return res.status(400).json({ error: 'Title and description are required' });
+    }
+    const priceNum = Number(price);
+    if (Number.isNaN(priceNum) || priceNum < 0) {
+      return res.status(400).json({ error: 'Price must be a non-negative number' });
+    }
 
     const newService = await Service.create({
       title,
       description,
-      price: parseFloat(price),
+      price: priceNum,
       userId: req.user.id
     });
+
     res.status(201).json({ service: newService });
   } catch (err) {
-    console.error(err);
+    console.error('Create service error:', err);
+    // surface sequelize validation nicely if present
+    if (err.name === 'SequelizeValidationError') {
+      return res.status(400).json({ error: err.errors?.map(e => e.message).join(', ') });
+    }
     res.status(500).json({ error: 'Failed to create service' });
   }
 });
 
-// Update a service
+// UPDATE a service (auth required, owner only)
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const service = await Service.findByPk(req.params.id);
     if (!service) return res.status(404).json({ error: 'Service not found' });
     if (service.userId !== req.user.id) return res.status(403).json({ error: 'Unauthorized' });
 
-    await service.update(req.body);
+    // only allow specific fields
+    const updates = {};
+    if (typeof req.body.title === 'string' && req.body.title.trim()) updates.title = req.body.title.trim();
+    if (typeof req.body.description === 'string' && req.body.description.trim()) updates.description = req.body.description.trim();
+
+    if (req.body.price !== undefined) {
+      const priceNum = Number(req.body.price);
+      if (Number.isNaN(priceNum) || priceNum < 0) {
+        return res.status(400).json({ error: 'Price must be a non-negative number' });
+      }
+      updates.price = priceNum;
+    }
+
+    await service.update(updates);
     res.json({ service });
   } catch (err) {
-    console.error(err);
+    console.error('Update service error:', err);
+    if (err.name === 'SequelizeValidationError') {
+      return res.status(400).json({ error: err.errors?.map(e => e.message).join(', ') });
+    }
     res.status(500).json({ error: 'Failed to update service' });
   }
 });
 
-// Delete a service
+// DELETE a service (auth required, owner only)
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const service = await Service.findByPk(req.params.id);
@@ -60,7 +89,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     await service.destroy();
     res.json({ message: 'Service deleted' });
   } catch (err) {
-    console.error(err);
+    console.error('Delete service error:', err);
     res.status(500).json({ error: 'Failed to delete service' });
   }
 });
