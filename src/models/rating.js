@@ -1,11 +1,18 @@
+// models/rating.js
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database');
+const sequelize = require('../config/database').sequelize;
 
 const Rating = sequelize.define('Rating', {
-  score: { type: DataTypes.INTEGER, allowNull: false },
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  raterId: { type: DataTypes.INTEGER, allowNull: false },
+  rateeId: { type: DataTypes.INTEGER, allowNull: false },
+  stars:   { type: DataTypes.INTEGER, allowNull: false, validate: { min: 1, max: 5 } },
   comment: { type: DataTypes.TEXT, allowNull: true },
-  userId: { type: DataTypes.INTEGER, allowNull: false },
-  serviceId: { type: DataTypes.INTEGER, allowNull: false }
-}, { tableName: 'ratings', timestamps: true });
+}, {
+  tableName: 'ratings',
+  indexes: [
+    { unique: true, fields: ['raterId', 'rateeId'] } // one rating per rater→ratee
+  ]
+});
 
 module.exports = Rating;

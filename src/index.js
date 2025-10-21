@@ -5,7 +5,8 @@ require('dotenv').config();
 
 const { sequelize, testConnection } = require('./config/database');
 const userRoutes = require('./routes/user');
-const serviceRoutes = require('./routes/service'); // ✅ ADD THIS LINE
+const serviceRoutes = require('./routes/service');
+const ratingRoutes = require('./routes/rating'); // ✅ NEW LINE
 
 const app = express();
 
@@ -13,18 +14,19 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve frontend
+// Serve frontend (your public folder)
 app.use(express.static(path.join(__dirname, '../public')));
 
 // API routes
 app.use('/api/users', userRoutes);
-app.use('/api/services', serviceRoutes); // ✅ ADD THIS LINE
+app.use('/api/services', serviceRoutes);
+app.use('/api/ratings', ratingRoutes); // ✅ NEW LINE
 
 // Start server
 const startServer = async () => {
   try {
     await testConnection();
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ alter: true }); // Sync DB schema
     const PORT = process.env.PORT || 10000;
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   } catch (err) {
