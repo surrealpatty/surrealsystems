@@ -1,223 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Services - CodeCrowds</title>
-<link rel="stylesheet" href="style.css">
-<style>
-body, html {
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #4e54c8, #00aaff);
-    color: #fff;
-    min-height: 100%;
-}
-
-/* Container */
-.container {
-    max-width: 900px;
-    width: 90%;
-    padding: 2.5rem 2rem;
-    margin: 50px auto;
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-    background: rgba(255,255,255,0.95);
-    border-radius: 16px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-    color: #333;
-    text-align: center;
-}
-
-/* Headings */
-h1 { color: #4e54c8; margin-bottom: 1rem; }
-
-/* Services Grid */
-#services-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-}
-
-/* Service Card */
-.service-card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    transition: transform 0.2s;
-    color: #333;
-    text-align: left;
-}
-.service-card:hover { transform: translateY(-5px); }
-.service-card h3 { margin-bottom: 10px; color: #4e54c8; }
-.service-card p { margin: 5px 0; color: #555; }
-.service-card .username { font-style: italic; color: #888; margin-bottom:10px; }
-
-/* Buttons */
-button {
-    padding: 12px 25px;
-    font-size: 1rem;
-    color: #fff;
-    background-color: #4e54c8;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-top: 10px;
-    transition: 0.3s;
-}
-button:hover { background-color: #3b40a1; }
-
-/* Message Modal */
-#messageModal {
-    display: none;
-    position: fixed;
-    top:0; left:0; right:0; bottom:0;
-    background: rgba(0,0,0,0.5);
-    justify-content: center;
-    align-items: center;
-}
-#messageModal .modal-content {
-    background: #fff;
-    color: #333;
-    padding: 20px;
-    border-radius: 12px;
-    max-width: 400px;
-    width: 90%;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-#messageModal textarea {
-    width: 100%;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 1rem;
-    box-sizing: border-box;
-}
-
-/* Responsive */
-@media (max-width: 480px) {
-    .container { padding: 2rem 1rem; }
-}
-</style>
+<link rel="stylesheet" href="services.css" />
 </head>
 <body>
-
 <div class="container">
-    <h1>All Services</h1>
-    <div id="services-list">
-        <p>Loading services...</p>
-    </div>
-    <button type="button" id="goToProfileBtn">Back to Profile</button>
+  <h1>All Services</h1>
+  <p class="subtle">Browse everything users are offering across CodeCrowds.</p>
+
+  <div class="controls" role="group" aria-label="Service search and sorting">
+    <label class="sr-only" for="search">Search services</label>
+    <input id="search" placeholder="Search services…" aria-describedby="searchHelp" />
+    <span id="searchHelp" class="sr-only">Type to filter services by title, description, or username</span>
+
+    <label class="sr-only" for="sort">Sort services</label>
+    <select id="sort" title="Sort services">
+      <option value="newest">Newest</option>
+      <option value="priceLow">Price: Low → High</option>
+      <option value="priceHigh">Price: High → Low</option>
+    </select>
+  </div>
+
+  <div id="services-list" aria-live="polite">
+    <p><span class="spinner"></span> Loading services…</p>
+  </div>
+
+  <div class="actions-row">
+    <button type="button" id="goToProfileBtn" class="button-secondary" aria-label="Back to your profile">Back to Profile</button>
+    <button type="button" id="refreshBtn" aria-label="Refresh services list">Refresh</button>
+  </div>
 </div>
 
 <!-- Message Modal -->
-<div id="messageModal">
-    <div class="modal-content">
-        <h3>Send Message</h3>
-        <textarea id="messageContent" placeholder="Type your message here..."></textarea>
-        <button type="button" id="sendMessageBtn">Send</button>
-        <button type="button" id="closeModalBtn">Cancel</button>
+<div id="messageModal" role="dialog" aria-modal="true" aria-labelledby="messageModalTitle">
+  <div class="modal-content">
+    <h3 id="messageModalTitle">Send Message</h3>
+    <label class="sr-only" for="messageContent">Message</label>
+    <textarea id="messageContent" placeholder="Type your message here…"></textarea>
+    <div class="modal-actions">
+      <button type="button" id="closeModalBtn" class="button-secondary">Cancel</button>
+      <button type="button" id="sendMessageBtn">Send</button>
     </div>
+  </div>
 </div>
 
 <script>
-const API_URL = 'https://codecrowds.onrender.com';
-const token = localStorage.getItem('token');
-const userId = localStorage.getItem('userId');
+/* ===== Config ===== */
+const API_BASE = '/api'; // mounted routes base (works locally and on Render)
+const token = localStorage.getItem('token') || null; // viewing is public; messaging uses token
 
-if (!token || !userId) window.location.href = 'index.html';
-
+/* ===== Elements ===== */
 const servicesList = document.getElementById('services-list');
 const goToProfileBtn = document.getElementById('goToProfileBtn');
+const refreshBtn = document.getElementById('refreshBtn');
+const searchInput = document.getElementById('search');
+const sortSelect = document.getElementById('sort');
 const messageModal = document.getElementById('messageModal');
 const messageContent = document.getElementById('messageContent');
 const sendMessageBtn = document.getElementById('sendMessageBtn');
 const closeModalBtn = document.getElementById('closeModalBtn');
 
+let allServices = [];
 let currentRecipientId = null;
 
-// Go to profile page
-goToProfileBtn.addEventListener('click', () => {
-    window.location.href = 'profile.html';
-});
+/* ===== Helpers ===== */
+const esc = (s) => String(s ?? '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fmtPrice = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n.toLocaleString(undefined, { maximumFractionDigits: 2 }) : esc(v);
+};
 
-// Load services
-async function loadServices() {
-    try {
-        const res = await fetch(`${API_URL}/services`, { headers: { Authorization: `Bearer ${token}` }});
-        if (!res.ok) throw new Error('Failed to fetch services');
-        const data = await res.json();
-        const services = data.services || data;
+/* ===== Render ===== */
+function render(services) {
+  servicesList.innerHTML = '';
+  if (!services.length) {
+    servicesList.innerHTML = '<p>No services available.</p>';
+    return;
+  }
 
-        servicesList.innerHTML = '';
+  services.forEach((s) => {
+    const card = document.createElement('div');
+    card.className = 'service-card';
+    card.innerHTML = `
+      <h3>${esc(s.title)}</h3>
+      <p>${esc(s.description)}</p>
+      <p><strong>Price:</strong> $${fmtPrice(s.price)}</p>
+      <p class="username">Posted by: ${esc(s.user?.username || 'Unknown')}</p>
+      <button type="button" class="messageBtn" data-userid="${s.user?.id ?? ''}" aria-label="Send message to ${esc(s.user?.username || 'user')}">Send Message</button>
+    `;
+    servicesList.appendChild(card);
+  });
 
-        if (!services.length) {
-            servicesList.innerHTML = '<p>No services available.</p>';
-            return;
-        }
-
-        services.forEach(s => {
-            const div = document.createElement('div');
-            div.className = 'service-card';
-            div.innerHTML = `
-                <h3>${s.title}</h3>
-                <p>${s.description}</p>
-                <p><strong>Price:</strong> $${s.price}</p>
-                <p class="username">Posted by: ${s.user?.username || 'Unknown'}</p>
-                <button type="button" class="messageBtn" data-userid="${s.user?.id}">Send Message</button>
-            `;
-            servicesList.appendChild(div);
-        });
-
-        // Add message button events
-        document.querySelectorAll('.messageBtn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                currentRecipientId = btn.dataset.userid;
-                messageContent.value = '';
-                messageModal.style.display = 'flex';
-            });
-        });
-    } catch(err) {
-        console.error(err);
-        servicesList.innerHTML = '<p class="error">Failed to load services</p>';
-    }
+  document.querySelectorAll('.messageBtn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (!token) return alert('Please log in to send messages.');
+      currentRecipientId = btn.dataset.userid;
+      if (!currentRecipientId) return alert('No recipient for this service.');
+      messageContent.value = '';
+      messageModal.style.display = 'flex';
+    });
+  });
 }
 
-// Close message modal
-closeModalBtn.addEventListener('click', () => {
-    messageModal.style.display = 'none';
-});
+/* ===== Filters & Sorting ===== */
+function applyFilters() {
+  const q = searchInput.value.toLowerCase().trim();
+  const filtered = allServices.filter((s) => {
+    const hay = `${s.title||''} ${s.description||''} ${s.user?.username||''}`.toLowerCase();
+    return hay.includes(q);
+  });
 
-// Send message
-sendMessageBtn.addEventListener('click', async () => {
-    const content = messageContent.value.trim();
-    if (!content) return alert('Message cannot be empty.');
+  switch (sortSelect.value) {
+    case 'priceLow':  filtered.sort((a,b) => Number(a.price) - Number(b.price)); break;
+    case 'priceHigh': filtered.sort((a,b) => Number(b.price) - Number(a.price)); break;
+    default:          filtered.sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
+  }
 
-    try {
-        const res = await fetch(`${API_URL}/messages`, {
-            method: 'POST',
-            headers: {
-                'Content-Type':'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ receiverId: currentRecipientId, content })
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error);
-        alert('Message sent successfully!');
-        messageModal.style.display = 'none';
-    } catch(err) {
-        console.error(err);
-        alert('Failed to send message: ' + err.message);
+  render(filtered);
+}
+
+/* ===== Data Load ===== */
+async function loadServices() {
+  servicesList.innerHTML = '<p><span class="spinner"></span> Loading services…</p>';
+  try {
+    const res = await fetch(`${API_BASE}/services`);
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = { error: text }; }
+
+    if (!res.ok) {
+      console.error('GET /api/services failed', res.status, data);
+      servicesList.innerHTML = `<p class="error">Failed to load services (HTTP ${res.status})</p>`;
+      return;
     }
+
+    allServices = data.services || data || [];
+    applyFilters();
+  } catch (err) {
+    console.error('Services load error:', err);
+    servicesList.innerHTML = '<p class="error">Failed to load services</p>';
+  }
+}
+
+/* ===== Messaging ===== */
+closeModalBtn.addEventListener('click', () => { messageModal.style.display = 'none'; });
+
+sendMessageBtn.addEventListener('click', async () => {
+  const content = messageContent.value.trim();
+  if (!content) return alert('Message cannot be empty.');
+  if (!token) return alert('Please log in to send messages.');
+
+  try {
+    const res = await fetch(`${API_BASE}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ receiverId: currentRecipientId, content }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    alert('Message sent successfully!');
+    messageModal.style.display = 'none';
+  } catch (err) {
+    console.error(err);
+    alert('Failed to send message: ' + err.message);
+  }
 });
 
-// Initialize
+/* ===== Nav & Init ===== */
+goToProfileBtn.addEventListener('click', () => { window.location.href = 'profile.html'; });
+refreshBtn.addEventListener('click', loadServices);
+searchInput.addEventListener('input', applyFilters);
+sortSelect.addEventListener('change', applyFilters);
+
 window.addEventListener('load', loadServices);
 </script>
 </body>
