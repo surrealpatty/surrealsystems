@@ -4,7 +4,7 @@ const router = express.Router();
 const { Rating, User } = require('../models');
 const authenticateToken = require('../middlewares/authenticateToken');
 
-// GET ratings for a user (the ratee) + summary
+// GET ratings for a given user (ratee) + summary
 router.get('/user/:userId', async (req, res) => {
   try {
     const rateeId = parseInt(req.params.userId, 10);
@@ -29,14 +29,15 @@ router.get('/user/:userId', async (req, res) => {
   }
 });
 
-// POST create or update rating (upsert by raterId+rateeId)
+// POST create or update a rating (upsert by raterId+rateeId)
 router.post('/', authenticateToken, async (req, res) => {
   try {
     const raterId = req.user.id;
     const { rateeId, stars, comment } = req.body;
 
     if (!rateeId || !stars) return res.status(400).json({ error: 'rateeId and stars are required' });
-    if (raterId === Number(rateeId)) return res.status(400).json({ error: 'You cannot rate yourself' });
+    if (Number(rateeId) === raterId) return res.status(400).json({ error: 'You cannot rate yourself' });
+
     const clamped = Math.max(1, Math.min(5, parseInt(stars, 10)));
 
     const [rating, created] = await Rating.findOrCreate({
@@ -50,7 +51,7 @@ router.post('/', authenticateToken, async (req, res) => {
       await rating.save();
     }
 
-    // return fresh summary
+    // fresh summary
     const all = await Rating.findAll({ where: { rateeId } });
     const count = all.length;
     const avg = count ? (all.reduce((s, r) => s + r.stars, 0) / count) : 0;

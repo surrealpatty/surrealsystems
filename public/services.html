@@ -34,78 +34,44 @@
   </div>
 </div>
 
-<!-- Message Modal -->
-<div id="messageModal" role="dialog" aria-modal="true" aria-labelledby="messageModalTitle">
-  <div class="modal-content">
-    <h3 id="messageModalTitle">Send Message</h3>
-    <label class="sr-only" for="messageContent">Message</label>
-    <textarea id="messageContent" placeholder="Type your message here…"></textarea>
-    <div class="modal-actions">
-      <button type="button" id="closeModalBtn" class="button-secondary">Cancel</button>
-      <button type="button" id="sendMessageBtn">Send</button>
-    </div>
-  </div>
-</div>
-
 <script>
-/* ===== Config ===== */
-const API_BASE = '/api'; // mounted routes base (works locally and on Render)
-const token = localStorage.getItem('token') || null; // viewing is public; messaging uses token
+const API_BASE = '/api';
+const token = localStorage.getItem('token') || null;
 
-/* ===== Elements ===== */
 const servicesList = document.getElementById('services-list');
 const goToProfileBtn = document.getElementById('goToProfileBtn');
 const refreshBtn = document.getElementById('refreshBtn');
 const searchInput = document.getElementById('search');
 const sortSelect = document.getElementById('sort');
-const messageModal = document.getElementById('messageModal');
-const messageContent = document.getElementById('messageContent');
-const sendMessageBtn = document.getElementById('sendMessageBtn');
-const closeModalBtn = document.getElementById('closeModalBtn');
 
 let allServices = [];
-let currentRecipientId = null;
 
-/* ===== Helpers ===== */
 const esc = (s) => String(s ?? '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const fmtPrice = (v) => {
   const n = Number(v);
   return Number.isFinite(n) ? n.toLocaleString(undefined, { maximumFractionDigits: 2 }) : esc(v);
 };
 
-/* ===== Render ===== */
 function render(services) {
   servicesList.innerHTML = '';
-  if (!services.length) {
-    servicesList.innerHTML = '<p>No services available.</p>';
-    return;
-  }
+  if (!services.length) { servicesList.innerHTML = '<p>No services available.</p>'; return; }
 
   services.forEach((s) => {
-    const card = document.createElement('div');
-    card.className = 'service-card';
-    card.innerHTML = `
+    const div = document.createElement('div');
+    div.className = 'service-card';
+    div.innerHTML = `
       <h3>${esc(s.title)}</h3>
       <p>${esc(s.description)}</p>
       <p><strong>Price:</strong> $${fmtPrice(s.price)}</p>
-      <p class="username">Posted by: ${esc(s.user?.username || 'Unknown')}</p>
-      <button type="button" class="messageBtn" data-userid="${s.user?.id ?? ''}" aria-label="Send message to ${esc(s.user?.username || 'user')}">Send Message</button>
+      <p class="username">
+        Posted by:
+        ${s.user ? `<a href="profile.html?userId=${s.user.id}">${esc(s.user.username)}</a>` : 'Unknown'}
+      </p>
     `;
-    servicesList.appendChild(card);
-  });
-
-  document.querySelectorAll('.messageBtn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      if (!token) return alert('Please log in to send messages.');
-      currentRecipientId = btn.dataset.userid;
-      if (!currentRecipientId) return alert('No recipient for this service.');
-      messageContent.value = '';
-      messageModal.style.display = 'flex';
-    });
+    servicesList.appendChild(div);
   });
 }
 
-/* ===== Filters & Sorting ===== */
 function applyFilters() {
   const q = searchInput.value.toLowerCase().trim();
   const filtered = allServices.filter((s) => {
@@ -114,62 +80,27 @@ function applyFilters() {
   });
 
   switch (sortSelect.value) {
-    case 'priceLow':  filtered.sort((a,b) => Number(a.price) - Number(b.price)); break;
-    case 'priceHigh': filtered.sort((a,b) => Number(b.price) - Number(a.price)); break;
-    default:          filtered.sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
+    case 'priceLow': filtered.sort((a,b)=>Number(a.price)-Number(b.price)); break;
+    case 'priceHigh': filtered.sort((a,b)=>Number(b.price)-Number(a.price)); break;
+    default: filtered.sort((a,b)=> new Date(b.createdAt||0)-new Date(a.createdAt||0));
   }
-
   render(filtered);
 }
 
-/* ===== Data Load ===== */
 async function loadServices() {
   servicesList.innerHTML = '<p><span class="spinner"></span> Loading services…</p>';
   try {
     const res = await fetch(`${API_BASE}/services`);
-    const text = await res.text();
-    let data;
-    try { data = JSON.parse(text); } catch { data = { error: text }; }
-
-    if (!res.ok) {
-      console.error('GET /api/services failed', res.status, data);
-      servicesList.innerHTML = `<p class="error">Failed to load services (HTTP ${res.status})</p>`;
-      return;
-    }
-
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
     allServices = data.services || data || [];
     applyFilters();
   } catch (err) {
-    console.error('Services load error:', err);
+    console.error(err);
     servicesList.innerHTML = '<p class="error">Failed to load services</p>';
   }
 }
 
-/* ===== Messaging ===== */
-closeModalBtn.addEventListener('click', () => { messageModal.style.display = 'none'; });
-
-sendMessageBtn.addEventListener('click', async () => {
-  const content = messageContent.value.trim();
-  if (!content) return alert('Message cannot be empty.');
-  if (!token) return alert('Please log in to send messages.');
-
-  try {
-    const res = await fetch(`${API_BASE}/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ receiverId: currentRecipientId, content }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-    alert('Message sent successfully!');
-    messageModal.style.display = 'none';
-  } catch (err) {
-    console.error(err);
-    alert('Failed to send message: ' + err.message);
-  }
-});
-
-/* ===== Nav & Init ===== */
 goToProfileBtn.addEventListener('click', () => { window.location.href = 'profile.html'; });
 refreshBtn.addEventListener('click', loadServices);
 searchInput.addEventListener('input', applyFilters);

@@ -1,6 +1,6 @@
 // models/rating.js
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database').sequelize;
+const { sequelize } = require('../config/database');
 
 const Rating = sequelize.define('Rating', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
