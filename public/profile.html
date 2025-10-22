@@ -175,9 +175,40 @@ async function loadProfile(){
     const res = await fetch(endpoint, { headers:{Accept:'application/json',Authorization:`Bearer ${token}`}});
     const data = await res.json().catch(()=> ({}));
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-    const u = data.user || data;
-    profileUsername.textContent = u.username || 'Unknown User';
-    profileDescription.textContent= u.description || 'No description yet.';
+    function getDisplayName(u) {
+  // Try common keys; fallback to email prefix
+  return (
+    u.username ||
+    u.name ||
+    u.displayName ||
+    (u.email ? u.email.split('@')[0] : '') ||
+    ''
+  );
+}
+function getDescription(u) {
+  return u.description || u.bio || u.about || '';
+}
+
+// Optimistic render from localStorage (no flash of "User")
+try {
+  const cached = JSON.parse(localStorage.getItem('cc_me') || 'null');
+  if (cached) {
+    const dn = getDisplayName(cached);
+    if (dn) profileUsername.textContent = dn;
+    const desc = getDescription(cached);
+    if (desc) profileDescription.textContent = desc;
+  }
+} catch {}
+
+const u = data.user || data;
+const displayName = getDisplayName(u) || 'Unknown User';
+const desc = getDescription(u) || 'No description yet.';
+profileUsername.textContent = displayName;
+profileDescription.textContent = desc;
+
+// keep cache fresh
+try { localStorage.setItem('cc_me', JSON.stringify(u)); } catch {}
+
     showOwnerUI(viewingSelf);
 
     const canRate = (!viewingSelf && currentUserTier === 'paid');
