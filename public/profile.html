@@ -8,7 +8,7 @@
 <script>window.API_URL = '/api';</script>
 <script src="script.js"></script>
 <script>
-  // Guard: redirect unauthorized users to root (login screen)
+  // Guard: redirect unauthorized users to root (login)
   (function guard(){
     if (!isLoggedIn()) {
       const here = location.pathname + location.search;
@@ -92,6 +92,8 @@
   <button type="button" class="floating-btn hidden" id="goToMessagesBtn">Messages</button>
   <button type="button" class="floating-btn hidden" id="addNewServiceBtn">+ Service</button>
   <button type="button" class="floating-btn hidden" id="editDescBtnFloat">Edit Bio</button>
+
+  <!-- Back to my profile (visible only when viewing someone else) -->
   <button type="button" class="floating-btn hidden" id="backToMyProfileBtn">← My Profile</button>
 
   <nav class="mobile-button-row hidden" id="mobileRow" aria-label="Mobile actions">
@@ -102,14 +104,22 @@
   </nav>
 
 <script>
-const token = getToken();
-const loggedInUserId = getUserId();
+// ===== pull helpers from script.js
 const API_URL = '/api';
+const token = getToken();
 
-const params = new URLSearchParams(location.search);
-const qsUserId = params.get('userId');
-const profileUserId = (qsUserId || loggedInUserId)?.toString();
+// 1) Read cached user immediately to avoid "Unknown User" flash
+try {
+  const cached = JSON.parse(localStorage.getItem('cc_me') || 'null');
+  if (cached) {
+    const cachedName = getDisplayName(cached);
+    if (cachedName) document.getElementById('profile-username').textContent = cachedName;
+    const cachedDesc = getDescription(cached);
+    if (cachedDesc) document.getElementById('profile-description').textContent = cachedDesc;
+  }
+} catch {}
 
+// ---- DOM
 const profileUsername = document.getElementById('profile-username');
 const profileDescription = document.getElementById('profile-description');
 const descControls = document.getElementById('descControls');
@@ -151,103 +161,79 @@ const loadMoreBtn = document.getElementById('loadMoreServicesBtn');
 let currentUserTier = 'free';
 let svcPage = 1, svcLoading = false;
 
+function esc(s){ return String(s ?? '').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function showOwnerUI(isOwner){
   [goToServicesBtn,goToMessagesBtn,addNewServiceBtn,editDescBtnFloat,mobileRow,descControls,newServiceSection]
     .forEach(el=>el.classList.toggle('hidden',!isOwner));
   backToMyProfileBtn.classList.toggle('hidden',isOwner);
   mobileBackBtn.classList.toggle('hidden',isOwner);
 }
-const esc = (s)=>String(s??'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-async function fetchMe(){
-  const res = await fetch(`${API_URL}/users/me`, { headers:{Accept:'application/json',Authorization:`Bearer ${token}`}});
-const raw = await res.json().catch(()=> ({}));
-if (!res.ok) throw new Error(raw?.error?.message || raw?.error || `HTTP ${res.status}`);
-const data = unwrap(raw);
-currentUserTier = data.user?.tier || 'free';
-return data.user;
+// 2) Fetch /users/me (unwrapped), set userId if missing, and render
+async function fetchMe() {
+  const me = await apiFetch('users/me'); // -> { user }
+  const u = me?.user || {};
 
+  // Ensure userId is stored so owner UI shows:
+  if (!getUserId() && u.id) setUserId(String(u.id));
+
+  // Cache full user + name
+  try {
+    localStorage.setItem('cc_me', JSON.stringify(u));
+    const dn = getDisplayName(u);
+    if (dn) localStorage.setItem('username', dn);
+  } catch {}
+
+  currentUserTier = u.tier || 'free';
+  return u;
 }
 
-async function loadProfile(){
-  try{
+async function loadProfile() {
+  try {
+    const me = await fetchMe();
+    const loggedInUserId = getUserId();
+
+    // Profile target: if ?userId present, viewing someone else; otherwise self
+    const params = new URLSearchParams(location.search);
+    const qsUserId = params.get('userId');
+    const profileUserId = (qsUserId || loggedInUserId)?.toString();
+
+    // Fetch profile (self or public)
+    const data = qsUserId ? await apiFetch(`users/${profileUserId}`) : { user: me };
+    const u = data.user || data;
+
+    // Render name + description with fallbacks
+    profileUsername.textContent = getDisplayName(u) || 'User';
+    profileDescription.textContent = getDescription(u) || 'No description yet.';
+
+    // Owner UI (controls + floating buttons)
     const viewingSelf = profileUserId === loggedInUserId;
-    await fetchMe();
-    const endpoint = viewingSelf ? `${API_URL}/users/me` : `${API_URL}/users/${profileUserId}`;
-    const res = await fetch(endpoint, { headers:{Accept:'application/json',Authorization:`Bearer ${token}`}});
-    const data = await res.json().catch(()=> ({}));
-    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-    function getDisplayName(u) {
-  // Try common keys; fallback to email prefix
-  return (
-    u.username ||
-    u.name ||
-    u.displayName ||
-    (u.email ? u.email.split('@')[0] : '') ||
-    ''
-  );
-}
-function getDescription(u) {
-  return u.description || u.bio || u.about || '';
-}
-
-// Optimistic render from localStorage (no flash of "User")
-try {
-  const cached = JSON.parse(localStorage.getItem('cc_me') || 'null');
-  if (cached) {
-    const dn = getDisplayName(cached);
-    if (dn) profileUsername.textContent = dn;
-    const desc = getDescription(cached);
-    if (desc) profileDescription.textContent = desc;
-  }
-} catch {}
-
-const u = data.user || data;
-const displayName = getDisplayName(u) || 'Unknown User';
-const desc = getDescription(u) || 'No description yet.';
-profileUsername.textContent = displayName;
-profileDescription.textContent = desc;
-
-// keep cache fresh
-try { localStorage.setItem('cc_me', JSON.stringify(u)); } catch {}
-
     showOwnerUI(viewingSelf);
 
+    // Rating visibility
     const canRate = (!viewingSelf && currentUserTier === 'paid');
     rateForm.classList.toggle('hidden', !canRate);
     rateUpgradeHint.classList.toggle('hidden', canRate);
-    if (viewingSelf && currentUserTier === 'free') upgradeBtn.classList.remove('hidden'); else upgradeBtn.classList.add('hidden');
-  }catch(err){
-    console.error(err);
-    profileUsername.textContent = 'Unknown User';
+
+    if (viewingSelf && currentUserTier === 'free') {
+      upgradeBtn.classList.remove('hidden');
+    } else {
+      upgradeBtn.classList.add('hidden');
+    }
+
+    // Now that we know the target profile, load lists against that ID
+    await loadServices({ reset: true, userId: profileUserId });
+    await loadRatings(profileUserId);
+
+  } catch (err) {
+    console.error('Profile load error:', err);
+    profileUsername.textContent = 'User';
     profileDescription.textContent = 'Failed to load profile';
     showOwnerUI(false);
   }
 }
 
-let editingDesc=false;
-function toggleDescEdit(force){
-  editingDesc = typeof force==='boolean' ? force : !editingDesc;
-  profileDescription.contentEditable = editingDesc;
-  editDescBtn.textContent = editingDesc ? 'Save Description' : 'Edit Description';
-  if (editingDesc) profileDescription.focus(); else profileDescription.blur();
-}
-async function saveDescription(){
-  const newDesc = profileDescription.textContent.trim();
-  try{
-    const res = await fetch(`${API_URL}/users/me/description`, {
-      method:'PUT', headers:{'Content-Type':'application/json',Accept:'application/json',Authorization:`Bearer ${token}`},
-      body: JSON.stringify({ description:newDesc })
-    });
-    const json = await res.json().catch(()=> ({}));
-    if (!res.ok) throw new Error(json.error || 'Failed to save description');
-    profileDescription.textContent = json.user?.description || newDesc;
-  }catch(err){ alert('Failed to save description'); console.error(err); }
-  finally{ toggleDescEdit(false); }
-}
-editDescBtn.addEventListener('click', ()=> !editingDesc ? toggleDescEdit(true) : saveDescription());
-document.getElementById('editDescBtnFloat').addEventListener('click', ()=> !editingDesc ? toggleDescEdit(true) : saveDescription());
-
+// Services list (simple paging)
 function serviceCardHTML(s,isOwner){
   return `<div class="card">
     <h3>${esc(s.title)}</h3>
@@ -260,24 +246,28 @@ function serviceCardHTML(s,isOwner){
   </div>`;
 }
 
-async function loadServices({reset=false}={}){
+async function loadServices({reset=false, userId} = {}) {
   if (svcLoading) return; svcLoading = true;
   try{
+    const loggedInUserId = getUserId();
+
     if (reset){ svcPage=1; servicesList.innerHTML='<p><span class="spinner"></span> Loading services...</p>'; loadMoreBtn.classList.add('hidden'); }
+
     const url = new URL(`${API_URL}/services`, location.origin);
-    url.searchParams.set('userId', profileUserId);
+    if (userId) url.searchParams.set('userId', userId);
     url.searchParams.set('limit','12');
     url.searchParams.set('page', String(svcPage));
-    const res = await fetch(url, { headers:{Accept:'application/json',Authorization:`Bearer ${token}`}});
-    const data = await res.json().catch(()=> ({}));
-    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+    const data = await apiFetch(url.pathname + url.search); // unwrapped
     const list = data.services || [];
     const hasMore = !!data.hasMore;
+
     if (reset) servicesList.innerHTML='';
     if (!list.length && svcPage===1){
       servicesList.innerHTML = '<div class="card"><h3>No Services Yet</h3><p class="muted">Nothing posted yet.</p></div>';
       loadMoreBtn.classList.add('hidden'); return;
     }
+
     const frag = document.createDocumentFragment();
     list.forEach(s=>{
       const isOwner = loggedInUserId === (s.user?.id?.toString() || s.userId?.toString() || '');
@@ -285,25 +275,21 @@ async function loadServices({reset=false}={}){
       frag.appendChild(wrap.firstElementChild);
     });
     servicesList.appendChild(frag);
+
     if (hasMore){ loadMoreBtn.classList.remove('hidden'); svcPage+=1; } else { loadMoreBtn.classList.add('hidden'); }
   }catch(err){
     console.error(err);
     if (svcPage===1) servicesList.innerHTML='<p>Failed to load services.</p>';
   }finally{ svcLoading=false; }
 }
-document.getElementById('loadMoreServicesBtn').addEventListener('click', ()=> loadServices({reset:false}));
+loadMoreBtn.addEventListener('click', ()=> loadServices({ reset:false }));
 
+// Ratings
 function renderStars(n){ const r=Math.round(n); return '★'.repeat(r)+'☆'.repeat(5-r); }
 async function loadRatings(userId){
-  const ratingsList = document.getElementById('ratings-list');
-  const avgStarsEl = document.getElementById('avg-stars');
-  const ratingsCountEl = document.getElementById('ratings-count');
-
   ratingsList.innerHTML='<p><span class="spinner"></span> Loading ratings...</p>';
   try{
-    const res = await fetch(`${API_URL}/ratings/user/${userId}`);
-    const data = await res.json().catch(()=> ({}));
-    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    const data = await apiFetch(`ratings/user/${userId}`); // unwrapped
     const avg = data.summary?.average ?? 0, count = data.summary?.count ?? 0;
     avgStarsEl.textContent = Number(avg).toFixed(1);
     ratingsCountEl.textContent = count;
@@ -325,68 +311,52 @@ async function loadRatings(userId){
     ratingsList.innerHTML = '<p class="muted">Failed to load ratings.</p>';
   }
 }
-function initRateForm(){
-  const rateForm = document.getElementById('rate-form');
-  const rateUpgradeHint = document.getElementById('rateUpgradeHint');
-  const upgradeInlineBtn = document.getElementById('upgradeInlineBtn');
-  const rateStars = document.getElementById('rateStars');
-  const rateComment = document.getElementById('rateComment');
-  const submitRatingBtn = document.getElementById('submitRatingBtn');
-  const rateMsg = document.getElementById('rateMsg');
 
-  submitRatingBtn.addEventListener('click', async ()=>{
-    rateMsg.textContent='';
-    const stars = parseInt(rateStars.value,10);
-    const comment = rateComment.value.trim();
-    try{
-      const res = await fetch(`${API_URL}/ratings`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json',Accept:'application/json',Authorization:`Bearer ${token}`},
-        body: JSON.stringify({ rateeId: profileUserId, stars, comment })
-      });
-      const data = await res.json().catch(()=> ({}));
-      if (!res.ok){
-        if (res.status===403){ rateMsg.textContent = data.error || 'Upgrade to a paid account to rate others.'; rateUpgradeHint.classList.remove('hidden'); }
-        else { rateMsg.textContent = data.error || `HTTP ${res.status}`; }
-        return;
-      }
-      rateMsg.textContent = data.message || 'Saved!';
-      rateComment.value = '';
-      await loadRatings(profileUserId);
-    }catch(err){ console.error(err); rateMsg.textContent='Network error.'; }
-  });
-  upgradeInlineBtn.addEventListener('click', doUpgrade);
+// Edit / Save description
+let editingDesc=false;
+function toggleDescEdit(force){
+  editingDesc = typeof force==='boolean' ? force : !editingDesc;
+  profileDescription.contentEditable = editingDesc;
+  editDescBtn.textContent = editingDesc ? 'Save Description' : 'Edit Description';
+  if (editingDesc) profileDescription.focus(); else profileDescription.blur();
 }
-async function doUpgrade(){
+async function saveDescription(){
+  const newDesc = profileDescription.textContent.trim();
   try{
-    if (!confirm('Upgrade to a paid account?')) return;
-    const res = await fetch(`${API_URL}/users/me/upgrade`, { method:'PUT', headers:{Accept:'application/json',Authorization:`Bearer ${token}`}});
-    const data = await res.json().catch(()=> ({}));
-    if (!res.ok) throw new Error(data.error || 'Failed to upgrade');
-    alert('Upgraded successfully!');
-    currentUserTier='paid';
-    await loadProfile();
-  }catch(err){ alert(err.message || 'Upgrade failed'); }
+    const out = await apiFetch('users/me/description', {
+      method:'PUT',
+      body: { description: newDesc }
+    });
+    const saved = out?.user || {};
+    profileDescription.textContent = getDescription(saved) || newDesc;
+  }catch(err){ alert('Failed to save description'); console.error(err); }
+  finally{ toggleDescEdit(false); }
 }
-document.getElementById('upgradeBtn').addEventListener('click', doUpgrade);
+editDescBtn.addEventListener('click', ()=> !editingDesc ? toggleDescEdit(true) : saveDescription());
+document.getElementById('editDescBtnFloat').addEventListener('click', ()=> !editingDesc ? toggleDescEdit(true) : saveDescription());
 
-// nav + logout
+// nav + logout + upgrade
 document.getElementById('goToServicesBtn').addEventListener('click', ()=> location.href='services.html');
 document.getElementById('goToMessagesBtn').addEventListener('click', ()=> location.href='messages.html');
 document.getElementById('mobileServicesBtn').addEventListener('click', ()=> location.href='services.html');
 document.getElementById('mobileMessagesBtn').addEventListener('click', ()=> location.href='messages.html');
-document.getElementById('backToMyProfileBtn').addEventListener('click', ()=> { location.href='profile.html'; });
-document.getElementById('mobileBackBtn').addEventListener('click', ()=> { location.href='profile.html'; });
 
 document.getElementById('logoutBtn').addEventListener('click', ()=>{
   localStorage.clear();
   location.replace('/');
 });
+document.getElementById('upgradeBtn').addEventListener('click', async ()=>{
+  try{
+    if (!confirm('Upgrade to a paid account?')) return;
+    await apiFetch('users/me/upgrade', { method:'PUT' });
+    alert('Upgraded successfully!');
+    currentUserTier = 'paid';
+    await loadProfile();
+  }catch(err){ alert(err.message || 'Upgrade failed'); }
+});
 
 // init
-loadProfile().then(()=> loadServices({reset:true}));
-loadRatings(profileUserId);
-initRateForm();
+loadProfile();
 </script>
 </body>
 </html>
