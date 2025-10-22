@@ -5,9 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Services - CodeCrowds</title>
 <link rel="stylesheet" href="services.css" />
-<!-- If your server exposes a CSRF token, you can add one of these meta tags -->
-<!-- <meta name="csrf-token" content="{{ csrfToken }}"> -->
-<!-- <meta name="x-xsrf-token" content="{{ xsrfToken }}"> -->
+
+<!-- OPTIONAL CONFIG (uncomment & set these to lock exact backend) -->
+<!--
+<script>
+  // Example: exact endpoint
+  window.__API_BASE__ = '/api';
+  window.__MESSAGE_ENDPOINT__ = '/api/v1/users/:userId/messages'; // tokens: :userId, :serviceId
+
+  // Example: backend expects {recipientId, text}
+  window.__MESSAGE_PAYLOAD_KEYS__ = {
+    to: 'recipientId',
+    text: 'text',
+    service: 'serviceId'   // optional
+  };
+</script>
+-->
 </head>
 <body>
 <div class="container">
@@ -41,6 +54,10 @@
       </div>
 
       <p id="sendError" class="error-inline" aria-live="polite" hidden></p>
+      <details id="attemptDetails" hidden>
+        <summary>Tried endpoints</summary>
+        <ul id="attemptList" class="attempt-list"></ul>
+      </details>
 
       <div class="modal-meta">
         <span id="charCount" aria-live="polite">0 / 2000</span>
@@ -62,15 +79,22 @@
 <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script>
-// ---------- Config ----------
-const API_BASE_INPUT = (window.__API_BASE__ ?? '/api'); // override by setting window.__API_BASE__ before this script
+// ---------- Config & helpers ----------
+const API_BASE_INPUT = (window.__API_BASE__ ?? '/api');
 const API_BASES = Array.from(new Set([API_BASE_INPUT, '/api', 'api', '/']))
   .map(b => String(b || '/').replace(/\/+$/,'') || '/');
+
+const FIXED_ENDPOINT = window.__MESSAGE_ENDPOINT__ || null;
+const CUSTOM_KEYS = window.__MESSAGE_PAYLOAD_KEYS__ || null;
 
 function buildUrl(base, path) {
   const b = base === '/' ? '' : base;
   const p = String(path || '').replace(/^\/+/, '');
   return `${b}/${p}`;
+}
+function replaceTokens(url, {userId, serviceId}) {
+  return url.replace(/:userId\b/g, encodeURIComponent(userId || ''))
+            .replace(/:serviceId\b/g, encodeURIComponent(serviceId || ''));
 }
 
 // ---------- DOM ----------
@@ -87,6 +111,8 @@ const sendMessageBtn = document.getElementById('sendMessageBtn');
 const cancelMessageBtn = document.getElementById('cancelMessageBtn');
 const charCount = document.getElementById('charCount');
 const sendError = document.getElementById('sendError');
+const attemptDetails = document.getElementById('attemptDetails');
+const attemptList = document.getElementById('attemptList');
 
 let allServices = [];
 let messageState = { toUserId: null, serviceId: null, username: '' };
@@ -100,7 +126,6 @@ const fmtPrice = (v) => {
   const n = Number(v);
   return Number.isFinite(n) ? n.toLocaleString(undefined, { maximumFractionDigits: 2 }) : esc(v);
 };
-
 function toast(msg) {
   const el = document.getElementById('toast');
   if (!el) { alert(msg); return; }
@@ -108,7 +133,6 @@ function toast(msg) {
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2200);
 }
-
 function getCsrf() {
   return (
     document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
@@ -116,13 +140,10 @@ function getCsrf() {
     null
   );
 }
-
 function showInlineError(msg) {
   sendError.textContent = msg;
   sendError.hidden = !msg;
 }
-
-// Error helpers
 function stringifyAny(value) {
   if (value == null) return '';
   if (typeof value === 'string') return value;
@@ -131,19 +152,11 @@ function stringifyAny(value) {
 function extractApiError(status, data, textFallback) {
   if (data && typeof data === 'object') {
     const keys = ['error', 'message', 'detail', 'reason'];
-    for (const k of keys) {
-      if (data[k]) return `[${status}] ${typeof data[k] === 'string' ? data[k] : stringifyAny(data[k])}`;
-    }
+    for (const k of keys) if (data[k]) return `[${status}] ${typeof data[k]==='string'?data[k]:stringifyAny(data[k])}`;
     if (Array.isArray(data.errors) && data.errors.length) {
-      const parts = data.errors.map(e => {
-        if (typeof e === 'string') return e;
-        if (e && typeof e === 'object') {
-          if (e.message && e.field) return `${e.field}: ${e.message}`;
-          if (e.message) return e.message;
-          return stringifyAny(e);
-        }
-        return String(e);
-      });
+      const parts = data.errors.map(e => typeof e==='string' ? e :
+        e?.message && e?.field ? `${e.field}: ${e.message}` :
+        e?.message || stringifyAny(e));
       return `[${status}] ${parts.join('; ')}`;
     }
     if (data.details) return `[${status}] ${stringifyAny(data.details)}`;
@@ -250,6 +263,7 @@ function showModal() {
   messageModal.style.display = 'flex';
   messageModal.setAttribute('aria-hidden', 'false');
   showInlineError('');
+  attemptDetails.hidden = true; attemptList.innerHTML = '';
   updateCounterAndState();
   setTimeout(() => messageContent?.focus(), 0);
   window.addEventListener('keydown', onModalKey);
@@ -259,6 +273,7 @@ function hideModal() {
   messageModal.setAttribute('aria-hidden', 'true');
   if (messageContent) messageContent.value = '';
   showInlineError('');
+  attemptDetails.hidden = true; attemptList.innerHTML = '';
   updateCounterAndState();
   messageState = { toUserId: null, serviceId: null, username: '' };
   window.removeEventListener('keydown', onModalKey);
@@ -277,8 +292,70 @@ function onModalKey(e) {
     if (!sendMessageBtn.disabled) sendMessage();
   }
 }
+function logAttempt(url, status) {
+  attemptDetails.hidden = false;
+  const li = document.createElement('li');
+  li.textContent = `${url}  →  ${status}`;
+  attemptList.appendChild(li);
+}
 
-// ---------- Send (robust w/ more endpoints) ----------
+// ---------- Endpoint & payload planning ----------
+function plannedEndpoints() {
+  const uid = encodeURIComponent(messageState.toUserId || '');
+  const sid = encodeURIComponent(messageState.serviceId || '');
+
+  // If user config provided, use only that
+  if (FIXED_ENDPOINT) {
+    return [replaceTokens(FIXED_ENDPOINT, {userId: uid, serviceId: sid})];
+  }
+
+  // Otherwise try a broad, sensible set
+  const out = [];
+  for (const b of API_BASES) {
+    // Generic messages
+    out.push(buildUrl(b, 'messages'));
+    out.push(buildUrl(b, 'messages/send'));
+    out.push(buildUrl(b, 'v1/messages'));
+    out.push(buildUrl(b, 'v1/messages/send'));
+    out.push(buildUrl(b, 'chat/messages'));
+    out.push(buildUrl(b, 'direct-messages'));
+
+    // User-scoped
+    out.push(buildUrl(b, `users/${uid}/messages`));
+    out.push(buildUrl(b, `users/${uid}/messages/send`));
+    out.push(buildUrl(b, `v1/users/${uid}/messages`));
+
+    // Conversation/threads starters
+    out.push(buildUrl(b, 'conversations'));
+    out.push(buildUrl(b, 'conversations/start'));
+    out.push(buildUrl(b, `users/${uid}/conversations`));
+    out.push(buildUrl(b, 'threads'));
+    out.push(buildUrl(b, 'threads/start'));
+  }
+  // de-dupe
+  return Array.from(new Set(out));
+}
+
+function payloadVariants(text) {
+  if (CUSTOM_KEYS) {
+    const toKey = CUSTOM_KEYS.to || 'toUserId';
+    const textKey = CUSTOM_KEYS.text || 'body';
+    const serviceKey = CUSTOM_KEYS.service || 'serviceId';
+    const obj = {};
+    obj[toKey] = messageState.toUserId;
+    obj[textKey] = text;
+    if (messageState.serviceId) obj[serviceKey] = messageState.serviceId;
+    return [obj];
+  }
+  // Try common shapes
+  return [
+    { toUserId: messageState.toUserId, serviceId: messageState.serviceId || null, body: text },
+    { recipientId: messageState.toUserId, serviceId: messageState.serviceId || null, text },
+    { to: messageState.toUserId, serviceId: messageState.serviceId || null, content: text },
+  ];
+}
+
+// ---------- Send (configurable & robust) ----------
 async function sendMessage() {
   const text = (messageContent.value || '').trim();
   if (!messageState.toUserId) { showInlineError('Missing recipient.'); return; }
@@ -289,34 +366,9 @@ async function sendMessage() {
   const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
   if (csrf) { headers['X-CSRF-Token'] = csrf; headers['X-XSRF-TOKEN'] = csrf; }
 
-  // Try common payload shapes
-  const payloads = [
-    { toUserId: messageState.toUserId, serviceId: messageState.serviceId || null, body: text },
-    { recipientId: messageState.toUserId, serviceId: messageState.serviceId || null, text },
-    { to: messageState.toUserId, serviceId: messageState.serviceId || null, content: text },
-  ];
+  const endpoints = plannedEndpoints();
+  const payloads = payloadVariants(text);
 
-  // Candidate endpoints (expanded)
-  const uid = encodeURIComponent(messageState.toUserId);
-  const endpoints = [];
-
-  for (const b of API_BASES) {
-    // Generic
-    endpoints.push(buildUrl(b, 'messages'));
-    endpoints.push(buildUrl(b, 'messages/send'));
-    endpoints.push(buildUrl(b, 'v1/messages'));
-    endpoints.push(buildUrl(b, 'v1/messages/send'));
-    // User-scoped
-    endpoints.push(buildUrl(b, `users/${uid}/messages`));
-    endpoints.push(buildUrl(b, `users/${uid}/messages/send`));
-    // Conversation starters
-    endpoints.push(buildUrl(b, 'conversations'));
-    endpoints.push(buildUrl(b, 'conversations/start'));
-    endpoints.push(buildUrl(b, 'threads'));
-    endpoints.push(buildUrl(b, 'threads/start'));
-  }
-
-  // Abort after 15s
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
 
@@ -329,7 +381,6 @@ async function sendMessage() {
     for (const url of endpoints) {
       for (const body of payloads) {
         try {
-          console.info('[messages] POST', url, 'payload=', body);
           const res = await fetch(url, {
             method: 'POST',
             headers,
@@ -338,9 +389,9 @@ async function sendMessage() {
             signal: controller.signal
           });
 
-          if (res.status === 204) { // No content success
-            hideModal(); toast('Message sent!'); return;
-          }
+          logAttempt(url, res.status);
+
+          if (res.status === 204) { hideModal(); toast('Message sent!'); return; }
 
           let data = null, textBody = '';
           try { data = await res.json(); }
@@ -348,29 +399,29 @@ async function sendMessage() {
 
           if (res.ok) {
             hideModal(); toast('Message sent!');
-            // Optional: if backend returns thread info
             // if (data?.threadId) location.href = `/messages?thread=${encodeURIComponent(data.threadId)}`;
             return;
           }
 
           const msg = extractApiError(res.status, data, textBody);
           lastErrMsg = msg;
-          console.warn('[messages] failed variant:', { url, status: res.status, msg, data, textBody });
 
           if (res.status === 401 || res.status === 403) {
             showInlineError(msg || 'Not authorized. Check sign-in/CSRF.');
             return;
           }
-          // Continue to next variant/endpoint
+          // try next variant/endpoint
         } catch (netErr) {
+          logAttempt(url, netErr?.name === 'AbortError' ? 'timeout' : (netErr?.message || 'network error'));
           lastErrMsg = netErr?.message || stringifyAny(netErr);
-          console.warn('[messages] network error:', { url, error: netErr });
-          // try next combination
+          // continue
         }
       }
     }
 
-    showInlineError(`Failed to send: ${lastErrMsg}. Open DevTools → Network → “messages” (or user-scoped endpoints) for details.`);
+    showInlineError(`Failed to send: ${lastErrMsg}.
+Hint: set window.__MESSAGE_ENDPOINT__ to your exact route (e.g. "/api/v1/users/:userId/messages")
+and optionally window.__MESSAGE_PAYLOAD_KEYS__ = { to:"recipientId", text:"text", service:"serviceId" }`);
   } finally {
     clearTimeout(timeout);
     sendMessageBtn.disabled = false;
@@ -392,7 +443,9 @@ servicesList.addEventListener('click', (e) => {
   const username = btn.getAttribute('data-username') || 'seller';
   const serviceId = btn.getAttribute('data-service-id');
   if (!toUserId) { toast('This service has no associated user.'); return; }
-  openMessageModal({ toUserId, serviceId, username });
+  messageState = { toUserId, serviceId, username };
+  messageRecipient.textContent = username || 'seller';
+  showModal();
 });
 
 cancelMessageBtn.addEventListener('click', hideModal);
