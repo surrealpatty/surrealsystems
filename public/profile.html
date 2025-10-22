@@ -21,6 +21,11 @@
       <p class="section-subtle">These also appear on the Services page.</p>
       <div id="services-list"><p><span class="spinner"></span> Loading services...</p></div>
 
+      <!-- Load more row -->
+      <div class="row row-center row-gap-8 justify-center">
+        <button type="button" id="loadMoreServicesBtn" class="hidden">Load more</button>
+      </div>
+
       <div id="newServiceSection" class="new-service">
         <input type="text" id="newServiceTitle" placeholder="Service Title" />
         <textarea id="newServiceDesc" placeholder="Service Description"></textarea>
@@ -151,8 +156,14 @@ const logoutBtn = document.getElementById('logoutBtn');
 const upgradeBtn = document.getElementById('upgradeBtn');
 
 const backToMyProfileBtn = document.getElementById('backToMyProfileBtn');
+const loadMoreBtn = document.getElementById('loadMoreServicesBtn');
 
 let currentUserTier = 'free'; // will be set by fetch of /users/me
+
+// --- Services pagination state
+let svcPage = 1;
+let svcHasMore = false;
+let svcLoading = false;
 
 // ------- Helpers
 function showOwnerUI(isOwner) {
@@ -243,101 +254,145 @@ async function saveDescription() {
 editDescBtn.addEventListener('click', () => !editingDesc ? toggleDescEdit(true) : saveDescription());
 editDescBtnFloat.addEventListener('click', () => !editingDesc ? toggleDescEdit(true) : saveDescription());
 
-// ------- Services
-async function loadServices() {
-  servicesList.innerHTML = '<p><span class="spinner"></span> Loading services...</p>';
+// ------- Services (PAGINATED)
+function serviceCardHTML(s, isOwner) {
+  return `
+    <div class="card">
+      <h3>${esc(s.title)}</h3>
+      <p>${esc(s.description)}</p>
+      <p><strong>Price:</strong> $${Number(s.price).toLocaleString(undefined,{maximumFractionDigits:2})}</p>
+      <div class="service-buttons ${isOwner ? '' : 'hidden'}">
+        <button class="edit-service-btn" data-id="${s.id}">Edit</button>
+        <button class="delete-service-btn" data-id="${s.id}">Delete</button>
+      </div>
+    </div>
+  `;
+}
+
+async function loadServices({ reset = false } = {}) {
+  if (svcLoading) return;
+  svcLoading = true;
+
   try {
-    const res = await fetch(`${API_URL}/services`);
+    if (reset) {
+      svcPage = 1;
+      servicesList.innerHTML = '<p><span class="spinner"></span> Loading services...</p>';
+      loadMoreBtn.classList.add('hidden');
+    } else {
+      loadMoreBtn.disabled = true;
+      loadMoreBtn.textContent = 'Loading...';
+    }
+
+    const url = new URL(`${API_URL}/services`, window.location.origin);
+    url.searchParams.set('userId', profileUserId);
+    url.searchParams.set('limit', '12');
+    url.searchParams.set('page', String(svcPage));
+
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
-    const all = data.services || data || [];
-    const mine = all.filter(s => s.user?.id?.toString() === profileUserId);
+    const list = data.services || [];
+    svcHasMore = !!data.hasMore;
 
-    servicesList.innerHTML = '';
-    if (!mine.length) {
+    if (reset) servicesList.innerHTML = '';
+
+    if (!list.length && svcPage === 1) {
       servicesList.innerHTML = '<div class="card"><h3>No Services Yet</h3><p class="muted">Nothing posted yet.</p></div>';
+      loadMoreBtn.classList.add('hidden');
       return;
     }
 
-    mine.forEach((s) => {
-      const isOwner = loggedInUserId === (s.user?.id?.toString() || '');
-      const div = document.createElement('div');
-      div.className = 'card';
-      div.innerHTML = `
-        <h3>${esc(s.title)}</h3>
-        <p>${esc(s.description)}</p>
-        <p><strong>Price:</strong> $${Number(s.price).toLocaleString(undefined,{maximumFractionDigits:2})}</p>
-        <div class="service-buttons ${isOwner ? '' : 'hidden'}">
-          <button class="edit-service-btn">Edit</button>
-          <button class="delete-service-btn">Delete</button>
-        </div>
-      `;
-      servicesList.appendChild(div);
-
-      if (isOwner) {
-        div.querySelector('.edit-service-btn').addEventListener('click', () => editService(div, s));
-        div.querySelector('.delete-service-btn').addEventListener('click', () => deleteService(s.id));
-      }
+    const frag = document.createDocumentFragment();
+    list.forEach((s) => {
+      const isOwner = loggedInUserId === (s.user?.id?.toString() || s.userId?.toString() || '');
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = serviceCardHTML(s, isOwner);
+      frag.appendChild(wrapper.firstElementChild);
     });
+    servicesList.appendChild(frag);
+
+    // Wire edit/delete for the newly added cards
+    servicesList.querySelectorAll('.edit-service-btn').forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.getAttribute('data-id');
+        const card = btn.closest('.card');
+        const titleEl = card.querySelector('h3');
+        const descEl = card.querySelector('p');
+        const priceWrap = card.querySelector('p + p');
+
+        const origTitle = titleEl.textContent;
+        const origDesc = descEl.textContent;
+        const priceMatch = (priceWrap.textContent.match(/[\d.,]+/) || ['0'])[0];
+
+        titleEl.innerHTML = `<input type="text" class="edit-title input" value="${esc(origTitle)}">`;
+        descEl.innerHTML = `<textarea class="edit-desc textarea">${esc(origDesc)}</textarea>`;
+        priceWrap.innerHTML = `<strong>Price:</strong> $ <input type="number" class="edit-price input input-number" value="${esc(priceMatch)}">`;
+
+        const btns = card.querySelector('.service-buttons');
+        btns.innerHTML = `<button class="save-btn">Save</button> <button class="cancel-btn">Cancel</button>`;
+
+        btns.querySelector('.save-btn').onclick = async () => {
+          const updatedTitle = card.querySelector('.edit-title').value.trim();
+          const updatedDesc = card.querySelector('.edit-desc').value.trim();
+          const updatedPrice = card.querySelector('.edit-price').value.trim();
+          if (!updatedTitle || !updatedDesc || !updatedPrice) { alert('All fields required'); return; }
+
+          try {
+            const res = await fetch(`${API_URL}/services/${id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ title: updatedTitle, description: updatedDesc, price: updatedPrice })
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || 'Failed to update');
+            await loadServices({ reset: true });
+          } catch (err) {
+            console.error(err); alert('Failed to update service.');
+          }
+        };
+
+        btns.querySelector('.cancel-btn').onclick = () => loadServices({ reset: true });
+      };
+    });
+
+    servicesList.querySelectorAll('.delete-service-btn').forEach(btn => {
+      btn.onclick = async () => {
+        const id = btn.getAttribute('data-id');
+        if (!confirm('Delete this service?')) return;
+        try {
+          const res = await fetch(`${API_URL}/services/${id}`, {
+            method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+          });
+          const json = await res.json();
+          if (!res.ok) throw new Error(json.error || 'Failed to delete');
+          await loadServices({ reset: true });
+        } catch (err) {
+          console.error(err); alert('Failed to delete.');
+        }
+      };
+    });
+
+    // Show/hide Load More
+    if (svcHasMore) {
+      loadMoreBtn.classList.remove('hidden');
+      loadMoreBtn.disabled = false;
+      loadMoreBtn.textContent = 'Load more';
+      svcPage += 1;
+    } else {
+      loadMoreBtn.classList.add('hidden');
+    }
   } catch (err) {
     console.error(err);
-    servicesList.innerHTML = '<p>Failed to load services.</p>';
-  }
-}
-
-async function editService(card, service) {
-  const titleEl = card.querySelector('h3');
-  const descEl = card.querySelector('p');
-  const priceWrap = card.querySelector('p + p');
-
-  const origTitle = titleEl.textContent;
-  const origDesc = descEl.textContent;
-  const origPrice = (service.price ?? '').toString();
-
-  titleEl.innerHTML = `<input type="text" class="edit-title input" value="${esc(origTitle)}">`;
-  descEl.innerHTML = `<textarea class="edit-desc textarea">${esc(origDesc)}</textarea>`;
-  priceWrap.innerHTML = `<strong>Price:</strong> $ <input type="number" class="edit-price input input-number" value="${esc(origPrice)}">`;
-
-  const btns = card.querySelector('.service-buttons');
-  btns.innerHTML = `<button class="save-btn">Save</button> <button class="cancel-btn">Cancel</button>`;
-
-  btns.querySelector('.save-btn').addEventListener('click', async () => {
-    const updatedTitle = card.querySelector('.edit-title').value.trim();
-    const updatedDesc = card.querySelector('.edit-desc').value.trim();
-    const updatedPrice = card.querySelector('.edit-price').value.trim();
-    if (!updatedTitle || !updatedDesc || !updatedPrice) { alert('All fields required'); return; }
-
-    try {
-      const res = await fetch(`${API_URL}/services/${service.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ title: updatedTitle, description: updatedDesc, price: updatedPrice })
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to update');
-      await loadServices();
-    } catch (err) {
-      console.error(err); alert('Failed to update service.');
+    if (svcPage === 1) {
+      servicesList.innerHTML = '<p>Failed to load services.</p>';
     }
-  });
-
-  btns.querySelector('.cancel-btn').addEventListener('click', loadServices);
-}
-
-async function deleteService(id) {
-  if (!confirm('Delete this service?')) return;
-  try {
-    const res = await fetch(`${API_URL}/services/${id}`, {
-      method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
-    });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Failed to delete');
-    await loadServices();
-  } catch (err) {
-    console.error(err); alert('Failed to delete.');
+  } finally {
+    svcLoading = false;
   }
 }
+
+loadMoreBtn.addEventListener('click', () => loadServices({ reset: false }));
 
 function toggleNewService() {
   newServiceSection.classList.toggle('show-flex');
@@ -361,7 +416,7 @@ createServiceBtn.addEventListener('click', async () => {
     if (!res.ok) throw new Error(json.error || 'Failed to create');
     newServiceTitle.value = ''; newServiceDesc.value=''; newServicePrice.value='';
     newServiceSection.classList.remove('show-flex');
-    await loadServices();
+    await loadServices({ reset: true });
   } catch (err) {
     console.error(err); alert('Failed to create service.');
   }
@@ -476,7 +531,7 @@ document.getElementById('backToMyProfileBtn').addEventListener('click', () => { 
 mobileBackBtn.addEventListener('click', () => { window.location.href = 'profile.html'; });
 
 // ------- Initial load
-loadProfile();
+loadProfile().then(() => loadServices({ reset: true }));
 loadRatings(profileUserId);
 initRateForm();
 </script>

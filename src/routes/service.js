@@ -4,13 +4,41 @@ const router = express.Router();
 const { Service, User } = require('../models');
 const authenticateToken = require('../middlewares/authenticateToken');
 
-// GET all services (public)
+/**
+ * GET /api/services
+ * Optional query params:
+ *   userId: number  -> filter by owner
+ *   page:   number  -> 1-based page (default 1)
+ *   limit:  number  -> page size (default 12, max 50)
+ *
+ * Examples:
+ *   /api/services?userId=123
+ *   /api/services?userId=123&page=2&limit=12
+ */
 router.get('/', async (req, res) => {
   try {
-    const services = await Service.findAll({
-      include: [{ model: User, as: 'user', attributes: ['id', 'username'] }]
-    });
-    res.json({ services });
+    const userId = req.query.userId ? parseInt(req.query.userId, 10) : null;
+    const limit = Math.min(parseInt(req.query.limit, 10) || 12, 50);
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const where = {};
+    if (userId) where.userId = userId;
+
+    const [services, total] = await Promise.all([
+      Service.findAll({
+        where,
+        attributes: ['id', 'title', 'description', 'price', 'userId', 'createdAt'],
+        include: [{ model: User, as: 'user', attributes: ['id', 'username'] }],
+        order: [['createdAt', 'DESC']],
+        limit,
+        offset: (page - 1) * limit,
+      }),
+      Service.count({ where }),
+    ]);
+
+    const hasMore = page * limit < total;
+    // Small private cache to protect your API and avoid thrash
+    res.set('Cache-Control', 'private, max-age=15');
+    res.json({ services, page, limit, total, hasMore });
   } catch (err) {
     console.error('Fetch services error:', err);
     res.status(500).json({ error: 'Failed to fetch services' });
@@ -40,7 +68,6 @@ router.post('/', authenticateToken, async (req, res) => {
     res.status(201).json({ service: newService });
   } catch (err) {
     console.error('Create service error:', err);
-    // surface sequelize validation nicely if present
     if (err.name === 'SequelizeValidationError') {
       return res.status(400).json({ error: err.errors?.map(e => e.message).join(', ') });
     }
@@ -55,7 +82,6 @@ router.put('/:id', authenticateToken, async (req, res) => {
     if (!service) return res.status(404).json({ error: 'Service not found' });
     if (service.userId !== req.user.id) return res.status(403).json({ error: 'Unauthorized' });
 
-    // only allow specific fields
     const updates = {};
     if (typeof req.body.title === 'string' && req.body.title.trim()) updates.title = req.body.title.trim();
     if (typeof req.body.description === 'string' && req.body.description.trim()) updates.description = req.body.description.trim();
