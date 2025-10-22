@@ -6,15 +6,25 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const authenticateToken = require('../middlewares/authenticateToken');
 
-// ✅ NEW: validators
+// Validators
 const { body, param, oneOf } = require('express-validator');
-const validate = require('../middlewares/validate'); // make sure this file exists
+const validate = require('../middlewares/validate');
 
 // Helper — remove password from returned objects
 function toSafeUser(user) {
   if (!user) return user;
   const { password, ...safe } = user.toJSON ? user.toJSON() : user;
   return safe;
+}
+
+// Helper — success/error responders (inline so this file is self-contained)
+function sendSuccess(res, data = {}, status = 200) {
+  return res.status(status).json({ success: true, data });
+}
+function sendError(res, message = 'Something went wrong', status = 500, details) {
+  const payload = { success: false, error: { message } };
+  if (details) payload.error.details = details;
+  return res.status(status).json(payload);
 }
 
 /**
@@ -48,12 +58,10 @@ router.post(
       const { username, email, password, description } = req.body;
 
       const existingEmail = await User.findOne({ where: { email } });
-      if (existingEmail)
-        return res.status(400).json({ error: 'Email already used' });
+      if (existingEmail) return sendError(res, 'Email already used', 400);
 
       const existingUsername = await User.findOne({ where: { username } });
-      if (existingUsername)
-        return res.status(400).json({ error: 'Username already taken' });
+      if (existingUsername) return sendError(res, 'Username already taken', 400);
 
       const hashedPassword = await bcrypt.hash(password, 10);
       const newUser = await User.create({
@@ -70,10 +78,10 @@ router.post(
         { expiresIn: '1d' }
       );
 
-      res.status(201).json({ token, user: toSafeUser(newUser) });
+      return sendSuccess(res, { token, user: toSafeUser(newUser) }, 201);
     } catch (err) {
       console.error('Register error:', err);
-      res.status(500).json({ error: 'Registration failed' });
+      return sendError(res, 'Registration failed', 500);
     }
   }
 );
@@ -111,10 +119,10 @@ router.post(
       const { email, username, password } = req.body;
 
       const user = await User.findOne({ where: email ? { email } : { username } });
-      if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+      if (!user) return sendError(res, 'Invalid credentials', 401);
 
       const valid = await bcrypt.compare(password, user.password);
-      if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+      if (!valid) return sendError(res, 'Invalid credentials', 401);
 
       const token = jwt.sign(
         { id: user.id, email: user.email },
@@ -122,10 +130,10 @@ router.post(
         { expiresIn: '1d' }
       );
 
-      res.json({ token, user: toSafeUser(user) });
+      return sendSuccess(res, { token, user: toSafeUser(user) });
     } catch (err) {
       console.error('Login error:', err);
-      res.status(500).json({ error: 'Login failed' });
+      return sendError(res, 'Login failed', 500);
     }
   }
 );
@@ -139,11 +147,11 @@ router.get('/me', authenticateToken, async (req, res) => {
     const user = await User.findByPk(req.user.id, {
       attributes: { exclude: ['password'] },
     });
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json({ user });
+    if (!user) return sendError(res, 'User not found', 404);
+    return sendSuccess(res, { user });
   } catch (err) {
     console.error('Get /me error:', err);
-    res.status(500).json({ error: 'Failed to fetch user' });
+    return sendError(res, 'Failed to fetch user', 500);
   }
 });
 
@@ -159,11 +167,11 @@ router.get(
     try {
       const id = Number(req.params.id);
       const user = await User.findByPk(id, { attributes: { exclude: ['password'] } });
-      if (!user) return res.status(404).json({ error: 'User not found' });
-      res.json({ user });
+      if (!user) return sendError(res, 'User not found', 404);
+      return sendSuccess(res, { user });
     } catch (err) {
       console.error('Get user by id error:', err);
-      res.status(500).json({ error: 'Failed to fetch user' });
+      return sendError(res, 'Failed to fetch user', 500);
     }
   }
 );
@@ -190,15 +198,15 @@ router.put(
       const { description } = req.body;
 
       const user = await User.findByPk(req.user.id);
-      if (!user) return res.status(404).json({ error: 'User not found' });
+      if (!user) return sendError(res, 'User not found', 404);
 
       user.description = description.trim();
       await user.save();
 
-      res.json({ message: 'Description updated successfully', user: toSafeUser(user) });
+      return sendSuccess(res, { message: 'Description updated successfully', user: toSafeUser(user) });
     } catch (err) {
       console.error('Update description error:', err);
-      res.status(500).json({ error: 'Failed to save description' });
+      return sendError(res, 'Failed to save description', 500);
     }
   }
 );
@@ -210,15 +218,15 @@ router.put(
 router.put('/me/upgrade', authenticateToken, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) return sendError(res, 'User not found', 404);
 
     user.tier = 'paid';
     await user.save();
 
-    res.json({ message: 'Account upgraded to paid', user: toSafeUser(user) });
+    return sendSuccess(res, { message: 'Account upgraded to paid', user: toSafeUser(user) });
   } catch (err) {
     console.error('Upgrade error:', err);
-    res.status(500).json({ error: 'Failed to upgrade account' });
+    return sendError(res, 'Failed to upgrade account', 500);
   }
 });
 
