@@ -218,3 +218,7 @@ button[disabled] { opacity: 0.6; cursor: not-allowed; }
 @media (max-width: 480px) {
   .container { padding: 2rem 1rem; }
 }
+/* Attempt list (moved from inline style) */
+.attempt-list {
+  margin: 6px 0 0 18px;
+}
