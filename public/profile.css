@@ -174,6 +174,13 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 #addNewServiceBtn { background-color: #ffc107; color: #333; bottom: 80px; }
 #editDescBtnFloat { background-color:#6f42c1; bottom: 20px; }
 
+/* NEW: Back (floating) — appears only when viewing someone else */
+#backToMyProfileBtn {
+  background-color: #6c757d;
+  bottom: 260px; /* stacked above others */
+}
+#backToMyProfileBtn:hover { background-color: #5a6268; }
+
 /* ---------- Mobile Bottom Row ---------- */
 .mobile-button-row {
   display: none;

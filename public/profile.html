@@ -74,10 +74,15 @@
   <button type="button" class="floating-btn hidden" id="addNewServiceBtn">+ Service</button>
   <button type="button" class="floating-btn hidden" id="editDescBtnFloat">Edit Bio</button>
 
+  <!-- NEW: Back to my profile (visible only when viewing someone else) -->
+  <button type="button" class="floating-btn hidden" id="backToMyProfileBtn">← My Profile</button>
+
   <div class="mobile-button-row hidden" id="mobileRow">
     <button type="button" id="mobileServicesBtn">Services</button>
     <button type="button" id="mobileMessagesBtn">Messages</button>
     <button type="button" id="mobileAddServiceBtn">+ Service</button>
+    <!-- NEW: Back (mobile) -->
+    <button type="button" id="mobileBackBtn" class="hidden">My Profile</button>
   </div>
 
 <script>
@@ -120,6 +125,7 @@ const mobileServicesBtn = document.getElementById('mobileServicesBtn');
 const mobileMessagesBtn = document.getElementById('mobileMessagesBtn');
 const mobileAddServiceBtn = document.getElementById('mobileAddServiceBtn');
 const mobileRow = document.getElementById('mobileRow');
+const mobileBackBtn = document.getElementById('mobileBackBtn');
 
 const ratingsList = document.getElementById('ratings-list');
 const avgStarsEl = document.getElementById('avg-stars');
@@ -130,10 +136,15 @@ const rateComment = document.getElementById('rateComment');
 const submitRatingBtn = document.getElementById('submitRatingBtn');
 const rateMsg = document.getElementById('rateMsg');
 
+const backToMyProfileBtn = document.getElementById('backToMyProfileBtn');
+
 // ------- Helpers
 function showOwnerUI(isOwner) {
   [goToServicesBtn, goToMessagesBtn, addNewServiceBtn, editDescBtnFloat, mobileRow, descControls, newServiceSection]
     .forEach(el => el.classList.toggle('hidden', !isOwner));
+  // Show "Back to My Profile" only when viewing someone else
+  backToMyProfileBtn.classList.toggle('hidden', isOwner);
+  mobileBackBtn.classList.toggle('hidden', isOwner);
 }
 
 function esc(s) { return String(s ?? '').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -389,6 +400,14 @@ mobileMessagesBtn.addEventListener('click', () => window.location.href = 'messag
 document.getElementById('logoutBtn').addEventListener('click', () => {
   localStorage.clear();
   window.location.href = 'index.html';
+});
+
+// --- Back buttons
+backToMyProfileBtn.addEventListener('click', () => {
+  window.location.href = 'profile.html';
+});
+mobileBackBtn.addEventListener('click', () => {
+  window.location.href = 'profile.html';
 });
 
 // ------- Initial load
