@@ -1,3 +1,4 @@
+// server.js
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -7,11 +8,17 @@ const { sequelize, testConnection } = require('./config/database');
 const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/service');
 const ratingRoutes = require('./routes/rating');
+const messageRoutes = require('./routes/messages'); // ✅ MOUNT THIS
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: true, // or ['http://localhost:3000'] if you want to pin it
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization'], // ✅ allow JWT header
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS']
+}));
 app.use(express.json());
 
 // Serve frontend
@@ -21,13 +28,14 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/ratings', ratingRoutes);
+app.use('/api/messages', messageRoutes); // ✅ NOW ACTIVE
 
-// ---- NEW: 404 for unknown routes
+// 404 for unknown routes
 app.use((req, res) => {
   res.status(404).json({ success: false, error: { message: 'Not found' } });
 });
 
-// ---- NEW: Central error handler (for thrown errors)
+// Central error handler
 app.use((err, req, res, next) => {
   console.error('🔥 Uncaught error:', err);
   const status = err.statusCode || 500;

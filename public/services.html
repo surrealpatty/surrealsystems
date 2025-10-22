@@ -229,7 +229,7 @@ function onModalKey(e) {
   }
 }
 
-// ===================== Send (locked to your backend) =====================
+// ===================== Send (POST /api/messages) =====================
 async function sendMessage() {
   const token = localStorage.getItem('token');   // set this at login
   if (!token) { showInlineError('Please log in to send messages.'); return; }
@@ -251,15 +251,13 @@ async function sendMessage() {
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
-        receiverId: messageState.toUserId,         // matches your backend
-        content: text,                             // matches your backend
+        receiverId: messageState.toUserId,         // backend expects this
+        content: text,                             // and this
         serviceId: messageState.serviceId || null  // optional
       })
     });
 
-    if (res.status === 204) {
-      hideModal(); toast('Message sent!'); return;
-    }
+    if (res.status === 204) { hideModal(); toast('Message sent!'); return; }
     if (!res.ok) {
       const msg = await readError(res);
       if (res.status === 401 || res.status === 403) {
@@ -271,7 +269,6 @@ async function sendMessage() {
       return;
     }
 
-    // Success with body
     hideModal();
     toast('Message sent!');
   } catch (err) {

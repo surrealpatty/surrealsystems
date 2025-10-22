@@ -3,19 +3,11 @@ const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
 
-// Adjust these imports to your actual model/middleware paths:
 const Message = require('../models/message');
 const User = require('../models/user');
 const authenticateToken = require('../middlewares/authenticateToken');
 
-// Optional: make sure associations exist (usually done in models/index)
-// Message.belongsTo(User, { as: 'sender', foreignKey: 'senderId' });
-// Message.belongsTo(User, { as: 'receiver', foreignKey: 'receiverId' });
-
-/**
- * POST /api/messages
- * Body: { receiverId, content, serviceId? }
- */
+// POST /api/messages — send a message
 router.post('/', authenticateToken, async (req, res) => {
   try {
     const { receiverId, content, serviceId } = req.body || {};
@@ -24,7 +16,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     const msg = await Message.create({
-      senderId: req.user.id,             // set by authenticateToken
+      senderId: req.user.id, // set by authenticateToken
       receiverId,
       content: String(content).trim(),
       serviceId: serviceId || null
@@ -37,10 +29,7 @@ router.post('/', authenticateToken, async (req, res) => {
   }
 });
 
-/**
- * GET /api/messages
- * Returns current user's inbox
- */
+// GET /api/messages — current user's inbox
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const messages = await Message.findAll({
@@ -55,10 +44,7 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-/**
- * GET /api/messages/conversation/:otherUserId
- * Returns DM thread between logged-in user and :otherUserId
- */
+// GET /api/messages/conversation/:otherUserId — DM thread
 router.get('/conversation/:otherUserId', authenticateToken, async (req, res) => {
   try {
     const otherUserId = req.params.otherUserId;
