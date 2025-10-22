@@ -278,7 +278,7 @@ function onModalKey(e) {
   }
 }
 
-// ---------- Send (robust) ----------
+// ---------- Send (robust w/ more endpoints) ----------
 async function sendMessage() {
   const text = (messageContent.value || '').trim();
   if (!messageState.toUserId) { showInlineError('Missing recipient.'); return; }
@@ -295,9 +295,28 @@ async function sendMessage() {
     { recipientId: messageState.toUserId, serviceId: messageState.serviceId || null, text },
     { to: messageState.toUserId, serviceId: messageState.serviceId || null, content: text },
   ];
-  // Candidate endpoints
-  const endpoints = API_BASES.map(b => buildUrl(b, 'messages'));
 
+  // Candidate endpoints (expanded)
+  const uid = encodeURIComponent(messageState.toUserId);
+  const endpoints = [];
+
+  for (const b of API_BASES) {
+    // Generic
+    endpoints.push(buildUrl(b, 'messages'));
+    endpoints.push(buildUrl(b, 'messages/send'));
+    endpoints.push(buildUrl(b, 'v1/messages'));
+    endpoints.push(buildUrl(b, 'v1/messages/send'));
+    // User-scoped
+    endpoints.push(buildUrl(b, `users/${uid}/messages`));
+    endpoints.push(buildUrl(b, `users/${uid}/messages/send`));
+    // Conversation starters
+    endpoints.push(buildUrl(b, 'conversations'));
+    endpoints.push(buildUrl(b, 'conversations/start'));
+    endpoints.push(buildUrl(b, 'threads'));
+    endpoints.push(buildUrl(b, 'threads/start'));
+  }
+
+  // Abort after 15s
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
 
@@ -329,29 +348,29 @@ async function sendMessage() {
 
           if (res.ok) {
             hideModal(); toast('Message sent!');
-            // Optional: redirect if backend returns thread info
+            // Optional: if backend returns thread info
             // if (data?.threadId) location.href = `/messages?thread=${encodeURIComponent(data.threadId)}`;
             return;
           }
 
           const msg = extractApiError(res.status, data, textBody);
           lastErrMsg = msg;
-          console.warn('[messages] variant failed:', { url, status: res.status, msg, data, textBody });
+          console.warn('[messages] failed variant:', { url, status: res.status, msg, data, textBody });
 
           if (res.status === 401 || res.status === 403) {
             showInlineError(msg || 'Not authorized. Check sign-in/CSRF.');
             return;
           }
-          // Otherwise, try next variant/endpoint
+          // Continue to next variant/endpoint
         } catch (netErr) {
           lastErrMsg = netErr?.message || stringifyAny(netErr);
           console.warn('[messages] network error:', { url, error: netErr });
-          // continue trying
+          // try next combination
         }
       }
     }
 
-    showInlineError(`Failed to send: ${lastErrMsg}. Open DevTools → Network → “messages” for details.`);
+    showInlineError(`Failed to send: ${lastErrMsg}. Open DevTools → Network → “messages” (or user-scoped endpoints) for details.`);
   } finally {
     clearTimeout(timeout);
     sendMessageBtn.disabled = false;
