@@ -1,169 +1,136 @@
+// routes/service.js
 const express = require('express');
 const router = express.Router();
-const { User } = require('../models');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+const { Service, User } = require('../models');
+const { body, param, query } = require('express-validator');
 const authenticateToken = require('../middlewares/authenticateToken');
+const validate = require('../middlewares/validate'); // <-- add
 
-// Helper — remove password from returned objects
-function toSafeUser(user) {
-  if (!user) return user;
-  const { password, ...safe } = user.toJSON ? user.toJSON() : user;
-  return safe;
-}
+// GET /api/services
+router.get(
+  '/',
+  [
+    query('userId').optional().isInt({ min: 1 }),
+    query('page').optional().isInt({ min: 1 }),
+    query('limit').optional().isInt({ min: 1, max: 50 }),
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const userId = req.query.userId ? parseInt(req.query.userId, 10) : null;
+      const limit = Math.min(parseInt(req.query.limit, 10) || 12, 50);
+      const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+      const where = {};
+      if (userId) where.userId = userId;
 
-// --- Register ---
-router.post('/register', async (req, res) => {
-  try {
-    const { username, email, password, description } = req.body;
-    if (!username || !email || !password) {
-      return res
-        .status(400)
-        .json({ error: 'Username, email, and password are required' });
+      const [services, total] = await Promise.all([
+        Service.findAll({
+          where,
+          attributes: ['id', 'title', 'description', 'price', 'userId', 'createdAt'],
+          include: [{ model: User, as: 'user', attributes: ['id', 'username'] }],
+          order: [['createdAt', 'DESC']],
+          limit,
+          offset: (page - 1) * limit,
+        }),
+        Service.count({ where }),
+      ]);
+
+      const hasMore = page * limit < total;
+      res.set('Cache-Control', 'private, max-age=15');
+      res.json({ services, page, limit, total, hasMore });
+    } catch (err) {
+      console.error('Fetch services error:', err);
+      res.status(500).json({ error: 'Failed to fetch services' });
     }
-
-    const existingEmail = await User.findOne({ where: { email } });
-    if (existingEmail)
-      return res.status(400).json({ error: 'Email already used' });
-
-    const existingUsername = await User.findOne({ where: { username } });
-    if (existingUsername)
-      return res.status(400).json({ error: 'Username already taken' });
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({
-      username,
-      email,
-      password: hashedPassword,
-      description: description || '',
-      tier: 'free', // default
-    });
-
-    const token = jwt.sign(
-      { id: newUser.id, email: newUser.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
-
-    res.status(201).json({ token, user: toSafeUser(newUser) });
-  } catch (err) {
-    console.error('Register error:', err);
-    res.status(500).json({ error: 'Registration failed' });
   }
-});
+);
 
-// --- Login ---
-router.post('/login', async (req, res) => {
-  try {
-    const { email, username, password } = req.body;
-    if ((!email && !username) || !password) {
-      return res
-        .status(400)
-        .json({ error: 'Email/username and password required' });
+// POST /api/services (create)
+router.post(
+  '/',
+  authenticateToken,
+  [
+    body('title').isString().trim().isLength({ min: 3, max: 120 }),
+    body('description').isString().isLength({ min: 10, max: 5000 }),
+    body('price').isFloat({ min: 0 }),
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const { title, description, price } = req.body;
+      const newService = await Service.create({
+        title: title.trim(),
+        description: description.trim(),
+        price: Number(price),
+        userId: req.user.id,
+      });
+      res.status(201).json({ service: newService });
+    } catch (err) {
+      console.error('Create service error:', err);
+      if (err.name === 'SequelizeValidationError') {
+        return res.status(400).json({ error: err.errors?.map(e => e.message).join(', ') });
+      }
+      res.status(500).json({ error: 'Failed to create service' });
     }
-
-    const user = await User.findOne({ where: email ? { email } : { username } });
-    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
-
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
-
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
-
-    res.json({ token, user: toSafeUser(user) });
-  } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ error: 'Login failed' });
   }
-});
+);
 
-// --- Profile: current user (/me) ---
-router.get('/me', authenticateToken, async (req, res) => {
-  try {
-    const user = await User.findByPk(req.user.id, {
-      attributes: { exclude: ['password'] },
-    });
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json({ user });
-  } catch (err) {
-    console.error('Get /me error:', err);
-    res.status(500).json({ error: 'Failed to fetch user' });
-  }
-});
+// PUT /api/services/:id (update)
+router.put(
+  '/:id',
+  authenticateToken,
+  [
+    param('id').isInt(),
+    body('title').optional().isString().trim().isLength({ min: 3, max: 120 }),
+    body('description').optional().isString().isLength({ min: 10, max: 5000 }),
+    body('price').optional().isFloat({ min: 0 }),
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const service = await Service.findByPk(req.params.id);
+      if (!service) return res.status(404).json({ error: 'Service not found' });
+      if (String(service.userId) !== String(req.user.id)) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
 
-// --- Profile: by ID ---
-router.get('/:id', authenticateToken, async (req, res) => {
-  try {
-    const user = await User.findByPk(req.params.id, {
-      attributes: { exclude: ['password'] },
-    });
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json({ user });
-  } catch (err) {
-    console.error('Get /:id error:', err);
-    res.status(500).json({ error: 'Failed to fetch user' });
-  }
-});
+      const updates = {};
+      if (req.body.title !== undefined) updates.title = req.body.title.trim();
+      if (req.body.description !== undefined) updates.description = req.body.description.trim();
+      if (req.body.price !== undefined) updates.price = Number(req.body.price);
 
-// --- Update description (3 routes) ---
-router.put('/me/description', authenticateToken, async (req, res) => {
-  await updateDescription(req, res, req.user.id);
-});
-
-router.put('/me', authenticateToken, async (req, res) => {
-  await updateDescription(req, res, req.user.id);
-});
-
-router.put('/:id', authenticateToken, async (req, res) => {
-  const targetId = req.params.id;
-  if (String(targetId) !== String(req.user.id)) {
-    return res.status(403).json({ error: 'Unauthorized' });
-  }
-  await updateDescription(req, res, targetId);
-});
-
-// --- Upgrade to paid ---
-router.put('/me/upgrade', authenticateToken, async (req, res) => {
-  try {
-    const user = await User.findByPk(req.user.id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    user.tier = 'paid';
-    await user.save();
-
-    res.json({ message: 'Account upgraded to paid', user: toSafeUser(user) });
-  } catch (err) {
-    console.error('Upgrade error:', err);
-    res.status(500).json({ error: 'Failed to upgrade account' });
-  }
-});
-
-// Shared update handler
-async function updateDescription(req, res, targetId) {
-  try {
-    const { description } = req.body;
-    if (typeof description !== 'string') {
-      return res.status(400).json({ error: 'Description must be a string' });
+      await service.update(updates);
+      res.json({ service });
+    } catch (err) {
+      console.error('Update service error:', err);
+      if (err.name === 'SequelizeValidationError') {
+        return res.status(400).json({ error: err.errors?.map(e => e.message).join(', ') });
+      }
+      res.status(500).json({ error: 'Failed to update service' });
     }
-
-    const user = await User.findByPk(targetId);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    user.description = description;
-    await user.save();
-
-    res.json({
-      message: 'Description updated successfully',
-      user: toSafeUser(user),
-    });
-  } catch (err) {
-    console.error('Update description error:', err);
-    res.status(500).json({ error: 'Failed to save description' });
   }
-}
+);
+
+// DELETE /api/services/:id
+router.delete(
+  '/:id',
+  authenticateToken,
+  [param('id').isInt()],
+  validate,
+  async (req, res) => {
+    try {
+      const service = await Service.findByPk(req.params.id);
+      if (!service) return res.status(404).json({ error: 'Service not found' });
+      if (String(service.userId) !== String(req.user.id)) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+      await service.destroy();
+      res.json({ message: 'Service deleted' });
+    } catch (err) {
+      console.error('Delete service error:', err);
+      res.status(500).json({ error: 'Failed to delete service' });
+    }
+  }
+);
 
 module.exports = router;
