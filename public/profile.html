@@ -161,10 +161,12 @@ const esc = (s)=>String(s??'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 async function fetchMe(){
   const res = await fetch(`${API_URL}/users/me`, { headers:{Accept:'application/json',Authorization:`Bearer ${token}`}});
-  const data = await res.json().catch(()=> ({}));
-  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-  currentUserTier = data.user?.tier || 'free';
-  return data.user;
+const raw = await res.json().catch(()=> ({}));
+if (!res.ok) throw new Error(raw?.error?.message || raw?.error || `HTTP ${res.status}`);
+const data = unwrap(raw);
+currentUserTier = data.user?.tier || 'free';
+return data.user;
+
 }
 
 async function loadProfile(){
