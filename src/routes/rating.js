@@ -30,13 +30,21 @@ router.get('/user/:userId', async (req, res) => {
 });
 
 // POST create or update a rating (upsert by raterId+rateeId)
+// Only PAID users can rate
 router.post('/', authenticateToken, async (req, res) => {
   try {
     const raterId = req.user.id;
     const { rateeId, stars, comment } = req.body;
 
     if (!rateeId || !stars) return res.status(400).json({ error: 'rateeId and stars are required' });
-    if (Number(rateeId) === raterId) return res.status(400).json({ error: 'You cannot rate yourself' });
+    if (Number(rateeId) === Number(raterId)) return res.status(400).json({ error: 'You cannot rate yourself' });
+
+    // Check rater tier
+    const rater = await User.findByPk(raterId);
+    if (!rater) return res.status(404).json({ error: 'User not found' });
+    if (rater.tier !== 'paid') {
+      return res.status(403).json({ error: 'Upgrade to a paid account to rate others.' });
+    }
 
     const clamped = Math.max(1, Math.min(5, parseInt(stars, 10)));
 

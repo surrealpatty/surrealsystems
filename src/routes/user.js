@@ -36,6 +36,7 @@ router.post('/register', async (req, res) => {
       email,
       password: hashedPassword,
       description: description || '',
+      tier: 'free', // default
     });
 
     const token = jwt.sign(
@@ -123,6 +124,22 @@ router.put('/:id', authenticateToken, async (req, res) => {
     return res.status(403).json({ error: 'Unauthorized' });
   }
   await updateDescription(req, res, targetId);
+});
+
+// --- Upgrade to paid ---
+router.put('/me/upgrade', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    user.tier = 'paid';
+    await user.save();
+
+    res.json({ message: 'Account upgraded to paid', user: toSafeUser(user) });
+  } catch (err) {
+    console.error('Upgrade error:', err);
+    res.status(500).json({ error: 'Failed to upgrade account' });
+  }
 });
 
 // Shared update handler
