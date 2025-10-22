@@ -71,7 +71,20 @@ function initLoginPage() {
       if (!token || !userId) { show(msg); setText(msg,'Login succeeded but token/userId missing.'); return; }
 
       setToken(token); setUserId(userId);
-      localStorage.setItem('cc_me', JSON.stringify(out.user || out.data?.user || {}));
+
+// normalize + cache for profile
+const rawUser = out.user || out.data?.user || {};
+const displayName =
+  rawUser.username ||
+  rawUser.name ||
+  rawUser.displayName ||
+  (rawUser.email ? rawUser.email.split('@')[0] : '');
+
+try {
+  localStorage.setItem('cc_me', JSON.stringify(rawUser));
+  if (displayName) localStorage.setItem('username', displayName);
+} catch {}
+
 
       // 🔒 Always land on profile after login (ignore ?from=, so we never bounce to services)
       location.replace('profile.html');

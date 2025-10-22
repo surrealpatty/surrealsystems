@@ -10,14 +10,28 @@ const authenticateToken = require('../middlewares/authenticateToken');
 const { body, param, oneOf } = require('express-validator');
 const validate = require('../middlewares/validate');
 
-// Helper — remove password from returned objects
+// ---------- Helpers ----------
+
+// Remove password from returned objects
 function toSafeUser(user) {
   if (!user) return user;
-  const { password, ...safe } = user.toJSON ? user.toJSON() : user;
+  const raw = user.toJSON ? user.toJSON() : user;
+  const { password, ...safe } = raw;
   return safe;
 }
 
-// Helper — success/error responders (inline so this file is self-contained)
+// Ensure we always have a `username` in API responses
+function withNormalizedUsername(safeUser) {
+  if (!safeUser) return safeUser;
+  const out = { ...safeUser };
+  if (!out.username || String(out.username).trim() === '') {
+    const fromEmail = out.email ? String(out.email).split('@')[0] : '';
+    out.username = out.name || out.displayName || fromEmail || 'User';
+  }
+  return out;
+}
+
+// Unified success/error responders
 function sendSuccess(res, data = {}, status = 200) {
   return res.status(status).json({ success: true, data });
 }
@@ -26,6 +40,8 @@ function sendError(res, message = 'Something went wrong', status = 500, details)
   if (details) payload.error.details = details;
   return res.status(status).json(payload);
 }
+
+// ---------- Routes ----------
 
 /**
  * --- Register ---
@@ -68,7 +84,7 @@ router.post(
         username,
         email,
         password: hashedPassword,
-        description: description || '',
+        description: (description || '').trim(),
         tier: 'free',
       });
 
@@ -78,7 +94,8 @@ router.post(
         { expiresIn: '1d' }
       );
 
-      return sendSuccess(res, { token, user: toSafeUser(newUser) }, 201);
+      const safe = withNormalizedUsername(toSafeUser(newUser));
+      return sendSuccess(res, { token, user: safe }, 201);
     } catch (err) {
       console.error('Register error:', err);
       return sendError(res, 'Registration failed', 500);
@@ -130,7 +147,8 @@ router.post(
         { expiresIn: '1d' }
       );
 
-      return sendSuccess(res, { token, user: toSafeUser(user) });
+      const safe = withNormalizedUsername(toSafeUser(user));
+      return sendSuccess(res, { token, user: safe });
     } catch (err) {
       console.error('Login error:', err);
       return sendError(res, 'Login failed', 500);
@@ -148,7 +166,9 @@ router.get('/me', authenticateToken, async (req, res) => {
       attributes: { exclude: ['password'] },
     });
     if (!user) return sendError(res, 'User not found', 404);
-    return sendSuccess(res, { user });
+
+    const safe = withNormalizedUsername(toSafeUser(user));
+    return sendSuccess(res, { user: safe });
   } catch (err) {
     console.error('Get /me error:', err);
     return sendError(res, 'Failed to fetch user', 500);
@@ -168,7 +188,9 @@ router.get(
       const id = Number(req.params.id);
       const user = await User.findByPk(id, { attributes: { exclude: ['password'] } });
       if (!user) return sendError(res, 'User not found', 404);
-      return sendSuccess(res, { user });
+
+      const safe = withNormalizedUsername(toSafeUser(user));
+      return sendSuccess(res, { user: safe });
     } catch (err) {
       console.error('Get user by id error:', err);
       return sendError(res, 'Failed to fetch user', 500);
@@ -203,7 +225,8 @@ router.put(
       user.description = description.trim();
       await user.save();
 
-      return sendSuccess(res, { message: 'Description updated successfully', user: toSafeUser(user) });
+      const safe = withNormalizedUsername(toSafeUser(user));
+      return sendSuccess(res, { message: 'Description updated successfully', user: safe });
     } catch (err) {
       console.error('Update description error:', err);
       return sendError(res, 'Failed to save description', 500);
@@ -223,7 +246,8 @@ router.put('/me/upgrade', authenticateToken, async (req, res) => {
     user.tier = 'paid';
     await user.save();
 
-    return sendSuccess(res, { message: 'Account upgraded to paid', user: toSafeUser(user) });
+    const safe = withNormalizedUsername(toSafeUser(user));
+    return sendSuccess(res, { message: 'Account upgraded to paid', user: safe });
   } catch (err) {
     console.error('Upgrade error:', err);
     return sendError(res, 'Failed to upgrade account', 500);
