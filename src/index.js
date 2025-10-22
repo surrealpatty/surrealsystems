@@ -1,3 +1,4 @@
+// src/index.js
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -19,29 +20,22 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// 🔒 Optional hard guard for direct hits to /services.html (best-effort, statics are public)
-app.get('/services.html', (req, res, next) => {
-  // If you later add server sessions, check them here.
-  const auth = req.header('Authorization') || req.header('Cookie');
-  if (!auth) return res.redirect('/');
-  next();
-});
-
-// Serve static frontend
+// ✅ Serve static frontend (public/*)
+// NOTE: __dirname points to /src, so ../public is correct
 app.use(express.static(path.join(__dirname, '../public')));
 
-// API routes (mounted at /api/*)
+// ✅ API routes
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/messages', messageRoutes);
 
-// 404 for unknown routes
+// 404 for unknown routes (non-static, non-API)
 app.use((req, res) => {
   res.status(404).json({ success: false, error: { message: 'Not found' } });
 });
 
-// Error handler
+// Central error handler
 app.use((err, req, res, next) => {
   console.error('🔥 Uncaught error:', err);
   const status = err.statusCode || 500;
@@ -60,4 +54,5 @@ const startServer = async () => {
     process.exit(1);
   }
 };
+
 startServer();
