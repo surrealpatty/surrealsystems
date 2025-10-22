@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="profile.css" />
 </head>
 <body>
-  <div class="container">
+  <main class="container">
     <header>
       <h1 id="profile-username"><span class="spinner"></span> Loading username...</h1>
       <p id="profile-description"><span class="spinner"></span> Loading description...</p>
@@ -41,7 +41,7 @@
         </p>
       </div>
 
-      <!-- Rate (only when viewing someone else) -->
+      <!-- Rate (only when viewing someone else AND current user is PAID) -->
       <div id="rate-form" class="card hidden" aria-labelledby="rateFormTitle">
         <h3 id="rateFormTitle">Leave a rating</h3>
 
@@ -57,6 +57,12 @@
         <textarea id="rateComment" class="w-full" placeholder="Say something helpful (optional)" rows="3"></textarea>
         <button type="button" id="submitRatingBtn">Submit Rating</button>
         <p id="rateMsg" class="muted"></p>
+
+        <!-- Shown if the user is free -->
+        <div id="rateUpgradeHint" class="hidden muted">
+          Rating is a paid feature.
+          <button type="button" id="upgradeInlineBtn" class="upgrade-btn">Upgrade to Paid</button>
+        </div>
       </div>
 
       <!-- List -->
@@ -65,8 +71,12 @@
       </div>
     </section>
 
-    <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
-  </div>
+    <div class="row row-center row-gap-8 justify-center">
+      <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
+      <!-- Show this on your own profile if you're free -->
+      <button type="button" id="upgradeBtn" class="upgrade-btn hidden">Upgrade to Paid</button>
+    </div>
+  </main>
 
   <!-- Floating shortcuts (only on your own profile) -->
   <button type="button" class="floating-btn hidden" id="goToServicesBtn">Services</button>
@@ -74,16 +84,15 @@
   <button type="button" class="floating-btn hidden" id="addNewServiceBtn">+ Service</button>
   <button type="button" class="floating-btn hidden" id="editDescBtnFloat">Edit Bio</button>
 
-  <!-- NEW: Back to my profile (visible only when viewing someone else) -->
+  <!-- Back to my profile (visible only when viewing someone else) -->
   <button type="button" class="floating-btn hidden" id="backToMyProfileBtn">← My Profile</button>
 
-  <div class="mobile-button-row hidden" id="mobileRow">
+  <nav class="mobile-button-row hidden" id="mobileRow" aria-label="Mobile actions">
     <button type="button" id="mobileServicesBtn">Services</button>
     <button type="button" id="mobileMessagesBtn">Messages</button>
     <button type="button" id="mobileAddServiceBtn">+ Service</button>
-    <!-- NEW: Back (mobile) -->
     <button type="button" id="mobileBackBtn" class="hidden">My Profile</button>
-  </div>
+  </nav>
 
 <script>
 const API_URL = '/api';
@@ -135,8 +144,15 @@ const rateStars = document.getElementById('rateStars');
 const rateComment = document.getElementById('rateComment');
 const submitRatingBtn = document.getElementById('submitRatingBtn');
 const rateMsg = document.getElementById('rateMsg');
+const rateUpgradeHint = document.getElementById('rateUpgradeHint');
+const upgradeInlineBtn = document.getElementById('upgradeInlineBtn');
+
+const logoutBtn = document.getElementById('logoutBtn');
+const upgradeBtn = document.getElementById('upgradeBtn');
 
 const backToMyProfileBtn = document.getElementById('backToMyProfileBtn');
+
+let currentUserTier = 'free'; // will be set by fetch of /users/me
 
 // ------- Helpers
 function showOwnerUI(isOwner) {
@@ -153,10 +169,22 @@ function starText(n) {
   return '★'.repeat(r) + '☆'.repeat(5 - r);
 }
 
+async function fetchMe() {
+  const res = await fetch(`${API_URL}/users/me`, { headers: { Authorization: `Bearer ${token}` } });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  currentUserTier = (data.user?.tier) || 'free';
+  return data.user;
+}
+
 // ------- Profile
 async function loadProfile() {
   try {
     const viewingSelf = profileUserId === loggedInUserId;
+
+    // Always fetch current user to know tier
+    await fetchMe();
+
     const endpoint = viewingSelf ? `${API_URL}/users/me` : `${API_URL}/users/${profileUserId}`;
     const res = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
     const data = await res.json();
@@ -165,7 +193,20 @@ async function loadProfile() {
     const u = data.user || data;
     profileUsername.textContent = u.username || 'Unknown User';
     profileDescription.textContent = u.description || 'No description yet.';
+
     showOwnerUI(viewingSelf);
+
+    // Rate form visibility: only if not viewing self AND current user is PAID
+    const canRate = (!viewingSelf && currentUserTier === 'paid');
+    rateForm.classList.toggle('hidden', !canRate);
+    rateUpgradeHint.classList.toggle('hidden', canRate); // show hint when cannot rate
+
+    // Show "Upgrade to Paid" button if it's your own profile and you're free
+    if (viewingSelf && currentUserTier === 'free') {
+      upgradeBtn.classList.remove('hidden');
+    } else {
+      upgradeBtn.classList.add('hidden');
+    }
   } catch (err) {
     console.error('Error loading profile:', err);
     profileUsername.textContent = 'Unknown User';
@@ -254,7 +295,6 @@ async function editService(card, service) {
   const origDesc = descEl.textContent;
   const origPrice = (service.price ?? '').toString();
 
-  // Replace with editors (no inline styles)
   titleEl.innerHTML = `<input type="text" class="edit-title input" value="${esc(origTitle)}">`;
   descEl.innerHTML = `<textarea class="edit-desc textarea">${esc(origDesc)}</textarea>`;
   priceWrap.innerHTML = `<strong>Price:</strong> $ <input type="number" class="edit-price input input-number" value="${esc(origPrice)}">`;
@@ -366,9 +406,6 @@ async function loadRatings(userId) {
 }
 
 function initRateForm() {
-  const viewingSelf = profileUserId === loggedInUserId;
-  rateForm.classList.toggle('hidden', !(token && !viewingSelf));
-
   submitRatingBtn.addEventListener('click', async () => {
     rateMsg.textContent = '';
     const stars = parseInt(rateStars.value, 10);
@@ -380,16 +417,48 @@ function initRateForm() {
         body: JSON.stringify({ rateeId: profileUserId, stars, comment })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      if (!res.ok) {
+        if (res.status === 403) {
+          rateMsg.textContent = data.error || 'Upgrade to a paid account to rate others.';
+          rateUpgradeHint.classList.remove('hidden');
+        } else {
+          rateMsg.textContent = data.error || `HTTP ${res.status}`;
+        }
+        return;
+      }
       rateMsg.textContent = data.message || 'Saved!';
       rateComment.value = '';
       await loadRatings(profileUserId);
     } catch (err) {
       console.error(err);
-      rateMsg.textContent = err.message;
+      rateMsg.textContent = 'Network error.';
     }
   });
+
+  // Inline upgrade button (inside rate form when blocked)
+  upgradeInlineBtn.addEventListener('click', doUpgrade);
 }
+
+// ------- Upgrade flow
+async function doUpgrade() {
+  try {
+    const ok = confirm('Upgrade to a paid account?');
+    if (!ok) return;
+    const res = await fetch(`${API_URL}/users/me/upgrade`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to upgrade');
+    alert('Upgraded successfully!');
+    currentUserTier = 'paid';
+    await loadProfile(); // refresh UI (rate form appears)
+  } catch (err) {
+    alert(err.message || 'Upgrade failed');
+  }
+}
+
+upgradeBtn.addEventListener('click', doUpgrade);
 
 // ------- Nav + Logout
 goToServicesBtn.addEventListener('click', () => window.location.href = 'services.html');
@@ -397,24 +466,19 @@ goToMessagesBtn.addEventListener('click', () => window.location.href = 'messages
 mobileServicesBtn.addEventListener('click', () => window.location.href = 'services.html');
 mobileMessagesBtn.addEventListener('click', () => window.location.href = 'messages.html');
 
-document.getElementById('logoutBtn').addEventListener('click', () => {
+logoutBtn.addEventListener('click', () => {
   localStorage.clear();
   window.location.href = 'index.html';
 });
 
 // --- Back buttons
-backToMyProfileBtn.addEventListener('click', () => {
-  window.location.href = 'profile.html';
-});
-mobileBackBtn.addEventListener('click', () => {
-  window.location.href = 'profile.html';
-});
+document.getElementById('backToMyProfileBtn').addEventListener('click', () => { window.location.href = 'profile.html'; });
+mobileBackBtn.addEventListener('click', () => { window.location.href = 'profile.html'; });
 
 // ------- Initial load
 loadProfile();
-loadServices();
-initRateForm();
 loadRatings(profileUserId);
+initRateForm();
 </script>
 </body>
 </html>
