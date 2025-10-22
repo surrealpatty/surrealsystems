@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Services - CodeCrowds</title>
 <link rel="stylesheet" href="services.css" />
-<!-- (Optional) If your server exposes a CSRF token, add one of these meta tags -->
+<!-- If your server exposes a CSRF token, you can add one of these meta tags -->
 <!-- <meta name="csrf-token" content="{{ csrfToken }}"> -->
 <!-- <meta name="x-xsrf-token" content="{{ xsrfToken }}"> -->
 </head>
@@ -63,8 +63,7 @@
 
 <script>
 // ---------- Config ----------
-// Change this if your API is hosted elsewhere. You can also set window.__API_BASE__ before this script.
-const API_BASE_INPUT = (window.__API_BASE__ ?? '/api');
+const API_BASE_INPUT = (window.__API_BASE__ ?? '/api'); // override by setting window.__API_BASE__ before this script
 const API_BASES = Array.from(new Set([API_BASE_INPUT, '/api', 'api', '/']))
   .map(b => String(b || '/').replace(/\/+$/,'') || '/');
 
@@ -101,6 +100,7 @@ const fmtPrice = (v) => {
   const n = Number(v);
   return Number.isFinite(n) ? n.toLocaleString(undefined, { maximumFractionDigits: 2 }) : esc(v);
 };
+
 function toast(msg) {
   const el = document.getElementById('toast');
   if (!el) { alert(msg); return; }
@@ -108,6 +108,7 @@ function toast(msg) {
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2200);
 }
+
 function getCsrf() {
   return (
     document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
@@ -115,14 +116,40 @@ function getCsrf() {
     null
   );
 }
+
 function showInlineError(msg) {
-  if (!msg) {
-    sendError.hidden = true;
-    sendError.textContent = '';
-  } else {
-    sendError.hidden = false;
-    sendError.textContent = msg;
+  sendError.textContent = msg;
+  sendError.hidden = !msg;
+}
+
+// Error helpers
+function stringifyAny(value) {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  try { return JSON.stringify(value); } catch { return String(value); }
+}
+function extractApiError(status, data, textFallback) {
+  if (data && typeof data === 'object') {
+    const keys = ['error', 'message', 'detail', 'reason'];
+    for (const k of keys) {
+      if (data[k]) return `[${status}] ${typeof data[k] === 'string' ? data[k] : stringifyAny(data[k])}`;
+    }
+    if (Array.isArray(data.errors) && data.errors.length) {
+      const parts = data.errors.map(e => {
+        if (typeof e === 'string') return e;
+        if (e && typeof e === 'object') {
+          if (e.message && e.field) return `${e.field}: ${e.message}`;
+          if (e.message) return e.message;
+          return stringifyAny(e);
+        }
+        return String(e);
+      });
+      return `[${status}] ${parts.join('; ')}`;
+    }
+    if (data.details) return `[${status}] ${stringifyAny(data.details)}`;
+    return `[${status}] ${stringifyAny(data)}`;
   }
+  return `[${status}] ${textFallback || 'Request failed'}`;
 }
 
 // ---------- Render ----------
@@ -262,61 +289,69 @@ async function sendMessage() {
   const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
   if (csrf) { headers['X-CSRF-Token'] = csrf; headers['X-XSRF-TOKEN'] = csrf; }
 
-  // Abort after 15s
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
-
-  // Try a couple of common payload shapes
+  // Try common payload shapes
   const payloads = [
     { toUserId: messageState.toUserId, serviceId: messageState.serviceId || null, body: text },
     { recipientId: messageState.toUserId, serviceId: messageState.serviceId || null, text },
-    { to: messageState.toUserId, serviceId: messageState.serviceId || null, content: text }
+    { to: messageState.toUserId, serviceId: messageState.serviceId || null, content: text },
   ];
-
-  // Try several typical endpoints
+  // Candidate endpoints
   const endpoints = API_BASES.map(b => buildUrl(b, 'messages'));
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
 
   try {
     sendMessageBtn.disabled = true;
     sendMessageBtn.textContent = 'Sending…';
 
-    let lastErr = null;
+    let lastErrMsg = 'Unknown error';
 
     for (const url of endpoints) {
-      for (const payload of payloads) {
+      for (const body of payloads) {
         try {
+          console.info('[messages] POST', url, 'payload=', body);
           const res = await fetch(url, {
             method: 'POST',
             headers,
-            body: JSON.stringify(payload),
             credentials: 'include',
-            signal: controller.signal,
+            body: JSON.stringify(body),
+            signal: controller.signal
           });
 
-          if (res.status === 204) { hideModal(); toast('Message sent!'); return; }
+          if (res.status === 204) { // No content success
+            hideModal(); toast('Message sent!'); return;
+          }
 
-          let data = null, t = '';
-          try { data = await res.json(); } catch { t = await res.text().catch(()=> ''); }
+          let data = null, textBody = '';
+          try { data = await res.json(); }
+          catch { textBody = await res.text().catch(() => ''); }
 
-          if (res.ok) { hideModal(); toast('Message sent!'); return; }
+          if (res.ok) {
+            hideModal(); toast('Message sent!');
+            // Optional: redirect if backend returns thread info
+            // if (data?.threadId) location.href = `/messages?thread=${encodeURIComponent(data.threadId)}`;
+            return;
+          }
 
-          const reason = (data && (data.error || data.message)) || t || `HTTP ${res.status}`;
-          lastErr = new Error(reason);
+          const msg = extractApiError(res.status, data, textBody);
+          lastErrMsg = msg;
+          console.warn('[messages] variant failed:', { url, status: res.status, msg, data, textBody });
 
           if (res.status === 401 || res.status === 403) {
-            showInlineError('Not authorized to send messages. Check login/CSRF/cookies.');
-            throw lastErr;
+            showInlineError(msg || 'Not authorized. Check sign-in/CSRF.');
+            return;
           }
-          // else try next payload/endpoint
-        } catch (e) {
-          lastErr = e; /* try next combination */
+          // Otherwise, try next variant/endpoint
+        } catch (netErr) {
+          lastErrMsg = netErr?.message || stringifyAny(netErr);
+          console.warn('[messages] network error:', { url, error: netErr });
+          // continue trying
         }
       }
     }
 
-    console.error('[messages] all attempts failed:', lastErr);
-    showInlineError(`Failed to send: ${lastErr?.message || 'Unknown error'}. Check Network tab for “messages”.`);
-
+    showInlineError(`Failed to send: ${lastErrMsg}. Open DevTools → Network → “messages” for details.`);
   } finally {
     clearTimeout(timeout);
     sendMessageBtn.disabled = false;
