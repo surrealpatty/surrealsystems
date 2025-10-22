@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Profile - CodeCrowds</title>
 <link rel="stylesheet" href="profile.css" />
+
+<!-- Auth + guard + API base -->
+<script src="auth.js"></script>
+<script>
+  // block unauthenticated users and set API_URL early
+  requireAuth('login.html');
+  window.API_URL = getApiBase();
+</script>
 </head>
 <body>
   <main class="container">
@@ -21,12 +29,11 @@
       <p class="section-subtle">These also appear on the Services page.</p>
       <div id="services-list"><p><span class="spinner"></span> Loading services...</p></div>
 
-      <!-- Load more row -->
       <div class="row row-center row-gap-8 justify-center">
         <button type="button" id="loadMoreServicesBtn" class="hidden">Load more</button>
       </div>
 
-      <div id="newServiceSection" class="new-service">
+      <div id="newServiceSection" class="new-service hidden">
         <input type="text" id="newServiceTitle" placeholder="Service Title" />
         <textarea id="newServiceDesc" placeholder="Service Description"></textarea>
         <input type="number" id="newServicePrice" placeholder="Price in USD" />
@@ -36,8 +43,6 @@
 
     <section>
       <h2>Ratings & Reviews</h2>
-
-      <!-- Summary -->
       <div id="ratings-summary" class="card">
         <p>
           <strong><span id="avg-stars">0.0</span> / 5.0</strong>
@@ -46,7 +51,6 @@
         </p>
       </div>
 
-      <!-- Rate (only when viewing someone else AND current user is PAID) -->
       <div id="rate-form" class="card hidden" aria-labelledby="rateFormTitle">
         <h3 id="rateFormTitle">Leave a rating</h3>
 
@@ -63,14 +67,12 @@
         <button type="button" id="submitRatingBtn">Submit Rating</button>
         <p id="rateMsg" class="muted"></p>
 
-        <!-- Shown if the user is free -->
         <div id="rateUpgradeHint" class="hidden muted">
           Rating is a paid feature.
           <button type="button" id="upgradeInlineBtn" class="upgrade-btn">Upgrade to Paid</button>
         </div>
       </div>
 
-      <!-- List -->
       <div id="ratings-list" class="review-list">
         <p><span class="spinner"></span> Loading ratings...</p>
       </div>
@@ -78,7 +80,6 @@
 
     <div class="row row-center row-gap-8 justify-center">
       <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
-      <!-- Show this on your own profile if you're free -->
       <button type="button" id="upgradeBtn" class="upgrade-btn hidden">Upgrade to Paid</button>
     </div>
   </main>
@@ -100,23 +101,15 @@
   </nav>
 
 <script>
-const API_URL = '/api';
-const token = localStorage.getItem('token');
-const loggedInUserId = localStorage.getItem('userId')?.toString();
+// ---- Auth / IDs
+const token = getToken();
+const loggedInUserId = getUserId();
+const API_URL = window.API_URL || '/api';
 
 // Use userId from URL (fallback to own)
 const params = new URLSearchParams(window.location.search);
 const qsUserId = params.get('userId');
 const profileUserId = (qsUserId || loggedInUserId)?.toString();
-
-// Kill old key that used to override navigation
-localStorage.removeItem('profileUserId');
-
-// Require login (remove this block if you allow public view)
-if (!token || !loggedInUserId) {
-  alert('You must log in first');
-  window.location.href = 'index.html';
-}
 
 // ------- DOM
 const profileUsername = document.getElementById('profile-username');
@@ -158,7 +151,7 @@ const upgradeBtn = document.getElementById('upgradeBtn');
 const backToMyProfileBtn = document.getElementById('backToMyProfileBtn');
 const loadMoreBtn = document.getElementById('loadMoreServicesBtn');
 
-let currentUserTier = 'free'; // will be set by fetch of /users/me
+let currentUserTier = 'free';
 
 // --- Services pagination state
 let svcPage = 1;
@@ -169,7 +162,6 @@ let svcLoading = false;
 function showOwnerUI(isOwner) {
   [goToServicesBtn, goToMessagesBtn, addNewServiceBtn, editDescBtnFloat, mobileRow, descControls, newServiceSection]
     .forEach(el => el.classList.toggle('hidden', !isOwner));
-  // Show "Back to My Profile" only when viewing someone else
   backToMyProfileBtn.classList.toggle('hidden', isOwner);
   mobileBackBtn.classList.toggle('hidden', isOwner);
 }
@@ -181,8 +173,8 @@ function starText(n) {
 }
 
 async function fetchMe() {
-  const res = await fetch(`${API_URL}/users/me`, { headers: { Authorization: `Bearer ${token}` } });
-  const data = await res.json();
+  const res = await fetch(`${API_URL}/users/me`, { headers: { Accept:'application/json', Authorization: `Bearer ${token}` } });
+  const data = await res.json().catch(()=> ({}));
   if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
   currentUserTier = (data.user?.tier) || 'free';
   return data.user;
@@ -193,12 +185,11 @@ async function loadProfile() {
   try {
     const viewingSelf = profileUserId === loggedInUserId;
 
-    // Always fetch current user to know tier
     await fetchMe();
 
     const endpoint = viewingSelf ? `${API_URL}/users/me` : `${API_URL}/users/${profileUserId}`;
-    const res = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
-    const data = await res.json();
+    const res = await fetch(endpoint, { headers: { Accept:'application/json', Authorization: `Bearer ${token}` } });
+    const data = await res.json().catch(()=> ({}));
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
     const u = data.user || data;
@@ -207,12 +198,11 @@ async function loadProfile() {
 
     showOwnerUI(viewingSelf);
 
-    // Rate form visibility: only if not viewing self AND current user is PAID
+    // Rate form visibility
     const canRate = (!viewingSelf && currentUserTier === 'paid');
     rateForm.classList.toggle('hidden', !canRate);
-    rateUpgradeHint.classList.toggle('hidden', canRate); // show hint when cannot rate
+    rateUpgradeHint.classList.toggle('hidden', canRate);
 
-    // Show "Upgrade to Paid" button if it's your own profile and you're free
     if (viewingSelf && currentUserTier === 'free') {
       upgradeBtn.classList.remove('hidden');
     } else {
@@ -226,7 +216,7 @@ async function loadProfile() {
   }
 }
 
-// ------- Edit / Save Description (owner only)
+// ------- Edit / Save Description
 let editingDesc = false;
 function toggleDescEdit(force) {
   editingDesc = typeof force === 'boolean' ? force : !editingDesc;
@@ -239,10 +229,10 @@ async function saveDescription() {
   try {
     const res = await fetch(`${API_URL}/users/me/description`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json', Accept:'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ description: newDesc })
     });
-    const json = await res.json();
+    const json = await res.json().catch(()=> ({}));
     if (!res.ok) throw new Error(json.error || 'Failed to save description');
     profileDescription.textContent = json.user?.description || newDesc;
   } catch (err) {
@@ -251,8 +241,8 @@ async function saveDescription() {
     toggleDescEdit(false);
   }
 }
-editDescBtn.addEventListener('click', () => !editingDesc ? toggleDescEdit(true) : saveDescription());
-editDescBtnFloat.addEventListener('click', () => !editingDesc ? toggleDescEdit(true) : saveDescription());
+document.getElementById('editDescBtn').addEventListener('click', () => !editingDesc ? toggleDescEdit(true) : saveDescription());
+document.getElementById('editDescBtnFloat').addEventListener('click', () => !editingDesc ? toggleDescEdit(true) : saveDescription());
 
 // ------- Services (PAGINATED)
 function serviceCardHTML(s, isOwner) {
@@ -288,12 +278,12 @@ async function loadServices({ reset = false } = {}) {
     url.searchParams.set('limit', '12');
     url.searchParams.set('page', String(svcPage));
 
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-    const data = await res.json();
+    const res = await fetch(url, { headers: { Accept:'application/json', Authorization: `Bearer ${token}` } });
+    const data = await res.json().catch(()=> ({}));
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
     const list = data.services || [];
-    svcHasMore = !!data.hasMore;
+    const hasMore = !!data.hasMore;
 
     if (reset) servicesList.innerHTML = '';
 
@@ -312,7 +302,7 @@ async function loadServices({ reset = false } = {}) {
     });
     servicesList.appendChild(frag);
 
-    // Wire edit/delete for the newly added cards
+    // Rewire edit/delete
     servicesList.querySelectorAll('.edit-service-btn').forEach(btn => {
       btn.onclick = () => {
         const id = btn.getAttribute('data-id');
@@ -341,10 +331,10 @@ async function loadServices({ reset = false } = {}) {
           try {
             const res = await fetch(`${API_URL}/services/${id}`, {
               method: 'PUT',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              headers: { 'Content-Type': 'application/json', Accept:'application/json', Authorization: `Bearer ${token}` },
               body: JSON.stringify({ title: updatedTitle, description: updatedDesc, price: updatedPrice })
             });
-            const json = await res.json();
+            const json = await res.json().catch(()=> ({}));
             if (!res.ok) throw new Error(json.error || 'Failed to update');
             await loadServices({ reset: true });
           } catch (err) {
@@ -362,9 +352,9 @@ async function loadServices({ reset = false } = {}) {
         if (!confirm('Delete this service?')) return;
         try {
           const res = await fetch(`${API_URL}/services/${id}`, {
-            method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+            method: 'DELETE', headers: { Accept:'application/json', Authorization: `Bearer ${token}` }
           });
-          const json = await res.json();
+          const json = await res.json().catch(()=> ({}));
           if (!res.ok) throw new Error(json.error || 'Failed to delete');
           await loadServices({ reset: true });
         } catch (err) {
@@ -373,8 +363,8 @@ async function loadServices({ reset = false } = {}) {
       };
     });
 
-    // Show/hide Load More
-    if (svcHasMore) {
+    // Load more visibility
+    if (hasMore) {
       loadMoreBtn.classList.remove('hidden');
       loadMoreBtn.disabled = false;
       loadMoreBtn.textContent = 'Load more';
@@ -394,9 +384,7 @@ async function loadServices({ reset = false } = {}) {
 
 loadMoreBtn.addEventListener('click', () => loadServices({ reset: false }));
 
-function toggleNewService() {
-  newServiceSection.classList.toggle('show-flex');
-}
+function toggleNewService() { newServiceSection.classList.toggle('hidden'); }
 document.getElementById('addNewServiceBtn').addEventListener('click', toggleNewService);
 document.getElementById('mobileAddServiceBtn').addEventListener('click', toggleNewService);
 
@@ -409,13 +397,13 @@ createServiceBtn.addEventListener('click', async () => {
   try {
     const res = await fetch(`${API_URL}/services`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json', Accept:'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ title, description, price })
     });
-    const json = await res.json();
+    const json = await res.json().catch(()=> ({}));
     if (!res.ok) throw new Error(json.error || 'Failed to create');
     newServiceTitle.value = ''; newServiceDesc.value=''; newServicePrice.value='';
-    newServiceSection.classList.remove('show-flex');
+    newServiceSection.classList.add('hidden');
     await loadServices({ reset: true });
   } catch (err) {
     console.error(err); alert('Failed to create service.');
@@ -423,13 +411,13 @@ createServiceBtn.addEventListener('click', async () => {
 });
 
 // ------- Ratings
-function renderStars(n) { return starText(n); }
+function renderStars(n) { const r = Math.round(n); return '★'.repeat(r) + '☆'.repeat(5-r); }
 
 async function loadRatings(userId) {
   ratingsList.innerHTML = '<p><span class="spinner"></span> Loading ratings...</p>';
   try {
     const res = await fetch(`${API_URL}/ratings/user/${userId}`);
-    const data = await res.json();
+    const data = await res.json().catch(()=> ({}));
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
     const avg = data.summary?.average ?? 0;
@@ -468,10 +456,10 @@ function initRateForm() {
     try {
       const res = await fetch(`${API_URL}/ratings`, {
         method: 'POST',
-        headers: { 'Content-Type':'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type':'application/json', Accept:'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ rateeId: profileUserId, stars, comment })
       });
-      const data = await res.json();
+      const data = await res.json().catch(()=> ({}));
       if (!res.ok) {
         if (res.status === 403) {
           rateMsg.textContent = data.error || 'Upgrade to a paid account to rate others.';
@@ -490,24 +478,19 @@ function initRateForm() {
     }
   });
 
-  // Inline upgrade button (inside rate form when blocked)
   upgradeInlineBtn.addEventListener('click', doUpgrade);
 }
 
 // ------- Upgrade flow
 async function doUpgrade() {
   try {
-    const ok = confirm('Upgrade to a paid account?');
-    if (!ok) return;
-    const res = await fetch(`${API_URL}/users/me/upgrade`, {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
+    if (!confirm('Upgrade to a paid account?')) return;
+    const res = await fetch(`${API_URL}/users/me/upgrade`, { method: 'PUT', headers: { Accept:'application/json', Authorization: `Bearer ${token}` } });
+    const data = await res.json().catch(()=> ({}));
     if (!res.ok) throw new Error(data.error || 'Failed to upgrade');
     alert('Upgraded successfully!');
     currentUserTier = 'paid';
-    await loadProfile(); // refresh UI (rate form appears)
+    await loadProfile();
   } catch (err) {
     alert(err.message || 'Upgrade failed');
   }
@@ -516,19 +499,16 @@ async function doUpgrade() {
 upgradeBtn.addEventListener('click', doUpgrade);
 
 // ------- Nav + Logout
-goToServicesBtn.addEventListener('click', () => window.location.href = 'services.html');
-goToMessagesBtn.addEventListener('click', () => window.location.href = 'messages.html');
-mobileServicesBtn.addEventListener('click', () => window.location.href = 'services.html');
-mobileMessagesBtn.addEventListener('click', () => window.location.href = 'messages.html');
+document.getElementById('goToServicesBtn').addEventListener('click', () => location.href = 'services.html');
+document.getElementById('goToMessagesBtn').addEventListener('click', () => location.href = 'messages.html');
+document.getElementById('mobileServicesBtn').addEventListener('click', () => location.href = 'services.html');
+document.getElementById('mobileMessagesBtn').addEventListener('click', () => location.href = 'messages.html');
 
-logoutBtn.addEventListener('click', () => {
-  localStorage.clear();
-  window.location.href = 'index.html';
-});
+logoutBtn.addEventListener('click', () => logout('login.html'));
 
 // --- Back buttons
-document.getElementById('backToMyProfileBtn').addEventListener('click', () => { window.location.href = 'profile.html'; });
-mobileBackBtn.addEventListener('click', () => { window.location.href = 'profile.html'; });
+document.getElementById('backToMyProfileBtn').addEventListener('click', () => { location.href = 'profile.html'; });
+mobileBackBtn.addEventListener('click', () => { location.href = 'profile.html'; });
 
 // ------- Initial load
 loadProfile().then(() => loadServices({ reset: true }));
