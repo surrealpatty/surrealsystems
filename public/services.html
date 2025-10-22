@@ -5,6 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Services - CodeCrowds</title>
 <link rel="stylesheet" href="services.css" />
+
+<!-- OPTIONAL CONFIG (uncomment & set these to lock exact backend) -->
+<!--
+<script>
+  // Example: exact endpoint
+  window.__API_BASE__ = '/api';
+  window.__MESSAGE_ENDPOINT__ = '/api/v1/users/:userId/messages'; // tokens: :userId, :serviceId
+
+  // Example: backend expects {recipientId, text}
+  window.__MESSAGE_PAYLOAD_KEYS__ = {
+    to: 'recipientId',
+    text: 'text',
+    service: 'serviceId'   // optional
+  };
+</script>
+-->
 </head>
 <body>
 <div class="container">
@@ -38,6 +54,10 @@
       </div>
 
       <p id="sendError" class="error-inline" aria-live="polite" hidden></p>
+      <details id="attemptDetails" hidden>
+        <summary>Tried endpoints</summary>
+        <ul id="attemptList" class="attempt-list"></ul>
+      </details>
 
       <div class="modal-meta">
         <span id="charCount" aria-live="polite">0 / 2000</span>
@@ -59,12 +79,23 @@
 <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script>
-// ---------- Config ----------
-const API_BASE = '/api';
-const MESSAGES_URL = `${API_BASE}/messages`;
+// ---------- Config & helpers ----------
+const API_BASE_INPUT = (window.__API_BASE__ ?? '/api');
+const API_BASES = Array.from(new Set([API_BASE_INPUT, '/api', 'api', '/']))
+  .map(b => String(b || '/').replace(/\/+$/,'') || '/');
 
-const token = localStorage.getItem('token') || null;  // required for send
-const currentUserId = localStorage.getItem('userId') || null;
+const FIXED_ENDPOINT = window.__MESSAGE_ENDPOINT__ || null;
+const CUSTOM_KEYS = window.__MESSAGE_PAYLOAD_KEYS__ || null;
+
+function buildUrl(base, path) {
+  const b = base === '/' ? '' : base;
+  const p = String(path || '').replace(/^\/+/, '');
+  return `${b}/${p}`;
+}
+function replaceTokens(url, {userId, serviceId}) {
+  return url.replace(/:userId\b/g, encodeURIComponent(userId || ''))
+            .replace(/:serviceId\b/g, encodeURIComponent(serviceId || ''));
+}
 
 // ---------- DOM ----------
 const servicesList = document.getElementById('services-list');
@@ -80,6 +111,8 @@ const sendMessageBtn = document.getElementById('sendMessageBtn');
 const cancelMessageBtn = document.getElementById('cancelMessageBtn');
 const charCount = document.getElementById('charCount');
 const sendError = document.getElementById('sendError');
+const attemptDetails = document.getElementById('attemptDetails');
+const attemptList = document.getElementById('attemptList');
 
 let allServices = [];
 let messageState = { toUserId: null, serviceId: null, username: '' };
@@ -100,9 +133,36 @@ function toast(msg) {
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2200);
 }
+function getCsrf() {
+  return (
+    document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+    document.querySelector('meta[name="x-xsrf-token"]')?.getAttribute('content') ||
+    null
+  );
+}
 function showInlineError(msg) {
   sendError.textContent = msg;
   sendError.hidden = !msg;
+}
+function stringifyAny(value) {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  try { return JSON.stringify(value); } catch { return String(value); }
+}
+function extractApiError(status, data, textFallback) {
+  if (data && typeof data === 'object') {
+    const keys = ['error', 'message', 'detail', 'reason'];
+    for (const k of keys) if (data[k]) return `[${status}] ${typeof data[k]==='string'?data[k]:stringifyAny(data[k])}`;
+    if (Array.isArray(data.errors) && data.errors.length) {
+      const parts = data.errors.map(e => typeof e==='string' ? e :
+        e?.message && e?.field ? `${e.field}: ${e.message}` :
+        e?.message || stringifyAny(e));
+      return `[${status}] ${parts.join('; ')}`;
+    }
+    if (data.details) return `[${status}] ${stringifyAny(data.details)}`;
+    return `[${status}] ${stringifyAny(data)}`;
+  }
+  return `[${status}] ${textFallback || 'Request failed'}`;
 }
 
 // ---------- Render ----------
@@ -159,19 +219,25 @@ function applyFilters() {
 // ---------- Data ----------
 async function loadServices() {
   servicesList.innerHTML = '<p><span class="spinner"></span> Loading services…</p>';
-  try {
-    const res = await fetch(`${API_BASE}/services`, { credentials: 'include' });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
-    allServices = data.services || data || [];
-    applyFilters();
-  } catch (e) {
-    console.error('[services] load failed:', e);
-    servicesList.innerHTML = '<p class="error">Failed to load services</p>';
+  let lastErr;
+  for (const base of API_BASES) {
+    try {
+      const url = buildUrl(base, 'services');
+      const res = await fetch(url, { credentials: 'include' });
+      let data;
+      try { data = await res.json(); } catch { data = []; }
+      if (!res.ok) throw new Error((data && (data.error || data.message)) || `HTTP ${res.status}`);
+      allServices = data.services || data || [];
+      applyFilters();
+      console.info('[services] loaded from', url);
+      return;
+    } catch (e) { lastErr = e; }
   }
+  console.error('[services] load failed:', lastErr);
+  servicesList.innerHTML = '<p class="error">Failed to load services</p>';
 }
 
-// ---------- Modal / a11y ----------
+// ---------- A11y / Modal ----------
 function updateCounterAndState() {
   const len = (messageContent.value || '').length;
   if (charCount) charCount.textContent = `${len} / ${MAX_LEN}`;
@@ -197,6 +263,7 @@ function showModal() {
   messageModal.style.display = 'flex';
   messageModal.setAttribute('aria-hidden', 'false');
   showInlineError('');
+  attemptDetails.hidden = true; attemptList.innerHTML = '';
   updateCounterAndState();
   setTimeout(() => messageContent?.focus(), 0);
   window.addEventListener('keydown', onModalKey);
@@ -206,10 +273,16 @@ function hideModal() {
   messageModal.setAttribute('aria-hidden', 'true');
   if (messageContent) messageContent.value = '';
   showInlineError('');
+  attemptDetails.hidden = true; attemptList.innerHTML = '';
   updateCounterAndState();
   messageState = { toUserId: null, serviceId: null, username: '' };
   window.removeEventListener('keydown', onModalKey);
   if (lastFocusedBeforeModal && lastFocusedBeforeModal.focus) lastFocusedBeforeModal.focus();
+}
+function openMessageModal({ toUserId, serviceId, username }) {
+  messageState = { toUserId, serviceId, username };
+  messageRecipient.textContent = username || 'seller';
+  showModal();
 }
 function onModalKey(e) {
   if (messageModal.style.display !== 'flex') return;
@@ -219,50 +292,138 @@ function onModalKey(e) {
     if (!sendMessageBtn.disabled) sendMessage();
   }
 }
+function logAttempt(url, status) {
+  attemptDetails.hidden = false;
+  const li = document.createElement('li');
+  li.textContent = `${url}  →  ${status}`;
+  attemptList.appendChild(li);
+}
 
-// ---------- Send (exactly your API) ----------
+// ---------- Endpoint & payload planning ----------
+function plannedEndpoints() {
+  const uid = encodeURIComponent(messageState.toUserId || '');
+  const sid = encodeURIComponent(messageState.serviceId || '');
+
+  // If user config provided, use only that
+  if (FIXED_ENDPOINT) {
+    return [replaceTokens(FIXED_ENDPOINT, {userId: uid, serviceId: sid})];
+  }
+
+  // Otherwise try a broad, sensible set
+  const out = [];
+  for (const b of API_BASES) {
+    // Generic messages
+    out.push(buildUrl(b, 'messages'));
+    out.push(buildUrl(b, 'messages/send'));
+    out.push(buildUrl(b, 'v1/messages'));
+    out.push(buildUrl(b, 'v1/messages/send'));
+    out.push(buildUrl(b, 'chat/messages'));
+    out.push(buildUrl(b, 'direct-messages'));
+
+    // User-scoped
+    out.push(buildUrl(b, `users/${uid}/messages`));
+    out.push(buildUrl(b, `users/${uid}/messages/send`));
+    out.push(buildUrl(b, `v1/users/${uid}/messages`));
+
+    // Conversation/threads starters
+    out.push(buildUrl(b, 'conversations'));
+    out.push(buildUrl(b, 'conversations/start'));
+    out.push(buildUrl(b, `users/${uid}/conversations`));
+    out.push(buildUrl(b, 'threads'));
+    out.push(buildUrl(b, 'threads/start'));
+  }
+  // de-dupe
+  return Array.from(new Set(out));
+}
+
+function payloadVariants(text) {
+  if (CUSTOM_KEYS) {
+    const toKey = CUSTOM_KEYS.to || 'toUserId';
+    const textKey = CUSTOM_KEYS.text || 'body';
+    const serviceKey = CUSTOM_KEYS.service || 'serviceId';
+    const obj = {};
+    obj[toKey] = messageState.toUserId;
+    obj[textKey] = text;
+    if (messageState.serviceId) obj[serviceKey] = messageState.serviceId;
+    return [obj];
+  }
+  // Try common shapes
+  return [
+    { toUserId: messageState.toUserId, serviceId: messageState.serviceId || null, body: text },
+    { recipientId: messageState.toUserId, serviceId: messageState.serviceId || null, text },
+    { to: messageState.toUserId, serviceId: messageState.serviceId || null, content: text },
+  ];
+}
+
+// ---------- Send (configurable & robust) ----------
 async function sendMessage() {
-  if (!token) { showInlineError('Please log in to send messages.'); return; }
-
   const text = (messageContent.value || '').trim();
   if (!messageState.toUserId) { showInlineError('Missing recipient.'); return; }
   if (!text) { showInlineError('Please write a message.'); messageContent.focus(); return; }
   showInlineError('');
 
-  const headers = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    'Authorization': `Bearer ${token}`
-  };
+  const csrf = getCsrf();
+  const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+  if (csrf) { headers['X-CSRF-Token'] = csrf; headers['X-XSRF-TOKEN'] = csrf; }
+
+  const endpoints = plannedEndpoints();
+  const payloads = payloadVariants(text);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
 
   try {
     sendMessageBtn.disabled = true;
     sendMessageBtn.textContent = 'Sending…';
 
-    const res = await fetch(MESSAGES_URL, {
-      method: 'POST',
-      headers,
-      credentials: 'include',
-      body: JSON.stringify({
-        receiverId: messageState.toUserId,   // <— matches your backend
-        content: text,                       // <— matches your backend
-        serviceId: messageState.serviceId || null
-      })
-    });
+    let lastErrMsg = 'Unknown error';
 
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      const msg = data?.error || data?.message || `HTTP ${res.status}`;
-      showInlineError(`Failed to send: ${msg}`);
-      return;
+    for (const url of endpoints) {
+      for (const body of payloads) {
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers,
+            credentials: 'include',
+            body: JSON.stringify(body),
+            signal: controller.signal
+          });
+
+          logAttempt(url, res.status);
+
+          if (res.status === 204) { hideModal(); toast('Message sent!'); return; }
+
+          let data = null, textBody = '';
+          try { data = await res.json(); }
+          catch { textBody = await res.text().catch(() => ''); }
+
+          if (res.ok) {
+            hideModal(); toast('Message sent!');
+            // if (data?.threadId) location.href = `/messages?thread=${encodeURIComponent(data.threadId)}`;
+            return;
+          }
+
+          const msg = extractApiError(res.status, data, textBody);
+          lastErrMsg = msg;
+
+          if (res.status === 401 || res.status === 403) {
+            showInlineError(msg || 'Not authorized. Check sign-in/CSRF.');
+            return;
+          }
+          // try next variant/endpoint
+        } catch (netErr) {
+          logAttempt(url, netErr?.name === 'AbortError' ? 'timeout' : (netErr?.message || 'network error'));
+          lastErrMsg = netErr?.message || stringifyAny(netErr);
+          // continue
+        }
+      }
     }
 
-    hideModal();
-    toast('Message sent!');
-  } catch (err) {
-    console.error('[messages] send error:', err);
-    showInlineError('Network error. Please try again.');
+    showInlineError(`Failed to send: ${lastErrMsg}.
+Hint: set window.__MESSAGE_ENDPOINT__ to your exact route (e.g. "/api/v1/users/:userId/messages")
+and optionally window.__MESSAGE_PAYLOAD_KEYS__ = { to:"recipientId", text:"text", service:"serviceId" }`);
   } finally {
+    clearTimeout(timeout);
     sendMessageBtn.disabled = false;
     sendMessageBtn.textContent = 'Send';
     updateCounterAndState();
@@ -290,7 +451,7 @@ servicesList.addEventListener('click', (e) => {
 cancelMessageBtn.addEventListener('click', hideModal);
 sendMessageBtn.addEventListener('click', sendMessage);
 
-// ESC and backdrop close
+// Close modal on ESC or click backdrop
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && messageModal.style.display === 'flex') hideModal();
 });
@@ -301,7 +462,6 @@ messageModal.addEventListener('click', (e) => {
 // Counter while typing
 messageContent.addEventListener('input', updateCounterAndState);
 
-// Initial load
 window.addEventListener('load', () => {
   updateCounterAndState();
   loadServices();
