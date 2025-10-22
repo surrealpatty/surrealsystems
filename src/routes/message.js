@@ -1,28 +1,46 @@
+// src/routes/messages.js
 const express = require('express');
 const router = express.Router();
+const { Op } = require('sequelize');
+
+// Adjust these imports to your actual model/middleware paths:
 const Message = require('../models/message');
 const User = require('../models/user');
 const authenticateToken = require('../middlewares/authenticateToken');
 
-// ---------------- Send a message ----------------
-router.post('/', authenticateToken, async (req, res) => {
-  const { receiverId, content } = req.body;
-  if (!receiverId || !content) return res.status(400).json({ error: 'Receiver and content required' });
+// Optional: make sure associations exist (usually done in models/index)
+// Message.belongsTo(User, { as: 'sender', foreignKey: 'senderId' });
+// Message.belongsTo(User, { as: 'receiver', foreignKey: 'receiverId' });
 
+/**
+ * POST /api/messages
+ * Body: { receiverId, content, serviceId? }
+ */
+router.post('/', authenticateToken, async (req, res) => {
   try {
-    const message = await Message.create({
-      senderId: req.user.id,
+    const { receiverId, content, serviceId } = req.body || {};
+    if (!receiverId || !content || !String(content).trim()) {
+      return res.status(400).json({ error: 'Receiver and content required' });
+    }
+
+    const msg = await Message.create({
+      senderId: req.user.id,             // set by authenticateToken
       receiverId,
-      content
+      content: String(content).trim(),
+      serviceId: serviceId || null
     });
-    res.json({ message });
+
+    return res.status(201).json({ message: 'Message sent', data: msg });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to send message' });
+    console.error('POST /api/messages error:', err);
+    return res.status(500).json({ error: 'Failed to send message' });
   }
 });
 
-// ---------------- Get inbox ----------------
+/**
+ * GET /api/messages
+ * Returns current user's inbox
+ */
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const messages = await Message.findAll({
@@ -30,20 +48,23 @@ router.get('/', authenticateToken, async (req, res) => {
       include: [{ model: User, as: 'sender', attributes: ['id', 'username'] }],
       order: [['createdAt', 'DESC']]
     });
-    res.json(messages);
+    return res.json(messages);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch messages' });
+    console.error('GET /api/messages error:', err);
+    return res.status(500).json({ error: 'Failed to fetch messages' });
   }
 });
 
-// ---------------- Get conversation with a user ----------------
+/**
+ * GET /api/messages/conversation/:otherUserId
+ * Returns DM thread between logged-in user and :otherUserId
+ */
 router.get('/conversation/:otherUserId', authenticateToken, async (req, res) => {
-  const otherUserId = req.params.otherUserId;
   try {
+    const otherUserId = req.params.otherUserId;
     const messages = await Message.findAll({
       where: {
-        [require('sequelize').Op.or]: [
+        [Op.or]: [
           { senderId: req.user.id, receiverId: otherUserId },
           { senderId: otherUserId, receiverId: req.user.id }
         ]
@@ -51,10 +72,10 @@ router.get('/conversation/:otherUserId', authenticateToken, async (req, res) => 
       include: [{ model: User, as: 'sender', attributes: ['id', 'username'] }],
       order: [['createdAt', 'ASC']]
     });
-    res.json(messages);
+    return res.json(messages);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch conversation' });
+    console.error('GET /api/messages/conversation/:otherUserId error:', err);
+    return res.status(500).json({ error: 'Failed to fetch conversation' });
   }
 });
 
