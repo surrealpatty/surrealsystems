@@ -1,31 +1,48 @@
 // --- auth.js ---
+// Tiny shared auth helper for all pages
+
 function getToken() {
   try { return localStorage.getItem('token') || ''; } catch { return ''; }
 }
 
+function getUserId() {
+  try { return localStorage.getItem('userId') || ''; } catch { return ''; }
+}
+
+// Be permissive: treat any non-empty string as “logged in”
+// (the server does real verification via JWT)
 function isLoggedIn() {
   const t = getToken();
-  // naive JWT check: 3 dot-separated parts
-  return Boolean(t && t.split('.').length === 3);
+  return !!t && t.length > 10;
 }
 
 /** Redirect to login if not authenticated */
 function requireAuth(redirectTo = 'login.html') {
-  if (!isLoggedIn()) {
-    // remember where they tried to go
+  if (!isLoggedIn() || !getUserId()) {
     const from = encodeURIComponent(location.pathname + location.search);
     location.replace(`${redirectTo}?from=${from}`);
   }
 }
 
-/** Clear token and go to login */
+/** Clear token & userId and go to login */
 function logout(redirectTo = 'login.html') {
-  try { localStorage.removeItem('token'); } catch {}
+  try {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+  } catch {}
   location.replace(redirectTo);
 }
 
-// Expose globally
+/** Compute API base: local uses /api; Render uses full https URL */
+function getApiBase() {
+  // Replace with your actual Render backend host:
+  const renderApi = 'https://<your-api-service>.onrender.com/api';
+  return location.hostname.endsWith('onrender.com') ? renderApi : '/api';
+}
+
 window.getToken = getToken;
+window.getUserId = getUserId;
 window.isLoggedIn = isLoggedIn;
 window.requireAuth = requireAuth;
 window.logout = logout;
+window.getApiBase = getApiBase;

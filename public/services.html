@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Services - CodeCrowds</title>
 <link rel="stylesheet" href="services.css" />
+
+<!-- Auth + guard + API base -->
+<script src="auth.js"></script>
+<script>
+  requireAuth('login.html');
+  window.API_BASE = getApiBase(); // e.g., '/api' locally or your Render API
+</script>
 </head>
 <body>
 <div class="container">
@@ -60,7 +67,7 @@
 
 <script>
 // ===================== Config =====================
-const API_BASE = '/api';
+const API_BASE = window.API_BASE || '/api';
 const MESSAGES_URL = `${API_BASE}/messages`;
 const MAX_LEN = 2000;
 
@@ -169,9 +176,14 @@ function applyFilters() {
 async function loadServices() {
   servicesList.innerHTML = '<p><span class="spinner"></span> Loading services…</p>';
   try {
-    const res = await fetch(`${API_BASE}/services`, { credentials: 'include' });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+    // If you protected /api/services, send Authorization header
+    const headers = { 'Accept': 'application/json' };
+    const token = getToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${API_BASE}/services`, { headers });
+    const data = await res.json().catch(()=> ([]));
+    if (!res.ok) throw new Error((data && (data.error || data.message)) || `HTTP ${res.status}`);
     allServices = data.services || data || [];
     applyFilters();
   } catch (e) {
@@ -231,7 +243,7 @@ function onModalKey(e) {
 
 // ===================== Send (POST /api/messages) =====================
 async function sendMessage() {
-  const token = localStorage.getItem('token');   // set this at login
+  const token = getToken();
   if (!token) { showInlineError('Please log in to send messages.'); return; }
 
   const text = (messageContent.value || '').trim();
@@ -251,9 +263,9 @@ async function sendMessage() {
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
-        receiverId: messageState.toUserId,         // backend expects this
-        content: text,                             // and this
-        serviceId: messageState.serviceId || null  // optional
+        receiverId: messageState.toUserId,
+        content: text,
+        serviceId: messageState.serviceId || null
       })
     });
 
@@ -282,7 +294,7 @@ async function sendMessage() {
 }
 
 // ===================== Events =====================
-goToProfileBtn.addEventListener('click', () => { window.location.href = 'profile.html'; });
+goToProfileBtn.addEventListener('click', () => { location.href = 'profile.html'; });
 refreshBtn.addEventListener('click', loadServices);
 searchInput.addEventListener('input', applyFilters);
 sortSelect.addEventListener('change', applyFilters);
