@@ -6,6 +6,10 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const authenticateToken = require('../middlewares/authenticateToken');
 
+// ✅ NEW: validators
+const { body, param, oneOf } = require('express-validator');
+const validate = require('../middlewares/validate'); // make sure this file exists
+
 // Helper — remove password from returned objects
 function toSafeUser(user) {
   if (!user) return user;
@@ -13,76 +17,123 @@ function toSafeUser(user) {
   return safe;
 }
 
-// --- Register ---
-router.post('/register', async (req, res) => {
-  try {
-    const { username, email, password, description } = req.body;
-    if (!username || !email || !password) {
-      return res
-        .status(400)
-        .json({ error: 'Username, email, and password are required' });
+/**
+ * --- Register ---
+ * POST /api/users/register
+ * Body: { username, email, password, description? }
+ */
+router.post(
+  '/register',
+  [
+    body('username')
+      .trim()
+      .isString().withMessage('Username must be a string')
+      .isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
+    body('email')
+      .trim()
+      .isEmail().withMessage('Invalid email address')
+      .normalizeEmail(),
+    body('password')
+      .isString().withMessage('Password must be a string')
+      .isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('description')
+      .optional({ nullable: true })
+      .isString().withMessage('Description must be a string')
+      .isLength({ max: 500 }).withMessage('Description must be 500 chars or fewer')
+      .trim(),
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const { username, email, password, description } = req.body;
+
+      const existingEmail = await User.findOne({ where: { email } });
+      if (existingEmail)
+        return res.status(400).json({ error: 'Email already used' });
+
+      const existingUsername = await User.findOne({ where: { username } });
+      if (existingUsername)
+        return res.status(400).json({ error: 'Username already taken' });
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const newUser = await User.create({
+        username,
+        email,
+        password: hashedPassword,
+        description: description || '',
+        tier: 'free',
+      });
+
+      const token = jwt.sign(
+        { id: newUser.id, email: newUser.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '1d' }
+      );
+
+      res.status(201).json({ token, user: toSafeUser(newUser) });
+    } catch (err) {
+      console.error('Register error:', err);
+      res.status(500).json({ error: 'Registration failed' });
     }
-
-    const existingEmail = await User.findOne({ where: { email } });
-    if (existingEmail)
-      return res.status(400).json({ error: 'Email already used' });
-
-    const existingUsername = await User.findOne({ where: { username } });
-    if (existingUsername)
-      return res.status(400).json({ error: 'Username already taken' });
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({
-      username,
-      email,
-      password: hashedPassword,
-      description: description || '',
-      tier: 'free',
-    });
-
-    const token = jwt.sign(
-      { id: newUser.id, email: newUser.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
-
-    res.status(201).json({ token, user: toSafeUser(newUser) });
-  } catch (err) {
-    console.error('Register error:', err);
-    res.status(500).json({ error: 'Registration failed' });
   }
-});
+);
 
-// --- Login ---
-router.post('/login', async (req, res) => {
-  try {
-    const { email, username, password } = req.body;
-    if ((!email && !username) || !password) {
-      return res
-        .status(400)
-        .json({ error: 'Email/username and password required' });
+/**
+ * --- Login ---
+ * POST /api/users/login
+ * Body: { email OR username, password }
+ */
+router.post(
+  '/login',
+  [
+    oneOf(
+      [
+        body('email')
+          .exists({ checkFalsy: true }).withMessage('Email is required when username is not provided')
+          .bail()
+          .isEmail().withMessage('Invalid email address')
+          .normalizeEmail(),
+        body('username')
+          .exists({ checkFalsy: true }).withMessage('Username is required when email is not provided')
+          .bail()
+          .isString().withMessage('Username must be a string')
+          .isLength({ min: 3 }).withMessage('Username must be at least 3 characters')
+          .trim(),
+      ],
+      'Either a valid email or a username is required'
+    ),
+    body('password')
+      .exists({ checkFalsy: true }).withMessage('Password is required'),
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const { email, username, password } = req.body;
+
+      const user = await User.findOne({ where: email ? { email } : { username } });
+      if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+
+      const valid = await bcrypt.compare(password, user.password);
+      if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+
+      const token = jwt.sign(
+        { id: user.id, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '1d' }
+      );
+
+      res.json({ token, user: toSafeUser(user) });
+    } catch (err) {
+      console.error('Login error:', err);
+      res.status(500).json({ error: 'Login failed' });
     }
-
-    const user = await User.findOne({ where: email ? { email } : { username } });
-    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
-
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
-
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
-
-    res.json({ token, user: toSafeUser(user) });
-  } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ error: 'Login failed' });
   }
-});
+);
 
-// --- Profile: current user (/me) ---
+/**
+ * --- Profile: current user (/me) ---
+ * GET /api/users/me
+ */
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
@@ -96,43 +147,66 @@ router.get('/me', authenticateToken, async (req, res) => {
   }
 });
 
-// --- Public profile by ID (make this protected if you want private profiles) ---
-router.get('/:id', async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-    if (!Number.isInteger(id) || id <= 0) {
-      return res.status(400).json({ error: 'Invalid user id' });
+/**
+ * --- Public profile by ID ---
+ * GET /api/users/:id
+ */
+router.get(
+  '/:id',
+  [param('id').isInt({ min: 1 }).withMessage('Invalid user id')],
+  validate,
+  async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const user = await User.findByPk(id, { attributes: { exclude: ['password'] } });
+      if (!user) return res.status(404).json({ error: 'User not found' });
+      res.json({ user });
+    } catch (err) {
+      console.error('Get user by id error:', err);
+      res.status(500).json({ error: 'Failed to fetch user' });
     }
-    const user = await User.findByPk(id, { attributes: { exclude: ['password'] } });
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json({ user });
-  } catch (err) {
-    console.error('Get user by id error:', err);
-    res.status(500).json({ error: 'Failed to fetch user' });
   }
-});
+);
 
-// --- Update description (current user) ---
-router.put('/me/description', authenticateToken, async (req, res) => {
-  try {
-    const { description } = req.body;
-    if (typeof description !== 'string') {
-      return res.status(400).json({ error: 'Description must be a string' });
+/**
+ * --- Update description (current user) ---
+ * PUT /api/users/me/description
+ * Body: { description }
+ */
+router.put(
+  '/me/description',
+  authenticateToken,
+  [
+    body('description')
+      .exists().withMessage('Description is required')
+      .bail()
+      .isString().withMessage('Description must be a string')
+      .isLength({ max: 500 }).withMessage('Description must be 500 chars or fewer')
+      .trim(),
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const { description } = req.body;
+
+      const user = await User.findByPk(req.user.id);
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      user.description = description.trim();
+      await user.save();
+
+      res.json({ message: 'Description updated successfully', user: toSafeUser(user) });
+    } catch (err) {
+      console.error('Update description error:', err);
+      res.status(500).json({ error: 'Failed to save description' });
     }
-    const user = await User.findByPk(req.user.id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    user.description = description.trim();
-    await user.save();
-
-    res.json({ message: 'Description updated successfully', user: toSafeUser(user) });
-  } catch (err) {
-    console.error('Update description error:', err);
-    res.status(500).json({ error: 'Failed to save description' });
   }
-});
+);
 
-// --- Upgrade to paid ---
+/**
+ * --- Upgrade to paid ---
+ * PUT /api/users/me/upgrade
+ */
 router.put('/me/upgrade', authenticateToken, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
