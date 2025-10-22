@@ -1,160 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>CodeCrowds - Showcase & Sell Your Skills</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css" />
 <style>
-    body, html {
-        margin: 0;
-        padding: 0;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: #f0f4f8;
-        color: #333;
-    }
-    header {
-        background: #4e54c8;
-        color: #fff;
-        padding: 60px 20px;
-        text-align: center;
-    }
-    header h1 {
-        font-size: 3rem;
-        margin-bottom: 20px;
-    }
-    header h1 .brand {
-        color: #00aaff;
-        text-shadow:
-            2px 2px 0 #060606,
-           -2px 2px 0 #060606,
-            2px -2px 0 #060606,
-           -2px -2px 0 #060606;
-    }
-    header p {
-        font-size: 1.3rem;
-        max-width: 600px;
-        margin: 0 auto 30px;
-    }
-    .btn {
-        display: inline-block;
-        padding: 12px 25px;
-        margin: 10px;
-        font-size: 1rem;
-        color: #4e54c8;
-        background-color: #fff;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        text-decoration: none;
-        transition: 0.3s;
-    }
-    .btn:hover {
-        background-color: #ddd;
-    }
-    .features {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        padding: 50px 20px;
-        gap: 20px;
-        text-align: center;
-    }
-    .feature-card {
-        background: #fff;
-        border-radius: 12px;
-        padding: 30px;
-        width: 250px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        transition: transform 0.2s;
-    }
-    .feature-card:hover {
-        transform: translateY(-5px);
-    }
-    .feature-card h3 {
-        margin-bottom: 15px;
-        color: #4e54c8;
-    }
-    .feature-card p {
-        font-size: 1rem;
-        color: #555;
-    }
-    .login-container {
-        max-width: 400px;
-        margin: 50px auto;
-        background: #fff;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        text-align: center;
-    }
-    .login-container h2 {
-        margin-bottom: 20px;
-        color: #4e54c8;
-    }
-    .login-container input {
-        width: 90%;
-        padding: 12px;
-        margin: 8px 0;
-        border-radius: 8px;
-        border: 1px solid #ccc;
-        font-size: 1rem;
-    }
-    .login-container button {
-        width: 95%;
-        margin-top: 10px;
-    }
-    .message {
-        margin: 10px 0;
-        font-weight: bold;
-        color: red;
-    }
-    footer {
-        text-align: center;
-        padding: 20px;
-        background: #eee;
-        font-size: 0.9rem;
-        color: #555;
-    }
+  body, html {
+    margin: 0; padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f4f8; color: #333;
+  }
+  header { background: #4e54c8; color: #fff; padding: 60px 20px; text-align: center; }
+  header h1 { font-size: 3rem; margin-bottom: 20px; }
+  header h1 .brand { color: #00aaff; text-shadow: 2px 2px 0 #060606, -2px 2px 0 #060606, 2px -2px 0 #060606, -2px -2px 0 #060606; }
+  header p { font-size: 1.3rem; max-width: 600px; margin: 0 auto 30px; }
+  .btn { display: inline-block; padding: 12px 25px; margin: 10px; font-size: 1rem; color: #4e54c8; background: #fff; border: none; border-radius: 8px; cursor: pointer; text-decoration: none; transition: 0.3s; }
+  .btn:hover { background: #ddd; }
+  .features { display: flex; flex-wrap: wrap; justify-content: center; padding: 50px 20px; gap: 20px; text-align: center; }
+  .feature-card { background: #fff; border-radius: 12px; padding: 30px; width: 250px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); transition: transform 0.2s; }
+  .feature-card:hover { transform: translateY(-5px); }
+  .feature-card h3 { margin-bottom: 15px; color: #4e54c8; }
+  .feature-card p { font-size: 1rem; color: #555; }
+
+  .login-container { max-width: 400px; margin: 50px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); text-align: center; }
+  .login-container h2 { margin-bottom: 20px; color: #4e54c8; }
+  .login-container input { width: 90%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; }
+  .login-container button { width: 95%; margin-top: 10px; }
+  .message { margin: 10px 0; font-weight: 600; }
+  .message.error { color: #c0392b; }
+  .message.success { color: #1e8449; }
+
+  footer { text-align: center; padding: 20px; background: #eee; font-size: 0.9rem; color: #555; }
 </style>
 </head>
 <body>
 
 <header>
-    <h1><span class="brand">CodeCrowds</span></h1>
-    <p>Showcase your coding skills, offer services, and connect with clients worldwide. Join a community where talent meets opportunity!</p>
+  <h1><span class="brand">CodeCrowds</span></h1>
+  <p>Showcase your coding skills, offer services, and connect with clients worldwide. Join a community where talent meets opportunity!</p>
 </header>
 
 <section class="features">
-    <div class="feature-card">
-        <h3>Offer Your Services</h3>
-        <p>Create posts to sell your coding skills and get noticed by clients worldwide.</p>
-    </div>
-    <div class="feature-card">
-        <h3>Connect & Collaborate</h3>
-        <p>Rate and interact with other developers, build credibility, and grow your network.</p>
-    </div>
-    <div class="feature-card">
-        <h3>Ad-Free & Premium</h3>
-        <p>Upgrade to premium for extra features like ad-free experience, lower fees, and more visibility.</p>
-    </div>
+  <div class="feature-card">
+    <h3>Offer Your Services</h3>
+    <p>Create posts to sell your coding skills and get noticed by clients worldwide.</p>
+  </div>
+  <div class="feature-card">
+    <h3>Connect & Collaborate</h3>
+    <p>Rate and interact with other developers, build credibility, and grow your network.</p>
+  </div>
+  <div class="feature-card">
+    <h3>Ad-Free & Premium</h3>
+    <p>Upgrade to premium for extra features like ad-free experience, lower fees, and more visibility.</p>
+  </div>
 </section>
 
 <div class="login-container">
-    <h2>Login</h2>
-    <form id="loginForm">
-        <input id="loginEmail" type="email" placeholder="Email" required>
-        <input id="loginPassword" type="password" placeholder="Password" required>
-        <button type="submit" class="btn">Login</button>
-    </form>
-    <p id="loginMessage" class="message"></p>
-    <p>Don't have an account? <a href="register.html">Sign up here</a></p>
+  <h2>Login</h2>
+  <form id="loginForm">
+    <input id="loginEmail" type="email" placeholder="Email" autocomplete="username" required />
+    <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password" required />
+    <button type="submit" class="btn">Login</button>
+  </form>
+  <p id="loginMessage" class="message"></p>
+  <p>Don't have an account? <a href="register.html">Sign up here</a></p>
 </div>
 
 <footer>
-    &copy; 2025 CodeCrowds. All rights reserved.
+  &copy; <span id="year"></span> CodeCrowds. All rights reserved.
 </footer>
 
 <script src="script.js"></script>
+<script>
+  // tiny nicety
+  document.getElementById('year').textContent = new Date().getFullYear();
+</script>
 </body>
 </html>
