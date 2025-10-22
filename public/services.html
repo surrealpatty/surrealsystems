@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Services - CodeCrowds</title>
 <link rel="stylesheet" href="services.css" />
+<!-- If your server provides a CSRF token, expose it like this: -->
+<!-- <meta name="csrf-token" content="{{ csrfToken }}"> -->
 </head>
 <body>
 <div class="container">
@@ -33,7 +35,6 @@
     <div class="modal-content" role="document">
       <h2 id="messageTitle">Message <span id="messageRecipient"></span></h2>
 
-      <!-- Wrap the textarea so extensions can't push siblings outside -->
       <div class="field-wrap">
         <textarea id="messageContent" placeholder="Write your message…" maxlength="2000" aria-label="Message body"></textarea>
       </div>
@@ -58,15 +59,17 @@
 <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script>
-const API_BASE = '/api';
+// ---- Config ----
+// Prefer window.__API_BASE__ if your app sets it; fallback to relative 'api' to avoid leading-slash gotchas.
+const API_BASE = (window.__API_BASE__ ?? 'api').replace(/\/+$/,''); // no trailing slash
 
+// DOM
 const servicesList = document.getElementById('services-list');
 const goToProfileBtn = document.getElementById('goToProfileBtn');
 const refreshBtn = document.getElementById('refreshBtn');
 const searchInput = document.getElementById('search');
 const sortSelect = document.getElementById('sort');
 
-// Messaging elements
 const messageModal = document.getElementById('messageModal');
 const messageRecipient = document.getElementById('messageRecipient');
 const messageContent = document.getElementById('messageContent');
@@ -80,13 +83,35 @@ let lastFocusedBeforeModal = null;
 
 const MAX_LEN = 2000;
 
+// ---- Utils ----
 const esc = (s) => String(s ?? '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const fmtPrice = (v) => {
   const n = Number(v);
   return Number.isFinite(n) ? n.toLocaleString(undefined, { maximumFractionDigits: 2 }) : esc(v);
 };
 
-// ---------- Render ----------
+function toast(msg) {
+  const el = document.getElementById('toast');
+  if (!el) { alert(msg); return; }
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// Read CSRF from <meta name="csrf-token" ...> if present
+function getCsrf() {
+  const m = document.querySelector('meta[name="csrf-token"]');
+  return m?.getAttribute('content') || null;
+}
+
+// Build absolute-ish url for our API base
+function apiUrl(path) {
+  // path like "messages" or "/messages"
+  const p = String(path || '').replace(/^\/+/,'');
+  return `${API_BASE}/${p}`;
+}
+
+// ---- Render ----
 function render(services) {
   servicesList.innerHTML = '';
   if (!services.length) { servicesList.innerHTML = '<p>No services available.</p>'; return; }
@@ -121,7 +146,7 @@ function render(services) {
   });
 }
 
-// ---------- Filters ----------
+// ---- Filters ----
 function applyFilters() {
   const q = searchInput.value.toLowerCase().trim();
   const filtered = allServices.filter((s) => {
@@ -137,30 +162,24 @@ function applyFilters() {
   render(filtered);
 }
 
-// ---------- Data ----------
+// ---- Data ----
 async function loadServices() {
   servicesList.innerHTML = '<p><span class="spinner"></span> Loading services…</p>';
   try {
-    const res = await fetch(`${API_BASE}/services`);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    const res = await fetch(apiUrl('services'), { credentials: 'include' });
+    // Allow arrays or {services:[]}
+    let data;
+    try { data = await res.json(); } catch { data = []; }
+    if (!res.ok) throw new Error((data && (data.error || data.message)) || `HTTP ${res.status}`);
     allServices = data.services || data || [];
     applyFilters();
   } catch (err) {
-    console.error(err);
+    console.error('[services] load failed:', err);
     servicesList.innerHTML = '<p class="error">Failed to load services</p>';
   }
 }
 
-// ---------- UI helpers ----------
-function toast(msg) {
-  const el = document.getElementById('toast');
-  if (!el) { alert(msg); return; }
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2000);
-}
-
+// ---- Modal & a11y ----
 function updateCounterAndState() {
   const len = (messageContent.value || '').length;
   if (charCount) charCount.textContent = `${len} / ${MAX_LEN}`;
@@ -183,7 +202,6 @@ function trapFocusIn(node, e) {
   }
 }
 
-// ---------- Modal controls ----------
 function showModal() {
   lastFocusedBeforeModal = document.activeElement;
   messageModal.style.display = 'flex';
@@ -215,44 +233,74 @@ function onModalKey(e) {
   }
 }
 
-// ---------- Send message ----------
+// ---- Send message (hardened) ----
 async function sendMessage() {
   const body = (messageContent.value || '').trim();
   if (!messageState.toUserId) { toast('Missing recipient.'); return; }
   if (!body) { toast('Please write a message.'); messageContent.focus(); return; }
 
+  const payload = {
+    toUserId: messageState.toUserId,
+    serviceId: messageState.serviceId || null,
+    body
+  };
+
+  const headers = { 'Content-Type': 'application/json' };
+  const csrf = getCsrf();
+  if (csrf) headers['X-CSRF-Token'] = csrf;
+
+  // Add timeout so it doesn't spin forever
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), 15000);
+
   try {
     sendMessageBtn.disabled = true;
     sendMessageBtn.textContent = 'Sending…';
 
-    const res = await fetch(`${API_BASE}/messages`, {
+    const res = await fetch(apiUrl('messages'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        toUserId: messageState.toUserId,
-        serviceId: messageState.serviceId || null,
-        body
-      })
+      headers,
+      body: JSON.stringify(payload),
+      credentials: 'include',        // send cookies/session
+      signal: controller.signal,
     });
 
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    clearTimeout(t);
+
+    // Some backends return 204 No Content
+    if (res.status === 204) {
+      hideModal();
+      toast('Message sent!');
+      return;
+    }
+
+    // Try parse JSON; if it fails, fall back to text
+    let data, text;
+    try { data = await res.json(); }
+    catch { text = await res.text().catch(() => ''); }
+
+    if (!res.ok) {
+      const reason = (data && (data.error || data.message)) || text || `HTTP ${res.status}`;
+      throw new Error(reason);
+    }
 
     hideModal();
     toast('Message sent!');
-    // Optional redirect:
-    // window.location.href = `/messages?with=${encodeURIComponent(messageState.toUserId)}`;
+    // Optional redirect to a thread if backend returns one:
+    // if (data?.threadId) location.href = `/messages?thread=${encodeURIComponent(data.threadId)}`;
+
   } catch (err) {
-    console.error(err);
+    console.error('[messages] send failed:', err);
     toast(`Failed to send: ${err.message}`);
   } finally {
+    clearTimeout(t);
     sendMessageBtn.disabled = false;
     sendMessageBtn.textContent = 'Send';
     updateCounterAndState();
   }
 }
 
-// ---------- Events ----------
+// ---- Events ----
 goToProfileBtn.addEventListener('click', () => { window.location.href = 'profile.html'; });
 refreshBtn.addEventListener('click', loadServices);
 searchInput.addEventListener('input', applyFilters);
