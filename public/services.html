@@ -18,8 +18,10 @@
   })();
 </script>
 
-<script>window.API_BASE = '/api'; window.API_URL='/api';</script>
+<!-- Make sure script.js knows the API base and is loaded BEFORE our inline code -->
+<script>window.API_BASE = '/api'; window.API_URL = '/api';</script>
 <script src="script.js"></script>
+
 <style>
   .error{color:#c0392b}
   .service-card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 8px 20px rgba(0,0,0,.06);margin-bottom:12px}
@@ -85,11 +87,6 @@
 <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script>
-// ===================== Config =====================
-const API_BASE = '/api';
-const MESSAGES_URL = `${API_BASE}/messages`;
-const MAX_LEN = 2000;
-
 // ===================== DOM =====================
 const servicesList = document.getElementById('services-list');
 const goToProfileBtn = document.getElementById('goToProfileBtn');
@@ -115,19 +112,30 @@ const fmtPrice = (v)=> {
   const n = Number(v);
   return Number.isFinite(n) ? n.toLocaleString(undefined,{ maximumFractionDigits:2 }) : esc(v);
 };
-function toast(msg){ const el=document.getElementById('toast'); if(!el){alert(msg);return;} el.textContent=msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2200); }
+function toast(msg){
+  const el=document.getElementById('toast');
+  if(!el){ alert(msg); return; }
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2200);
+}
 function showInlineError(msg){ sendError.textContent=msg; sendError.hidden=!msg; }
 function stringifyAny(v){ if(v==null) return ''; if(typeof v==='string') return v; try{return JSON.stringify(v);}catch{return String(v);} }
 async function readError(res){
-  let data=null, text=''; try{ data=await res.json(); }catch{ text=await res.text().catch(()=> ''); }
-  const nested = data && typeof data==='object' ? (data.error?.message || data.error || data.message || data?.errors || data) : text || `HTTP ${res.status}`;
+  let data=null, text='';
+  try{ data=await res.json(); }catch{ text=await res.text().catch(()=> ''); }
+  const nested = data && typeof data==='object'
+    ? (data.error?.message || data.error || data.message || data?.errors || data)
+    : text || `HTTP ${res.status}`;
   return `[${res.status}] ${typeof nested==='string' ? nested : stringifyAny(nested)}`;
 }
 
 // ===================== Render =====================
 function render(services){
   servicesList.innerHTML='';
-  if(!services.length){ servicesList.innerHTML='<p>No services available.</p>'; return; }
+  if(!services.length){
+    servicesList.innerHTML='<p>No services available.</p>';
+    return;
+  }
   services.forEach(s=>{
     const div=document.createElement('div');
     div.className='service-card';
@@ -169,20 +177,27 @@ function applyFilters(){
   render(filtered);
 }
 
-// ===================== Data =====================
+// ===================== Data (uses apiFetch from script.js) =====================
 async function loadServices(){
   servicesList.innerHTML='<p><span class="spinner"></span> Loading services…</p>';
   try{
-    const headers = { 'Accept':'application/json' };
-    const tok = getToken(); if (tok) headers['Authorization'] = `Bearer ${tok}`;
-    const res = await fetch(`${API_BASE}/services`, { headers });
-    const data = await res.json().catch(()=> ([]));
-    if (!res.ok) throw new Error((data && (data.error || data.message)) || `HTTP ${res.status}`);
-    allServices = data.services || data || [];
+    // Ask server for the chosen sort (client still sorts as safety)
+    let sort = 'newest';
+    if (sortSelect.value === 'priceLow')  sort = 'priceLow';
+    if (sortSelect.value === 'priceHigh') sort = 'priceHigh';
+
+    // apiFetch auto-unwraps { success, data }, attaches token, and prefixes /api
+    const out = await apiFetch(`services?limit=50&page=1&sort=${encodeURIComponent(sort)}`);
+
+    // Support both shapes: bare {services:[…]} OR {success:true,data:{services:[…]}}
+    const payload = (out && out.services) ? out : (out && out.data) ? out.data : out;
+    const list = Array.isArray(payload) ? payload : (payload && payload.services) ? payload.services : [];
+
+    allServices = list;
     applyFilters();
   }catch(e){
     console.error('[services] load failed:', e);
-    servicesList.innerHTML = '<p class="error">Failed to load services</p>';
+    servicesList.innerHTML = `<p class="error">Failed to load services: ${esc(e.message || e)}</p>`;
   }
 }
 
@@ -226,9 +241,8 @@ function onModalKey(e){
 }
 
 // ===================== Send Message =====================
-function getToken(){ return localStorage.getItem('token') || ''; }
 async function sendMessage(){
-  const token = getToken();
+  const token = getToken(); // from script.js
   if (!token){ showInlineError('Please log in to send messages.'); return; }
   const text = (messageContent.value||'').trim();
   if (!messageState.toUserId){ showInlineError('Missing recipient.'); return; }
@@ -236,27 +250,47 @@ async function sendMessage(){
   showInlineError('');
   try{
     sendMessageBtn.disabled=true; sendMessageBtn.textContent='Sending…';
-    const res = await fetch(MESSAGES_URL, {
+    const res = await fetch('/api/messages', {
       method:'POST',
       headers:{ 'Content-Type':'application/json','Accept':'application/json','Authorization':`Bearer ${token}` },
       body: JSON.stringify({ receiverId: messageState.toUserId, content:text, serviceId: messageState.serviceId || null })
     });
     if (res.status===204){ hideModal(); toast('Message sent!'); return; }
-    if (!res.ok){ const msg = await readError(res);
-      if (res.status===401||res.status===403){ localStorage.removeItem('token'); showInlineError(`${msg}. Please log in again.`); }
-      else { showInlineError(`Failed to send: ${msg}`); }
+    if (!res.ok){
+      const msg = await readError(res);
+      if (res.status===401||res.status===403){
+        localStorage.removeItem('token');
+        showInlineError(`${msg}. Please log in again.`);
+      } else {
+        showInlineError(`Failed to send: ${msg}`);
+      }
       return;
     }
     hideModal(); toast('Message sent!');
-  }catch(err){ console.error('[messages] network error:', err); showInlineError('Network error. Please try again.'); }
-  finally{ sendMessageBtn.disabled=false; sendMessageBtn.textContent='Send'; updateCounterAndState(); }
+  }catch(err){
+    console.error('[messages] network error:', err);
+    showInlineError('Network error. Please try again.');
+  }finally{
+    sendMessageBtn.disabled=false; sendMessageBtn.textContent='Send';
+    updateCounterAndState();
+  }
 }
 
 // ===================== Events =====================
 document.getElementById('goToProfileBtn').addEventListener('click', ()=> { location.href='profile.html'; });
 refreshBtn.addEventListener('click', loadServices);
-searchInput.addEventListener('input', applyFilters);
-sortSelect.addEventListener('change', applyFilters);
+
+// Debounced filter to avoid re-render on every keystroke
+let filterTimer = null;
+searchInput.addEventListener('input', () => {
+  clearTimeout(filterTimer);
+  filterTimer = setTimeout(applyFilters, 120);
+});
+
+// When sort changes, re-fetch from server so large lists stay fast
+sortSelect.addEventListener('change', () => {
+  loadServices();
+});
 
 servicesList.addEventListener('click', (e)=>{
   const btn = e.target.closest('.message-btn'); if (!btn) return;
@@ -275,7 +309,10 @@ messageModal.addEventListener('click', (e)=>{ if (e.target===messageModal) hideM
 messageContent.addEventListener('input', updateCounterAndState);
 
 // Initial load
-window.addEventListener('load', ()=>{ updateCounterAndState(); loadServices(); });
+window.addEventListener('load', () => {
+  updateCounterAndState();
+  loadServices();
+});
 </script>
 </body>
 </html>
