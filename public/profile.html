@@ -43,6 +43,7 @@
         <button type="button" id="loadMoreServicesBtn" class="hidden">Load more</button>
       </div>
 
+      <!-- stays hidden until + Service is clicked -->
       <div id="newServiceSection" class="new-service hidden">
         <input type="text" id="newServiceTitle" placeholder="Service Title" />
         <textarea id="newServiceDesc" placeholder="Service Description"></textarea>
@@ -162,11 +163,19 @@ let currentUserTier = 'free';
 let svcPage = 1, svcLoading = false;
 
 function esc(s){ return String(s ?? '').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Only toggle owner UI controls (not the newServiceSection; that opens on click)
 function showOwnerUI(isOwner){
-  [goToServicesBtn,goToMessagesBtn,addNewServiceBtn,editDescBtnFloat,mobileRow,descControls,newServiceSection]
+  [goToServicesBtn,goToMessagesBtn,addNewServiceBtn,editDescBtnFloat,mobileRow,descControls]
     .forEach(el=>el.classList.toggle('hidden',!isOwner));
   backToMyProfileBtn.classList.toggle('hidden',isOwner);
   mobileBackBtn.classList.toggle('hidden',isOwner);
+
+  // Keep the form hidden by default; the +Service button will reveal it.
+  if (!isOwner) {
+    newServiceSection.classList.add('hidden');
+    newServiceSection.classList.remove('show-flex');
+  }
 }
 
 // 2) Fetch /users/me (unwrapped), set userId if missing, and render
@@ -204,7 +213,7 @@ async function loadProfile() {
 
     // Render name + description with fallbacks
     profileUsername.textContent = getDisplayName(u) || 'User';
-    profileDescription.textContent = getDescription(u) || 'No description yet.';
+    profileDescription.textContent = getDescription(u) || 'No description yet.'
 
     // Owner UI (controls + floating buttons)
     const viewingSelf = profileUserId === loggedInUserId;
@@ -354,6 +363,46 @@ document.getElementById('upgradeBtn').addEventListener('click', async ()=>{
     await loadProfile();
   }catch(err){ alert(err.message || 'Upgrade failed'); }
 });
+
+/* ===== NEW: + Service button behavior ===== */
+function openNewService() {
+  // ensure visible & flex layout
+  newServiceSection.classList.remove('hidden');
+  newServiceSection.classList.add('show-flex');
+  newServiceTitle.focus();
+  try { newServiceSection.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch {}
+}
+addNewServiceBtn.addEventListener('click', openNewService);
+mobileAddServiceBtn.addEventListener('click', openNewService);
+
+/* ===== NEW: Create Service handler ===== */
+async function createService() {
+  const title = newServiceTitle.value.trim();
+  const description = newServiceDesc.value.trim();
+  const price = Number(newServicePrice.value);
+
+  if (!title) { alert('Title is required'); return; }
+  if (Number.isNaN(price) || price < 0) { alert('Enter a valid price'); return; }
+
+  try {
+    await apiFetch('services', {
+      method: 'POST',
+      body: { title, description, price }
+    });
+
+    // Clear form
+    newServiceTitle.value = '';
+    newServiceDesc.value = '';
+    newServicePrice.value = '';
+
+    // Refresh list for the current user
+    await loadServices({ reset: true, userId: getUserId() });
+  } catch (err) {
+    console.error(err);
+    alert('Failed to create service');
+  }
+}
+createServiceBtn.addEventListener('click', createService);
 
 // init
 loadProfile();
