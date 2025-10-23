@@ -3,6 +3,9 @@
 *::before,
 *::after { box-sizing: border-box; }
 
+html, body,
+.container, .card, .row, .meta-row { min-width: 0; } /* Prevent flex overflow */
+
 html, body {
   margin: 0;
   padding: 0;
@@ -11,6 +14,9 @@ html, body {
   background: linear-gradient(135deg, #4e54c8, #00aaff);
   color: #fff;
 }
+
+/* Ensure media fits */
+img, video { max-width: 100%; height: auto; display: block; }
 
 /* ---------- Container ---------- */
 .container {
@@ -98,6 +104,10 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
   box-shadow: 0 8px 20px rgba(0,0,0,0.15);
   color: #333;
   transition: transform 0.2s;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  -webkit-hyphens: auto;
+  hyphens: auto;
 }
 .card:hover { transform: translateY(-5px); }
 .card h3 { margin-bottom: 10px; color: #4e54c8; }
@@ -130,12 +140,14 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 .input-number { max-width: 200px; }
 
 /* ---------- Ratings ---------- */
-.stars { font-size: 1.2rem; letter-spacing: 2px; color:#f59e0b; }
+.stars { font-size: 1.2rem; letter-spacing: 2px; color:#f59e0b; flex-wrap: wrap; }
 .review-list {
   display:grid;
   grid-template-columns: 1fr;
   gap:14px;
   text-align:left;
+  width: 100%;
+  padding: 0 10px;
 }
 .review {
   background:#fff;
@@ -143,11 +155,18 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
   border-radius:12px;
   padding:16px;
   box-shadow:0 8px 20px rgba(0,0,0,0.15);
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  -webkit-hyphens: auto;
+  hyphens: auto;
 }
 .meta-row {
   display:flex;
   align-items:center;
   gap:10px;
+  flex-wrap: wrap;
 }
 .badge {
   background:#eef2ff;
@@ -160,8 +179,6 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 .row { display:flex; }
 .row-center { align-items:center; }
 .row-gap-8 { gap: 8px; }
-
-/* Utility to replace inline style */
 .justify-center { justify-content: center; }
 
 /* ---------- Floating Buttons ---------- */
@@ -211,4 +228,5 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
   .floating-btn { display: none; }
   .mobile-button-row { display: flex; }
   button { font-size: 1rem; padding: 12px 20px; }
+  .review { padding: 12px; }
 }
