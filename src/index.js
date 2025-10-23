@@ -1,7 +1,8 @@
 // src/index.js
-app.use(compression({ threshold: 0 })); // gzip everything
+const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const compression = require('compression'); // <-- import first
 require('dotenv').config();
 
 const { sequelize, testConnection } = require('./config/database');
@@ -10,8 +11,10 @@ const serviceRoutes = require('./routes/service');
 const ratingRoutes = require('./routes/rating');
 const messageRoutes = require('./routes/messages');
 
-const app = express();
+const app = express();               // <-- create app first
 
+// Middlewares (order matters)
+app.use(compression({ threshold: 0 })); // <-- then use it
 app.use(cors({
   origin: true,
   credentials: true,
@@ -20,17 +23,16 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// ✅ Serve static frontend (public/*)
-// NOTE: __dirname points to /src, so ../public is correct
+// Serve static frontend (../public because this file is in /src)
 app.use(express.static(path.join(__dirname, '../public')));
 
-// ✅ API routes
+// API routes
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/messages', messageRoutes);
 
-// 404 for unknown routes (non-static, non-API)
+// 404 for unknown routes
 app.use((req, res) => {
   res.status(404).json({ success: false, error: { message: 'Not found' } });
 });
