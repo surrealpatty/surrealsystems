@@ -4,7 +4,7 @@
 *::after { box-sizing: border-box; }
 
 html, body,
-.container, .card, .row, .meta-row { min-width: 0; } /* Prevent flex overflow */
+.container, .card, .row, .meta-row { min-width: 0; }
 
 html, body {
   margin: 0;
@@ -15,10 +15,8 @@ html, body {
   color: #fff;
 }
 
-/* Ensure media fits */
 img, video { max-width: 100%; height: auto; display: block; }
 
-/* ---------- Container ---------- */
 .container {
   max-width: 900px;
   width: 90%;
@@ -34,14 +32,9 @@ img, video { max-width: 100%; height: auto; display: block; }
   text-align: center;
 }
 
-/* ---------- Headings ---------- */
-h1, h2 {
-  color: #4e54c8;
-  margin-bottom: 0.5rem;
-}
+h1, h2 { color: #4e54c8; margin-bottom: 0.5rem; }
 .section-subtle { color:#666; margin-top:-10px; }
 
-/* ---------- Spinner ---------- */
 .spinner {
   display: inline-block;
   width: 20px;
@@ -53,11 +46,9 @@ h1, h2 {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ---------- Transitions ---------- */
 .fade-in { opacity: 0; transform: translateY(10px); animation: fadeIn 0.5s ease forwards; }
 @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
 
-/* ---------- Description ---------- */
 #profile-description { min-height: 50px; margin-bottom: 10px; }
 #profile-description[contenteditable="true"] {
   border: 1px solid #4e54c8;
@@ -68,7 +59,6 @@ h1, h2 {
 }
 #descControls { display:flex; gap:10px; justify-content:center; }
 
-/* ---------- Buttons ---------- */
 button {
   padding: 12px 24px;
   font-size: 1.05rem;
@@ -95,7 +85,6 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 .upgrade-btn:hover { background-color: #218838; }
 .hidden { display: none !important; }
 
-/* ---------- Cards / Lists ---------- */
 .card {
   background: #fff;
   border-radius: 12px;
@@ -114,7 +103,6 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 .card p { margin: 5px 0; color: #555; }
 .muted { color:#777; font-size: 0.95rem; }
 
-/* ---------- Services Grid ---------- */
 #services-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -122,8 +110,6 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 }
 .service-buttons { display: flex; gap: 8px; }
 
-/* ---------- New Service Section ---------- */
-/* stays hidden until +Service click (JS toggles .hidden + adds .show-flex) */
 .new-service {
   display:none;
   flex-direction: column;
@@ -140,7 +126,6 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 }
 .input-number { max-width: 200px; }
 
-/* ---------- Ratings ---------- */
 .stars { font-size: 1.2rem; letter-spacing: 2px; color:#f59e0b; flex-wrap: wrap; }
 .review-list {
   display:grid;
@@ -182,7 +167,6 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 .row-gap-8 { gap: 8px; }
 .justify-center { justify-content: center; }
 
-/* ---------- Floating Buttons ---------- */
 .floating-btn {
   position: fixed;
   right: 20px;
@@ -202,7 +186,6 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 #editDescBtnFloat { background-color:#6f42c1; bottom: 20px; }
 #backToMyProfileBtn { background-color:#0ea5e9; bottom: 260px; }
 
-/* ---------- Mobile Bottom Row ---------- */
 .mobile-button-row {
   display: none;
   position: fixed;
@@ -224,7 +207,6 @@ button:hover { transform: translateY(-5px); opacity: 0.9; }
 }
 .mobile-button-row button:hover { transform: translateY(-5px); opacity: 0.9; }
 
-/* ---------- Responsive ---------- */
 @media (max-width: 480px) {
   .floating-btn { display: none; }
   .mobile-button-row { display: flex; }
