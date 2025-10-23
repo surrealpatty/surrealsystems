@@ -6,8 +6,8 @@
 <title>Profile - CodeCrowds</title>
 <link rel="stylesheet" href="profile.css" />
 <script>window.API_URL = '/api';</script>
-<script src="script.js"></script>
-<script>
+<script src="script.js" defer></script>
+<script defer>
   // Guard: redirect unauthorized users to root (login)
   (function guard(){
     if (!isLoggedIn()) {
@@ -104,7 +104,7 @@
     <button type="button" id="mobileBackBtn" class="hidden">My Profile</button>
   </nav>
 
-<script>
+<script defer>
 // ===== pull helpers from script.js
 const API_URL = '/api';
 const token = getToken();
@@ -117,6 +117,10 @@ try {
     if (cachedName) document.getElementById('profile-username').textContent = cachedName;
     const cachedDesc = getDescription(cached);
     if (cachedDesc) document.getElementById('profile-description').textContent = cachedDesc;
+
+    // Perceived speed: if not viewing ?userId, it's self—show owner controls instantly
+    const params = new URLSearchParams(location.search);
+    if (cached.id && !params.get('userId')) showOwnerUI(true);
   }
 } catch {}
 
@@ -161,6 +165,7 @@ const loadMoreBtn = document.getElementById('loadMoreServicesBtn');
 
 let currentUserTier = 'free';
 let svcPage = 1, svcLoading = false;
+let svcAborter = null;
 
 function esc(s){ return String(s ?? '').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -213,7 +218,7 @@ async function loadProfile() {
 
     // Render name + description with fallbacks
     profileUsername.textContent = getDisplayName(u) || 'User';
-    profileDescription.textContent = getDescription(u) || 'No description yet.'
+    profileDescription.textContent = getDescription(u) || 'No description yet.';
 
     // Owner UI (controls + floating buttons)
     const viewingSelf = profileUserId === loggedInUserId;
@@ -230,9 +235,10 @@ async function loadProfile() {
       upgradeBtn.classList.add('hidden');
     }
 
-    // Now that we know the target profile, load lists against that ID
+    // Load lists (faster perceived load: services first; ratings lazily)
     await loadServices({ reset: true, userId: profileUserId });
-    await loadRatings(profileUserId);
+    const lazy = (cb)=> (window.requestIdleCallback ? requestIdleCallback(cb, { timeout: 1500 }) : setTimeout(cb, 0));
+    lazy(()=> loadRatings(profileUserId));
 
   } catch (err) {
     console.error('Profile load error:', err);
@@ -260,14 +266,28 @@ async function loadServices({reset=false, userId} = {}) {
   try{
     const loggedInUserId = getUserId();
 
-    if (reset){ svcPage=1; servicesList.innerHTML='<p><span class="spinner"></span> Loading services...</p>'; loadMoreBtn.classList.add('hidden'); }
+    if (reset){
+      svcPage=1;
+      // lightweight skeletons for instant paint
+      servicesList.innerHTML = Array.from({length:3}).map(()=>`
+        <div class="card fade-in">
+          <h3 style="background:#eee;height:18px;width:60%;border-radius:6px;"></h3>
+          <p style="background:#f2f2f2;height:14px;width:100%;border-radius:6px;"></p>
+          <p style="background:#f2f2f2;height:14px;width:80%;border-radius:6px;"></p>
+        </div>
+      `).join('');
+      loadMoreBtn.classList.add('hidden');
+    }
 
     const url = new URL(`${API_URL}/services`, location.origin);
     if (userId) url.searchParams.set('userId', userId);
-    url.searchParams.set('limit','12');
+    url.searchParams.set('limit', svcPage === 1 ? '6' : '12'); // smaller first page for speed
     url.searchParams.set('page', String(svcPage));
 
-    const data = await apiFetch(url.pathname + url.search); // unwrapped
+    if (svcAborter) { try { svcAborter.abort(); } catch {} }
+    svcAborter = new AbortController();
+
+    const data = await apiFetch(url.pathname + url.search, { signal: svcAborter.signal }); // "signal" should be forwarded by apiFetch
     const list = data.services || [];
     const hasMore = !!data.hasMore;
 
@@ -287,8 +307,10 @@ async function loadServices({reset=false, userId} = {}) {
 
     if (hasMore){ loadMoreBtn.classList.remove('hidden'); svcPage+=1; } else { loadMoreBtn.classList.add('hidden'); }
   }catch(err){
-    console.error(err);
-    if (svcPage===1) servicesList.innerHTML='<p>Failed to load services.</p>';
+    if (err?.name !== 'AbortError') {
+      console.error(err);
+      if (svcPage===1) servicesList.innerHTML='<p>Failed to load services.</p>';
+    }
   }finally{ svcLoading=false; }
 }
 loadMoreBtn.addEventListener('click', ()=> loadServices({ reset:false }));
@@ -364,7 +386,7 @@ document.getElementById('upgradeBtn').addEventListener('click', async ()=>{
   }catch(err){ alert(err.message || 'Upgrade failed'); }
 });
 
-/* ===== NEW: + Service button behavior ===== */
+/* ===== + Service button behavior ===== */
 function openNewService() {
   // ensure visible & flex layout
   newServiceSection.classList.remove('hidden');
@@ -375,7 +397,7 @@ function openNewService() {
 addNewServiceBtn.addEventListener('click', openNewService);
 mobileAddServiceBtn.addEventListener('click', openNewService);
 
-/* ===== NEW: Create Service handler ===== */
+/* ===== Create Service handler ===== */
 async function createService() {
   const title = newServiceTitle.value.trim();
   const description = newServiceDesc.value.trim();
