@@ -1,51 +1,94 @@
-// routes/service.js
 const express = require('express');
 const router = express.Router();
+const { Op } = require('sequelize');
 const { Service, User } = require('../models');
 const authenticateToken = require('../middlewares/authenticateToken');
 
-// GET /api/services
-// ?userId=123&page=1&limit=12
+// Small helpers to keep responses consistent
+function sendSuccess(res, data = {}, status = 200) {
+  return res.status(status).json({ success: true, data });
+}
+function sendError(res, message = 'Something went wrong', status = 500, details) {
+  const payload = { success: false, error: { message } };
+  if (details) payload.error.details = details;
+  return res.status(status).json(payload);
+}
+
+/**
+ * GET /api/services
+ * Optional query:
+ *   userId=<number>  filter by owner
+ *   page=<number>    default 1
+ *   limit=<number>   default 12, max 50
+ *   sort=newest|priceLow|priceHigh (default newest)
+ */
 router.get('/', async (req, res) => {
   try {
     const userId = req.query.userId ? parseInt(req.query.userId, 10) : null;
-    const limit = Math.min(parseInt(req.query.limit, 10) || 12, 50);
+
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 12, 1), 50);
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const offset = (page - 1) * limit;
+
+    const sort = String(req.query.sort || 'newest').toLowerCase();
+    let order;
+    if (sort === 'pricelow') order = [['price', 'ASC']];
+    else if (sort === 'pricehigh') order = [['price', 'DESC']];
+    else order = [['createdAt', 'DESC']]; // newest
+
     const where = {};
     if (userId) where.userId = userId;
 
-    const [services, total] = await Promise.all([
-      Service.findAll({
-        where,
-        attributes: ['id', 'title', 'description', 'price', 'userId', 'createdAt'],
-        include: [{ model: User, as: 'user', attributes: ['id', 'username'] }],
-        order: [['createdAt', 'DESC']],
-        limit,
-        offset: (page - 1) * limit,
-      }),
-      Service.count({ where }),
-    ]);
+    const { rows, count } = await Service.findAndCountAll({
+      where,
+      attributes: ['id', 'title', 'description', 'price', 'userId', 'createdAt'],
+      include: [
+        {
+          model: User,
+          as: 'user',                // make sure your association uses this alias
+          attributes: ['id', 'username'],
+          required: false,
+        },
+      ],
+      order,
+      limit,
+      offset,
+      subQuery: false,              // helps performance on joins + pagination
+    });
 
-    const hasMore = page * limit < total;
+    const hasMore = offset + rows.length < count;
     res.set('Cache-Control', 'private, max-age=15');
-    res.json({ services, page, limit, total, hasMore });
+
+    return sendSuccess(res, {
+      services: rows,
+      hasMore,
+      page,
+      limit,
+      total: count,
+      sort,
+      filter: { userId },
+    });
   } catch (err) {
     console.error('Fetch services error:', err);
-    res.status(500).json({ error: 'Failed to fetch services' });
+    return sendError(res, 'Failed to fetch services', 500);
   }
 });
 
-// POST /api/services (create; auth required)
+/**
+ * POST /api/services  (create; auth required)
+ * Body: { title, description, price }
+ */
 router.post('/', authenticateToken, async (req, res) => {
   try {
     const { title, description, price } = req.body;
 
     if (!title || !description) {
-      return res.status(400).json({ error: 'Title and description are required' });
+      return sendError(res, 'Title and description are required', 400);
     }
+
     const priceNum = Number(price);
-    if (Number.isNaN(priceNum) || priceNum < 0) {
-      return res.status(400).json({ error: 'Price must be a non-negative number' });
+    if (!Number.isFinite(priceNum) || priceNum < 0) {
+      return sendError(res, 'Price must be a non-negative number', 400);
     }
 
     const newService = await Service.create({
@@ -55,28 +98,35 @@ router.post('/', authenticateToken, async (req, res) => {
       userId: req.user.id,
     });
 
-    res.status(201).json({ service: newService });
+    return sendSuccess(res, { service: newService }, 201);
   } catch (err) {
     console.error('Create service error:', err);
     if (err.name === 'SequelizeValidationError') {
-      return res.status(400).json({ error: err.errors?.map(e => e.message).join(', ') });
+      return sendError(
+        res,
+        err.errors?.map(e => e.message).join(', ') || 'Validation failed',
+        400
+      );
     }
-    res.status(500).json({ error: 'Failed to create service' });
+    return sendError(res, 'Failed to create service', 500);
   }
 });
 
-// PUT /api/services/:id (update; owner only)
+/**
+ * PUT /api/services/:id  (update; owner only)
+ * Body: { title?, description?, price? }
+ */
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const idNum = Number(req.params.id);
     if (!Number.isInteger(idNum) || idNum <= 0) {
-      return res.status(400).json({ error: 'Invalid service id' });
+      return sendError(res, 'Invalid service id', 400);
     }
 
     const service = await Service.findByPk(idNum);
-    if (!service) return res.status(404).json({ error: 'Service not found' });
+    if (!service) return sendError(res, 'Service not found', 404);
     if (String(service.userId) !== String(req.user.id)) {
-      return res.status(403).json({ error: 'Unauthorized' });
+      return sendError(res, 'Unauthorized', 403);
     }
 
     const updates = {};
@@ -88,42 +138,48 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
     if (req.body.price !== undefined) {
       const priceNum = Number(req.body.price);
-      if (Number.isNaN(priceNum) || priceNum < 0) {
-        return res.status(400).json({ error: 'Price must be a non-negative number' });
+      if (!Number.isFinite(priceNum) || priceNum < 0) {
+        return sendError(res, 'Price must be a non-negative number', 400);
       }
       updates.price = priceNum;
     }
 
     await service.update(updates);
-    res.json({ service });
+    return sendSuccess(res, { service });
   } catch (err) {
     console.error('Update service error:', err);
     if (err.name === 'SequelizeValidationError') {
-      return res.status(400).json({ error: err.errors?.map(e => e.message).join(', ') });
+      return sendError(
+        res,
+        err.errors?.map(e => e.message).join(', ') || 'Validation failed',
+        400
+      );
     }
-    res.status(500).json({ error: 'Failed to update service' });
+    return sendError(res, 'Failed to update service', 500);
   }
 });
 
-// DELETE /api/services/:id (owner only)
+/**
+ * DELETE /api/services/:id  (owner only)
+ */
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const idNum = Number(req.params.id);
     if (!Number.isInteger(idNum) || idNum <= 0) {
-      return res.status(400).json({ error: 'Invalid service id' });
+      return sendError(res, 'Invalid service id', 400);
     }
 
     const service = await Service.findByPk(idNum);
-    if (!service) return res.status(404).json({ error: 'Service not found' });
+    if (!service) return sendError(res, 'Service not found', 404);
     if (String(service.userId) !== String(req.user.id)) {
-      return res.status(403).json({ error: 'Unauthorized' });
+      return sendError(res, 'Unauthorized', 403);
     }
 
     await service.destroy();
-    res.json({ message: 'Service deleted' });
+    return sendSuccess(res, { message: 'Service deleted' });
   } catch (err) {
     console.error('Delete service error:', err);
-    res.status(500).json({ error: 'Failed to delete service' });
+    return sendError(res, 'Failed to delete service', 500);
   }
 });
 

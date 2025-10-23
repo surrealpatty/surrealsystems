@@ -1,5 +1,5 @@
 // src/index.js
-const express = require('express');
+app.use(compression({ threshold: 0 })); // gzip everything
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
