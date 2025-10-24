@@ -14,7 +14,7 @@ const baseOpts = {
   dialectOptions: {}
 };
 
-// Require SSL only in production (local dev often runs without SSL)
+// SSL only in production
 if (process.env.NODE_ENV === 'production') {
   baseOpts.dialectOptions.ssl = { require: true, rejectUnauthorized: false };
 }
@@ -25,11 +25,7 @@ const sequelize = process.env.DATABASE_URL
       process.env.DB_NAME,
       process.env.DB_USER,
       process.env.DB_PASSWORD,
-      {
-        ...baseOpts,
-        host: process.env.DB_HOST,
-        port: Number(process.env.DB_PORT) || 5432
-      }
+      { ...baseOpts, host: process.env.DB_HOST, port: Number(process.env.DB_PORT) || 5432 }
     );
 
 const testConnection = async () => {

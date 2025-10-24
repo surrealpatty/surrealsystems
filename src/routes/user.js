@@ -121,13 +121,16 @@ router.post(
   }
 );
 
-/** Me */
+/** Me (optimized & briefly cached) */
 router.get('/me', authenticateToken, async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.id, { attributes: { exclude: ['password'] } });
+    const user = await User.findByPk(req.user.id, {
+      attributes: ['id', 'username', 'email', 'description', 'tier', 'createdAt', 'updatedAt']
+    });
     if (!user) return sendError(res, 'User not found', 404);
-    const safe = withNormalizedUsername(toSafeUser(user));
-    return sendSuccess(res, { user: safe });
+
+    res.set('Cache-Control', 'private, max-age=15'); // fast repeat loads
+    return sendSuccess(res, { user });
   } catch (err) {
     console.error('Get /me error:', err);
     return sendError(res, 'Failed to fetch user', 500);
@@ -157,9 +160,7 @@ router.get(
 router.put(
   '/me/description',
   authenticateToken,
-  [
-    body('description').exists().isString().isLength({ max: 500 }).trim()
-  ],
+  [body('description').exists().isString().isLength({ max: 500 }).trim()],
   validate,
   async (req, res) => {
     try {
