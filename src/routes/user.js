@@ -1,4 +1,3 @@
-// src/routes/user.js
 const express = require('express');
 const router = express.Router();
 const { User } = require('../models');
@@ -129,7 +128,7 @@ router.get('/me', authenticateToken, async (req, res) => {
     });
     if (!user) return sendError(res, 'User not found', 404);
 
-    res.set('Cache-Control', 'private, max-age=15'); // fast repeat loads
+    res.set('Cache-Control', 'private, max-age=15');
     return sendSuccess(res, { user });
   } catch (err) {
     console.error('Get /me error:', err);

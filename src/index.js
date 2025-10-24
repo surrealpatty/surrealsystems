@@ -1,4 +1,3 @@
-// src/index.js
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -48,15 +47,27 @@ app.use(rateLimit({
 
 app.use(express.json());
 
-/* ── Server-Timing (see slow endpoints in devtools) ──────────────────── */
+/* ── Server-Timing (fixed: no headers-after-sent) ────────────────────── */
 app.set('etag', 'weak');
 app.use((req, res, next) => {
   const start = process.hrtime.bigint();
+
+  // set Server-Timing just before headers go out
+  const origWriteHead = res.writeHead;
+  res.writeHead = function (...args) {
+    const ttfbMs = Number((process.hrtime.bigint() - start) / 1000000n);
+    try { res.setHeader('Server-Timing', `app;dur=${ttfbMs}`); } catch {}
+    return origWriteHead.apply(this, args);
+  };
+
+  // log slow requests after response finishes
   res.on('finish', () => {
-    const durMs = Number((process.hrtime.bigint() - start) / 1000000n);
-    res.setHeader('Server-Timing', `app;dur=${durMs}`);
-    if (durMs > 300) console.warn(`[SLOW] ${req.method} ${req.originalUrl} -> ${res.statusCode} in ${durMs}ms`);
+    const totalMs = Number((process.hrtime.bigint() - start) / 1000000n);
+    if (totalMs > 300) {
+      console.warn(`[SLOW] ${req.method} ${req.originalUrl} -> ${res.statusCode} in ${totalMs}ms`);
+    }
   });
+
   next();
 });
 
@@ -68,14 +79,20 @@ app.use('/api/services', serviceRoutes);
 let dbStatus = 'starting';
 let dbErrorMsg = null;
 app.get('/api/health', (req, res) => {
-  res.json({ ok: true, ts: Date.now(), uptime: process.uptime(), db: dbStatus, ...(dbErrorMsg ? { dbError: dbErrorMsg } : {}) });
+  res.json({
+    ok: true,
+    ts: Date.now(),
+    uptime: process.uptime(),
+    db: dbStatus,
+    ...(dbErrorMsg ? { dbError: dbErrorMsg } : {})
+  });
 });
 
-/* ── Static frontend with caching ──────────────────────────────────────
-   NOTE: index.js is in /src and public/ is at repo root -> ../public
-*/
+/* ── Static frontend with caching ────────────────────────────────────── */
 const publicDir = path.join(__dirname, '../public');
-app.use(express.static(publicDir, { maxAge: '7d', etag: true, lastModified: true, immutable: true }));
+app.use(express.static(publicDir, {
+  maxAge: '7d', etag: true, lastModified: true, immutable: true
+}));
 
 // Root HTML: no-store so new deploys show instantly
 app.get('/', (req, res) => {
