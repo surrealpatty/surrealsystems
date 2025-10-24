@@ -5,22 +5,16 @@ const { User } = require('../models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const authenticateToken = require('../middlewares/authenticateToken');
-
-// Validators
 const { body, param, oneOf } = require('express-validator');
 const validate = require('../middlewares/validate');
 
-// ---------- Helpers ----------
-
-// Remove password from returned objects
+// helpers
 function toSafeUser(user) {
   if (!user) return user;
   const raw = user.toJSON ? user.toJSON() : user;
   const { password, ...safe } = raw;
   return safe;
 }
-
-// Ensure we always have a `username` in API responses
 function withNormalizedUsername(safeUser) {
   if (!safeUser) return safeUser;
   const out = { ...safeUser };
@@ -30,8 +24,6 @@ function withNormalizedUsername(safeUser) {
   }
   return out;
 }
-
-// Unified success/error responders
 function sendSuccess(res, data = {}, status = 200) {
   return res.status(status).json({ success: true, data });
 }
@@ -41,42 +33,25 @@ function sendError(res, message = 'Something went wrong', status = 500, details)
   return res.status(status).json(payload);
 }
 
-// ---------- Routes ----------
-
-/**
- * --- Register ---
- * POST /api/users/register
- * Body: { username, email, password, description? }
- */
+/** Register */
 router.post(
   '/register',
   [
-    body('username')
-      .trim()
-      .isString().withMessage('Username must be a string')
-      .isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
-    body('email')
-      .trim()
-      .isEmail().withMessage('Invalid email address')
-      .normalizeEmail(),
-    body('password')
-      .isString().withMessage('Password must be a string')
-      .isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-    body('description')
-      .optional({ nullable: true })
-      .isString().withMessage('Description must be a string')
-      .isLength({ max: 500 }).withMessage('Description must be 500 chars or fewer')
-      .trim(),
+    body('username').trim().isString().isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
+    body('email').trim().isEmail().withMessage('Invalid email').normalizeEmail(),
+    body('password').isString().isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('description').optional({ nullable: true }).isString().isLength({ max: 500 }).trim()
   ],
   validate,
   async (req, res) => {
     try {
       const { username, email, password, description } = req.body;
 
-      const existingEmail = await User.findOne({ where: { email } });
+      const [existingEmail, existingUsername] = await Promise.all([
+        User.findOne({ where: { email } }),
+        User.findOne({ where: { username } })
+      ]);
       if (existingEmail) return sendError(res, 'Email already used', 400);
-
-      const existingUsername = await User.findOne({ where: { username } });
       if (existingUsername) return sendError(res, 'Username already taken', 400);
 
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -85,9 +60,13 @@ router.post(
         email,
         password: hashedPassword,
         description: (description || '').trim(),
-        tier: 'free',
+        tier: 'free'
       });
 
+      if (!process.env.JWT_SECRET) {
+        console.error('Missing JWT_SECRET at sign time');
+        return sendError(res, 'Server misconfigured', 500);
+      }
       const token = jwt.sign(
         { id: newUser.id, email: newUser.email },
         process.env.JWT_SECRET,
@@ -103,44 +82,30 @@ router.post(
   }
 );
 
-/**
- * --- Login ---
- * POST /api/users/login
- * Body: { email OR username, password }
- */
+/** Login (email or username) */
 router.post(
   '/login',
   [
-    oneOf(
-      [
-        body('email')
-          .exists({ checkFalsy: true }).withMessage('Email is required when username is not provided')
-          .bail()
-          .isEmail().withMessage('Invalid email address')
-          .normalizeEmail(),
-        body('username')
-          .exists({ checkFalsy: true }).withMessage('Username is required when email is not provided')
-          .bail()
-          .isString().withMessage('Username must be a string')
-          .isLength({ min: 3 }).withMessage('Username must be at least 3 characters')
-          .trim(),
-      ],
-      'Either a valid email or a username is required'
-    ),
-    body('password')
-      .exists({ checkFalsy: true }).withMessage('Password is required'),
+    oneOf([
+      body('email').exists({ checkFalsy: true }).isEmail().normalizeEmail(),
+      body('username').exists({ checkFalsy: true }).isString().isLength({ min: 3 }).trim()
+    ], 'Either a valid email or a username is required'),
+    body('password').exists({ checkFalsy: true })
   ],
   validate,
   async (req, res) => {
     try {
       const { email, username, password } = req.body;
-
       const user = await User.findOne({ where: email ? { email } : { username } });
       if (!user) return sendError(res, 'Invalid credentials', 401);
 
       const valid = await bcrypt.compare(password, user.password);
       if (!valid) return sendError(res, 'Invalid credentials', 401);
 
+      if (!process.env.JWT_SECRET) {
+        console.error('Missing JWT_SECRET at sign time');
+        return sendError(res, 'Server misconfigured', 500);
+      }
       const token = jwt.sign(
         { id: user.id, email: user.email },
         process.env.JWT_SECRET,
@@ -156,17 +121,11 @@ router.post(
   }
 );
 
-/**
- * --- Profile: current user (/me) ---
- * GET /api/users/me
- */
+/** Me */
 router.get('/me', authenticateToken, async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.id, {
-      attributes: { exclude: ['password'] },
-    });
+    const user = await User.findByPk(req.user.id, { attributes: { exclude: ['password'] } });
     if (!user) return sendError(res, 'User not found', 404);
-
     const safe = withNormalizedUsername(toSafeUser(user));
     return sendSuccess(res, { user: safe });
   } catch (err) {
@@ -175,10 +134,7 @@ router.get('/me', authenticateToken, async (req, res) => {
   }
 });
 
-/**
- * --- Public profile by ID ---
- * GET /api/users/:id
- */
+/** Public profile by id */
 router.get(
   '/:id',
   [param('id').isInt({ min: 1 }).withMessage('Invalid user id')],
@@ -188,7 +144,6 @@ router.get(
       const id = Number(req.params.id);
       const user = await User.findByPk(id, { attributes: { exclude: ['password'] } });
       if (!user) return sendError(res, 'User not found', 404);
-
       const safe = withNormalizedUsername(toSafeUser(user));
       return sendSuccess(res, { user: safe });
     } catch (err) {
@@ -198,27 +153,17 @@ router.get(
   }
 );
 
-/**
- * --- Update description (current user) ---
- * PUT /api/users/me/description
- * Body: { description }
- */
+/** Update description (me) */
 router.put(
   '/me/description',
   authenticateToken,
   [
-    body('description')
-      .exists().withMessage('Description is required')
-      .bail()
-      .isString().withMessage('Description must be a string')
-      .isLength({ max: 500 }).withMessage('Description must be 500 chars or fewer')
-      .trim(),
+    body('description').exists().isString().isLength({ max: 500 }).trim()
   ],
   validate,
   async (req, res) => {
     try {
       const { description } = req.body;
-
       const user = await User.findByPk(req.user.id);
       if (!user) return sendError(res, 'User not found', 404);
 
@@ -234,18 +179,13 @@ router.put(
   }
 );
 
-/**
- * --- Upgrade to paid ---
- * PUT /api/users/me/upgrade
- */
+/** Upgrade to paid (me) */
 router.put('/me/upgrade', authenticateToken, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
     if (!user) return sendError(res, 'User not found', 404);
-
     user.tier = 'paid';
     await user.save();
-
     const safe = withNormalizedUsername(toSafeUser(user));
     return sendSuccess(res, { message: 'Account upgraded to paid', user: safe });
   } catch (err) {

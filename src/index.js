@@ -15,12 +15,9 @@ const app = express();
 
 /* ── Core middleware ─────────────────────────────────────────────────── */
 app.use(compression({ threshold: 0 }));
-app.use(helmet());
+app.use(helmet()); // secure headers
 
-/**
- * CORS: only allow origins you list in CORS_ALLOWED_ORIGINS
- * Example: CORS_ALLOWED_ORIGINS=https://your-site.com,https://admin.your-site.com
- */
+// CORS: allow only configured origins; allow server-to-server calls
 const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
   .split(',')
   .map(s => s.trim())
@@ -28,8 +25,8 @@ const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
 
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin) return cb(null, true); // allow server-to-server / curl
-    if (allowedOrigins.length === 0) return cb(null, true); // fallback: allow all if unset
+    if (!origin) return cb(null, true); // curl/server-to-server
+    if (allowedOrigins.length === 0) return cb(null, true); // fallback if unset
     if (allowedOrigins.includes(origin)) return cb(null, true);
     return cb(new Error('CORS: origin not allowed'), false);
   },
@@ -38,10 +35,10 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 }));
 
-// If behind a proxy (Render/Heroku), trust it so rate limits work correctly
+// If behind a proxy (Render/Heroku), trust it so rate limits work by IP
 app.set('trust proxy', 1);
 
-// Basic rate limit: 100 req / 15 min per IP (override with RATE_LIMIT_MAX)
+// Rate limit: 100 req / 15m per IP (override with RATE_LIMIT_MAX)
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
@@ -55,7 +52,7 @@ app.use(express.json());
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 
-/* ── Health endpoint (DB-ready check) ────────────────────────────────── */
+/* ── Health endpoint ─────────────────────────────────────────────────── */
 let dbStatus = 'starting';
 let dbErrorMsg = null;
 app.get('/api/health', (req, res) => {
@@ -68,15 +65,25 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-/* ── Static frontend (../public) ───────────────────────────────────────
-   Your index.js is in /src and public/ is at repo root -> go up one level.
+/* ── Static frontend with caching ──────────────────────────────────────
+   NOTE: index.js is in /src and public/ is at repo root -> ../public
 */
-app.use(express.static(path.join(__dirname, '../public')));
+const publicDir = path.join(__dirname, '../public');
+app.use(express.static(publicDir, {
+  maxAge: '7d', etag: true, lastModified: true, immutable: true
+}));
 
-// Serve index.html for non-API routes (deep links)
+// Root HTML: no-store so new deploys show instantly
+app.get('/', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.sendFile(path.join(publicDir, 'index.html'));
+});
+
+// SPA deep links: serve index.html (no-store), but don't intercept API
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
-  res.sendFile(path.join(__dirname, '../public', 'index.html'));
+  res.set('Cache-Control', 'no-store');
+  res.sendFile(path.join(publicDir, 'index.html'));
 });
 
 /* ── 404 & Error handlers ────────────────────────────────────────────── */
@@ -85,29 +92,33 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  // avoid leaking internals
-  console.error('🔥 Uncaught error:', err);
+  console.error('🔥 Uncaught error:', err.message);
   const status = err.statusCode || 500;
   const message = err.expose ? err.message : 'Internal server error';
   res.status(status).json({ success: false, error: { message } });
 });
 
-/* ── Start server ────────────────────────────────────────────────────── */
+/* ── Boot sequence ───────────────────────────────────────────────────── */
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
 
-/* ── Initialize DB in background (non-blocking) ──────────────────────── */
-(async function initDatabase() {
+async function boot() {
   try {
     await sequelize.authenticate();
-    const alter = process.env.DB_ALTER === 'true'; // dev only
+    const alter = process.env.DB_ALTER === 'true' && process.env.NODE_ENV !== 'production';
     await sequelize.sync({ alter });
     dbStatus = 'ready';
     dbErrorMsg = null;
     console.log('✅ Database ready (alter:', alter, ')');
+
+    app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
   } catch (err) {
     dbStatus = 'error';
     dbErrorMsg = err?.message || 'DB init failed';
-    console.error('❌ Database init failed:', err);
+    console.error('❌ Failed to start: DB init error:', err);
+    if (process.env.NODE_ENV === 'production') process.exit(1);
+    // In dev, still start server so you can see health + logs
+    app.listen(PORT, () => console.log(`🚀 Dev server on http://localhost:${PORT} (DB error)`));
   }
-})();
+}
+
+boot();

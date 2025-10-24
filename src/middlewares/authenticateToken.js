@@ -1,20 +1,33 @@
+// src/middlewares/authenticateToken.js
 const jwt = require('jsonwebtoken');
 
-// Middleware for all protected routes
 module.exports = function authenticateToken(req, res, next) {
-  const authHeader = req.headers.authorization || '';
-  const [scheme, token] = authHeader.split(' ');
-
-  if (scheme !== 'Bearer' || !token) {
-    return res.status(401).json({ error: 'No token provided' });
-  }
-
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = { id: decoded.id, email: decoded.email };
-    next();
+    const auth =
+      req.headers.authorization ||
+      req.headers.Authorization ||
+      '';
+
+    if (!auth.startsWith('Bearer ')) {
+      return res.status(401).json({ success: false, error: { message: 'Missing or invalid Authorization header' } });
+    }
+
+    const token = auth.slice('Bearer '.length).trim();
+    if (!token) {
+      return res.status(401).json({ success: false, error: { message: 'Empty token' } });
+    }
+
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      console.error('JWT_SECRET is not set');
+      return res.status(500).json({ success: false, error: { message: 'Server misconfigured' } });
+    }
+
+    const payload = jwt.verify(token, secret);
+    req.user = { id: payload.id, email: payload.email };
+    return next();
   } catch (err) {
-    console.error('Invalid token:', err.message);
-    return res.status(403).json({ error: 'Invalid token' });
+    const msg = err.name === 'TokenExpiredError' ? 'Token expired' : 'Invalid token';
+    return res.status(401).json({ success: false, error: { message: msg } });
   }
 };
