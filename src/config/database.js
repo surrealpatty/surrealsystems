@@ -10,7 +10,12 @@ const baseOpts = {
     idle: Number(process.env.DB_POOL_IDLE || 10000),
     acquire: Number(process.env.DB_POOL_ACQUIRE || 30000)
   },
-  dialectOptions: {}
+  dialectOptions: {
+    // keep TCP open to avoid slow reconnects on each request
+    keepAlive: true,
+    statement_timeout: Number(process.env.PG_STATEMENT_TIMEOUT || 5000), // ms
+    query_timeout: Number(process.env.PG_QUERY_TIMEOUT || 0)             // 0 = off
+  }
 };
 
 // SSL only in production

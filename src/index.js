@@ -12,19 +12,26 @@ const serviceRoutes = require('./routes/service');
 
 const app = express();
 
+/* ── Feature flags (env) ────────────────────────────────────────────── */
+const ENABLE_HELMET = (process.env.ENABLE_HELMET ?? 'true') === 'true';
+const ENABLE_RATE_LIMIT = (process.env.ENABLE_RATE_LIMIT ?? 'true') === 'true';
+const ENABLE_SERVER_TIMING = (process.env.ENABLE_SERVER_TIMING ?? 'false') === 'true';
+const ENABLE_STATIC_CACHE = (process.env.ENABLE_STATIC_CACHE ?? 'true') === 'true';
+
+// Compression threshold (bytes). Use 0 to gzip everything, or something like 10240 (10KB)
+const COMPRESSION_THRESHOLD = Number(process.env.COMPRESSION_THRESHOLD ?? 10240);
+
 /* ── Core middleware ─────────────────────────────────────────────────── */
-app.use(compression({ threshold: 0 }));
-app.use(helmet());
+app.use(compression({ threshold: COMPRESSION_THRESHOLD }));
+if (ENABLE_HELMET) app.use(helmet());
 
 // CORS: allow only configured origins; allow server-to-server calls too
 const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
-  .split(',')
-  .map(s => s.trim())
-  .filter(Boolean);
+  .split(',').map(s => s.trim()).filter(Boolean);
 
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin) return cb(null, true); // curl/server-to-server
+    if (!origin) return cb(null, true);               // curl/server-to-server
     if (allowedOrigins.length === 0) return cb(null, true); // fallback if unset
     if (allowedOrigins.includes(origin)) return cb(null, true);
     return cb(new Error('CORS: origin not allowed'), false);
@@ -37,39 +44,36 @@ app.use(cors({
 // Trust proxy for real client IP (Render/Heroku)
 app.set('trust proxy', 1);
 
-// Rate limit: 100 req / 15m per IP (override with RATE_LIMIT_MAX)
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
-  standardHeaders: true,
-  legacyHeaders: false
-}));
+// Rate limit (guarded)
+if (ENABLE_RATE_LIMIT) {
+  app.use(rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
+    standardHeaders: true,
+    legacyHeaders: false
+  }));
+}
 
 app.use(express.json());
 
-/* ── Server-Timing (fixed: no headers-after-sent) ────────────────────── */
-app.set('etag', 'weak');
-app.use((req, res, next) => {
-  const start = process.hrtime.bigint();
-
-  // set Server-Timing just before headers go out
-  const origWriteHead = res.writeHead;
-  res.writeHead = function (...args) {
-    const ttfbMs = Number((process.hrtime.bigint() - start) / 1000000n);
-    try { res.setHeader('Server-Timing', `app;dur=${ttfbMs}`); } catch {}
-    return origWriteHead.apply(this, args);
-  };
-
-  // log slow requests after response finishes
-  res.on('finish', () => {
-    const totalMs = Number((process.hrtime.bigint() - start) / 1000000n);
-    if (totalMs > 300) {
-      console.warn(`[SLOW] ${req.method} ${req.originalUrl} -> ${res.statusCode} in ${totalMs}ms`);
-    }
+/* ── Server-Timing (guarded + safe) ──────────────────────────────────── */
+if (ENABLE_SERVER_TIMING) {
+  app.set('etag', 'weak');
+  app.use((req, res, next) => {
+    const start = process.hrtime.bigint();
+    const origWriteHead = res.writeHead;
+    res.writeHead = function (...args) {
+      const ttfbMs = Number((process.hrtime.bigint() - start) / 1000000n);
+      try { res.setHeader('Server-Timing', `app;dur=${ttfbMs}`); } catch {}
+      return origWriteHead.apply(this, args);
+    };
+    res.on('finish', () => {
+      const totalMs = Number((process.hrtime.bigint() - start) / 1000000n);
+      if (totalMs > 300) console.warn(`[SLOW] ${req.method} ${req.originalUrl} -> ${res.statusCode} in ${totalMs}ms`);
+    });
+    next();
   });
-
-  next();
-});
+}
 
 /* ── API routes ──────────────────────────────────────────────────────── */
 app.use('/api/users', userRoutes);
@@ -88,11 +92,11 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-/* ── Static frontend with caching ────────────────────────────────────── */
+/* ── Static frontend (guarded cache) ─────────────────────────────────── */
 const publicDir = path.join(__dirname, '../public');
-app.use(express.static(publicDir, {
+app.use(express.static(publicDir, ENABLE_STATIC_CACHE ? {
   maxAge: '7d', etag: true, lastModified: true, immutable: true
-}));
+} : {}));
 
 // Root HTML: no-store so new deploys show instantly
 app.get('/', (req, res) => {
