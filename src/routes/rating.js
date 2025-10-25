@@ -33,10 +33,17 @@ router.get('/user/:userId', async (req, res) => {
       summary: { count, average: Number(avg.toFixed(2)) },
       ratings
     });
-  } catch (err) {
-    console.error('Get ratings error:', err && err.stack ? err.stack : err);
-    return res.status(500).json({ error: 'Failed to load ratings' });
+    } catch (err) {
+    // Log the full stack so we can debug
+    console.error('Get ratings error (stack):', err && err.stack ? err.stack : err);
+
+    // SAFE: don't return 500 to the UI — return an empty summary so the profile UI won't hang
+    return res.json({
+      summary: { count: 0, average: 0.0 },
+      ratings: []
+    });
   }
+
 });
 
 /**
