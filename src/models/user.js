@@ -1,19 +1,17 @@
-// src/models/user.js
-// Define User model (factory). Keep lightweight — add fields your app requires.
-
+// src/models/rating.js
 module.exports = (sequelize) => {
   const { DataTypes } = require('sequelize');
 
-  const User = sequelize.define('User', {
+  const Rating = sequelize.define('Rating', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    username: { type: DataTypes.STRING, allowNull: false },
-    email: { type: DataTypes.STRING, allowNull: false },
-    // optional fields:
-    // passwordHash: { type: DataTypes.STRING },
+    serviceId: { type: DataTypes.INTEGER, allowNull: false },
+    userId: { type: DataTypes.INTEGER, allowNull: false },
+    score: { type: DataTypes.INTEGER, allowNull: false }, // e.g. 1-5
+    comment: { type: DataTypes.TEXT, allowNull: true }
   }, {
-    tableName: 'users',
+    tableName: 'ratings',
     timestamps: true
   });
 
-  return User;
+  return Rating;
 };
