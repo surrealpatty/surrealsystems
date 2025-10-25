@@ -10,25 +10,30 @@ const Message = buildMessage(sequelize);
 const Service = buildService(sequelize);
 const Rating = buildRating(sequelize);
 
-// Associations for messages
+/* ---- Associations ---- */
+
+// Messages
 Message.belongsTo(User, { as: 'sender', foreignKey: 'senderId' });
 Message.belongsTo(User, { as: 'receiver', foreignKey: 'receiverId' });
 User.hasMany(Message, { as: 'sentMessages', foreignKey: 'senderId' });
 User.hasMany(Message, { as: 'receivedMessages', foreignKey: 'receiverId' });
 
-// Associations for services
+// Services
 Service.belongsTo(User, { as: 'owner', foreignKey: 'userId' });
 User.hasMany(Service, { as: 'services', foreignKey: 'userId' });
 
-// Associations for ratings
-Rating.belongsTo(User, { as: 'user', foreignKey: 'userId' });
+// Ratings
+// Service ratings
 Rating.belongsTo(Service, { as: 'service', foreignKey: 'serviceId' });
 Service.hasMany(Rating, { as: 'ratings', foreignKey: 'serviceId' });
-User.hasMany(Rating, { as: 'ratings', foreignKey: 'userId' });
 
-// *** NEW: Add a rater alias so routes that include "rater" succeed ***
-Rating.belongsTo(User, { as: 'rater', foreignKey: 'userId' });
-// (If you later add a separate rateeId column, you could add a 'ratee' association too.)
+// User-to-user ratings
+Rating.belongsTo(User, { as: 'rater', foreignKey: 'raterId' });
+Rating.belongsTo(User, { as: 'ratee', foreignKey: 'rateeId' });
+
+// Helpful user associations
+User.hasMany(Rating, { as: 'givenRatings', foreignKey: 'raterId' });
+User.hasMany(Rating, { as: 'receivedRatings', foreignKey: 'rateeId' });
 
 module.exports = {
   sequelize,

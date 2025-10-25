@@ -5,7 +5,7 @@ module.exports = (sequelize) => {
   const Rating = sequelize.define('Rating', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
 
-    // For service ratings
+    // For service ratings (nullable so rating can be user-to-user)
     serviceId: { type: DataTypes.INTEGER, allowNull: true },
 
     // For user-to-user ratings
@@ -22,7 +22,7 @@ module.exports = (sequelize) => {
   }, {
     tableName: 'ratings',
     timestamps: true,
-    underscored: true // helpful if DB uses snake_case
+    underscored: true // map JS camelCase <-> DB snake_case
   });
 
   return Rating;

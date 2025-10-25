@@ -1,15 +1,19 @@
-// routes/rating.js
+// src/routes/rating.js
 const express = require('express');
 const router = express.Router();
 const { Rating, User } = require('../models');
 const authenticateToken = require('../middlewares/authenticateToken');
 
-// GET ratings for a given user (ratee) + summary
+/**
+ * GET /api/ratings/user/:userId
+ * Return ratings received by a user (ratee) with rater info + summary
+ */
 router.get('/user/:userId', async (req, res) => {
   try {
     const rateeId = parseInt(req.params.userId, 10);
     if (Number.isNaN(rateeId)) return res.status(400).json({ error: 'Invalid user id' });
 
+    // include rater info (alias 'rater' defined in models/index.js)
     const ratings = await Rating.findAll({
       where: { rateeId },
       include: [{ model: User, as: 'rater', attributes: ['id', 'username'] }],
@@ -17,20 +21,23 @@ router.get('/user/:userId', async (req, res) => {
     });
 
     const count = ratings.length;
-    const avg = count ? (ratings.reduce((s, r) => s + r.stars, 0) / count) : 0;
+    const avg = count ? (ratings.reduce((s, r) => s + (r.stars || r.score || 0), 0) / count) : 0;
 
-    res.json({
+    return res.json({
       summary: { count, average: Number(avg.toFixed(2)) },
       ratings
     });
   } catch (err) {
-    console.error('Get ratings error:', err);
-    res.status(500).json({ error: 'Failed to load ratings' });
+    console.error('Get ratings error:', err && err.stack ? err.stack : err);
+    return res.status(500).json({ error: 'Failed to load ratings' });
   }
 });
 
-// POST create or update a rating (upsert by raterId+rateeId)
-// Only PAID users can rate
+/**
+ * POST /api/ratings
+ * Create or update a rating (by rater -> ratee). Only paid users can rate.
+ * body: { rateeId, stars, comment }
+ */
 router.post('/', authenticateToken, async (req, res) => {
   try {
     const raterId = req.user.id;
@@ -39,12 +46,9 @@ router.post('/', authenticateToken, async (req, res) => {
     if (!rateeId || !stars) return res.status(400).json({ error: 'rateeId and stars are required' });
     if (Number(rateeId) === Number(raterId)) return res.status(400).json({ error: 'You cannot rate yourself' });
 
-    // Check rater tier
     const rater = await User.findByPk(raterId);
     if (!rater) return res.status(404).json({ error: 'User not found' });
-    if (rater.tier !== 'paid') {
-      return res.status(403).json({ error: 'Upgrade to a paid account to rate others.' });
-    }
+    if (rater.tier !== 'paid') return res.status(403).json({ error: 'Upgrade to a paid account to rate others.' });
 
     const clamped = Math.max(1, Math.min(5, parseInt(stars, 10)));
 
@@ -59,19 +63,19 @@ router.post('/', authenticateToken, async (req, res) => {
       await rating.save();
     }
 
-    // fresh summary
+    // fresh summary for ratee
     const all = await Rating.findAll({ where: { rateeId } });
     const count = all.length;
-    const avg = count ? (all.reduce((s, r) => s + r.stars, 0) / count) : 0;
+    const avg = count ? (all.reduce((s, r) => s + (r.stars || r.score || 0), 0) / count) : 0;
 
-    res.status(created ? 201 : 200).json({
+    return res.status(created ? 201 : 200).json({
       message: created ? 'Rating created' : 'Rating updated',
       rating,
       summary: { count, average: Number(avg.toFixed(2)) }
     });
   } catch (err) {
-    console.error('Upsert rating error:', err);
-    res.status(500).json({ error: 'Failed to save rating' });
+    console.error('Upsert rating error:', err && err.stack ? err.stack : err);
+    return res.status(500).json({ error: 'Failed to save rating' });
   }
 });
 
