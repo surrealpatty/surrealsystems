@@ -1,9 +1,8 @@
 // src/routes/service.js
 const express = require('express');
 const router = express.Router();
-const models = require('../models');
-const { Service, User } = models;
-const Rating = models.Rating; // may be undefined if model/table missing
+const { Service, User, Rating } = require('../models');
+const { fn, col } = require('sequelize');
 const authenticateToken = require('../middlewares/authenticateToken');
 const { query, param, body } = require('express-validator');
 const validate = require('../middlewares/validate');
@@ -17,10 +16,10 @@ function err(res, message = 'Something went wrong', status = 500, details) {
   return res.status(status).json(out);
 }
 
-// DEV DEBUG route (temporary): quick sanity check without includes
+// Dev debug route (keeps quick check without includes)
 router.get('/debug/no-include', async (req, res) => {
   try {
-    const rows = await Service.findAll({ attributes: ['id', 'userId', 'title'], limit: 5 });
+    const rows = await Service.findAll({ attributes: ['id','userId','title'], limit: 5 });
     return res.json({ ok: true, rows });
   } catch (e) {
     console.error('DEBUG /api/services/no-include error:', e && e.stack ? e.stack : e);
@@ -46,45 +45,53 @@ router.get(
       const where = {};
       if (req.query.userId) where.userId = Number(req.query.userId);
 
-      // Build includes, but only add ratings if model & association appear to exist
-      const include = [{ model: User, as: 'owner', attributes: ['id', 'username'] }];
-      const canIncludeRatings = Rating && Service.associations && Service.associations.ratings;
-      if (canIncludeRatings) {
-        include.push({ model: Rating, as: 'ratings', attributes: ['score'] });
+      // Fetch services with owner only (don't fetch ratings rows)
+      const rows = await Service.findAll({
+        where: Object.keys(where).length ? where : undefined,
+        attributes: ['id','userId','title','description','price','createdAt','updatedAt'],
+        include: [{ model: User, as: 'owner', attributes: ['id','username'] }],
+        order: [['createdAt','DESC']],
+        limit,
+        offset
+      });
+
+      // If no services, return early
+      if (!rows || !rows.length) {
+        return ok(res, { services: [], hasMore: false, nextOffset: offset });
       }
 
-      let rows;
+      // Aggregate ratings (one query for all serviceIds)
+      const serviceIds = rows.map(r => r.id);
+      let ratingsSummary = [];
       try {
-        // First attempt: include ratings if available
-        rows = await Service.findAll({
-          where: Object.keys(where).length ? where : undefined,
-          attributes: ['id','userId','title','description','price','createdAt','updatedAt'],
-          include,
-          order: [['createdAt','DESC']],
-          limit,
-          offset
+        ratingsSummary = await Rating.findAll({
+          attributes: [
+            'serviceId',
+            [fn('AVG', col('score')), 'avgRating'],
+            [fn('COUNT', col('id')), 'ratingsCount']
+          ],
+          where: { serviceId: serviceIds },
+          group: ['serviceId']
         });
-      } catch (firstErr) {
-        // If we tried to include ratings and that failed (missing table/assoc), retry without ratings
-        console.error('Service.findAll first attempt failed. Retrying without ratings include. Error:', firstErr && firstErr.stack ? firstErr.stack : firstErr);
-
-        // Retry excluding ratings entirely (owner only)
-        const ownerOnlyInclude = [{ model: User, as: 'owner', attributes: ['id', 'username'] }];
-        rows = await Service.findAll({
-          where: Object.keys(where).length ? where : undefined,
-          attributes: ['id','userId','title','description','price','createdAt','updatedAt'],
-          include: ownerOnlyInclude,
-          order: [['createdAt','DESC']],
-          limit,
-          offset
-        });
+      } catch (aggErr) {
+        // If aggregation fails (e.g., ratings table missing), log and continue with empty summaries
+        console.error('Ratings aggregation failed, continuing without ratings summaries:', aggErr && aggErr.stack ? aggErr.stack : aggErr);
+        ratingsSummary = [];
       }
 
-      const services = rows.map(s => {
-        // If s.ratings might not exist (because we retried without it), handle gracefully
-        const ratingsArr = Array.isArray(s.ratings) ? s.ratings.map(r => r.score).filter(x => typeof x === 'number') : [];
-        const avgRating = ratingsArr.length ? (ratingsArr.reduce((a,b) => a + b, 0) / ratingsArr.length) : null;
+      // Map summaries to a dict: serviceId -> { avgRating, ratingsCount }
+      const summaryMap = {};
+      (ratingsSummary || []).forEach(r => {
+        const sid = r.get('serviceId');
+        summaryMap[sid] = {
+          avgRating: r.get('avgRating') !== null ? Number(Number(r.get('avgRating')).toFixed(2)) : null,
+          ratingsCount: Number(r.get('ratingsCount') || 0)
+        };
+      });
 
+      // Build final services payload
+      const services = rows.map(s => {
+        const sum = summaryMap[s.id] || { avgRating: null, ratingsCount: 0 };
         return {
           id: s.id,
           title: s.title,
@@ -93,8 +100,8 @@ router.get(
           owner: s.owner || null,
           user: s.owner || null,
           userId: s.userId,
-          avgRating,
-          ratingsCount: ratingsArr.length,
+          avgRating: sum.avgRating,
+          ratingsCount: sum.ratingsCount,
           createdAt: s.createdAt,
           updatedAt: s.updatedAt
         };
@@ -116,30 +123,17 @@ router.get(
   async (req, res) => {
     try {
       const id = Number(req.params.id);
-
-      const include = [{ model: User, as: 'owner', attributes: ['id', 'username'] }];
-      if (Rating && Service.associations && Service.associations.ratings) {
-        include.push({ model: Rating, as: 'ratings', attributes: ['id','score','comment','userId','createdAt'] });
-      }
-
-      let s;
-      try {
-        s = await Service.findByPk(id, {
-          attributes: ['id','userId','title','description','price','createdAt','updatedAt'],
-          include
-        });
-      } catch (firstErr) {
-        console.error('Service.findByPk include attempt failed, retrying without ratings. Error:', firstErr && firstErr.stack ? firstErr.stack : firstErr);
-        s = await Service.findByPk(id, {
-          attributes: ['id','userId','title','description','price','createdAt','updatedAt'],
-          include: [{ model: User, as: 'owner', attributes: ['id', 'username'] }]
-        });
-      }
-
+      const s = await Service.findByPk(id, {
+        attributes: ['id','userId','title','description','price','createdAt','updatedAt'],
+        include: [
+          { model: User, as: 'owner', attributes: ['id','username'] },
+          { model: Rating, as: 'ratings', attributes: ['id','score','comment','userId','createdAt'] }
+        ]
+      });
       if (!s) return err(res, 'Service not found', 404);
 
-      const ratings = (Array.isArray(s.ratings) ? s.ratings : []).map(r => ({ id: r.id, score: r.score, comment: r.comment, userId: r.userId, createdAt: r.createdAt }));
-      const avgRating = ratings.length ? (ratings.reduce((a,b) => a + (b.score||0), 0) / ratings.length) : null;
+      const ratings = (s.ratings || []).map(r => ({ id: r.id, score: r.score, comment: r.comment, userId: r.userId, createdAt: r.createdAt }));
+      const avgRating = ratings.length ? (ratings.reduce((a,b)=>a + (b.score||0), 0) / ratings.length) : null;
 
       const serviceOut = {
         id: s.id,
