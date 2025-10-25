@@ -1,17 +1,18 @@
-// src/models/rating.js
+// src/models/user.js
 module.exports = (sequelize) => {
   const { DataTypes } = require('sequelize');
 
-  const Rating = sequelize.define('Rating', {
+  const User = sequelize.define('User', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    serviceId: { type: DataTypes.INTEGER, allowNull: false },
-    userId: { type: DataTypes.INTEGER, allowNull: false },
-    score: { type: DataTypes.INTEGER, allowNull: false }, // e.g. 1-5
-    comment: { type: DataTypes.TEXT, allowNull: true }
+    username: { type: DataTypes.STRING, allowNull: false, unique: true },
+    email: { type: DataTypes.STRING, allowNull: false, unique: true },
+    password: { type: DataTypes.STRING, allowNull: false }, // bcrypt hash
+    description: { type: DataTypes.TEXT, allowNull: true },
+    tier: { type: DataTypes.STRING, allowNull: false, defaultValue: 'free' }
   }, {
-    tableName: 'ratings',
+    tableName: 'users',
     timestamps: true
   });
 
-  return Rating;
+  return User;
 };
