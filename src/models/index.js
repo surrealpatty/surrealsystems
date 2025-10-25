@@ -26,6 +26,10 @@ Rating.belongsTo(Service, { as: 'service', foreignKey: 'serviceId' });
 Service.hasMany(Rating, { as: 'ratings', foreignKey: 'serviceId' });
 User.hasMany(Rating, { as: 'ratings', foreignKey: 'userId' });
 
+// *** NEW: Add a rater alias so routes that include "rater" succeed ***
+Rating.belongsTo(User, { as: 'rater', foreignKey: 'userId' });
+// (If you later add a separate rateeId column, you could add a 'ratee' association too.)
+
 module.exports = {
   sequelize,
   User,
