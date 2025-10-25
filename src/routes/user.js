@@ -137,7 +137,12 @@ router.get(
       const limit = req.query.limit ?? 20;
       const rows = await Message.findAll({
         where: { receiverId: req.user.id },
-        attributes: ['id', 'senderId', 'receiverId', 'body', 'createdAt', 'updatedAt'],
+        // model uses 'content' (not 'body')
+        attributes: ['id', 'senderId', 'receiverId', 'content', 'createdAt', 'updatedAt'],
+        include: [
+          // include sender so frontend can display sender.username
+          { model: User, as: 'sender', attributes: ['id', 'username'] }
+        ],
         order: [['createdAt', 'DESC']],
         limit
       });
@@ -145,7 +150,7 @@ router.get(
       // compat: include top-level and wrapped
       return res.status(200).json({ success: true, messages: rows, data: { messages: rows } });
     } catch (e) {
-      console.error('GET /api/users/me/messages error:', e);
+      console.error('GET /api/users/me/messages error:', e && e.stack ? e.stack : e);
       return res.status(500).json({ success: false, error: { message: 'Failed to load messages' } });
     }
   }
