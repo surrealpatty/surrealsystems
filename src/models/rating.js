@@ -22,7 +22,7 @@ module.exports = (sequelize) => {
   }, {
     tableName: 'ratings',
     timestamps: true
-    // **note**: no underscored: true — use camelCase columns to match DB
+    // IMPORTANT: do NOT set underscored:true — your DB uses camelCase column names
   });
 
   return Rating;

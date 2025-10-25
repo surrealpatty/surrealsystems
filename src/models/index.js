@@ -23,7 +23,7 @@ Service.belongsTo(User, { as: 'owner', foreignKey: 'userId' });
 User.hasMany(Service, { as: 'services', foreignKey: 'userId' });
 
 // Ratings
-// Service ratings
+// Service ratings (nullable)
 Rating.belongsTo(Service, { as: 'service', foreignKey: 'serviceId' });
 Service.hasMany(Rating, { as: 'ratings', foreignKey: 'serviceId' });
 
@@ -31,7 +31,7 @@ Service.hasMany(Rating, { as: 'ratings', foreignKey: 'serviceId' });
 Rating.belongsTo(User, { as: 'rater', foreignKey: 'raterId' });
 Rating.belongsTo(User, { as: 'ratee', foreignKey: 'rateeId' });
 
-// Helpful user associations
+// Helpful user associations for convenience
 User.hasMany(Rating, { as: 'givenRatings', foreignKey: 'raterId' });
 User.hasMany(Rating, { as: 'receivedRatings', foreignKey: 'rateeId' });
 

@@ -17,11 +17,14 @@ function err(res, message = 'Something went wrong', status = 500, details) {
   return res.status(status).json(out);
 }
 
-// DEBUG route omitted for brevity — keep existing one if you have it
-
 router.get(
   '/',
-  [ /* validators omitted for brevity (keep yours) */ ],
+  [
+    query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
+    query('offset').optional().isInt({ min: 0 }).toInt(),
+    query('page').optional().isInt({ min: 1 }).toInt(),
+    query('userId').optional().isInt({ min: 1 }).toInt()
+  ],
   validate,
   async (req, res) => {
     try {
@@ -44,41 +47,33 @@ router.get(
 
       if (!rows || !rows.length) return ok(res, { services: [], hasMore: false, nextOffset: offset });
 
-      // Determine whether the DB has a column for serviceId (model now maps to camelCase)
-      const ratingAttrs = Rating.rawAttributes || {};
-      const hasServiceColumn = !!ratingAttrs.serviceId && ratingAttrs.serviceId.field !== undefined;
-
+      // Try raw aggregation using COALESCE(stars, score).
+      // If the DB doesn't have serviceId or aggregation fails, we'll skip summaries.
+      const serviceIds = rows.map(r => r.id);
       const summaryMap = {};
 
-      if (hasServiceColumn) {
-        // column name (as stored in DB)
-        const serviceCol = ratingAttrs.serviceId.field || 'serviceId';
-        // run raw SQL aggregation using that column name
-        try {
-          const rowsRaw = await sequelize.query(
-            `SELECT "${serviceCol}" AS "serviceId",
-                    AVG(COALESCE(stars,score))::numeric(10,2) AS "avgRating",
-                    COUNT(*)::int AS "ratingsCount"
-             FROM ratings
-             WHERE "${serviceCol}" IS NOT NULL
-               AND "${serviceCol}" IN (:ids)
-             GROUP BY "${serviceCol}"`,
-            { replacements: { ids: rows.map(r => r.id) }, type: QueryTypes.SELECT }
-          );
+      try {
+        // Use camelCase column name 'serviceId' since your DB uses camelCase
+        const rowsRaw = await sequelize.query(
+          `SELECT "serviceId",
+                  AVG(COALESCE(stars, score))::numeric(10,2) AS "avgRating",
+                  COUNT(*)::int AS "ratingsCount"
+           FROM ratings
+           WHERE "serviceId" IS NOT NULL AND "serviceId" IN (:ids)
+           GROUP BY "serviceId"`,
+          { replacements: { ids: serviceIds }, type: QueryTypes.SELECT }
+        );
 
-          (rowsRaw || []).forEach(r => {
-            summaryMap[r.serviceId] = {
-              avgRating: r.avgRating !== null && r.avgRating !== undefined ? Number(Number(r.avgRating).toFixed(2)) : null,
-              ratingsCount: Number(r.ratingsCount || 0)
-            };
-          });
-        } catch (e) {
-          console.error('Ratings aggregation raw SQL failed, continuing without summaries:', e && e.stack ? e.stack : e);
-          // leave summaryMap empty
-        }
-      } else {
-        // No serviceId column in the ratings table — skip aggregation.
-        console.info('ratings table has no serviceId column; skipping service-level aggregation.');
+        (rowsRaw || []).forEach(r => {
+          summaryMap[r.serviceId] = {
+            avgRating: r.avgRating !== null && r.avgRating !== undefined ? Number(Number(r.avgRating).toFixed(2)) : null,
+            ratingsCount: Number(r.ratingsCount || 0)
+          };
+        });
+      } catch (e) {
+        // If raw aggregation fails because column doesn't exist (or other DB issue),
+        // we continue without summaries (avgRating=null) and log the error.
+        console.info('Ratings aggregation skipped or failed (no service-level ratings or DB schema mismatch):', e && e.message ? e.message : e);
       }
 
       const services = rows.map(s => {

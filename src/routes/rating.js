@@ -20,8 +20,14 @@ router.get('/user/:userId', async (req, res) => {
       order: [['createdAt', 'DESC']]
     });
 
+    // safe average calculation: handle Sequelize instances or plain objects, fallback to score
     const count = ratings.length;
-    const avg = count ? (ratings.reduce((s, r) => s + (r.stars || r.score || 0), 0) / count) : 0;
+    const sum = ratings.reduce((s, r) => {
+      const get = typeof r.get === 'function' ? r.get.bind(r) : (k) => r[k];
+      const v = (get('stars') !== undefined && get('stars') !== null) ? get('stars') : get('score');
+      return s + Number(v || 0);
+    }, 0);
+    const avg = count ? (sum / count) : 0;
 
     return res.json({
       summary: { count, average: Number(avg.toFixed(2)) },
@@ -63,10 +69,15 @@ router.post('/', authenticateToken, async (req, res) => {
       await rating.save();
     }
 
-    // fresh summary for ratee
+    // fresh summary for ratee (safe same way)
     const all = await Rating.findAll({ where: { rateeId } });
     const count = all.length;
-    const avg = count ? (all.reduce((s, r) => s + (r.stars || r.score || 0), 0) / count) : 0;
+    const sum = all.reduce((s, r) => {
+      const get = typeof r.get === 'function' ? r.get.bind(r) : (k) => r[k];
+      const v = (get('stars') !== undefined && get('stars') !== null) ? get('stars') : get('score');
+      return s + Number(v || 0);
+    }, 0);
+    const avg = count ? (sum / count) : 0;
 
     return res.status(created ? 201 : 200).json({
       message: created ? 'Rating created' : 'Rating updated',
