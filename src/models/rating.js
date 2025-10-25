@@ -10,7 +10,8 @@ module.exports = (sequelize) => {
     comment: { type: DataTypes.TEXT, allowNull: true }
   }, {
     tableName: 'ratings',
-    timestamps: true
+    timestamps: true,
+    underscored: true    // <- add this line
   });
 
   return Rating;
