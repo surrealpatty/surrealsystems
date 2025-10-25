@@ -1,11 +1,11 @@
 // src/routes/user.js
 const express = require('express');
 const router = express.Router();
-const { User, Service } = require('../models'); // Service is exported from models/index.js
+const { User, Service, Message } = require('../models'); // ✅ include Message
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const authenticateToken = require('../middlewares/authenticateToken');
-const { body, param, oneOf } = require('express-validator');
+const { body, param, oneOf, query } = require('express-validator'); // ✅ include query
 const validate = require('../middlewares/validate');
 
 /* helpers */
@@ -118,7 +118,6 @@ router.get('/me', authenticateToken, async (req, res) => {
     if (!me) return sendError(res, 'User not found', 404);
     const user = normalizeUsername(toSafeUser(me));
 
-    // brief private cache for snappy reloads
     res.set('Cache-Control', 'private, max-age=15');
     return respondCompat(res, { user });
   } catch (err) {
@@ -126,6 +125,31 @@ router.get('/me', authenticateToken, async (req, res) => {
     return sendError(res, 'Failed to fetch user', 500);
   }
 });
+
+/* ✅ My messages (recent received by me) */
+router.get(
+  '/me/messages',
+  authenticateToken,
+  [query('limit').optional().isInt({ min: 1, max: 100 }).toInt()],
+  validate,
+  async (req, res) => {
+    try {
+      const limit = req.query.limit ?? 20;
+      const rows = await Message.findAll({
+        where: { receiverId: req.user.id },
+        attributes: ['id', 'senderId', 'receiverId', 'body', 'createdAt', 'updatedAt'],
+        order: [['createdAt', 'DESC']],
+        limit
+      });
+      res.set('Cache-Control', 'private, max-age=10');
+      // compat: include top-level and wrapped
+      return res.status(200).json({ success: true, messages: rows, data: { messages: rows } });
+    } catch (e) {
+      console.error('GET /api/users/me/messages error:', e);
+      return res.status(500).json({ success: false, error: { message: 'Failed to load messages' } });
+    }
+  }
+);
 
 /* My services (for profile page) */
 router.get('/me/services', authenticateToken, async (req, res) => {
@@ -149,7 +173,8 @@ router.get('/me/services', authenticateToken, async (req, res) => {
 });
 
 /* Public profile by id */
-router.get('/:id',
+router.get(
+  '/:id',
   [param('id').isInt({ min: 1 }).withMessage('Invalid user id')],
   validate,
   async (req, res) => {
@@ -167,7 +192,8 @@ router.get('/:id',
 );
 
 /* Update description (me) */
-router.put('/me/description',
+router.put(
+  '/me/description',
   authenticateToken,
   [body('description').exists().isString().isLength({ max: 500 }).trim()],
   validate,
