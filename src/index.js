@@ -7,8 +7,7 @@ require('dotenv').config();
 const { sequelize } = require('./config/database');
 const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/service');
-const ratingRoutes = require('./routes/rating');
-const messageRoutes = require('./routes/messages'); // ✅ Added for messages
+const ratingRoutes = require('./routes/rating'); // ✅ add back
 
 const app = express();
 
@@ -29,8 +28,7 @@ app.get('/api/health', (req, res) => {
 /* ---- API routes ---- */
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
-app.use('/api/ratings', ratingRoutes);
-app.use('/api/messages', messageRoutes); // ✅ Now messages will work
+app.use('/api/ratings', ratingRoutes); // ✅ restore ratings
 
 /* ---- Static frontend (serve ../public) ---- */
 const publicDir = path.join(__dirname, '../public');
