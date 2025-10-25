@@ -1,8 +1,9 @@
 // src/routes/service.js
 const express = require('express');
 const router = express.Router();
-const { Service, User, Rating } = require('../models');
-const { fn, col } = require('sequelize');
+const models = require('../models');
+const { Service, User, Rating, sequelize } = models;
+const { fn, col, QueryTypes } = require('sequelize');
 const authenticateToken = require('../middlewares/authenticateToken');
 const { query, param, body } = require('express-validator');
 const validate = require('../middlewares/validate');
@@ -60,10 +61,16 @@ router.get(
         return ok(res, { services: [], hasMore: false, nextOffset: offset });
       }
 
-      // Aggregate ratings (one query for all serviceIds)
       const serviceIds = rows.map(r => r.id);
       let ratingsSummary = [];
+
+      // Try aggregation several ways to tolerate schema differences:
+      // 1) AVG(score)
+      // 2) AVG(stars)
+      // 3) raw SQL AVG(COALESCE(score, stars))
+      // If all fail, continue with empty summaries.
       try {
+        // Attempt 1: existing 'score' column (most likely)
         ratingsSummary = await Rating.findAll({
           attributes: [
             'serviceId',
@@ -73,23 +80,65 @@ router.get(
           where: { serviceId: serviceIds },
           group: ['serviceId']
         });
-      } catch (aggErr) {
-        // If aggregation fails (e.g., ratings table missing), log and continue with empty summaries
-        console.error('Ratings aggregation failed, continuing without ratings summaries:', aggErr && aggErr.stack ? aggErr.stack : aggErr);
-        ratingsSummary = [];
+      } catch (e1) {
+        console.warn('Ratings aggregation with score failed, trying stars:', e1 && e1.message ? e1.message : e1);
+        try {
+          // Attempt 2: try 'stars'
+          ratingsSummary = await Rating.findAll({
+            attributes: [
+              'serviceId',
+              [fn('AVG', col('stars')), 'avgRating'],
+              [fn('COUNT', col('id')), 'ratingsCount']
+            ],
+            where: { serviceId: serviceIds },
+            group: ['serviceId']
+          });
+        } catch (e2) {
+          console.warn('Ratings aggregation with stars failed, trying raw COALESCE:', e2 && e2.message ? e2.message : e2);
+          try {
+            // Attempt 3: raw SQL using COALESCE(score, stars)
+            // Use named replacements for safety
+            const rowsRaw = await sequelize.query(
+              `SELECT "serviceId", AVG(COALESCE(score, stars))::numeric(10,2) AS "avgRating", COUNT(*)::int AS "ratingsCount"
+               FROM ratings
+               WHERE "serviceId" IN (:ids)
+               GROUP BY "serviceId"`,
+              { replacements: { ids: serviceIds }, type: QueryTypes.SELECT }
+            );
+            // rowsRaw is an array of plain objects; adapt to common shape
+            ratingsSummary = rowsRaw.map(r => ({
+              // emulate Sequelize Model.get() used later
+              get: (k) => r[k]
+            }));
+          } catch (e3) {
+            console.error('Ratings aggregation failed (all attempts). Continuing without ratings summaries:', e3 && e3.stack ? e3.stack : e3);
+            ratingsSummary = [];
+          }
+        }
       }
 
-      // Map summaries to a dict: serviceId -> { avgRating, ratingsCount }
+      // Normalize summaries into a simple map: serviceId -> { avgRating, ratingsCount }
       const summaryMap = {};
       (ratingsSummary || []).forEach(r => {
-        const sid = r.get('serviceId');
+        // r may be Sequelize model with get() or a plain object wrapped above
+        let sid, avg, cnt;
+        if (typeof r.get === 'function') {
+          const d = r.get();
+          sid = d.serviceId ?? d.serviceid ?? d.service_id;
+          avg = d.avgRating ?? d.avgrating;
+          cnt = d.ratingsCount ?? d.ratingscount ?? d.ratings_count;
+        } else {
+          sid = r.serviceId ?? r.serviceid ?? r.service_id;
+          avg = r.avgRating ?? r.avgrating;
+          cnt = r.ratingsCount ?? r.ratingscount ?? r.ratings_count;
+        }
         summaryMap[sid] = {
-          avgRating: r.get('avgRating') !== null ? Number(Number(r.get('avgRating')).toFixed(2)) : null,
-          ratingsCount: Number(r.get('ratingsCount') || 0)
+          avgRating: avg !== null && avg !== undefined ? Number(Number(avg).toFixed(2)) : null,
+          ratingsCount: Number(cnt || 0)
         };
       });
 
-      // Build final services payload
+      // Build final services payload (use summaryMap)
       const services = rows.map(s => {
         const sum = summaryMap[s.id] || { avgRating: null, ratingsCount: 0 };
         return {
@@ -127,13 +176,19 @@ router.get(
         attributes: ['id','userId','title','description','price','createdAt','updatedAt'],
         include: [
           { model: User, as: 'owner', attributes: ['id','username'] },
-          { model: Rating, as: 'ratings', attributes: ['id','score','comment','userId','createdAt'] }
+          // include both 'score' and 'stars' to be tolerant
+          { model: Rating, as: 'ratings', attributes: ['id','score','stars','comment','userId','createdAt'] }
         ]
       });
       if (!s) return err(res, 'Service not found', 404);
 
-      const ratings = (s.ratings || []).map(r => ({ id: r.id, score: r.score, comment: r.comment, userId: r.userId, createdAt: r.createdAt }));
-      const avgRating = ratings.length ? (ratings.reduce((a,b)=>a + (b.score||0), 0) / ratings.length) : null;
+      const ratings = (s.ratings || []).map(r => {
+        // r may be a Sequelize instance; use get if available
+        const get = typeof r.get === 'function' ? r.get.bind(r) : (k) => r[k];
+        const val = (get('stars') !== undefined && get('stars') !== null) ? get('stars') : get('score');
+        return { id: get('id'), score: get('score'), stars: get('stars'), value: val, comment: get('comment'), userId: get('userId'), createdAt: get('createdAt') };
+      });
+      const avgRating = ratings.length ? (ratings.reduce((a,b) => a + Number(b.value || 0), 0) / ratings.length) : null;
 
       const serviceOut = {
         id: s.id,
