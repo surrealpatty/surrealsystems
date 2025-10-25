@@ -10,14 +10,19 @@ const serviceRoutes = require('./routes/service');
 
 const app = express();
 
-/* ---- Minimal middleware (no helmet, no ratelimit, no compression) ---- */
+/* ---- Minimal middleware (fast) ---- */
 app.use(cors({
-  origin: true,                 // allow all origins (like before)
+  origin: true, // allow all (same as before)
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization'],
   methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS']
 }));
 app.use(express.json());
+
+/* ---- Health endpoint (needed by frontend) ---- */
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true, ts: Date.now() });
+});
 
 /* ---- API routes (unchanged) ---- */
 app.use('/api/users', userRoutes);
@@ -27,6 +32,7 @@ app.use('/api/services', serviceRoutes);
 const publicDir = path.join(__dirname, '../public');
 app.use(express.static(publicDir));
 
+// SPA fallback (don’t intercept /api/*)
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
   res.sendFile(path.join(publicDir, 'index.html'));
