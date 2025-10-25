@@ -1,4 +1,3 @@
-// src/index.js
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -8,6 +7,7 @@ const { sequelize } = require('./config/database');
 const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/service');
 const ratingRoutes = require('./routes/rating'); // ✅ add back
+const messagesRoutes = require('./routes/messages'); // <-- new
 
 const app = express();
 
@@ -29,6 +29,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/ratings', ratingRoutes); // ✅ restore ratings
+app.use('/api/messages', messagesRoutes); // <-- mount messages routes
 
 /* ---- Static frontend (serve ../public) ---- */
 const publicDir = path.join(__dirname, '../public');

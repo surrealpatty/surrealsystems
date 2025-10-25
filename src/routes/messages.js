@@ -34,7 +34,10 @@ router.get(
       const offset = req.query.offset ?? 0;
       const rows = await Message.findAll({
         where: { receiverId: req.user.id },
-        attributes: ['id','senderId','receiverId','body','createdAt','updatedAt'],
+        attributes: ['id','senderId','receiverId','content','createdAt','updatedAt'],
+        include: [
+          { model: User, as: 'sender', attributes: ['id','username'] }
+        ],
         order: [['createdAt','DESC']],
         limit, offset
       });
@@ -63,7 +66,10 @@ router.get(
       const offset = req.query.offset ?? 0;
       const rows = await Message.findAll({
         where: { senderId: req.user.id },
-        attributes: ['id','senderId','receiverId','body','createdAt','updatedAt'],
+        attributes: ['id','senderId','receiverId','content','createdAt','updatedAt'],
+        include: [
+          { model: User, as: 'receiver', attributes: ['id','username'] }
+        ],
         order: [['createdAt','DESC']],
         limit, offset
       });
@@ -102,7 +108,11 @@ router.get(
             { senderId: otherId,   receiverId: req.user.id }
           ]
         },
-        attributes: ['id','senderId','receiverId','body','createdAt','updatedAt'],
+        attributes: ['id','senderId','receiverId','content','createdAt','updatedAt'],
+        include: [
+          { model: User, as: 'sender', attributes: ['id','username'] },
+          { model: User, as: 'receiver', attributes: ['id','username'] }
+        ],
         order: [['createdAt','DESC']], // newest first; reverse on client if needed
         limit, offset
       });
@@ -130,7 +140,10 @@ router.get(
       const limit = req.query.limit ?? 20;
       const rows = await Message.findAll({
         where: { receiverId: req.user.id },
-        attributes: ['id','senderId','receiverId','body','createdAt','updatedAt'],
+        attributes: ['id','senderId','receiverId','content','createdAt','updatedAt'],
+        include: [
+          { model: User, as: 'sender', attributes: ['id','username'] }
+        ],
         order: [['createdAt','DESC']],
         limit
       });
@@ -145,17 +158,17 @@ router.get(
 
 /**
  * POST /api/messages
- * Send a message: { to, body }
+ * Send a message: { to, content }
  */
 router.post(
   '/',
   authenticateToken,
   [body('to').isInt({ min: 1 }).withMessage('Recipient id required'),
-   body('body').isString().isLength({ min: 1, max: 5000 }).trim()],
+   body('content').isString().isLength({ min: 1, max: 5000 }).trim()],
   validate,
   async (req, res) => {
     try {
-      const { to, body: text } = req.body;
+      const { to, content: text } = req.body;
 
       // Optional: reject sending to self
       if (Number(to) === Number(req.user.id)) {
@@ -169,7 +182,7 @@ router.post(
       const msg = await Message.create({
         senderId: req.user.id,
         receiverId: to,
-        body: text
+        content: text
       });
 
       return ok(res, { message: msg }, 201);

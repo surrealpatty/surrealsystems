@@ -101,22 +101,31 @@ goBackBtn.addEventListener('click', () => {
     window.location.href = 'profile.html';
 });
 
+// helper: extract messages array from server wrapper
+function extractMessages(payload) {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload.messages)) return payload.messages;
+  if (payload.data && Array.isArray(payload.data.messages)) return payload.data.messages;
+  return [];
+}
+
 // Load inbox (received messages)
 async function loadMessages() {
     try {
-        const res = await fetch(`${API_URL}/messages`, {
+        const res = await fetch(`${API_URL}/messages/users/me/messages`, {
             headers: { Authorization: `Bearer ${token}` }
         });
 
-        const text = await res.text(); // fallback for non-JSON responses
-        let messages;
-        try {
-            messages = JSON.parse(text);
-        } catch {
-            console.error('Server returned non-JSON:', text);
-            messagesList.innerHTML = '<p class="error">Failed to load messages (server error)</p>';
+        if (!res.ok) {
+            const text = await res.text();
+            console.error('Server returned error while fetching messages:', res.status, res.statusText, text);
+            messagesList.innerHTML = `<p class="error">Failed to load messages (server returned ${res.status})</p>`;
             return;
         }
+
+        const data = await res.json();
+        const messages = extractMessages(data);
 
         messagesList.innerHTML = '';
         if (!messages.length) {
@@ -129,9 +138,9 @@ async function loadMessages() {
             div.className = 'card';
             div.innerHTML = `
                 <h3>From: ${m.sender?.username || 'Unknown'}</h3>
-                <p>${m.content}</p>
+                <p>${m.content || ''}</p>
                 <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
-                <button class="viewConversationBtn" data-userid="${m.sender?.id}" data-username="${m.sender?.username}">View Conversation</button>
+                <button class="viewConversationBtn" data-userid="${m.sender?.id || m.senderId}" data-username="${m.sender?.username || 'User'}">View Conversation</button>
             `;
             messagesList.appendChild(div);
         });
@@ -154,28 +163,31 @@ async function loadMessages() {
 // Load full conversation
 async function loadConversation(otherUserId, otherUsername) {
     try {
-        const res = await fetch(`${API_URL}/messages/conversation/${otherUserId}`, {
+        const res = await fetch(`${API_URL}/messages/thread/${otherUserId}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
 
-        const text = await res.text();
-        let conversation;
-        try {
-            conversation = JSON.parse(text);
-        } catch {
-            console.error('Server returned non-JSON:', text);
+        if (!res.ok) {
+            const text = await res.text();
+            console.error('Server returned error while fetching conversation:', res.status, res.statusText, text);
             alert('Failed to load conversation (server error)');
             return;
         }
 
+        const data = await res.json();
+        const conversation = extractMessages(data);
+
         messagesList.innerHTML = `<h2>Conversation with ${otherUsername}</h2>`;
+
+        // conversation may be newest-first (server uses DESC). If desired, reverse:
+        // conversation.reverse();
 
         conversation.forEach(m => {
             const div = document.createElement('div');
             div.className = 'card';
             div.innerHTML = `
-                <h3>${m.sender.username}</h3>
-                <p>${m.content}</p>
+                <h3>${m.sender?.username || 'Unknown'}</h3>
+                <p>${m.content || ''}</p>
                 <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
             `;
             messagesList.appendChild(div);
