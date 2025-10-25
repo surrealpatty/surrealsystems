@@ -1,3 +1,4 @@
+// src/routes/user.js
 const express = require('express');
 const router = express.Router();
 const { User } = require('../models');
@@ -7,22 +8,7 @@ const authenticateToken = require('../middlewares/authenticateToken');
 const { body, param, oneOf } = require('express-validator');
 const validate = require('../middlewares/validate');
 
-// helpers
-function toSafeUser(user) {
-  if (!user) return user;
-  const raw = user.toJSON ? user.toJSON() : user;
-  const { password, ...safe } = raw;
-  return safe;
-}
-function withNormalizedUsername(safeUser) {
-  if (!safeUser) return safeUser;
-  const out = { ...safeUser };
-  if (!out.username || String(out.username).trim() === '') {
-    const fromEmail = out.email ? String(out.email).split('@')[0] : '';
-    out.username = out.name || out.displayName || fromEmail || 'User';
-  }
-  return out;
-}
+/* helpers */
 function sendSuccess(res, data = {}, status = 200) {
   return res.status(status).json({ success: true, data });
 }
@@ -31,21 +17,35 @@ function sendError(res, message = 'Something went wrong', status = 500, details)
   if (details) payload.error.details = details;
   return res.status(status).json(payload);
 }
+function toSafeUser(user) {
+  if (!user) return user;
+  const raw = user.toJSON ? user.toJSON() : user;
+  const { password, ...safe } = raw;
+  return safe;
+}
+function withNormalizedUsername(u) {
+  if (!u) return u;
+  const out = { ...u };
+  if (!out.username || String(out.username).trim() === '') {
+    const fromEmail = out.email ? String(out.email).split('@')[0] : '';
+    out.username = out.name || out.displayName || fromEmail || 'User';
+  }
+  return out;
+}
 
-/** Register */
+/* Register */
 router.post(
   '/register',
   [
-    body('username').trim().isString().isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
-    body('email').trim().isEmail().withMessage('Invalid email').normalizeEmail(),
-    body('password').isString().isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('username').trim().isString().isLength({ min: 3 }),
+    body('email').trim().isEmail().normalizeEmail(),
+    body('password').isString().isLength({ min: 6 }),
     body('description').optional({ nullable: true }).isString().isLength({ max: 500 }).trim()
   ],
   validate,
   async (req, res) => {
     try {
       const { username, email, password, description } = req.body;
-
       const [existingEmail, existingUsername] = await Promise.all([
         User.findOne({ where: { email } }),
         User.findOne({ where: { username } })
@@ -62,18 +62,10 @@ router.post(
         tier: 'free'
       });
 
-      if (!process.env.JWT_SECRET) {
-        console.error('Missing JWT_SECRET at sign time');
-        return sendError(res, 'Server misconfigured', 500);
-      }
-      const token = jwt.sign(
-        { id: newUser.id, email: newUser.email },
-        process.env.JWT_SECRET,
-        { expiresIn: '1d' }
-      );
+      if (!process.env.JWT_SECRET) return sendError(res, 'Server misconfigured', 500);
+      const token = jwt.sign({ id: newUser.id, email: newUser.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-      const safe = withNormalizedUsername(toSafeUser(newUser));
-      return sendSuccess(res, { token, user: safe }, 201);
+      return sendSuccess(res, { token, user: withNormalizedUsername(toSafeUser(newUser)) }, 201);
     } catch (err) {
       console.error('Register error:', err);
       return sendError(res, 'Registration failed', 500);
@@ -81,7 +73,7 @@ router.post(
   }
 );
 
-/** Login (email or username) */
+/* Login (email or username) */
 router.post(
   '/login',
   [
@@ -101,18 +93,10 @@ router.post(
       const valid = await bcrypt.compare(password, user.password);
       if (!valid) return sendError(res, 'Invalid credentials', 401);
 
-      if (!process.env.JWT_SECRET) {
-        console.error('Missing JWT_SECRET at sign time');
-        return sendError(res, 'Server misconfigured', 500);
-      }
-      const token = jwt.sign(
-        { id: user.id, email: user.email },
-        process.env.JWT_SECRET,
-        { expiresIn: '1d' }
-      );
+      if (!process.env.JWT_SECRET) return sendError(res, 'Server misconfigured', 500);
+      const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-      const safe = withNormalizedUsername(toSafeUser(user));
-      return sendSuccess(res, { token, user: safe });
+      return sendSuccess(res, { token, user: withNormalizedUsername(toSafeUser(user)) });
     } catch (err) {
       console.error('Login error:', err);
       return sendError(res, 'Login failed', 500);
@@ -120,7 +104,7 @@ router.post(
   }
 );
 
-/** Me (optimized & briefly cached) */
+/* Me (lightweight & brief cache) */
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
@@ -136,18 +120,15 @@ router.get('/me', authenticateToken, async (req, res) => {
   }
 });
 
-/** Public profile by id */
-router.get(
-  '/:id',
-  [param('id').isInt({ min: 1 }).withMessage('Invalid user id')],
+/* Public profile by id */
+router.get('/:id',
+  [param('id').isInt({ min: 1 })],
   validate,
   async (req, res) => {
     try {
-      const id = Number(req.params.id);
-      const user = await User.findByPk(id, { attributes: { exclude: ['password'] } });
+      const user = await User.findByPk(Number(req.params.id), { attributes: { exclude: ['password'] } });
       if (!user) return sendError(res, 'User not found', 404);
-      const safe = withNormalizedUsername(toSafeUser(user));
-      return sendSuccess(res, { user: safe });
+      return sendSuccess(res, { user: withNormalizedUsername(toSafeUser(user)) });
     } catch (err) {
       console.error('Get user by id error:', err);
       return sendError(res, 'Failed to fetch user', 500);
@@ -155,23 +136,18 @@ router.get(
   }
 );
 
-/** Update description (me) */
-router.put(
-  '/me/description',
+/* Update description (me) */
+router.put('/me/description',
   authenticateToken,
   [body('description').exists().isString().isLength({ max: 500 }).trim()],
   validate,
   async (req, res) => {
     try {
-      const { description } = req.body;
       const user = await User.findByPk(req.user.id);
       if (!user) return sendError(res, 'User not found', 404);
-
-      user.description = description.trim();
+      user.description = req.body.description.trim();
       await user.save();
-
-      const safe = withNormalizedUsername(toSafeUser(user));
-      return sendSuccess(res, { message: 'Description updated successfully', user: safe });
+      return sendSuccess(res, { message: 'Description updated successfully', user: withNormalizedUsername(toSafeUser(user)) });
     } catch (err) {
       console.error('Update description error:', err);
       return sendError(res, 'Failed to save description', 500);
@@ -179,15 +155,14 @@ router.put(
   }
 );
 
-/** Upgrade to paid (me) */
+/* Upgrade to paid (me) */
 router.put('/me/upgrade', authenticateToken, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
     if (!user) return sendError(res, 'User not found', 404);
     user.tier = 'paid';
     await user.save();
-    const safe = withNormalizedUsername(toSafeUser(user));
-    return sendSuccess(res, { message: 'Account upgraded to paid', user: safe });
+    return sendSuccess(res, { message: 'Account upgraded to paid', user: withNormalizedUsername(toSafeUser(user)) });
   } catch (err) {
     console.error('Upgrade error:', err);
     return sendError(res, 'Failed to upgrade account', 500);
