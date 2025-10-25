@@ -1,16 +1,19 @@
-// models/index.js
-const User = require('./user');
-const Service = require('./service');
-const Rating = require('./rating');
+// src/models/index.js
+// Central model registry and association setup.
 
-// Services
-User.hasMany(Service, { foreignKey: 'userId', as: 'services', onDelete: 'CASCADE' });
-Service.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+const { sequelize } = require('../config/database');
+const buildUser = require('./user');
+const buildMessage = require('./message');
 
-// Ratings
-User.hasMany(Rating, { foreignKey: 'raterId', as: 'givenRatings', onDelete: 'CASCADE' });
-User.hasMany(Rating, { foreignKey: 'rateeId', as: 'receivedRatings', onDelete: 'CASCADE' });
-Rating.belongsTo(User, { foreignKey: 'raterId', as: 'rater' });
-Rating.belongsTo(User, { foreignKey: 'rateeId', as: 'ratee' });
+const User = buildUser(sequelize);
+const Message = buildMessage(sequelize);
 
-module.exports = { User, Service, Rating };
+// Associations
+Message.belongsTo(User, { as: 'sender', foreignKey: 'senderId' });
+Message.belongsTo(User, { as: 'receiver', foreignKey: 'receiverId' });
+
+User.hasMany(Message, { as: 'sentMessages', foreignKey: 'senderId' });
+User.hasMany(Message, { as: 'receivedMessages', foreignKey: 'receiverId' });
+
+// Export the sequelize instance and models
+module.exports = { sequelize, User, Message };

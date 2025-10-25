@@ -1,18 +1,18 @@
 // src/models/message.js
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database');
-const User = require('./user');
+// Define Message model (factory). Uses `content` as the message text column.
 
-const Message = sequelize.define('Message', {
-  senderId: { type: DataTypes.INTEGER, allowNull: false },
-  receiverId: { type: DataTypes.INTEGER, allowNull: false },
-  content: { type: DataTypes.TEXT, allowNull: false }
-}, { tableName: 'messages', timestamps: true });
+module.exports = (sequelize) => {
+  const { DataTypes } = require('sequelize');
 
-Message.belongsTo(User, { as: 'sender', foreignKey: 'senderId' });
-Message.belongsTo(User, { as: 'receiver', foreignKey: 'receiverId' });
+  const Message = sequelize.define('Message', {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    senderId: { type: DataTypes.INTEGER, allowNull: false },
+    receiverId: { type: DataTypes.INTEGER, allowNull: false },
+    content: { type: DataTypes.TEXT, allowNull: false }
+  }, {
+    tableName: 'messages',
+    timestamps: true
+  });
 
-User.hasMany(Message, { as: 'sentMessages', foreignKey: 'senderId' });
-User.hasMany(Message, { as: 'receivedMessages', foreignKey: 'receiverId' });
-
-module.exports = Message;
+  return Message;
+};

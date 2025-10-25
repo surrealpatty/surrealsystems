@@ -1,21 +1,19 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database');
+// src/models/user.js
+// Define User model (factory). Keep lightweight — add fields your app requires.
 
-const User = sequelize.define('User', {
-  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  username: { type: DataTypes.STRING, allowNull: false, unique: true },
-  email: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-    validate: { isEmail: true },
-  },
-  password: { type: DataTypes.STRING, allowNull: false },
-  description: { type: DataTypes.TEXT, allowNull: false, defaultValue: '' },
-  tier: { type: DataTypes.ENUM('free', 'paid'), defaultValue: 'free' },
-}, {
-  tableName: 'users',
-  timestamps: true,
-});
+module.exports = (sequelize) => {
+  const { DataTypes } = require('sequelize');
 
-module.exports = User;
+  const User = sequelize.define('User', {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    username: { type: DataTypes.STRING, allowNull: false },
+    email: { type: DataTypes.STRING, allowNull: false },
+    // optional fields:
+    // passwordHash: { type: DataTypes.STRING },
+  }, {
+    tableName: 'users',
+    timestamps: true
+  });
+
+  return User;
+};
