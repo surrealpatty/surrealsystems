@@ -21,8 +21,8 @@ module.exports = (sequelize) => {
     comment: { type: DataTypes.TEXT, allowNull: true }
   }, {
     tableName: 'ratings',
-    timestamps: true,
-    underscored: true // map JS camelCase <-> DB snake_case
+    timestamps: true
+    // **note**: no underscored: true — use camelCase columns to match DB
   });
 
   return Rating;
