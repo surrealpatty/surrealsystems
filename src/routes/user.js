@@ -1,14 +1,13 @@
 // src/routes/user.js
 const express = require('express');
 const router = express.Router();
-const { User, Service, Message } = require('../models'); // ✅ include Message
+const { User, Service, Message } = require('../models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const authenticateToken = require('../middlewares/authenticateToken');
-const { body, param, oneOf, query } = require('express-validator'); // ✅ include query
+const { body, param, oneOf, query } = require('express-validator');
 const validate = require('../middlewares/validate');
 
-/* helpers */
 function toSafeUser(user) {
   if (!user) return user;
   const raw = user.toJSON ? user.toJSON() : user;
@@ -24,9 +23,6 @@ function normalizeUsername(u) {
   }
   return out;
 }
-// Respond in both formats so old frontend code still works:
-// - legacy top-level: { user, token? }
-// - new wrapper: { success:true, data:{ user, token? } }
 function respondCompat(res, payload, status = 200) {
   return res.status(status).json({ success: true, ...payload, data: payload });
 }
@@ -36,7 +32,6 @@ function sendError(res, message = 'Something went wrong', status = 500, details)
   return res.status(status).json(payload);
 }
 
-/* Register */
 router.post(
   '/register',
   [
@@ -71,13 +66,12 @@ router.post(
       const user = normalizeUsername(toSafeUser(newUser));
       return respondCompat(res, { token, user }, 201);
     } catch (err) {
-      console.error('Register error:', err);
+      console.error('Register error:', err && err.stack ? err.stack : err);
       return sendError(res, 'Registration failed', 500);
     }
   }
 );
 
-/* Login (email or username) */
 router.post(
   '/login',
   [
@@ -103,13 +97,12 @@ router.post(
       const user = normalizeUsername(toSafeUser(userRec));
       return respondCompat(res, { token, user });
     } catch (err) {
-      console.error('Login error:', err);
+      console.error('Login error:', err && err.stack ? err.stack : err);
       return sendError(res, 'Login failed', 500);
     }
   }
 );
 
-/* Me (lightweight; includes description & tier) */
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const me = await User.findByPk(req.user.id, {
@@ -121,12 +114,11 @@ router.get('/me', authenticateToken, async (req, res) => {
     res.set('Cache-Control', 'private, max-age=15');
     return respondCompat(res, { user });
   } catch (err) {
-    console.error('Get /me error:', err);
+    console.error('Get /me error:', err && err.stack ? err.stack : err);
     return sendError(res, 'Failed to fetch user', 500);
   }
 });
 
-/* ✅ My messages (recent received by me) */
 router.get(
   '/me/messages',
   authenticateToken,
@@ -137,17 +129,12 @@ router.get(
       const limit = req.query.limit ?? 20;
       const rows = await Message.findAll({
         where: { receiverId: req.user.id },
-        // model uses 'content' (not 'body')
-        attributes: ['id', 'senderId', 'receiverId', 'content', 'createdAt', 'updatedAt'],
-        include: [
-          // include sender so frontend can display sender.username
-          { model: User, as: 'sender', attributes: ['id', 'username'] }
-        ],
-        order: [['createdAt', 'DESC']],
+        attributes: ['id','senderId','receiverId','content','createdAt','updatedAt'],
+        include: [{ model: User, as: 'sender', attributes: ['id','username'] }],
+        order: [['createdAt','DESC']],
         limit
       });
       res.set('Cache-Control', 'private, max-age=10');
-      // compat: include top-level and wrapped
       return res.status(200).json({ success: true, messages: rows, data: { messages: rows } });
     } catch (e) {
       console.error('GET /api/users/me/messages error:', e && e.stack ? e.stack : e);
@@ -156,15 +143,14 @@ router.get(
   }
 );
 
-/* My services (for profile page) */
 router.get('/me/services', authenticateToken, async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 20, 50);
     const offset = Number(req.query.offset) || 0;
     const rows = await Service.findAll({
       where: { userId: req.user.id },
-      attributes: ['id', 'title', 'price', 'createdAt', 'updatedAt'],
-      order: [['createdAt', 'DESC']],
+      attributes: ['id','title','price','createdAt','updatedAt'],
+      order: [['createdAt','DESC']],
       limit,
       offset
     });
@@ -172,52 +158,38 @@ router.get('/me/services', authenticateToken, async (req, res) => {
     res.set('Cache-Control', 'private, max-age=15');
     return respondCompat(res, payload);
   } catch (err) {
-    console.error('Get /me/services error:', err);
+    console.error('Get /me/services error:', err && err.stack ? err.stack : err);
     return sendError(res, 'Failed to fetch services', 500);
   }
 });
 
-/* Public profile by id */
-router.get(
-  '/:id',
-  [param('id').isInt({ min: 1 }).withMessage('Invalid user id')],
-  validate,
-  async (req, res) => {
-    try {
-      const id = Number(req.params.id);
-      const userRec = await User.findByPk(id, { attributes: { exclude: ['password'] } });
-      if (!userRec) return sendError(res, 'User not found', 404);
-      const user = normalizeUsername(toSafeUser(userRec));
-      return respondCompat(res, { user });
-    } catch (err) {
-      console.error('Get user by id error:', err);
-      return sendError(res, 'Failed to fetch user', 500);
-    }
+router.get('/:id', [param('id').isInt({ min: 1 }).withMessage('Invalid user id')], validate, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const userRec = await User.findByPk(id, { attributes: { exclude: ['password'] } });
+    if (!userRec) return sendError(res, 'User not found', 404);
+    const user = normalizeUsername(toSafeUser(userRec));
+    return respondCompat(res, { user });
+  } catch (err) {
+    console.error('Get user by id error:', err && err.stack ? err.stack : err);
+    return sendError(res, 'Failed to fetch user', 500);
   }
-);
+});
 
-/* Update description (me) */
-router.put(
-  '/me/description',
-  authenticateToken,
-  [body('description').exists().isString().isLength({ max: 500 }).trim()],
-  validate,
-  async (req, res) => {
-    try {
-      const userRec = await User.findByPk(req.user.id);
-      if (!userRec) return sendError(res, 'User not found', 404);
-      userRec.description = req.body.description.trim();
-      await userRec.save();
-      const user = normalizeUsername(toSafeUser(userRec));
-      return respondCompat(res, { message: 'Description updated successfully', user });
-    } catch (err) {
-      console.error('Update description error:', err);
-      return sendError(res, 'Failed to save description', 500);
-    }
+router.put('/me/description', authenticateToken, [body('description').exists().isString().isLength({ max: 500 }).trim()], validate, async (req, res) => {
+  try {
+    const userRec = await User.findByPk(req.user.id);
+    if (!userRec) return sendError(res, 'User not found', 404);
+    userRec.description = req.body.description.trim();
+    await userRec.save();
+    const user = normalizeUsername(toSafeUser(userRec));
+    return respondCompat(res, { message: 'Description updated successfully', user });
+  } catch (err) {
+    console.error('Update description error:', err && err.stack ? err.stack : err);
+    return sendError(res, 'Failed to save description', 500);
   }
-);
+});
 
-/* Upgrade to paid (me) */
 router.put('/me/upgrade', authenticateToken, async (req, res) => {
   try {
     const userRec = await User.findByPk(req.user.id);
@@ -227,7 +199,7 @@ router.put('/me/upgrade', authenticateToken, async (req, res) => {
     const user = normalizeUsername(toSafeUser(userRec));
     return respondCompat(res, { message: 'Account upgraded to paid', user });
   } catch (err) {
-    console.error('Upgrade error:', err);
+    console.error('Upgrade error:', err && err.stack ? err.stack : err);
     return sendError(res, 'Failed to upgrade account', 500);
   }
 });

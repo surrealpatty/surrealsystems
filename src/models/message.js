@@ -1,6 +1,4 @@
 // src/models/message.js
-// Define Message model (factory). Uses `content` as the message text column.
-
 module.exports = (sequelize) => {
   const { DataTypes } = require('sequelize');
 

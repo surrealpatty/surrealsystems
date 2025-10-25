@@ -1,6 +1,4 @@
 // src/models/index.js
-// Central registry: build models with the same sequelize instance and set associations.
-
 const { sequelize } = require('../config/database');
 const buildUser = require('./user');
 const buildMessage = require('./message');
@@ -12,7 +10,7 @@ const Message = buildMessage(sequelize);
 const Service = buildService(sequelize);
 const Rating = buildRating(sequelize);
 
-// Associations for messages (already used earlier)
+// Associations for messages
 Message.belongsTo(User, { as: 'sender', foreignKey: 'senderId' });
 Message.belongsTo(User, { as: 'receiver', foreignKey: 'receiverId' });
 User.hasMany(Message, { as: 'sentMessages', foreignKey: 'senderId' });
@@ -28,7 +26,6 @@ Rating.belongsTo(Service, { as: 'service', foreignKey: 'serviceId' });
 Service.hasMany(Rating, { as: 'ratings', foreignKey: 'serviceId' });
 User.hasMany(Rating, { as: 'ratings', foreignKey: 'userId' });
 
-// Export everything
 module.exports = {
   sequelize,
   User,

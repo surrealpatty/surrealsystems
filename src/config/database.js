@@ -1,3 +1,4 @@
+// src/config/database.js
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
@@ -11,14 +12,12 @@ const baseOpts = {
     acquire: Number(process.env.DB_POOL_ACQUIRE || 30000)
   },
   dialectOptions: {
-    // keep TCP open to avoid slow reconnects on each request
     keepAlive: true,
-    statement_timeout: Number(process.env.PG_STATEMENT_TIMEOUT || 5000), // ms
-    query_timeout: Number(process.env.PG_QUERY_TIMEOUT || 0)             // 0 = off
+    statement_timeout: Number(process.env.PG_STATEMENT_TIMEOUT || 5000),
+    query_timeout: Number(process.env.PG_QUERY_TIMEOUT || 0)
   }
 };
 
-// SSL only in production
 if (process.env.NODE_ENV === 'production') {
   baseOpts.dialectOptions.ssl = { require: true, rejectUnauthorized: false };
 }
