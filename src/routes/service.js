@@ -6,6 +6,7 @@ const authenticateToken = require('../middlewares/authenticateToken');
 const { query, param, body } = require('express-validator');
 const validate = require('../middlewares/validate');
 
+/* helpers */
 function ok(res, payload, status = 200) {
   return res.status(status).json({ success: true, ...payload, data: payload });
 }
@@ -15,21 +16,28 @@ function err(res, message = 'Something went wrong', status = 500, details) {
   return res.status(status).json(out);
 }
 
+/**
+ * GET /api/services
+ * List services (with owner info and basic rating summary)
+ * optional: ?limit&offset  OR ?page (1-based) and optional ?userId
+ */
 router.get(
   '/',
   [
     query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
     query('offset').optional().isInt({ min: 0 }).toInt(),
-    query('page').optional().isInt({ min: 1 }).toInt(),
-    query('userId').optional().isInt({ min: 1 }).toInt()
+    query('page').optional().isInt({ min: 1 }).toInt(),       // support page param from frontend
+    query('userId').optional().isInt({ min: 1 }).toInt()     // optional filter by owner
   ],
   validate,
   async (req, res) => {
     try {
       const limit = req.query.limit ?? 20;
+      // Prefer page if provided (page is 1-based). Otherwise use offset if provided.
       const page = req.query.page;
       const offset = typeof page === 'number' ? (Math.max(1, page) - 1) * limit : (req.query.offset ?? 0);
 
+      // Optional filter by owner/userId (profile page passes this)
       const where = {};
       if (req.query.userId) where.userId = Number(req.query.userId);
 
@@ -37,7 +45,9 @@ router.get(
         where: Object.keys(where).length ? where : undefined,
         attributes: ['id','userId','title','description','price','createdAt','updatedAt'],
         include: [
+          // owner: expose as 'owner' here, we'll map to `user` for the frontend
           { model: User, as: 'owner', attributes: ['id','username'] },
+          // ratings: used to compute average; safe even if empty
           { model: Rating, as: 'ratings', attributes: ['score'] }
         ],
         order: [['createdAt','DESC']],
@@ -45,15 +55,18 @@ router.get(
         offset
       });
 
+      // compute average rating/client-friendly payload
       const services = rows.map(s => {
         const ratings = (s.ratings || []).map(r => r.score).filter(x => typeof x === 'number');
         const avgRating = ratings.length ? (ratings.reduce((a,b) => a + b, 0) / ratings.length) : null;
 
+        // Map to shape frontend expects. Frontend checks s.user?.id or s.userId.
         return {
           id: s.id,
           title: s.title,
           description: s.description,
           price: s.price,
+          // provide both 'owner' and 'user' to be safe; front-end will use s.user
           owner: s.owner || null,
           user: s.owner || null,
           userId: s.userId,
@@ -64,15 +77,21 @@ router.get(
         };
       });
 
+      // hasMore logic: if returned rows length === limit, more may exist
       const hasMore = rows.length >= limit;
+
       return ok(res, { services, hasMore, nextOffset: offset + rows.length });
     } catch (e) {
+      // Improved logging for diagnostics
       console.error('GET /api/services error:', e && e.stack ? e.stack : e);
       return err(res, 'Failed to load services', 500);
     }
   }
 );
 
+/**
+ * GET /api/services/:id
+ */
 router.get(
   '/:id',
   [ param('id').isInt({ min: 1 }).toInt() ],
@@ -89,6 +108,7 @@ router.get(
       });
       if (!s) return err(res, 'Service not found', 404);
 
+      // Map owner -> user to match frontend expectation
       const ratings = (s.ratings || []).map(r => ({ id: r.id, score: r.score, comment: r.comment, userId: r.userId, createdAt: r.createdAt }));
       const avgRating = ratings.length ? (ratings.reduce((a,b)=>a + (b.score||0), 0) / ratings.length) : null;
 
@@ -115,6 +135,11 @@ router.get(
   }
 );
 
+/**
+ * POST /api/services
+ * Create new service (requires authentication)
+ * { title, description, price }
+ */
 router.post(
   '/',
   authenticateToken,
@@ -134,6 +159,7 @@ router.post(
         price: price || null
       });
 
+      // Return created service (minimal)
       const out = {
         id: svc.id,
         title: svc.title,
