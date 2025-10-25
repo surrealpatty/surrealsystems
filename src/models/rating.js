@@ -4,14 +4,25 @@ module.exports = (sequelize) => {
 
   const Rating = sequelize.define('Rating', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    serviceId: { type: DataTypes.INTEGER, allowNull: false },
-    userId: { type: DataTypes.INTEGER, allowNull: false },
-    score: { type: DataTypes.INTEGER, allowNull: false }, // 1-5
+
+    // For service ratings
+    serviceId: { type: DataTypes.INTEGER, allowNull: true },
+
+    // For user-to-user ratings
+    raterId: { type: DataTypes.INTEGER, allowNull: true },
+    rateeId: { type: DataTypes.INTEGER, allowNull: true },
+
+    // canonical rating value used by routes: 'stars'
+    stars: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+
+    // legacy: keep score if present (optional)
+    score: { type: DataTypes.INTEGER, allowNull: true },
+
     comment: { type: DataTypes.TEXT, allowNull: true }
   }, {
     tableName: 'ratings',
     timestamps: true,
-    underscored: true    // <- add this line
+    underscored: true // helpful if DB uses snake_case
   });
 
   return Rating;
