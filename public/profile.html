@@ -237,6 +237,14 @@ const avgStarsEl = document.getElementById('avg-stars');
 const ratingsCountEl = document.getElementById('ratings-count');
 const rateForm = document.getElementById('rate-form');
 
+// Rating form controls
+const rateStars = document.getElementById('rateStars');
+const rateComment = document.getElementById('rateComment');
+const submitRatingBtn = document.getElementById('submitRatingBtn');
+const rateMsg = document.getElementById('rateMsg');
+const rateUpgradeHint = document.getElementById('rateUpgradeHint');
+const upgradeInlineBtn = document.getElementById('upgradeInlineBtn');
+
 const logoutBtn = document.getElementById('logoutBtn');
 const upgradeBtn = document.getElementById('upgradeBtn');
 const backToMyProfileBtn = document.getElementById('backToMyProfileBtn');
@@ -244,6 +252,7 @@ const loadMoreBtn = document.getElementById('loadMoreServicesBtn');
 
 /* ------------------------------ State ------------------------------ */
 let currentUserTier = 'free';
+let currentProfileUserId = null; // <- which profile we're viewing (for rating)
 let svcPage = 1, svcLoading = false;
 let svcAborter = null, ratingsAborter = null;
 
@@ -295,6 +304,9 @@ async function loadProfile() {
     const qsUserId = params.get('userId');
     const profileUserId = (qsUserId || loggedInUserId)?.toString();
 
+    // Keep the submit handler aware of which profile we're viewing
+    currentProfileUserId = profileUserId;
+
     const data = qsUserId ? await fetchWithTimeout(`users/${profileUserId}`, {}, 8000) : { user: me };
     const u = data.user || data || {};
 
@@ -306,6 +318,9 @@ async function loadProfile() {
 
     const canRate = (!viewingSelf && currentUserTier === 'paid');
     rateForm.classList.toggle('hidden', !canRate);
+
+    // hide inline upgrade hint by default
+    if (rateUpgradeHint) rateUpgradeHint.classList.add('hidden');
 
     if (viewingSelf && currentUserTier === 'free') upgradeBtn.classList.remove('hidden');
     else upgradeBtn.classList.add('hidden');
@@ -508,6 +523,74 @@ async function createService() {
   }
 }
 createServiceBtn.addEventListener('click', createService);
+
+/* ------------------------- Rating submit handlers --------------------- */
+
+// small helper to show a transient message in the rating area
+function showRateMsg(txt, isError=false){
+  if (!rateMsg) return;
+  rateMsg.textContent = txt || '';
+  rateMsg.style.color = isError ? '#b91c1c' : '#2b7a2b';
+  if (!txt) return;
+  setTimeout(()=> { if (rateMsg) rateMsg.textContent = ''; }, 4500);
+}
+
+if (submitRatingBtn) {
+  submitRatingBtn.addEventListener('click', async () => {
+    const stars = parseInt((rateStars?.value || '0'), 10) || 0;
+    const comment = (rateComment?.value || '').trim();
+    const rateeId = currentProfileUserId || (new URLSearchParams(location.search)).get('userId') || getUserId();
+
+    if (!rateeId) { showRateMsg('No target user to rate', true); return; }
+    if (!stars || stars < 1 || stars > 5) { showRateMsg('Please pick 1–5 stars', true); return; }
+
+    submitRatingBtn.disabled = true;
+    showRateMsg('Submitting…');
+
+    try {
+      const payload = { rateeId, stars, comment: comment || null };
+      // POST /api/ratings (apiFetch / fetchWithTimeout will prefix API_URL)
+      const out = await fetchWithTimeout('ratings', { method: 'POST', body: payload }, 8000);
+
+      showRateMsg(out?.message || 'Rating saved');
+      // refresh summary + ratings list
+      await loadRatings(rateeId);
+
+      // clear comment optionally
+      if (rateComment) rateComment.value = '';
+      if (rateUpgradeHint) rateUpgradeHint.classList.add('hidden');
+
+    } catch (err) {
+      console.error('Rating submit error', err);
+      const m = String(err?.message || '');
+      // detect upgrade requirement (server returns 403 / message about upgrade)
+      if (m.includes('403') || m.toLowerCase().includes('upgrade')) {
+        if (rateUpgradeHint) rateUpgradeHint.classList.remove('hidden');
+        showRateMsg('Upgrade required to rate users.', true);
+      } else {
+        showRateMsg(err?.message || 'Failed to submit rating', true);
+      }
+    } finally {
+      submitRatingBtn.disabled = false;
+    }
+  });
+}
+
+// Wire the inline upgrade button to perform an upgrade (same UX as upgradeBtn)
+if (upgradeInlineBtn) {
+  upgradeInlineBtn.addEventListener('click', async () => {
+    try {
+      if (!confirm('Upgrade to a paid account?')) return;
+      await fetchWithTimeout('users/me/upgrade', { method:'PUT' }, 8000);
+      alert('Upgraded successfully!');
+      currentUserTier = 'paid';
+      // reload profile so rate form appears if viewing someone else
+      await loadProfile();
+    } catch (err) {
+      alert(err?.message || 'Upgrade failed');
+    }
+  });
+}
 
 /* -------------------------------- Init -------------------------------- */
 loadProfile();
