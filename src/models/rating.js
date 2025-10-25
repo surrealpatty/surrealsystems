@@ -13,7 +13,22 @@ module.exports = (sequelize) => {
     rateeId: { type: DataTypes.INTEGER, allowNull: true },
 
     // canonical rating value used by routes: 'stars'
-    stars: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    // default 1, validation 1..5
+    stars: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1,
+      validate: {
+        min: {
+          args: [1],
+          msg: 'stars must be >= 1'
+        },
+        max: {
+          args: [5],
+          msg: 'stars must be <= 5'
+        }
+      }
+    },
 
     // legacy: keep score if present (optional)
     score: { type: DataTypes.INTEGER, allowNull: true },
