@@ -13,7 +13,6 @@ function dialectOptions() {
     || (process.env.DATABASE_URL && /sslmode=require/i.test(process.env.DATABASE_URL));
 
   if (needsSsl) {
-    // For managed DBs (Render/Heroku), accept provider certs by not rejecting unauthorized.
     return { ssl: { require: true, rejectUnauthorized: false } };
   }
   return {};
@@ -36,7 +35,6 @@ module.exports = {
   development: baseConfig('codecrowds'),
   test: baseConfig('codecrowds_test'),
   production: {
-    // In production prefer DATABASE_URL; dialectOptions still applied via dialectOptions()
     url: process.env.DATABASE_URL,
     dialectOptions: dialectOptions(),
     ...common
