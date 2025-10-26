@@ -144,6 +144,23 @@
       strengthEl.textContent = labels[score] || '';
     }
 
+    function getProfileUrl() {
+      // Build a URL to profile.html relative to THIS file's directory
+      return new URL('profile.html', window.location.href).toString();
+    }
+
+    function shouldTreatAsSuccess(r) {
+      // Success if:
+      // 1) HTTP 2xx OR
+      // 2) JSON says success:true OR
+      // 3) JSON has token and user.id
+      if (r.ok) return true;
+      var d = r.data || {};
+      if (d.success === true) return true;
+      if (d.token && d.user && d.user.id != null) return true;
+      return false;
+    }
+
     // Events
     descEl.addEventListener('input', function () {
       descCounter.textContent = descEl.value.length + ' / 400';
@@ -204,34 +221,53 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-        .then(function (res) {
-          return res.text().then(function (text) {
-            var data = {};
-            try { data = text ? JSON.parse(text) : {}; } catch (e) { data = {}; }
-            return { ok: res.ok, status: res.status, data: data };
-          });
-        })
-        .then(function (r) {
-          if (r.ok) {
-            // Save token/user if provided
-            if (r.data && r.data.token && r.data.user && r.data.user.id != null) {
-              localStorage.setItem('token', r.data.token);
-              localStorage.setItem('userId', r.data.user.id);
-            }
-            setMsg('Registration successful! Redirecting…', 'success');
-            window.location.replace('profile.html'); // ✅ Redirect always happens
-            return;
-          }
-          setMsg((r.data && r.data.error) || 'Registration failed (HTTP ' + r.status + ')', 'error');
-        })
-        .catch(function (err) {
-          console.error(err);
-          setMsg('Network error, please try again.', 'error');
-        })
-        .finally(function () {
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Create account';
+      .then(function (res) {
+        return res.text().then(function (text) {
+          var data = {};
+          try { data = text ? JSON.parse(text) : {}; } catch (e) { data = {}; }
+          var result = { ok: res.ok, status: res.status, data: data, redirected: res.redirected, url: res.url };
+          console.log('[register] response:', result);
+          return result;
         });
+      })
+      .then(function (r) {
+        // Save auth info if provided
+        if (r.data && r.data.token && r.data.user && r.data.user.id != null) {
+          localStorage.setItem('token', r.data.token);
+          localStorage.setItem('userId', r.data.user.id);
+        }
+
+        if (shouldTreatAsSuccess(r)) {
+          setMsg('Registration successful! Redirecting…', 'success');
+
+          // Build a safe, correct target relative to this file
+          var target = getProfileUrl();
+          console.log('[register] redirecting to:', target);
+
+          // Use replace so Back won't return to the register page
+          window.location.replace(target);
+
+          // Fallback: if replace is blocked by something unusual, force a second attempt shortly after
+          setTimeout(function () {
+            if (!/profile\.html/i.test(window.location.href)) {
+              window.location.assign(target);
+            }
+          }, 300);
+          return;
+        }
+
+        // Not success — show message from backend if present
+        var errText = (r.data && (r.data.error || r.data.message)) || ('Registration failed (HTTP ' + r.status + ')');
+        setMsg(errText, 'error');
+      })
+      .catch(function (err) {
+        console.error('[register] network error:', err);
+        setMsg('Network error, please try again.', 'error');
+      })
+      .finally(function () {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create account';
+      });
     });
 
     // Initial UI
