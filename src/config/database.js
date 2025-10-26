@@ -12,14 +12,33 @@ const baseOpts = {
     acquire: Number(process.env.DB_POOL_ACQUIRE || 30000)
   },
   dialectOptions: {
+    // keepAlive is useful for some cloud providers
     keepAlive: true,
     statement_timeout: Number(process.env.PG_STATEMENT_TIMEOUT || 5000),
     query_timeout: Number(process.env.PG_QUERY_TIMEOUT || 0)
   }
 };
 
-if (process.env.NODE_ENV === 'production') {
-  baseOpts.dialectOptions.ssl = { require: true, rejectUnauthorized: false };
+/**
+ * Determine whether DB requires SSL:
+ * - NODE_ENV === 'production'
+ * - OR DB_REQUIRE_SSL is explicitly true (accepts 'true', '1', 'yes')
+ * - OR DATABASE_URL contains "sslmode=require" (common with Render/managed PG)
+ */
+const dbRequireSslEnv = String(process.env.DB_REQUIRE_SSL || '').toLowerCase();
+const dbRequiresSsl = (
+  process.env.NODE_ENV === 'production' ||
+  dbRequireSslEnv === 'true' || dbRequireSslEnv === '1' || dbRequireSslEnv === 'yes' ||
+  (process.env.DATABASE_URL && /sslmode=require/i.test(process.env.DATABASE_URL))
+);
+
+if (dbRequiresSsl) {
+  // For many managed Postgres providers (Render/Heroku), require SSL but don't reject self-signed certs.
+  // This keeps things working when the provider uses certs that are not verifiable by default.
+  baseOpts.dialectOptions = {
+    ...baseOpts.dialectOptions,
+    ssl: { require: true, rejectUnauthorized: false }
+  };
 }
 
 const sequelize = process.env.DATABASE_URL
