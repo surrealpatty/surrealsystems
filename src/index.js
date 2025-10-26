@@ -23,8 +23,16 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 /* ---------------------- Security + performance ---------------------- */
-// Common security headers
-app.use(helmet());
+/**
+ * In development, avoid enforcing a strict CSP (helmet.contentSecurityPolicy)
+ * because your static pages include inline scripts. In production, let Helmet
+ * apply defaults (or configure CSP explicitly).
+ */
+const helmetOptions = (process.env.NODE_ENV === 'production')
+  ? {}
+  : { contentSecurityPolicy: false };
+
+app.use(helmet(helmetOptions));
 
 // Optional compression for faster responses (static + API)
 app.use(compression());
@@ -48,6 +56,11 @@ const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
   .map(s => s.trim())
   .filter(Boolean);
 
+/**
+ * Primary cors() middleware — the origin callback returns (null, true/false)
+ * instead of throwing an Error. Throwing would cause Express to respond with
+ * an error and omit CORS headers (which confuses browsers).
+ */
 app.use(cors({
   origin: function(origin, callback) {
     // Allow requests with no origin (curl, mobile apps, server-to-server)
@@ -61,13 +74,61 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    // Block other origins
-    return callback(new Error('CORS policy: origin not allowed'));
+    // Block other origins (don't throw — just signal not allowed)
+    return callback(null, false);
   },
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization'],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 }));
+
+/**
+ * Ensure preflight responses are handled and always include the necessary
+ * Access-Control-Allow-* headers. This helps avoid the common browser case
+ * where OPTIONS preflight returns without CORS headers and the browser blocks
+ * the actual request.
+ */
+app.options('*', cors({
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.length === 0 && process.env.NODE_ENV !== 'production') return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(null, false);
+  },
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+}));
+
+/**
+ * Explicit header middleware: makes sure responses include Access-Control-Allow-*
+ * for both normal and preflight requests. This is a friendly fallback so debug
+ * is easier — it doesn't replace the proper cors() middleware.
+ */
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (!origin) {
+    // Non-browser or same-origin requests
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  } else if (allowedOrigins.length === 0 && process.env.NODE_ENV !== 'production') {
+    // Dev convenience: echo origin
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  } else if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  } else {
+    // origin not allowed: no Access-Control-Allow-Origin header will be present
+    // (browser will block). Log to help debugging.
+    if (origin) console.warn('Blocked origin by CORS:', origin);
+  }
+
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
 
 /* --------------------------- Body parsing --------------------------- */
 app.use(express.json());
