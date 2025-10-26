@@ -17,7 +17,7 @@ router.get('/user/:userId', async (req, res) => {
     const ratings = await Rating.findAll({
       where: { rateeId },
       include: [{ model: User, as: 'rater', attributes: ['id', 'username'] }],
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC']],
     });
 
     // safe average calculation: handle Sequelize instances or plain objects, fallback to score
@@ -31,16 +31,16 @@ router.get('/user/:userId', async (req, res) => {
 
     return res.json({
       summary: { count, average: Number(avg.toFixed(2)) },
-      ratings
+      ratings,
     });
   } catch (err) {
     // Log the full stack so we can debug
     console.error('Get ratings error (stack):', err && err.stack ? err.stack : err);
 
-    // SAFE: don't return 500 to the UI — return an empty summary so the profile UI won't hang
+    // Return an empty payload so the UI doesn't hang
     return res.json({
       summary: { count: 0, average: 0.0 },
-      ratings: []
+      ratings: [],
     });
   }
 });
@@ -90,35 +90,31 @@ router.post('/', authenticateToken, async (req, res) => {
     const ratee = await User.findByPk(rateeId);
     if (!ratee) return res.status(404).json({ error: 'Ratee not found' });
 
-    // Create or update rating (do it explicitly to avoid surprises)
-    let rating = await Rating.findOne({ where: { raterId, rateeId } });
-    let created = false;
-
-    if (rating) {
-      rating.stars = stars;
-      rating.comment = comment;
-      await rating.save();
-    } else {
-      rating = await Rating.create({ raterId, rateeId, stars, comment });
-      created = true;
+    // Upsert with findOrCreate to reduce race conditions
+    const [rating, created] = await Rating.findOrCreate({
+      where: { raterId, rateeId },
+      defaults: { stars, comment },
+    });
+    if (!created) {
+      await rating.update({ stars, comment });
     }
 
-    // Compute fresh summary using SQL aggregates for accuracy/performance
-    const count = await Rating.count({ where: { rateeId } });
-
-    // get sum of stars
-    const sumResult = await Rating.findAll({
+    // One-shot aggregate for summary (COUNT + AVG)
+    const agg = await Rating.findOne({
       where: { rateeId },
-      attributes: [[sequelize.fn('SUM', sequelize.col('stars')), 'sumStars']],
-      raw: false
+      attributes: [
+        [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
+        [sequelize.fn('AVG', sequelize.col('stars')), 'avg'],
+      ],
+      raw: true,
     });
-    const sumStars = Number((sumResult[0] && (sumResult[0].get('sumStars') || 0)) || 0);
-    const avg = count ? (sumStars / count) : 0;
+    const count = Number(agg?.count || 0);
+    const average = count ? Number(Number(agg.avg).toFixed(2)) : 0;
 
     return res.status(created ? 201 : 200).json({
       message: created ? 'Rating created' : 'Rating updated',
       rating,
-      summary: { count, average: Number(avg.toFixed(2)) }
+      summary: { count, average },
     });
   } catch (err) {
     // Verbose debug output (helpful during development)
@@ -130,8 +126,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     // If Sequelize ValidationError -> return 400 with details
-    const SequelizeValidationError = err && err.name && err.name === 'SequelizeValidationError';
-    if (SequelizeValidationError && err.errors) {
+    if (err && err.name === 'SequelizeValidationError' && err.errors) {
       return res.status(400).json({ error: 'Validation failed', details: err.errors.map(e => e.message) });
     }
 

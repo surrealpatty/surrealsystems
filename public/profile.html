@@ -12,20 +12,12 @@
   .muted{color:#666}
   .card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 8px 20px rgba(0,0,0,.06);margin-bottom:12px}
   .floating-btn{position:fixed;right:16px;bottom:16px;border-radius:999px;padding:10px 14px}
-  /* diagnostic banner */
-  #diagBanner {
-    position: fixed; top: 0; left: 0; right: 0;
-    background: #b91c1c; color: #fff; padding: 10px 14px;
-    font: 500 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-    z-index: 999999;
-  }
-  #diagBanner .muted { color: #ffe2e2; }
+  #diagBanner { position:fixed; top:0; left:0; right:0; background:#b91c1c; color:#fff; padding:10px 14px; font:500 14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; z-index:999999; }
+  #diagBanner .muted { color:#ffe2e2; }
   body { padding-top: 0; }
 </style>
 
-<!-- IMPORTANT: expose API_URL early -->
 <script>window.API_URL = '/api';</script>
-<!-- Load your helpers (if present). If this 404s, the fallback below covers it. -->
 <script src="script.js" defer></script>
 </head>
 <body>
@@ -44,11 +36,9 @@
       <h2>User's Services</h2>
       <p class="section-subtle">These also appear on the Services page.</p>
       <div id="services-list"><p><span class="spinner"></span> Loading services...</p></div>
-
       <div class="row row-center row-gap-8 justify-center">
         <button type="button" id="loadMoreServicesBtn" class="hidden">Load more</button>
       </div>
-
       <div id="newServiceSection" class="new-service hidden">
         <input type="text" id="newServiceTitle" placeholder="Service Title" />
         <textarea id="newServiceDesc" placeholder="Service Description"></textarea>
@@ -112,25 +102,18 @@
 <script>
 /* -------------------- DIAGNOSTIC + FALLBACK LAYER -------------------- */
 const Diag = {
-  show(msg){
-    const el = document.getElementById('diagBanner');
-    el.innerHTML = msg;
-    el.classList.remove('hidden');
-    console.error('[Diag]', el.textContent.replace(/\s+/g,' ').trim());
-  },
+  show(msg){ const el = document.getElementById('diagBanner'); el.innerHTML = msg; el.classList.remove('hidden'); console.error('[Diag]', el.textContent.replace(/\s+/g,' ').trim()); },
   hide(){ document.getElementById('diagBanner').classList.add('hidden'); }
 };
 
 // Fallbacks if script.js is missing or broken
-function safe(fn, fallback){
-  try { return typeof fn === 'function' ? fn : fallback; } catch { return fallback; }
-}
-const getToken = safe(window.getToken, ()=> localStorage.getItem('token'));
-const getUserId = safe(window.getUserId, ()=> localStorage.getItem('userId'));
-const setUserId = safe(window.setUserId, (v)=> localStorage.setItem('userId', v));
-const getDisplayName = safe(window.getDisplayName, (u)=> u?.username || u?.name || 'User');
-const getDescription = safe(window.getDescription, (u)=> u?.description || '');
-let apiFetch = window.apiFetch;
+function safe(fn, fallback){ try { return typeof fn === 'function' ? fn : fallback; } catch { return fallback; } }
+const getToken        = safe(window.getToken,        ()=> localStorage.getItem('token'));
+const getUserId       = safe(window.getUserId,       ()=> localStorage.getItem('userId'));
+const setUserId       = safe(window.setUserId,       (v)=> localStorage.setItem('userId', v));
+const getDisplayName  = safe(window.getDisplayName,  (u)=> u?.username || u?.name || 'User');
+const getDescription  = safe(window.getDescription,  (u)=> u?.description || '');
+let apiFetch          = window.apiFetch;
 
 // Harden apiFetch if missing
 if (typeof apiFetch !== 'function') {
@@ -138,13 +121,13 @@ if (typeof apiFetch !== 'function') {
     const token = getToken();
     const headers = {
       'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
     };
     const init = {
       method: opts.method || 'GET',
       headers,
       body: opts.body ? JSON.stringify(opts.body) : undefined,
-      signal: opts.signal
+      signal: opts.signal,
     };
     const full = url.startsWith('http') ? url : (url.startsWith('/') ? url : `${API_URL.replace(/\/$/,'')}/${url.replace(/^\//,'')}`);
     const res = await fetch(full, init);
@@ -154,22 +137,19 @@ if (typeof apiFetch !== 'function') {
     }
     const ct = res.headers.get('content-type') || '';
     return ct.includes('application/json') ? res.json() : res.text();
-  }
+  };
 }
 
 /* -------------------------- SAFE LOGIN GUARD -------------------------- */
-// Do NOT run this early in <head>; do it here so helpers exist.
 (async function guard(){
   try {
     if (typeof window.isLoggedIn === 'function') {
-      // if helper exists, use it
       if (!isLoggedIn()) {
         const here = location.pathname + location.search;
         location.replace(`/?from=${encodeURIComponent(here)}`);
         return;
       }
     } else {
-      // Fall back: token presence only; if no token, show banner (don’t loop)
       const token = getToken();
       if (!token) {
         Diag.show('You appear to be logged out. <span class="muted">No token found. UI will load, but protected API calls will fail.</span>');
@@ -181,7 +161,7 @@ if (typeof apiFetch !== 'function') {
 })();
 
 /* -------------------- PERF HELPERS: SWR cache + timeout -------------------- */
-const SWR_TTL_MS = 60_000; // 60s
+const SWR_TTL_MS = 60_000;
 function lsGet(key){ try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; } }
 function lsSet(key, val){ try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
 function isFresh(ts){ return (Date.now() - (ts||0)) < SWR_TTL_MS; }
@@ -252,7 +232,7 @@ const loadMoreBtn = document.getElementById('loadMoreServicesBtn');
 
 /* ------------------------------ State ------------------------------ */
 let currentUserTier = 'free';
-let currentProfileUserId = null; // <- which profile we're viewing (for rating)
+let currentProfileUserId = null;
 let svcPage = 1, svcLoading = false;
 let svcAborter = null, ratingsAborter = null;
 
@@ -268,31 +248,24 @@ function showOwnerUI(isOwner){
 
 /* ----------------------------- API PINGS ----------------------------- */
 (async function healthCheck(){
-  try{
-    const h = await fetchWithTimeout('health', {}, 4000); // GET /api/health (string or json)
-    console.log('[health]', h);
-  }catch(e){
+  try { await fetchWithTimeout('health', {}, 4000); }
+  catch {
     Diag.show('API health check failed. <span class="muted">Verify that <code>/api/health</code> is reachable, check CORS, and confirm the server is running.</span>');
   }
 })();
 
 /* ---------------------------- Data loaders ---------------------------- */
 async function fetchMe() {
-  try{
-    const me = await fetchWithTimeout('users/me', {}, 8000); // -> { user }
-    const u = me?.user || me || {};
-    if (!getUserId() && u.id) setUserId(String(u.id));
-    try {
-      localStorage.setItem('cc_me', JSON.stringify(u));
-      const dn = getDisplayName(u);
-      if (dn) localStorage.setItem('username', dn);
-    } catch {}
-    currentUserTier = u.tier || 'free';
-    return u;
-  }catch(e){
-    Diag.show('Failed to load user profile. <span class="muted">Check auth token and <code>/api/users/me</code>.</span>');
-    throw e;
-  }
+  const me = await fetchWithTimeout('users/me', {}, 8000); // -> { user }
+  const u = me?.user || me || {};
+  if (!getUserId() && u.id) setUserId(String(u.id));
+  try {
+    localStorage.setItem('cc_me', JSON.stringify(u));
+    const dn = getDisplayName(u);
+    if (dn) localStorage.setItem('username', dn);
+  } catch {}
+  currentUserTier = u.tier || 'free';
+  return u;
 }
 
 async function loadProfile() {
@@ -303,8 +276,6 @@ async function loadProfile() {
     const params = new URLSearchParams(location.search);
     const qsUserId = params.get('userId');
     const profileUserId = (qsUserId || loggedInUserId)?.toString();
-
-    // Keep the submit handler aware of which profile we're viewing
     currentProfileUserId = profileUserId;
 
     const data = qsUserId ? await fetchWithTimeout(`users/${profileUserId}`, {}, 8000) : { user: me };
@@ -318,8 +289,6 @@ async function loadProfile() {
 
     const canRate = (!viewingSelf && currentUserTier === 'paid');
     rateForm.classList.toggle('hidden', !canRate);
-
-    // hide inline upgrade hint by default
     if (rateUpgradeHint) rateUpgradeHint.classList.add('hidden');
 
     if (viewingSelf && currentUserTier === 'free') upgradeBtn.classList.remove('hidden');
@@ -411,7 +380,7 @@ async function loadServices({reset=false, userId} = {}) {
     }
   }finally{ svcLoading=false; }
 }
-loadMoreBtn.addEventListener('click', ()=> loadServices({ reset:false }));
+document.getElementById('loadMoreServicesBtn').addEventListener('click', ()=> loadServices({ reset:false }));
 
 /* ----------------------------- Ratings SWR ----------------------------- */
 function renderStars(n){ const r=Math.round(n); return '★'.repeat(r)+'☆'.repeat(5-r); }
@@ -471,14 +440,14 @@ function toggleDescEdit(force){
 }
 async function saveDescription(){
   const newDesc = profileDescription.textContent.trim();
-  try{
+  try {
     const out = await fetchWithTimeout('users/me/description', { method:'PUT', body:{ description: newDesc } }, 8000);
     const saved = out?.user || {};
     profileDescription.textContent = getDescription(saved) || newDesc;
-  }catch(err){ alert('Failed to save description'); console.error(err); }
-  finally{ toggleDescEdit(false); }
+  } catch { alert('Failed to save description'); }
+  finally { toggleDescEdit(false); }
 }
-editDescBtn.addEventListener('click', ()=> !editingDesc ? toggleDescEdit(true) : saveDescription());
+document.getElementById('editDescBtn').addEventListener('click', ()=> !editingDesc ? toggleDescEdit(true) : saveDescription());
 document.getElementById('editDescBtnFloat').addEventListener('click', ()=> !editingDesc ? toggleDescEdit(true) : saveDescription());
 
 document.getElementById('goToServicesBtn').addEventListener('click', ()=> location.href='services.html');
@@ -486,9 +455,7 @@ document.getElementById('goToMessagesBtn').addEventListener('click', ()=> locati
 document.getElementById('mobileServicesBtn').addEventListener('click', ()=> location.href='services.html');
 document.getElementById('mobileMessagesBtn').addEventListener('click', ()=> location.href='messages.html');
 
-document.getElementById('logoutBtn').addEventListener('click', ()=>{
-  localStorage.clear(); location.replace('/');
-});
+document.getElementById('logoutBtn').addEventListener('click', ()=>{ localStorage.clear(); location.replace('/'); });
 document.getElementById('upgradeBtn').addEventListener('click', async ()=>{
   try{
     if (!confirm('Upgrade to a paid account?')) return;
@@ -504,8 +471,8 @@ function openNewService() {
   newServiceTitle.focus();
   try { newServiceSection.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch {}
 }
-addNewServiceBtn.addEventListener('click', openNewService);
-mobileAddServiceBtn.addEventListener('click', openNewService);
+document.getElementById('addNewServiceBtn').addEventListener('click', openNewService);
+document.getElementById('mobileAddServiceBtn').addEventListener('click', openNewService);
 
 async function createService() {
   const title = newServiceTitle.value.trim();
@@ -518,15 +485,11 @@ async function createService() {
     await fetchWithTimeout('services', { method: 'POST', body: { title, description, price } }, 8000);
     newServiceTitle.value = ''; newServiceDesc.value = ''; newServicePrice.value = '';
     await loadServices({ reset: true, userId: getUserId() });
-  } catch (err) {
-    console.error(err); alert('Failed to create service');
-  }
+  } catch { alert('Failed to create service'); }
 }
-createServiceBtn.addEventListener('click', createService);
+document.getElementById('createServiceBtn').addEventListener('click', createService);
 
 /* ------------------------- Rating submit handlers --------------------- */
-
-// small helper to show a transient message in the rating area
 function showRateMsg(txt, isError=false){
   if (!rateMsg) return;
   rateMsg.textContent = txt || '';
@@ -549,21 +512,15 @@ if (submitRatingBtn) {
 
     try {
       const payload = { rateeId, stars, comment: comment || null };
-      // POST /api/ratings (apiFetch / fetchWithTimeout will prefix API_URL)
       const out = await fetchWithTimeout('ratings', { method: 'POST', body: payload }, 8000);
 
       showRateMsg(out?.message || 'Rating saved');
-      // refresh summary + ratings list
       await loadRatings(rateeId);
-
-      // clear comment optionally
       if (rateComment) rateComment.value = '';
       if (rateUpgradeHint) rateUpgradeHint.classList.add('hidden');
-
     } catch (err) {
       console.error('Rating submit error', err);
       const m = String(err?.message || '');
-      // detect upgrade requirement (server returns 403 / message about upgrade)
       if (m.includes('403') || m.toLowerCase().includes('upgrade')) {
         if (rateUpgradeHint) rateUpgradeHint.classList.remove('hidden');
         showRateMsg('Upgrade required to rate users.', true);
@@ -576,7 +533,7 @@ if (submitRatingBtn) {
   });
 }
 
-// Wire the inline upgrade button to perform an upgrade (same UX as upgradeBtn)
+// Inline upgrade flow
 if (upgradeInlineBtn) {
   upgradeInlineBtn.addEventListener('click', async () => {
     try {
@@ -584,7 +541,6 @@ if (upgradeInlineBtn) {
       await fetchWithTimeout('users/me/upgrade', { method:'PUT' }, 8000);
       alert('Upgraded successfully!');
       currentUserTier = 'paid';
-      // reload profile so rate form appears if viewing someone else
       await loadProfile();
     } catch (err) {
       alert(err?.message || 'Upgrade failed');

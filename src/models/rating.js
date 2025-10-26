@@ -7,29 +7,29 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
-      field: 'id'
+      field: 'id',
     },
 
     // For service ratings (nullable so rating can be user-to-user)
     serviceId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: 'service_id'
+      field: 'service_id',
     },
 
     // For user-to-user ratings
     raterId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: 'rater_id'
+      field: 'rater_id',
     },
     rateeId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: 'ratee_id'
+      field: 'ratee_id',
     },
 
-    // canonical rating: 'stars' (DB column is 'stars')
+    // canonical rating: 'stars'
     stars: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -37,26 +37,30 @@ module.exports = (sequelize) => {
       field: 'stars',
       validate: {
         min: { args: [1], msg: 'stars must be >= 1' },
-        max: { args: [5], msg: 'stars must be <= 5' }
-      }
+        max: { args: [5], msg: 'stars must be <= 5' },
+      },
     },
 
     // optional legacy 'score'
     score: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: 'score'
+      field: 'score',
     },
 
     comment: {
       type: DataTypes.TEXT,
       allowNull: true,
-      field: 'comment'
-    }
+      field: 'comment',
+    },
   }, {
     tableName: 'ratings',
-    timestamps: true
-    // Note: we explicitly map the fields above so we don't rely on underscored:true
+    timestamps: true,
+    // We explicitly map each column via `field` so we don't rely on underscored:true.
+    indexes: [
+      // One (rater → ratee) rating; allows service ratings separately via serviceId
+      { unique: true, fields: ['rater_id', 'ratee_id'], where: { ratee_id: { [sequelize.Sequelize.Op.ne]: null } } },
+    ],
   });
 
   return Rating;
