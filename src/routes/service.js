@@ -17,6 +17,7 @@ function err(res, message = 'Something went wrong', status = 500, details) {
   return res.status(status).json(out);
 }
 
+/* ------------------------------ LIST ------------------------------- */
 router.get(
   '/',
   [
@@ -101,5 +102,98 @@ router.get(
     }
   }
 );
+
+/* ----------------------------- CREATE ------------------------------ */
+router.post(
+  '/',
+  authenticateToken,
+  [
+    body('title').isString().isLength({ min: 3 }).withMessage('Title is required (min 3 chars)'),
+    body('description').optional({ nullable: true }).isString().isLength({ max: 2000 }),
+    body('price').optional({ nullable: true }).isDecimal().withMessage('Invalid price')
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const userId = Number(req.user.id);
+      const { title, description, price } = req.body;
+
+      const svc = await Service.create({
+        userId,
+        title: String(title).trim(),
+        description: description ? String(description).trim() : null,
+        price: price != null ? Number(price) : null
+      });
+
+      return ok(res, { service: svc }, 201);
+    } catch (e) {
+      console.error('Create service error:', e && e.stack ? e.stack : e);
+      return err(res, 'Failed to create service', 500);
+    }
+  }
+);
+
+/* ---------------------------- GET BY ID ---------------------------- */
+router.get('/:id', [ param('id').isInt({ min: 1 }).toInt() ], validate, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const svc = await Service.findByPk(id, {
+      include: [{ model: User, as: 'owner', attributes: ['id','username'] }]
+    });
+    if (!svc) return err(res, 'Service not found', 404);
+    return ok(res, { service: svc });
+  } catch (e) {
+    console.error('Get service error:', e && e.stack ? e.stack : e);
+    return err(res, 'Failed to load service', 500);
+  }
+});
+
+/* ----------------------------- UPDATE ------------------------------ */
+router.put(
+  '/:id',
+  authenticateToken,
+  [
+    param('id').isInt({ min: 1 }).toInt(),
+    body('title').optional().isString().isLength({ min: 3 }),
+    body('description').optional({ nullable: true }).isString().isLength({ max: 2000 }),
+    body('price').optional({ nullable: true }).isDecimal()
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const svc = await Service.findByPk(id);
+      if (!svc) return err(res, 'Service not found', 404);
+      if (Number(svc.userId) !== Number(req.user.id)) return err(res, 'Forbidden', 403);
+
+      const { title, description, price } = req.body;
+      await svc.update({
+        title: title !== undefined ? String(title).trim() : svc.title,
+        description: description !== undefined ? (description ? String(description).trim() : null) : svc.description,
+        price: price !== undefined ? (price !== null ? Number(price) : null) : svc.price
+      });
+      return ok(res, { service: svc });
+    } catch (e) {
+      console.error('Update service error:', e && e.stack ? e.stack : e);
+      return err(res, 'Failed to update service', 500);
+    }
+  }
+);
+
+/* ----------------------------- DELETE ------------------------------ */
+router.delete('/:id', authenticateToken, [ param('id').isInt({ min: 1 }).toInt() ], validate, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const svc = await Service.findByPk(id);
+    if (!svc) return err(res, 'Service not found', 404);
+    if (Number(svc.userId) !== Number(req.user.id)) return err(res, 'Forbidden', 403);
+
+    await svc.destroy();
+    return ok(res, { message: 'Service deleted' });
+  } catch (e) {
+    console.error('Delete service error:', e && e.stack ? e.stack : e);
+    return err(res, 'Failed to delete service', 500);
+  }
+});
 
 module.exports = router;
