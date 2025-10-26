@@ -45,7 +45,7 @@
           />
         </div>
 
-        <!-- Password with toggle + strength -->
+        <!-- Password -->
         <div class="field">
           <label for="registerPassword">Password</label>
           <div class="password-row">
@@ -73,7 +73,7 @@
           <small id="strengthHelp" class="hint">Use at least 8 characters with a mix of letters, numbers, and symbols.</small>
         </div>
 
-        <!-- Description / Bio -->
+        <!-- Description -->
         <div class="field">
           <label for="registerDescription">Tell us about yourself (optional)</label>
           <textarea
@@ -195,7 +195,7 @@
         description: descEl.value.trim()
       };
 
-      // lock UI
+      // Lock UI
       submitBtn.disabled = true;
       submitBtn.textContent = 'Creating...';
 
@@ -204,31 +204,34 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-      .then(function (res) {
-        return res.json().catch(function () { return {}; }).then(function (data) {
-          return { ok: res.ok, status: res.status, data: data };
-        });
-      })
-      .then(function (r) {
-        if (r.ok) {
-          setMsg('Registration successful! Redirecting...', 'success');
-          if (r.data && r.data.token && r.data.user && r.data.user.id != null) {
-            localStorage.setItem('token', r.data.token);
-            localStorage.setItem('userId', r.data.user.id);
+        .then(function (res) {
+          return res.text().then(function (text) {
+            var data = {};
+            try { data = text ? JSON.parse(text) : {}; } catch (e) { data = {}; }
+            return { ok: res.ok, status: res.status, data: data };
+          });
+        })
+        .then(function (r) {
+          if (r.ok) {
+            // Save token/user if provided
+            if (r.data && r.data.token && r.data.user && r.data.user.id != null) {
+              localStorage.setItem('token', r.data.token);
+              localStorage.setItem('userId', r.data.user.id);
+            }
+            setMsg('Registration successful! Redirecting…', 'success');
+            window.location.replace('profile.html'); // ✅ Redirect always happens
+            return;
           }
-          setTimeout(function () { window.location.href = 'profile.html'; }, 900);
-        } else {
           setMsg((r.data && r.data.error) || 'Registration failed (HTTP ' + r.status + ')', 'error');
-        }
-      })
-      .catch(function (err) {
-        console.error(err);
-        setMsg('Network error, please try again.', 'error');
-      })
-      .finally(function () {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Create account';
-      });
+        })
+        .catch(function (err) {
+          console.error(err);
+          setMsg('Network error, please try again.', 'error');
+        })
+        .finally(function () {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Create account';
+        });
     });
 
     // Initial UI
