@@ -15,11 +15,7 @@ module.exports = (sequelize) => {
   }, {
     tableName: 'services',
     timestamps: true,
-
-    // IMPORTANT: override the global underscored=true so this model
-    // will use the DB columns 'createdAt' / 'updatedAt' instead of
-    // expecting 'created_at' / 'updated_at'.
-    underscored: false
+    underscored: false // Use camelCase timestamps/columns
   });
 
   return Service;
