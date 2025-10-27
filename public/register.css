@@ -1,203 +1,41 @@
-/* ---------- Reset & Base ---------- */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-html, body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #4e54c8, #00aaff);
-  color: #fff;
-  min-height: 100%;
-}
-
-/* ---------- Layout ---------- */
-.auth-page {
-  min-height: 100vh;
-  display: flex;
+/* === noscript notice ===
+   Visible only when scripting is disabled (that's how <noscript> works).
+   No inline styles — everything in CSS for maintainability and CSP friendliness.
+*/
+.noscript-note {
+  display: block;               /* ensure it occupies its own block */
+  text-align: center;
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  align-items: center;
   justify-content: center;
-  align-items: center;
-  padding: 32px 16px;
-}
-
-.card {
-  width: 100%;
-  max-width: 480px;
-  background: rgba(255,255,255,0.98);
-  color: #333;
-  border-radius: 18px;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-  padding: 32px 28px 28px;
-  overflow: hidden; /* stops any element from escaping */
-}
-
-/* ---------- Header ---------- */
-.card-header {
-  text-align: center;
-  margin-bottom: 12px;
-}
-
-h1 {
-  margin: 0 0 6px;
-  color: #4e54c8;
-  font-size: 1.7rem;
-}
-
-.subtle {
-  margin: 0;
-  color: #666;
-  font-size: 0.95rem;
-}
-
-/* ---------- Form ---------- */
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 14px;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  text-align: left;
-}
-
-label {
-  font-weight: 600;
-  color: #394150;
-}
-
-.hint {
-  color: #6b7280;
-  font-size: 0.85rem;
   line-height: 1.2;
-  word-break: break-word;
 }
 
-/* ---------- Inputs ---------- */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-textarea {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: 1px solid #d1d5db;
-  background: #fff;
-  color: #111827;
-  font-size: 1rem;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+/* If you already have .message and .error styles they will apply.
+   If not, these provide a gentle visible style for an error message. */
+.message.error {
+  background-color: #fff2f0; /* light red/pink background */
+  color: #8a1f1f;            /* dark red text */
+  border: 1px solid #f3c6c6;
 }
 
-input:focus,
-textarea:focus {
-  border-color: #6e74e6;
-  box-shadow: 0 0 0 3px rgba(78,84,200,0.15);
+/* Icon styling (decorative) */
+.noscript-icon {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 0.5rem;
+  font-size: 1.1rem;
 }
 
-/* ---------- Password Row ---------- */
-.password-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-  align-items: center;
-}
-.password-row input {
-  min-width: 0; /* allows shrinking inside grid */
+/* Ensure the text is readable on small screens */
+.noscript-text {
+  display: inline-block;
+  vertical-align: middle;
 }
 
-.btn-icon {
-  background: #eef2ff;
-  color: #4e54c8;
-  border: none;
-  border-radius: 10px;
-  padding: 0 12px;
-  height: 44px;
-  cursor: pointer;
-  transition: filter 0.2s;
-  white-space: nowrap;
-}
-.btn-icon:hover { filter: brightness(0.95); }
-
-/* ---------- Strength Meter ---------- */
-.strength {
-  height: 6px;
-  border-radius: 999px;
-  background: #e5e7eb;
-  position: relative;
-  overflow: hidden;
-  margin-top: 6px;
-}
-.strength::after {
-  content: '';
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 0%;
-  background: #ef4444;
-  transition: width 0.25s ease, background 0.25s ease;
-}
-.strength[data-score="0"]::after { width: 8%;  background:#ef4444; }
-.strength[data-score="1"]::after { width: 20%; background:#ef4444; }
-.strength[data-score="2"]::after { width: 40%; background:#f59e0b; }
-.strength[data-score="3"]::after { width: 60%; background:#f59e0b; }
-.strength[data-score="4"]::after { width: 80%; background:#22c55e; }
-.strength[data-score="5"]::after { width: 100%; background:#16a34a; }
-
-/* ---------- Textarea Counter ---------- */
-.meta-row {
-  display: flex;
-  justify-content: flex-end;
-}
-
-/* ---------- Buttons ---------- */
-.btn-primary {
-  padding: 12px 16px;
-  font-size: 1rem;
-  border: none;
-  border-radius: 12px;
-  background: #4e54c8;
-  color: #fff;
-  cursor: pointer;
-  transition: transform 0.2s, filter 0.2s, opacity 0.2s;
-}
-.btn-primary:hover { transform: translateY(-2px); filter: brightness(0.98); }
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-
-/* ---------- Messages ---------- */
+/* Optional: keep the existing .message base styles consistent */
 .message {
-  min-height: 1.25rem;
-  margin: 4px 0 2px;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-.message.info { color: #4b5563; }
-.message.success { color: #16a34a; }
-.message.error { color: #dc2626; }
-
-/* ---------- Switch ---------- */
-.switch {
-  margin: 8px 0 0;
-  color: #4b5563;
-  text-align: center;
-}
-.switch a {
-  color: #4e54c8;
-  text-decoration: none;
-  font-weight: 600;
-}
-.switch a:hover { text-decoration: underline; }
-
-/* ---------- Responsive ---------- */
-@media (max-width: 480px) {
-  .card { padding: 24px 18px 18px; }
-  h1 { font-size: 1.4rem; }
-  input, textarea { font-size: 0.95rem; }
-  .btn-primary { font-size: 0.95rem; }
+  font-size: 0.95rem;
 }
