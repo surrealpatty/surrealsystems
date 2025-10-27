@@ -15,6 +15,11 @@ const baseOpts = {
     keepAlive: true,
     statement_timeout: Number(process.env.PG_STATEMENT_TIMEOUT || 5000),
     query_timeout: Number(process.env.PG_QUERY_TIMEOUT || 0)
+  },
+
+  // <-- Important: map JS camelCase attributes to snake_case DB columns (userId -> user_id, createdAt -> created_at, etc.)
+  define: {
+    underscored: true
   }
 };
 

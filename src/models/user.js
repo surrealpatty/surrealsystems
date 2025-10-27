@@ -11,7 +11,8 @@ module.exports = (sequelize) => {
     tier: { type: DataTypes.STRING, allowNull: false, defaultValue: 'free' }
   }, {
     tableName: 'users',
-    timestamps: true
+    timestamps: true,
+    underscored: true
   });
 
   return User;
