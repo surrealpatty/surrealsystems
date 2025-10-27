@@ -49,19 +49,19 @@ router.get(
       if (!rows || !rows.length) return ok(res, { services: [], hasMore: false, nextOffset: offset });
 
       // Try raw aggregation using COALESCE(stars, score).
-      // If the DB doesn't have serviceId or aggregation fails, we'll skip summaries.
+      // Use DB column names (snake_case) and alias to serviceId for JS code.
       const serviceIds = rows.map(r => r.id);
       const summaryMap = {};
 
       try {
-        // Use camelCase column name 'serviceId' since your DB uses camelCase
+        // NOTE: ratings table columns use snake_case (service_id). Alias to "serviceId"
         const rowsRaw = await sequelize.query(
-          `SELECT "serviceId",
+          `SELECT "service_id" AS "serviceId",
                   AVG(COALESCE(stars, score))::numeric(10,2) AS "avgRating",
                   COUNT(*)::int AS "ratingsCount"
            FROM ratings
-           WHERE "serviceId" IS NOT NULL AND "serviceId" IN (:ids)
-           GROUP BY "serviceId"`,
+           WHERE "service_id" IS NOT NULL AND "service_id" IN (:ids)
+           GROUP BY "service_id"`,
           { replacements: { ids: serviceIds }, type: QueryTypes.SELECT }
         );
 
@@ -73,7 +73,7 @@ router.get(
         });
       } catch (e) {
         // If raw aggregation fails because column doesn't exist (or other DB issue),
-        // we continue without summaries (avgRating=null) and log the error.
+        // we continue without summaries (avgRating=null) and log the error for debugging.
         console.info('Ratings aggregation skipped or failed (no service-level ratings or DB schema mismatch):', e && e.message ? e.message : e);
       }
 
