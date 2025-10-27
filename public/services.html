@@ -6,8 +6,49 @@
 <title>Services - CodeCrowds</title>
 <link rel="stylesheet" href="services.css" />
 
-<!-- Allow the page to override API base if needed -->
-<script>window.API_BASE = '/api'; window.API_URL = '/api';</script>
+<!-- Optional: If you prefer explicit config, add a meta:
+<meta name="api-url" content="https://api.your-domain.com/api" />
+-->
+<script>
+  // Ensure a sane API_URL / API_BASE is present before script.js runs.
+  (function () {
+    try {
+      function normalize(u) {
+        if (!u) return u;
+        return String(u).replace(/\/+$/, '');
+      }
+
+      let api = null;
+
+      // 1) explicit window.__API_URL__ (host/build injection)
+      try { if (typeof window.__API_URL__ !== 'undefined' && window.__API_URL__) api = normalize(window.__API_URL__); } catch (e) {}
+
+      // 2) meta tag
+      try {
+        if (!api) {
+          const meta = document.querySelector('meta[name="api-url"]');
+          if (meta && meta.content) api = normalize(meta.content);
+        }
+      } catch (e) {}
+
+      // 3) existing inline page config (older pages)
+      try {
+        if (!api && typeof window.API_URL !== 'undefined' && window.API_URL) api = normalize(window.API_URL);
+        if (!api && typeof window.API_BASE !== 'undefined' && window.API_BASE) api = normalize(window.API_BASE);
+      } catch (e) {}
+
+      // 4) fallback to same-origin + /api
+      if (!api) {
+        try { api = (window.location.origin || '').replace(/\/$/, '') + '/api'; } catch (e) { api = '/api'; }
+      }
+
+      window.API_BASE = api;
+      window.API_URL = api;
+      try { console.info('Init: API_URL =', window.API_URL); } catch (e) {}
+    } catch (e) { /* ignore */ }
+  })();
+</script>
+
 <script src="script.js"></script>
 
 <style>
@@ -20,9 +61,20 @@
   #messageModal{display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,.4)}
   #messageModal .modal-content{background:#fff;border-radius:12px;max-width:520px;width:92%;padding:16px}
   .button-secondary{background:#f0f0f0}
+
+/* small diagnostic banner (hidden by default) */
+#diagBanner {
+  display:none;
+  position:fixed;
+  top:0; left:0; right:0;
+  background:#b91c1c;color:#fff;padding:8px 12px;font-weight:600; z-index:9999;
+}
+#diagBanner .muted { opacity:0.9; font-weight:400; font-size:0.95rem; }
 </style>
 </head>
 <body>
+<div id="diagBanner"><span id="diagMsg"></span></div>
+
 <div class="container">
   <h1>All Services</h1>
   <p class="subtle">Browse everything users are offering across CodeCrowds.</p>
@@ -76,6 +128,15 @@
 
 <script>
 // ===================== DOM =====================
+const diagBanner = document.getElementById('diagBanner');
+const diagMsg = document.getElementById('diagMsg');
+function showDiag(msg, ttl = 7000) {
+  if (!diagBanner) return;
+  diagMsg.textContent = msg;
+  diagBanner.style.display = 'block';
+  setTimeout(()=> { diagBanner.style.display = 'none'; diagMsg.textContent=''; }, ttl);
+}
+
 const servicesList = document.getElementById('services-list');
 const goToProfileBtn = document.getElementById('goToProfileBtn');
 const refreshBtn = document.getElementById('refreshBtn');
@@ -106,8 +167,14 @@ function toast(msg){
   el.textContent=msg; el.classList.add('show');
   setTimeout(()=>el.classList.remove('show'), 2200);
 }
-function showInlineError(msg){ if (sendError) { sendError.textContent=msg; sendError.hidden=!msg; } }
+function showInlineError(msg){
+  if (sendError) {
+    sendError.textContent = msg || '';
+    sendError.hidden = !msg;
+  }
+}
 function stringifyAny(v){ if(v==null) return ''; if(typeof v==='string') return v; try{return JSON.stringify(v);}catch{return String(v);} }
+
 async function readError(res){
   let data=null, text='';
   try{ data=await res.json(); }catch{ text=await res.text().catch(()=> ''); }
@@ -115,6 +182,18 @@ async function readError(res){
     ? (data.error?.message || data.error || data.message || data?.errors || data)
     : text || `HTTP ${res.status}`;
   return `[${res.status}] ${typeof nested==='string' ? nested : stringifyAny(nested)}`;
+}
+
+function makeFriendlyError(err) {
+  if (!err) return 'Unknown error';
+  if (err?.payload) {
+    try {
+      const p = err.payload;
+      const msg = p?.error?.message || p?.message || (p?.error ? JSON.stringify(p.error) : null);
+      if (msg) return String(msg);
+    } catch (e) {}
+  }
+  return err.message || String(err);
 }
 
 // ===================== Render =====================
@@ -187,7 +266,10 @@ async function loadServices(){
     applyFilters();
   }catch(e){
     console.error('[services] load failed:', e);
-    servicesList.innerHTML = `<p class="error">Failed to load services: ${esc(e.message || e)}</p>`;
+    const friendly = makeFriendlyError(e);
+    servicesList.innerHTML = `<p class="error">Failed to load services: ${esc(friendly)}</p>`;
+    // Helpful hint for the user/admin
+    showDiag('Failed to load services. If you see CORS errors in the console, update CORS_ALLOWED_ORIGINS to include your frontend origin (e.g. https://codecrowds.onrender.com).');
   }
 }
 
@@ -242,25 +324,38 @@ async function sendMessage(){
   showInlineError('');
   try{
     if (sendMessageBtn) { sendMessageBtn.disabled=true; sendMessageBtn.textContent='Sending…'; }
+
+    // Send both "to" (server expects this) and "receiverId" (safe fallback).
+    const body = {
+      to: Number(messageState.toUserId),
+      receiverId: Number(messageState.toUserId),
+      content: text
+    };
+    if (messageState.serviceId) body.serviceId = Number(messageState.serviceId);
+
     await apiFetch('messages', {
       method: 'POST',
-      body: {
-        // *** CHANGED: send "to" (server expects field "to"), not "receiverId" ***
-        to: Number(messageState.toUserId),
-        content: text,
-        serviceId: messageState.serviceId ? Number(messageState.serviceId) : null
-      },
+      body,
       timeoutMs: 10000
     });
+
     hideModal(); toast('Message sent!');
   }catch(err){
     console.error('[messages] network error:', err);
-    const msg = err?.message || 'Network error. Please try again.';
+    const friendly = makeFriendlyError(err);
     if (err?.status === 401 || err?.status === 403) {
       try { clearToken(); clearUserId(); } catch {}
-      showInlineError(`${msg}. Please log in again.`);
+      showInlineError(`${friendly}. Please log in again.`);
     } else {
-      showInlineError(`Failed to send: ${msg}`);
+      // If the error looks like a network/CORS problem suggest the probable fix
+      const lower = String(err?.message || '').toLowerCase();
+      const possibleCors = lower.includes('cors') || lower.includes('blocked') || lower.includes('network') || lower.includes('failed to fetch');
+      if (possibleCors) {
+        showInlineError(`Failed to send: ${friendly}. Possible CORS or network issue — ensure CORS_ALLOWED_ORIGINS includes your frontend origin and API_URL is correct.`);
+        showDiag('Network/CORS issue sending messages. Check server logs and update CORS_ALLOWED_ORIGINS to include your frontend origin.');
+      } else {
+        showInlineError(`Failed to send: ${friendly}`);
+      }
     }
   }finally{
     if (sendMessageBtn) { sendMessageBtn.disabled=false; sendMessageBtn.textContent='Send'; }
