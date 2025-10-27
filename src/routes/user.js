@@ -2,12 +2,69 @@
 const express = require('express');
 const router = express.Router();
 const { User, Service, Message } = require('../models');
-const bcrypt = require('bcrypt');
+let bcrypt;
+try {
+  // prefer native bcrypt (fast), but fall back to bcryptjs if needed
+  bcrypt = require('bcrypt');
+} catch (e) {
+  try {
+    bcrypt = require('bcryptjs');
+    console.warn('bcrypt not available — falling back to bcryptjs');
+  } catch (e2) {
+    console.error('No bcrypt implementation available. Install "bcrypt" or "bcryptjs".');
+    throw e2;
+  }
+}
 const jwt = require('jsonwebtoken');
 const authenticateToken = require('../middlewares/authenticateToken');
 const { body, param, oneOf, query } = require('express-validator');
 const validate = require('../middlewares/validate');
 
+/**
+ * Wrap bcrypt.hash/compare so we can `await` regardless of whether the
+ * installed implementation supports promises or only callback style.
+ */
+async function hashPassword(password, rounds = 10) {
+  // Try promise-style first (works with native bcrypt v5+ or bcrypt that returns Promise)
+  try {
+    const maybe = bcrypt.hash(password, rounds);
+    // If the implementation returned a Promise, await it
+    if (maybe && typeof maybe.then === 'function') {
+      return await maybe;
+    }
+    // Otherwise, fall through to callback-style wrapper below
+  } catch (_) {
+    // fallthrough to callback wrapper
+  }
+
+  return new Promise((resolve, reject) => {
+    // callback signature supported by both bcrypt and bcryptjs
+    bcrypt.hash(password, rounds, (err, hash) => {
+      if (err) return reject(err);
+      resolve(hash);
+    });
+  });
+}
+
+async function comparePassword(password, hashed) {
+  try {
+    const maybe = bcrypt.compare(password, hashed);
+    if (maybe && typeof maybe.then === 'function') {
+      return await maybe;
+    }
+  } catch (_) {
+    // fallthrough
+  }
+
+  return new Promise((resolve, reject) => {
+    bcrypt.compare(password, hashed, (err, ok) => {
+      if (err) return reject(err);
+      resolve(!!ok);
+    });
+  });
+}
+
+/* ------------------ helpers ------------------ */
 function toSafeUser(user) {
   if (!user) return user;
   const raw = user.toJSON ? user.toJSON() : user;
@@ -32,12 +89,15 @@ function sendError(res, message = 'Something went wrong', status = 500, details)
   return res.status(status).json(payload);
 }
 
+/* ------------------ routes ------------------ */
+
 router.post(
   '/register',
   [
     body('username').trim().isString().isLength({ min: 3 }),
     body('email').trim().isEmail().normalizeEmail(),
-    body('password').isString().isLength({ min: 6 }),
+    // match client-side requirement: min 8 characters
+    body('password').isString().isLength({ min: 8 }),
     body('description').optional({ nullable: true }).isString().isLength({ max: 500 }).trim()
   ],
   validate,
@@ -55,7 +115,8 @@ router.post(
       if (existingEmail) return sendError(res, 'Email already used', 400);
       if (existingUsername) return sendError(res, 'Username already taken', 400);
 
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await hashPassword(password, 10);
+
       const newUser = await User.create({
         username,
         email,
@@ -87,7 +148,9 @@ router.post(
       // In non-production show the underlying message to help dev debugging.
       if (process.env.NODE_ENV && process.env.NODE_ENV !== 'production') {
         const message = err && err.message ? `Registration failed: ${err.message}` : 'Registration failed';
-        return sendError(res, message, 500);
+        // include stack in details to make debugging easier in dev
+        const details = err && err.stack ? [err.stack] : undefined;
+        return sendError(res, message, 500, details);
       }
 
       return sendError(res, 'Registration failed', 500);
@@ -111,7 +174,7 @@ router.post(
       const userRec = await User.findOne({ where: email ? { email } : { username } });
       if (!userRec) return sendError(res, 'Invalid credentials', 401);
 
-      const valid = await bcrypt.compare(password, userRec.password);
+      const valid = await comparePassword(password, userRec.password);
       if (!valid) return sendError(res, 'Invalid credentials', 401);
 
       if (!process.env.JWT_SECRET) return sendError(res, 'Server misconfigured', 500);

@@ -38,34 +38,21 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 /* ---------------------- Security + performance ---------------------- */
-/**
- * In development, avoid enforcing a strict CSP (helmet.contentSecurityPolicy)
- * because your static pages include inline scripts. In production, let Helmet
- * apply defaults (or configure CSP explicitly).
- */
 const helmetOptions = (process.env.NODE_ENV === 'production')
   ? {}
   : { contentSecurityPolicy: false };
-
 app.use(helmet(helmetOptions));
-
-// Optional compression for faster responses (static + API)
 app.use(compression());
 
-// Rate limiting (basic IP-level protection)
 const limiter = rateLimit({
-  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // default 15 minutes
-  max: Number(process.env.RATE_LIMIT_MAX) || 100, // requests per window per IP
+  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max: Number(process.env.RATE_LIMIT_MAX) || 100,
   standardHeaders: true,
   legacyHeaders: false,
 });
 app.use(limiter);
 
 /* ---------------------------- CORS setup ---------------------------- */
-/**
- * Provide CORS_ALLOWED_ORIGINS as a comma-separated list of origins in env.
- * Example: CORS_ALLOWED_ORIGINS=https://app.example.com,http://localhost:3000
- */
 const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
   .split(',')
   .map(s => s.trim())
@@ -73,34 +60,15 @@ const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
 
 console.info('CORS allowedOrigins:', (allowedOrigins.length ? allowedOrigins : '[none configured]'));
 
-// Warn if configuration looks suspicious (helpful in production debugging)
 if (process.env.NODE_ENV === 'production' && allowedOrigins.length === 0) {
   console.warn('⚠️ CORS_ALLOWED_ORIGINS is empty while NODE_ENV=production — this will block browser requests from other origins.');
 }
 
-/**
- * Primary cors() middleware — the origin callback returns (null, true/false)
- * instead of throwing an Error. Throwing would cause Express to respond with
- * an error and omit CORS headers (which confuses browsers).
- *
- * Keep this here for convenience; we also add an explicit header middleware
- * below to ensure consistent Access-Control-* headers for both normal and
- * preflight responses.
- */
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (curl, mobile apps, server-to-server)
     if (!origin) return callback(null, true);
-
-    // If no origins configured (dev), allow all origins for convenience.
-    if (allowedOrigins.length === 0 && process.env.NODE_ENV !== 'production') {
-      return callback(null, true);
-    }
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    // Block other origins (don't throw — just signal not allowed)
+    if (allowedOrigins.length === 0 && process.env.NODE_ENV !== 'production') return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
     return callback(null, false);
   },
   credentials: true,
@@ -108,11 +76,6 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 }));
 
-/**
- * Handle OPTIONS preflight centrally — mirror the same origin logic so preflight
- * responses include proper CORS headers. This helps avoid the situation where
- * a 204 is returned without Access-Control-Allow-Origin (browser then blocks).
- */
 app.options('*', cors({
   origin: function(origin, callback) {
     if (!origin) return callback(null, true);
@@ -125,27 +88,16 @@ app.options('*', cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 }));
 
-/**
- * Explicit header middleware: makes sure responses include Access-Control-Allow-*
- * for both normal and preflight requests. This is a friendly fallback so debug
- * is easier — it doesn't replace the proper cors() middleware.
- *
- * IMPORTANT: If origin is disallowed and request is OPTIONS, respond 403 so the
- * browser sees a clear failure rather than a 204 with no CORS headers.
- */
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  // Make caching proxies vary responses by origin
   res.setHeader('Vary', 'Origin');
 
   let originAllowed = false;
 
   if (!origin) {
-    // Non-browser or same-origin requests
     res.setHeader('Access-Control-Allow-Origin', '*');
     originAllowed = true;
   } else if (allowedOrigins.length === 0 && process.env.NODE_ENV !== 'production') {
-    // Dev convenience: echo origin
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     originAllowed = true;
@@ -154,15 +106,12 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     originAllowed = true;
   } else {
-    // origin not allowed
     if (origin) console.warn('Blocked origin by CORS:', origin);
   }
 
-  // Always advertise what headers/methods are allowed for browsers that do receive CORS
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
 
-  // If this is a preflight, return 204 only when allowed; otherwise 403
   if (req.method === 'OPTIONS') {
     return originAllowed ? res.sendStatus(204) : res.sendStatus(403);
   }
@@ -181,7 +130,6 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 /* --------------------------- Body parsing --------------------------- */
-// JSON + urlencoded parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -200,7 +148,6 @@ app.use('/api/messages', messagesRoutes);
 const publicDir = path.join(__dirname, '../public');
 app.use(express.static(publicDir));
 
-// Only send index.html for non-API GETs (avoid hijacking unknown asset paths)
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
   res.sendFile(path.join(publicDir, 'index.html'));
@@ -224,7 +171,6 @@ const PORT = process.env.PORT || 10000;
       }
       await sequelize.sync({ alter: useAlter });
     } else {
-      // Production: do not call sync() — run migrations instead.
       console.log('⚠️ Production mode: skipping sequelize.sync. Apply migrations before starting the app.');
     }
 
@@ -243,5 +189,4 @@ process.on('unhandledRejection', (reason) => {
 });
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
-  // In production you might want to exit and let a process manager restart the app.
 });
