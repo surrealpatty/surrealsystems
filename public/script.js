@@ -178,7 +178,7 @@ function setText(el, txt) { if (el) el.textContent = txt; }
 function show(el)        { if (el) el.style.display = ''; }
 function hide(el)        { if (el) el.style.display = 'none'; }
 
-/* ============================ Display helpers ============================ */
+/* ============================ Display helpers ============================== */
 function getDisplayName(u = {}) {
   return (
     u.username ||
@@ -211,7 +211,6 @@ function initLoginPage() {
     }
 
     try {
-      // apiFetch returns unwrapped data (expects { token, user })
       const out = await apiFetch('users/login', {
         method: 'POST',
         body: { email, password },
@@ -230,14 +229,12 @@ function initLoginPage() {
       setToken(token);
       setUserId(userId);
 
-      // Cache full user & normalized display name
       try {
         localStorage.setItem('cc_me', JSON.stringify(user));
         const dn = getDisplayName(user);
         if (dn) localStorage.setItem('username', dn);
       } catch {}
 
-      // Land on profile page
       location.replace('profile.html');
     } catch (err) {
       show(msg); setText(msg, err.message || 'Login failed');

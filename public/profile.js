@@ -1,12 +1,11 @@
 /* profile.js - canonical profile client
-   Relies on script.js (apiFetch, getToken, getUserId, etc.) when available,
-   and falls back to safe behavior if not.
+   Uses script.js helpers when available and falls back safely.
 */
 
 (function () {
   'use strict';
 
-  // ---- small helpers ----
+  // ---- helpers ----
   function safe(fn, fallback) { try { return typeof fn === 'function' ? fn : fallback; } catch { return fallback; } }
   const getToken = safe(window.getToken, () => localStorage.getItem('token'));
   const getUserId = safe(window.getUserId, () => localStorage.getItem('userId'));
@@ -32,18 +31,15 @@
     }
   };
 
-  // Do-fetch (uses apiFetch when available, otherwise fallback to fetch)
+  // doFetch - uses apiFetch if available, otherwise falls back to fetch
   async function doFetch(pathOrUrl, opts = {}, timeoutMs = 8000) {
-    // If absolute URL passed, use it verbatim; else build relative to API_URL
     const isAbsolute = typeof pathOrUrl === 'string' && /^https?:\/\//i.test(pathOrUrl);
     const url = isAbsolute ? pathOrUrl : (pathOrUrl.startsWith('/') ? API_URL + pathOrUrl : API_URL + '/' + pathOrUrl.replace(/^\/+/, ''));
 
     if (apiFetch) {
-      // apiFetch accepts path or absolute
       return apiFetch(pathOrUrl, { timeoutMs, ...opts });
     }
 
-    // Fallback: use fetch with Authorization if token present
     const headers = Object.assign({}, opts.headers || {});
     const token = getToken();
     if (token && !headers['Authorization']) headers['Authorization'] = `Bearer ${token}`;
@@ -56,13 +52,10 @@
       signal: opts.signal
     };
 
-    // implement timeout via AbortController
-    let timeoutController;
     if (Number.isFinite(timeoutMs) && timeoutMs > 0) {
-      timeoutController = new AbortController();
+      const timeoutController = new AbortController();
       const tid = setTimeout(() => timeoutController.abort(), timeoutMs);
       if (init.signal) {
-        // chain signals
         const chained = new AbortController();
         init.signal.addEventListener('abort', () => chained.abort(), { once: true });
         timeoutController.signal.addEventListener('abort', () => chained.abort(), { once: true });
@@ -86,7 +79,6 @@
         throw e;
       }
     } else {
-      // no timeout
       const res = await fetch(url, init);
       if (!res.ok) {
         const text = await res.text().catch(() => '');
@@ -144,11 +136,12 @@
   let svcPage = 1, svcLoading = false;
   let svcAborter = null, ratingsAborter = null;
 
-  // ---- utilities ----
+  // ---- utils ----
   function esc(s) { return String(s ?? '').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   function showOwnerUI(isOwner) {
-    [goToServicesBtn, goToMessagesBtn, addNewServiceBtn, editDescBtnFloat, mobileRow, descControls]
-      .forEach(el => { if (el) el.classList.toggle('hidden', !isOwner); });
+    [goToServicesBtn, goToMessagesBtn, addNewServiceBtn, editDescBtnFloat, mobileRow, descControls].forEach(el => {
+      if (el) el.classList.toggle('hidden', !isOwner);
+    });
     if (backToMyProfileBtn) backToMyProfileBtn.classList.toggle('hidden', isOwner);
     if (mobileBackBtn) mobileBackBtn.classList.toggle('hidden', isOwner);
     if (!isOwner && newServiceSection) { newServiceSection.classList.add('hidden'); newServiceSection.classList.remove('show-flex'); }
@@ -157,7 +150,6 @@
   // ---- health check ----
   (async function healthCheck() {
     try {
-      // call API health using doFetch; use short timeout
       await doFetch('health', {}, 4000);
       Diag.hide();
     } catch (err) {
@@ -167,7 +159,7 @@
 
   // ---- data loaders ----
   async function fetchMe() {
-    const me = await doFetch('users/me', {}, 8000); // -> { user } or user object
+    const me = await doFetch('users/me', {}, 8000);
     const u = me?.user || me || {};
     if (!getUserId() && u.id) setUserId && setUserId(String(u.id));
     try {
@@ -213,7 +205,7 @@
     }
   }
 
-  // ---- services loader/renderer ----
+  // ---- services ----
   function serviceCardHTML(s, isOwner) {
     return `<div class="card">
       <h3>${esc(s.title)}</h3>
@@ -284,7 +276,7 @@
         loadMoreBtn.classList.add('hidden');
       }
 
-      // wire up edit/delete buttons (delegation could be used; simple rewire here)
+      // wire up edit/delete buttons
       servicesList.querySelectorAll('.edit-service-btn').forEach(btn => {
         btn.removeEventListener('click', onEditServiceClick);
         btn.addEventListener('click', onEditServiceClick);
@@ -303,13 +295,12 @@
     } finally { svcLoading = false; }
   }
 
-  // Edit/Delete handlers require reading the service element
+  // Edit/Delete helpers
   function onEditServiceClick(e) {
     const btn = e.currentTarget;
     const id = btn.getAttribute('data-id');
     const div = btn.closest('.card');
     if (!div) return;
-    // fetch values from the DOM and switch to edit mode...
     editService(div, { id });
   }
   function onDeleteServiceClick(e) {
@@ -321,20 +312,16 @@
   async function editService(div, service) {
     const titleEl = div.querySelector('h3') || div.querySelector('.service-title');
     const descEl = div.querySelector('p') || div.querySelector('.service-desc');
-    const priceEl = div.querySelector('.service-price') || div.querySelector('p strong') || null;
 
     const origTitle = (titleEl?.textContent || '').trim();
     const origDesc = (descEl?.textContent || '').trim();
-    const origPrice = (priceEl?.textContent || '').trim();
+    const origPrice =  (div.querySelector('.service-price')?.textContent || '').trim();
 
     titleEl.innerHTML = `<input type="text" value="${esc(origTitle)}" class="edit-title">`;
     descEl.innerHTML = `<textarea class="edit-desc">${esc(origDesc)}</textarea>`;
-    // priceEl may be a <p> containing text; place an edit-price input near it:
-    if (priceEl && priceEl.parentElement) {
-      priceEl.parentElement.querySelector('.service-price')?.remove();
-      const priceContainer = document.createElement('div');
-      priceContainer.innerHTML = `<p><strong>Price:</strong> $<span class="service-price"><input type="number" value="${Number(origPrice).toString()}" class="edit-price"></span></p>`;
-      priceEl.parentElement.appendChild(priceContainer);
+
+    if (div.querySelector('.service-price')) {
+      div.querySelector('.service-price').innerHTML = `<input type="number" value="${Number(origPrice || 0)}" class="edit-price">`;
     }
 
     const buttonsDiv = div.querySelector('.service-buttons');
@@ -379,61 +366,83 @@
     }
   }
 
-  // ---- toggle + create new service ----
+  // ---- NEW toggleNewService (fixed to toggle classes) ----
   function toggleNewService() {
     if (!newServiceSection) return;
-    newServiceSection.style.display = newServiceSection.style.display === 'flex' ? 'none' : 'flex';
+    // Use classes (do not rely on inline style alone because .hidden uses !important)
+    if (newServiceSection.classList.contains('hidden')) {
+      newServiceSection.classList.remove('hidden');
+      newServiceSection.classList.add('show-flex');
+      newServiceSection.style.display = 'flex';
+      // focus the title
+      try { newServiceTitle && newServiceTitle.focus(); } catch {}
+    } else {
+      newServiceSection.classList.add('hidden');
+      newServiceSection.classList.remove('show-flex');
+      newServiceSection.style.display = 'none';
+    }
   }
 
+  // ---- NEW createService (robust + logs) ----
   async function createService() {
-    if (!createServiceBtn) return;
-    // Read values
+    if (!createServiceBtn) {
+      console.warn('createServiceBtn not found');
+      return;
+    }
+
     const title = newServiceTitle?.value?.trim();
     const description = newServiceDesc?.value?.trim();
     const rawPrice = newServicePrice?.value;
     const price = Number(rawPrice);
 
-    // Basic validation
     if (!title) { alert('Title is required'); return; }
     if (Number.isNaN(price) || price < 0) { alert('Enter a valid price'); return; }
 
-    // UI: disable while working
+    const token = (typeof getToken === 'function' ? getToken() : localStorage.getItem('token'));
+    if (!token) {
+      alert('You appear to be logged out. Please sign in and try again.');
+      return;
+    }
+
     createServiceBtn.disabled = true;
-    const oldText = createServiceBtn.textContent;
+    const prevText = createServiceBtn.textContent;
     createServiceBtn.textContent = 'Creating…';
 
+    const payload = { title, description, price };
+    console.log('createService: payload=', payload);
+
     try {
-      const payload = { title, description, price };
+      const out = await doFetch('services', { method: 'POST', body: payload }, 12000);
+      console.log('createService: server response:', out);
 
-      // doFetch is our wrapper that uses apiFetch when available
-      const out = await doFetch('services', { method: 'POST', body: payload }, 10000);
-
-      // If server returned an envelope like { error: .. } surface it
-      if (out && (out.error || out.errors)) {
+      if (out == null) {
+        throw new Error('Empty server response');
+      }
+      if (out.error || out.errors) {
         const msg = out.error || (Array.isArray(out.errors) ? out.errors.join(', ') : JSON.stringify(out.errors));
         throw new Error(msg);
       }
 
-      // Success: reload services and clear form
       await loadServices({ reset: true, userId: getUserId() });
 
       if (newServiceTitle) newServiceTitle.value = '';
       if (newServiceDesc) newServiceDesc.value = '';
       if (newServicePrice) newServicePrice.value = '';
       if (newServiceSection) {
+        newServiceSection.classList.add('hidden');
         newServiceSection.classList.remove('show-flex');
         newServiceSection.style.display = 'none';
       }
+      Diag.show('Service created successfully.');
+      setTimeout(() => Diag.hide(), 2000);
     } catch (err) {
-      // Show best possible error message
       console.error('Create service failed:', err);
       const msg = err?.message || (err?.payload && JSON.stringify(err.payload)) || 'Failed to create service';
-      // show an alert and the diag banner for visibility
       alert(msg);
       Diag.show(`Create service failed. <span class="muted">${msg}</span>`);
     } finally {
       createServiceBtn.disabled = false;
-      createServiceBtn.textContent = oldText || 'Create Service';
+      createServiceBtn.textContent = prevText || 'Create Service';
     }
   }
 
@@ -487,7 +496,7 @@
     if (ratingsList) ratingsList.innerHTML = html;
   }
 
-  // ---- edit / save description ----
+  // ---- edit/save description ----
   let editingDesc = false;
   function toggleDescEdit(force) {
     editingDesc = typeof force === 'boolean' ? force : !editingDesc;
@@ -598,7 +607,6 @@
 
   // ---- init ----
   document.addEventListener('DOMContentLoaded', () => {
-    // instant paint from cache
     try {
       const cached = JSON.parse(localStorage.getItem('cc_me') || 'null');
       if (cached) {
@@ -614,12 +622,9 @@
 
     wireHandlers();
 
-    // The guard: do not redirect immediately on parse-time.
     try {
       if (typeof window.isLoggedIn === 'function') {
         if (!isLoggedIn()) {
-          const here = location.pathname + location.search;
-          // do a redirect to login if you want; otherwise show diag (we show diag)
           Diag.show('You appear to be logged out. <span class="muted">No token found. UI will load, but protected API calls will fail.</span>');
         }
       } else {
@@ -632,7 +637,6 @@
       Diag.show('Login guard error. <span class="muted">Check <code>isLoggedIn()</code> or <code>script.js</code>.</span>');
     }
 
-    // load profile
     loadProfile();
   });
 })();
