@@ -244,7 +244,12 @@ async function sendMessage(){
     if (sendMessageBtn) { sendMessageBtn.disabled=true; sendMessageBtn.textContent='Sending…'; }
     await apiFetch('messages', {
       method: 'POST',
-      body: { receiverId: Number(messageState.toUserId), content: text, serviceId: messageState.serviceId ? Number(messageState.serviceId) : null },
+      body: {
+        // *** CHANGED: send "to" (server expects field "to"), not "receiverId" ***
+        to: Number(messageState.toUserId),
+        content: text,
+        serviceId: messageState.serviceId ? Number(messageState.serviceId) : null
+      },
       timeoutMs: 10000
     });
     hideModal(); toast('Message sent!');
