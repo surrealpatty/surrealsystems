@@ -6,18 +6,6 @@
 <title>Services - CodeCrowds</title>
 <link rel="stylesheet" href="services.css" />
 
-<!-- EARLY GUARD: never show this page to unauthorized users -->
-<script>
-  (function guard(){
-    const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('userId');
-    if (!token || !userId) {
-      const here = location.pathname + location.search;
-      location.replace(`/?from=${encodeURIComponent(here)}`);
-    }
-  })();
-</script>
-
 <!-- Make sure script.js knows the API base and is loaded BEFORE our inline code -->
 <script>window.API_BASE = '/api'; window.API_URL = '/api';</script>
 <script src="script.js"></script>
@@ -118,7 +106,7 @@ function toast(msg){
   el.textContent=msg; el.classList.add('show');
   setTimeout(()=>el.classList.remove('show'), 2200);
 }
-function showInlineError(msg){ sendError.textContent=msg; sendError.hidden=!msg; }
+function showInlineError(msg){ if (sendError) { sendError.textContent=msg; sendError.hidden=!msg; } }
 function stringifyAny(v){ if(v==null) return ''; if(typeof v==='string') return v; try{return JSON.stringify(v);}catch{return String(v);} }
 async function readError(res){
   let data=null, text='';
@@ -131,6 +119,7 @@ async function readError(res){
 
 // ===================== Render =====================
 function render(services){
+  if (!servicesList) return;
   servicesList.innerHTML='';
   if(!services.length){
     servicesList.innerHTML='<p>No services available.</p>';
@@ -139,13 +128,16 @@ function render(services){
   services.forEach(s=>{
     const div=document.createElement('div');
     div.className='service-card';
+    const usernameHtml = s.user && s.user.id
+      ? `<a href="profile.html?userId=${encodeURIComponent(s.user.id)}">${esc(s.user.username)}</a>`
+      : 'Unknown';
     div.innerHTML=`
       <h3>${esc(s.title)}</h3>
       <p>${esc(s.description)}</p>
       <p><strong>Price:</strong> $${fmtPrice(s.price)}</p>
       <p class="username">
         Posted by:
-        ${s.user ? `<a href="profile.html?userId=${s.user.id}">${esc(s.user.username)}</a>` : 'Unknown'}
+        ${usernameHtml}
       </p>
       <div class="card-actions">
         <button type="button" class="message-btn"
@@ -164,12 +156,12 @@ function render(services){
 
 // ===================== Filters =====================
 function applyFilters(){
-  const q = searchInput.value.toLowerCase().trim();
+  const q = (searchInput?.value || '').toLowerCase().trim();
   const filtered = allServices.filter(s=>{
     const hay = `${s.title||''} ${s.description||''} ${s.user?.username||''}`.toLowerCase();
     return hay.includes(q);
   });
-  switch (sortSelect.value){
+  switch (sortSelect?.value){
     case 'priceLow':  filtered.sort((a,b)=> Number(a.price)-Number(b.price)); break;
     case 'priceHigh': filtered.sort((a,b)=> Number(b.price)-Number(a.price)); break;
     default:          filtered.sort((a,b)=> new Date(b.createdAt||0)-new Date(a.createdAt||0));
@@ -179,12 +171,13 @@ function applyFilters(){
 
 // ===================== Data (uses apiFetch from script.js) =====================
 async function loadServices(){
+  if (!servicesList) return;
   servicesList.innerHTML='<p><span class="spinner"></span> Loading services…</p>';
   try{
     // Ask server for the chosen sort (client still sorts as safety)
     let sort = 'newest';
-    if (sortSelect.value === 'priceLow')  sort = 'priceLow';
-    if (sortSelect.value === 'priceHigh') sort = 'priceHigh';
+    if (sortSelect && sortSelect.value === 'priceLow')  sort = 'priceLow';
+    if (sortSelect && sortSelect.value === 'priceHigh') sort = 'priceHigh';
 
     // apiFetch auto-unwraps { success, data }, attaches token, and prefixes /api
     const out = await apiFetch(`services?limit=50&page=1&sort=${encodeURIComponent(sort)}`);
@@ -203,10 +196,10 @@ async function loadServices(){
 
 // ===================== Modal / a11y =====================
 function updateCounterAndState(){
-  const len = (messageContent.value || '').length;
+  const len = (messageContent?.value || '').length;
   if (charCount) charCount.textContent = `${len} / 2000`;
   const ok = len > 0 && len <= 2000 && !!messageState.toUserId;
-  sendMessageBtn.disabled = !ok;
+  if (sendMessageBtn) sendMessageBtn.disabled = !ok;
 }
 function trapFocusIn(node, e){
   if (e.key!=='Tab') return;
@@ -219,6 +212,7 @@ function trapFocusIn(node, e){
 }
 function showModal(){
   lastFocusedBeforeModal = document.activeElement;
+  if (!messageModal) return;
   messageModal.style.display='flex';
   messageModal.setAttribute('aria-hidden','false');
   showInlineError(''); updateCounterAndState();
@@ -226,6 +220,7 @@ function showModal(){
   window.addEventListener('keydown', onModalKey);
 }
 function hideModal(){
+  if (!messageModal) return;
   messageModal.style.display='none';
   messageModal.setAttribute('aria-hidden','true');
   if (messageContent) messageContent.value='';
@@ -235,7 +230,7 @@ function hideModal(){
   if (lastFocusedBeforeModal?.focus) lastFocusedBeforeModal.focus();
 }
 function onModalKey(e){
-  if (messageModal.style.display!=='flex') return;
+  if (!messageModal || messageModal.style.display!=='flex') return;
   if (e.key==='Tab') trapFocusIn(messageModal,e);
   if ((e.ctrlKey||e.metaKey) && e.key==='Enter'){ e.preventDefault(); if(!sendMessageBtn.disabled) sendMessage(); }
 }
@@ -244,69 +239,85 @@ function onModalKey(e){
 async function sendMessage(){
   const token = getToken(); // from script.js
   if (!token){ showInlineError('Please log in to send messages.'); return; }
-  const text = (messageContent.value||'').trim();
+  const text = (messageContent?.value||'').trim();
   if (!messageState.toUserId){ showInlineError('Missing recipient.'); return; }
   if (!text){ showInlineError('Please write a message.'); messageContent.focus(); return; }
   showInlineError('');
   try{
-    sendMessageBtn.disabled=true; sendMessageBtn.textContent='Sending…';
-    const res = await fetch('/api/messages', {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json','Accept':'application/json','Authorization':`Bearer ${token}` },
-      body: JSON.stringify({ receiverId: messageState.toUserId, content:text, serviceId: messageState.serviceId || null })
+    if (sendMessageBtn) { sendMessageBtn.disabled=true; sendMessageBtn.textContent='Sending…'; }
+    // Use apiFetch so Authorization header and envelope-handling are consistent
+    await apiFetch('messages', {
+      method: 'POST',
+      body: { receiverId: Number(messageState.toUserId), content: text, serviceId: messageState.serviceId ? Number(messageState.serviceId) : null },
+      timeoutMs: 10000
     });
-    if (res.status===204){ hideModal(); toast('Message sent!'); return; }
-    if (!res.ok){
-      const msg = await readError(res);
-      if (res.status===401||res.status===403){
-        localStorage.removeItem('token');
-        showInlineError(`${msg}. Please log in again.`);
-      } else {
-        showInlineError(`Failed to send: ${msg}`);
-      }
-      return;
-    }
     hideModal(); toast('Message sent!');
   }catch(err){
     console.error('[messages] network error:', err);
-    showInlineError('Network error. Please try again.');
+    const msg = err?.message || 'Network error. Please try again.';
+    if (err?.status === 401 || err?.status === 403) {
+      try { clearToken(); clearUserId(); } catch {}
+      showInlineError(`${msg}. Please log in again.`);
+    } else {
+      showInlineError(`Failed to send: ${msg}`);
+    }
   }finally{
-    sendMessageBtn.disabled=false; sendMessageBtn.textContent='Send';
+    if (sendMessageBtn) { sendMessageBtn.disabled=false; sendMessageBtn.textContent='Send'; }
     updateCounterAndState();
   }
 }
 
 // ===================== Events =====================
-document.getElementById('goToProfileBtn').addEventListener('click', ()=> { location.href='profile.html'; });
-refreshBtn.addEventListener('click', loadServices);
+if (goToProfileBtn) goToProfileBtn.addEventListener('click', ()=> { location.href='profile.html'; });
+if (refreshBtn) refreshBtn.addEventListener('click', loadServices);
 
 // Debounced filter to avoid re-render on every keystroke
 let filterTimer = null;
-searchInput.addEventListener('input', () => {
-  clearTimeout(filterTimer);
-  filterTimer = setTimeout(applyFilters, 120);
-});
+if (searchInput) {
+  searchInput.addEventListener('input', () => {
+    clearTimeout(filterTimer);
+    filterTimer = setTimeout(applyFilters, 120);
+  });
+}
 
 // When sort changes, re-fetch from server so large lists stay fast
-sortSelect.addEventListener('change', () => {
-  loadServices();
-});
+if (sortSelect) {
+  sortSelect.addEventListener('change', () => {
+    loadServices();
+  });
+}
 
-servicesList.addEventListener('click', (e)=>{
-  const btn = e.target.closest('.message-btn'); if (!btn) return;
-  const toUserId = btn.getAttribute('data-user-id');
-  const username = btn.getAttribute('data-username') || 'seller';
-  const serviceId = btn.getAttribute('data-service-id');
-  if (!toUserId){ toast('This service has no associated user.'); return; }
-  messageState = { toUserId, serviceId, username };
-  messageRecipient.textContent = username || 'seller';
-  showModal();
-});
-cancelMessageBtn.addEventListener('click', hideModal);
-sendMessageBtn.addEventListener('click', sendMessage);
-window.addEventListener('keydown', (e)=>{ if (e.key==='Escape' && messageModal.style.display==='flex') hideModal(); });
-messageModal.addEventListener('click', (e)=>{ if (e.target===messageModal) hideModal(); });
-messageContent.addEventListener('input', updateCounterAndState);
+if (servicesList) {
+  servicesList.addEventListener('click', (e)=>{
+    const btn = e.target.closest('.message-btn'); if (!btn) return;
+    const rawUserId = btn.getAttribute('data-user-id');
+    const toUserId = rawUserId ? Number(rawUserId) : null;
+    const username = btn.getAttribute('data-username') || 'seller';
+    const rawServiceId = btn.getAttribute('data-service-id');
+    const serviceId = rawServiceId ? Number(rawServiceId) : null;
+
+    if (!toUserId){ toast('This service has no associated user.'); return; }
+
+    // If not logged in, prompt to login
+    if (typeof isLoggedIn === 'function' && !isLoggedIn()) {
+      toast('Please log in to message sellers.');
+      setTimeout(()=> { location.replace(`/?from=${encodeURIComponent(location.pathname + location.search)}`); }, 600);
+      return;
+    }
+
+    messageState = { toUserId, serviceId, username };
+    messageRecipient.textContent = username || 'seller';
+    showModal();
+  });
+}
+
+if (cancelMessageBtn) cancelMessageBtn.addEventListener('click', hideModal);
+if (sendMessageBtn) sendMessageBtn.addEventListener('click', sendMessage);
+window.addEventListener('keydown', (e)=>{ if (e.key==='Escape' && messageModal?.style?.display==='flex') hideModal(); });
+if (messageModal) {
+  messageModal.addEventListener('click', (e)=>{ if (e.target===messageModal) hideModal(); });
+}
+if (messageContent) messageContent.addEventListener('input', updateCounterAndState);
 
 // Initial load
 window.addEventListener('load', () => {
