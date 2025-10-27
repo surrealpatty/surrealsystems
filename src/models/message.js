@@ -4,12 +4,16 @@ module.exports = (sequelize) => {
 
   const Message = sequelize.define('Message', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    senderId: { type: DataTypes.INTEGER, allowNull: false },
-    receiverId: { type: DataTypes.INTEGER, allowNull: false },
+
+    // Use camelCase column names (senderId / receiverId) to match the DB
+    senderId: { type: DataTypes.INTEGER, allowNull: false, field: 'senderId' },
+    receiverId: { type: DataTypes.INTEGER, allowNull: false, field: 'receiverId' },
+
     content: { type: DataTypes.TEXT, allowNull: false }
   }, {
     tableName: 'messages',
-    timestamps: true
+    timestamps: true,
+    underscored: false // ensure createdAt/updatedAt are used (camelCase)
   });
 
   return Message;

@@ -1,32 +1,28 @@
 // src/models/rating.js
 module.exports = (sequelize) => {
-  const { DataTypes } = require('sequelize');
+  const { DataTypes, Op } = require('sequelize');
 
   const Rating = sequelize.define('Rating', {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true,
-      field: 'id',
+      autoIncrement: true
     },
 
     // For service ratings (nullable so rating can be user-to-user)
     serviceId: {
       type: DataTypes.INTEGER,
-      allowNull: true,
-      field: 'service_id',
+      allowNull: true
     },
 
     // For user-to-user ratings
     raterId: {
       type: DataTypes.INTEGER,
-      allowNull: true,
-      field: 'rater_id',
+      allowNull: true
     },
     rateeId: {
       type: DataTypes.INTEGER,
-      allowNull: true,
-      field: 'ratee_id',
+      allowNull: true
     },
 
     // canonical rating: 'stars'
@@ -34,7 +30,6 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 1,
-      field: 'stars',
       validate: {
         min: { args: [1], msg: 'stars must be >= 1' },
         max: { args: [5], msg: 'stars must be <= 5' },
@@ -45,21 +40,27 @@ module.exports = (sequelize) => {
     score: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: 'score',
     },
 
     comment: {
       type: DataTypes.TEXT,
       allowNull: true,
-      field: 'comment',
     },
   }, {
     tableName: 'ratings',
     timestamps: true,
-    // We explicitly map each column via `field` so we don't rely on underscored:true.
+    underscored: false, // use camelCase columns: serviceId, raterId, rateeId
+
+    // Unique rating constraint for rater -> ratee (only when rateeId is not null)
+    // Use camelCase column names here as well
     indexes: [
-      // One (rater → ratee) rating; allows service ratings separately via serviceId
-      { unique: true, fields: ['rater_id', 'ratee_id'], where: { ratee_id: { [sequelize.Sequelize.Op.ne]: null } } },
+      {
+        unique: true,
+        fields: ['raterId', 'rateeId'],
+        where: {
+          rateeId: { [Op.ne]: null }
+        }
+      }
     ],
   });
 
