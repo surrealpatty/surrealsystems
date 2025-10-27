@@ -259,7 +259,8 @@
       if (svcAborter) { try { svcAborter.abort(); } catch { } }
       svcAborter = new AbortController();
 
-      const data = await doFetch(url.pathname + url.search, { signal: svcAborter.signal }, 8000);
+      // === FIXED: pass absolute URL (url.href) into doFetch so we don't double-prefix /api when API_URL === '/api'
+      const data = await doFetch(url.href, { signal: svcAborter.signal }, 8000);
       const list = data.services || [];
       const hasMore = !!data.hasMore;
 
