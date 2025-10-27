@@ -44,6 +44,10 @@ router.post(
   async (req, res) => {
     try {
       const { username, email, password, description } = req.body;
+
+      // Helpful debug log (no password)
+      console.info('Register attempt payload:', { username, email, hasDescription: !!description });
+
       const [existingEmail, existingUsername] = await Promise.all([
         User.findOne({ where: { email } }),
         User.findOne({ where: { username } })
@@ -66,7 +70,26 @@ router.post(
       const user = normalizeUsername(toSafeUser(newUser));
       return respondCompat(res, { token, user }, 201);
     } catch (err) {
+      // Always log full stack for server-side debugging
       console.error('Register error:', err && err.stack ? err.stack : err);
+
+      // Handle common Sequelize errors with friendly messages
+      if (err && err.name === 'SequelizeUniqueConstraintError') {
+        const details = (err.errors || []).map(e => (e && e.message) ? e.message : (e && e.path ? `${e.path} must be unique` : String(e)));
+        return sendError(res, 'Conflict: duplicate value', 409, details);
+      }
+
+      if (err && err.name === 'SequelizeValidationError') {
+        const details = (err.errors || []).map(e => (e && e.message) ? e.message : String(e));
+        return sendError(res, 'Validation failed', 400, details);
+      }
+
+      // In non-production show the underlying message to help dev debugging.
+      if (process.env.NODE_ENV && process.env.NODE_ENV !== 'production') {
+        const message = err && err.message ? `Registration failed: ${err.message}` : 'Registration failed';
+        return sendError(res, message, 500);
+      }
+
       return sendError(res, 'Registration failed', 500);
     }
   }
@@ -98,6 +121,17 @@ router.post(
       return respondCompat(res, { token, user });
     } catch (err) {
       console.error('Login error:', err && err.stack ? err.stack : err);
+
+      if (err && err.name === 'SequelizeValidationError') {
+        const details = (err.errors || []).map(e => (e && e.message) ? e.message : String(e));
+        return sendError(res, 'Validation failed', 400, details);
+      }
+
+      if (process.env.NODE_ENV && process.env.NODE_ENV !== 'production') {
+        const message = err && err.message ? `Login failed: ${err.message}` : 'Login failed';
+        return sendError(res, message, 500);
+      }
+
       return sendError(res, 'Login failed', 500);
     }
   }

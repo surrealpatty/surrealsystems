@@ -1,3 +1,4 @@
+// src/index.js
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -16,8 +17,8 @@ const rateLimit = require('express-rate-limit');
 const { sequelize } = require('./config/database');
 const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/service');
-const ratingRoutes = require('./routes/rating'); // ratings API (this file)
-const messagesRoutes = require('./routes/messages'); // keep if you have it
+const ratingRoutes = require('./routes/rating'); // ratings API
+const messagesRoutes = require('./routes/messages'); // messages API (if present)
 
 const app = express();
 
@@ -114,6 +115,9 @@ app.options('*', cors({
  * Explicit header middleware: makes sure responses include Access-Control-Allow-*
  * for both normal and preflight requests. This is a friendly fallback so debug
  * is easier — it doesn't replace the proper cors() middleware.
+ *
+ * IMPORTANT: If origin is disallowed and request is OPTIONS, respond 403 so the
+ * browser sees a clear failure rather than a 204 with no CORS headers.
  */
 app.use((req, res, next) => {
   const origin = req.headers.origin;
@@ -128,9 +132,14 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
   } else {
-    // origin not allowed: no Access-Control-Allow-Origin header will be present
-    // (browser will block). Log to help debugging.
+    // origin not allowed: log and for preflight explicitly reject
     if (origin) console.warn('Blocked origin by CORS:', origin);
+    if (req.method === 'OPTIONS') {
+      // Preflight from disallowed origin — reply with a clear failure
+      return res.sendStatus(403);
+    }
+    // For non-OPTIONS requests we continue without setting CORS headers,
+    // the browser will block the response client-side.
   }
 
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
