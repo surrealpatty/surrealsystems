@@ -1,5 +1,6 @@
 // src/middlewares/authenticateToken.js
 const jwt = require('jsonwebtoken');
+const { getJwtSecrets } = require('../lib/jwtSecrets');
 
 module.exports = function authenticateToken(req, res, next) {
   try {
@@ -10,14 +11,32 @@ module.exports = function authenticateToken(req, res, next) {
     const token = auth.slice('Bearer '.length).trim();
     if (!token) return res.status(401).json({ success: false, error: { message: 'Empty token' } });
 
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      console.error('JWT_SECRET is not set');
+    const secrets = getJwtSecrets();
+    if (!secrets.length) {
+      console.error('No JWT secrets configured');
       return res.status(500).json({ success: false, error: { message: 'Server misconfigured' } });
     }
 
-    // Verify token and extract an explicit user id from common fields:
-    const payload = jwt.verify(token, secret);
+    // Try all secrets; if any verifies, we accept the payload.
+    // If token is expired we return an explicit message immediately.
+    let payload = null;
+    for (const secret of secrets) {
+      try {
+        payload = jwt.verify(token, secret);
+        break;
+      } catch (e) {
+        if (e && e.name === 'TokenExpiredError') {
+          // Expired token -> return explicit message
+          return res.status(401).json({ success: false, error: { message: 'Token expired' } });
+        }
+        // Invalid signature for this secret -> try next secret
+      }
+    }
+
+    if (!payload) {
+      return res.status(401).json({ success: false, error: { message: 'Invalid token' } });
+    }
+
     const userId = payload.id || payload.userId || payload.sub;
     if (!userId) {
       console.error('authenticateToken: token has no user id payload', payload);
@@ -28,15 +47,13 @@ module.exports = function authenticateToken(req, res, next) {
     req.user = {
       id: userId,
       email: payload.email,
-      // keep full payload available for debugging if needed:
       _payload: payload
     };
 
-    // debug (safe for dev)
-    // console.log('authenticateToken set req.user:', req.user);
     next();
   } catch (err) {
-    const msg = err.name === 'TokenExpiredError' ? 'Token expired' : 'Invalid token';
+    // Unexpected errors: if it's TokenExpiredError, be explicit; else generic invalid
+    const msg = err && err.name === 'TokenExpiredError' ? 'Token expired' : 'Invalid token';
     return res.status(401).json({ success: false, error: { message: msg } });
   }
 };

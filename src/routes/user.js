@@ -16,6 +16,7 @@ try {
   }
 }
 const jwt = require('jsonwebtoken');
+const { getSigningSecret } = require('../lib/jwtSecrets'); // <- new helper import
 const authenticateToken = require('../middlewares/authenticateToken');
 const { body, param, oneOf, query } = require('express-validator');
 const validate = require('../middlewares/validate');
@@ -125,8 +126,10 @@ router.post(
         tier: 'free'
       });
 
-      if (!process.env.JWT_SECRET) return sendError(res, 'Server misconfigured', 500);
-      const token = jwt.sign({ id: newUser.id, email: newUser.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
+      // Use the first configured signing secret (supports JWT_SECRETS rotation)
+      const signingSecret = getSigningSecret();
+      if (!signingSecret) return sendError(res, 'Server misconfigured', 500);
+      const token = jwt.sign({ id: newUser.id, email: newUser.email }, signingSecret, { expiresIn: '1d' });
 
       const user = normalizeUsername(toSafeUser(newUser));
       return respondCompat(res, { token, user }, 201);
@@ -177,8 +180,10 @@ router.post(
       const valid = await comparePassword(password, userRec.password);
       if (!valid) return sendError(res, 'Invalid credentials', 401);
 
-      if (!process.env.JWT_SECRET) return sendError(res, 'Server misconfigured', 500);
-      const token = jwt.sign({ id: userRec.id, email: userRec.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
+      // Use the first configured signing secret (supports JWT_SECRETS rotation)
+      const signingSecret = getSigningSecret();
+      if (!signingSecret) return sendError(res, 'Server misconfigured', 500);
+      const token = jwt.sign({ id: userRec.id, email: userRec.email }, signingSecret, { expiresIn: '1d' });
 
       const user = normalizeUsername(toSafeUser(userRec));
       return respondCompat(res, { token, user });
