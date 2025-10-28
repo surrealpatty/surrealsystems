@@ -39,6 +39,32 @@ router.get(
   }
 );
 
+// GET /api/messages/sent
+router.get(
+  '/sent',
+  authenticateToken,
+  [query('limit').optional().isInt({ min:1, max:100 }).toInt(), query('offset').optional().isInt({ min:0 }).toInt()],
+  validate,
+  async (req, res) => {
+    try {
+      const limit = req.query.limit ?? 20;
+      const offset = req.query.offset ?? 0;
+      const rows = await Message.findAll({
+        where: { senderId: req.user.id },
+        attributes: ['id','senderId','receiverId','content','createdAt','updatedAt'],
+        include: [{ model: User, as: 'receiver', attributes: ['id','username'] }],
+        order: [['createdAt','DESC']],
+        limit, offset
+      });
+      res.set('Cache-Control', 'private, max-age=10');
+      return ok(res, { messages: rows, nextOffset: offset + rows.length });
+    } catch (e) {
+      console.error('GET /messages/sent error:', e && e.stack ? e.stack : e);
+      return err(res, 'Failed to load sent messages');
+    }
+  }
+);
+
 // GET /api/messages/thread/:userId
 router.get(
   '/thread/:userId',
