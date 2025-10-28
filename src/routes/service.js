@@ -49,20 +49,20 @@ router.get(
       if (!rows || !rows.length) return ok(res, { services: [], hasMore: false, nextOffset: offset });
 
       // Try raw aggregation using COALESCE(stars, score).
-      // Use DB column names (snake_case) and alias to serviceId for JS code.
+      // Use DB column names (camelCase) and alias to serviceId for JS code.
       const serviceIds = rows.map(r => r.id);
       console.info('[services] fetched rows count=%d, serviceIds=%o', rows.length, serviceIds.slice(0,5));
       const summaryMap = {};
 
       try {
-        // NOTE: ratings table columns use snake_case (service_id). Alias to "serviceId"
+        // NOTE: ratings table columns use camelCase ("serviceId"). Alias to "serviceId"
         const rowsRaw = await sequelize.query(
-          `SELECT "service_id" AS "serviceId",
+          `SELECT "serviceId",
                   AVG(COALESCE(stars, score))::numeric(10,2) AS "avgRating",
                   COUNT(*)::int AS "ratingsCount"
            FROM ratings
-           WHERE "service_id" IS NOT NULL AND "service_id" IN (:ids)
-           GROUP BY "service_id"`,
+           WHERE "serviceId" IS NOT NULL AND "serviceId" IN (:ids)
+           GROUP BY "serviceId"`,
           { replacements: { ids: serviceIds }, type: QueryTypes.SELECT }
         );
 
