@@ -5,6 +5,12 @@ const authenticateToken = require('../middlewares/authenticateToken');
 const { User, Billing } = require('../models');
 
 /**
+ * Feature flag to safely disable payments until you want to connect Stripe.
+ * Set ENABLE_PAYMENTS=true in .env to enable full Stripe behavior.
+ */
+const ENABLE_PAYMENTS = process.env.ENABLE_PAYMENTS === 'true';
+
+/**
  * Safe stripe initialization (do not crash at module load time if not configured).
  */
 let stripe = null;
@@ -27,6 +33,43 @@ const CANCEL_URL  = (FRONTEND_URL || '') + '/profile.html?from=checkout_cancel';
 if (!process.env.STRIPE_SECRET_KEY) {
   console.warn('STRIPE_SECRET_KEY is not configured. Payments endpoints will return 500 if used.');
 }
+
+/**
+ * If payments are disabled, register a small availability endpoint and
+ * safe stubs for checkout/portal/webhook so the rest of the app can run.
+ */
+if (!ENABLE_PAYMENTS) {
+  console.info('Payments are disabled via ENABLE_PAYMENTS=false — registering safe stubs.');
+
+  // availability endpoint for frontend
+  router.get('/available', (_req, res) => {
+    res.json({ enabled: false });
+  });
+
+  // stubs for checkout and portal endpoints
+  router.post('/create-checkout-session', authenticateToken, (_req, res) => {
+    return res.status(503).json({ error: 'Payments are currently disabled' });
+  });
+
+  router.post('/create-portal-session', authenticateToken, (_req, res) => {
+    return res.status(503).json({ error: 'Payments are currently disabled' });
+  });
+
+  // webhook stub — keep webhook route registered but return 503
+  async function webhookHandler(req, res) {
+    return res.status(503).send('Payments are currently disabled');
+  }
+
+  module.exports = router;
+  module.exports.webhookHandler = webhookHandler;
+  // early return — do not execute the full Stripe logic below when disabled
+  return;
+}
+
+/* -------------------------- Payments enabled --------------------------- */
+/**
+ * Actual implementation below runs only when ENABLE_PAYMENTS=true
+ */
 
 /**
  * POST /api/payments/create-checkout-session

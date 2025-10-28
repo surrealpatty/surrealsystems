@@ -135,6 +135,7 @@
   let currentProfileUserId = null;
   let svcPage = 1, svcLoading = false;
   let svcAborter = null, ratingsAborter = null;
+  let paymentsEnabled = true; // optimistic default until we check
 
   // ---- utils ----
   function esc(s) { return String(s ?? '').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
@@ -156,6 +157,36 @@
       Diag.show('API health check failed. <span class="muted">Verify that <code>/api/health</code> is reachable, check CORS, and confirm the server is running.</span>');
     }
   })();
+
+  // ---- payments availability (frontend) ----
+  async function initPaymentsAvailability() {
+    try {
+      const out = await doFetch('payments/available', {}, 4000);
+      paymentsEnabled = !!(out && out.enabled);
+    } catch (e) {
+      // network error — be conservative and treat as disabled
+      paymentsEnabled = false;
+    }
+
+    // Apply the availability to the UI if upgrade button present
+    try {
+      const upgradeBtns = [upgradeBtn, upgradeInlineBtn];
+      upgradeBtns.forEach(btn => {
+        if (!btn) return;
+        if (!paymentsEnabled) {
+          btn.classList.add('hidden');
+        } else {
+          // leave visibility to existing logic (loadProfile decides owner/tier)
+          btn.classList.remove('hidden');
+        }
+      });
+
+      // hide inline upgrade hint if payments disabled
+      if (!paymentsEnabled && rateUpgradeHint) rateUpgradeHint.classList.add('hidden');
+    } catch (e) {
+      // ignore UI errors
+    }
+  }
 
   // ---- data loaders ----
   async function fetchMe() {
@@ -194,7 +225,8 @@
       if (rateForm) rateForm.classList.toggle('hidden', !canRate);
       if (rateUpgradeHint) rateUpgradeHint.classList.add('hidden');
 
-      if (viewingSelf && currentUserTier === 'free') upgradeBtn && upgradeBtn.classList.remove('hidden');
+      // only show upgrade if payments are enabled
+      if (viewingSelf && currentUserTier === 'free' && paymentsEnabled) upgradeBtn && upgradeBtn.classList.remove('hidden');
       else upgradeBtn && upgradeBtn.classList.add('hidden');
 
       await loadServices({ reset: true, userId: profileUserId });
@@ -532,10 +564,13 @@
     if (mobileBackBtn) mobileBackBtn.addEventListener('click', () => location.href = 'profile.html');
 
     if (logoutBtn) logoutBtn.addEventListener('click', () => { localStorage.clear(); location.replace('/'); });
+
     if (upgradeBtn) upgradeBtn.addEventListener('click', async () => {
       try {
+        if (!paymentsEnabled) { alert('Payments are currently disabled.'); return; }
         if (!confirm('Upgrade to a paid account?')) return;
-        await doFetch('users/me/upgrade', { method: 'PUT' }, 8000);
+        // changed to POST to match backend
+        await doFetch('users/me/upgrade', { method: 'POST' }, 8000);
         alert('Upgraded successfully!');
         currentUserTier = 'paid';
         await loadProfile();
@@ -586,8 +621,10 @@
     if (upgradeInlineBtn) {
       upgradeInlineBtn.addEventListener('click', async () => {
         try {
+          if (!paymentsEnabled) { alert('Payments are currently disabled.'); return; }
           if (!confirm('Upgrade to a paid account?')) return;
-          await doFetch('users/me/upgrade', { method: 'PUT' }, 8000);
+          // changed to POST to match backend
+          await doFetch('users/me/upgrade', { method: 'POST' }, 8000);
           alert('Upgraded successfully!');
           currentUserTier = 'paid';
           await loadProfile();
@@ -607,7 +644,7 @@
   }
 
   // ---- init ----
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
     try {
       const cached = JSON.parse(localStorage.getItem('cc_me') || 'null');
       if (cached) {
@@ -638,6 +675,10 @@
       Diag.show('Login guard error. <span class="muted">Check <code>isLoggedIn()</code> or <code>script.js</code>.</span>');
     }
 
+    // Wait for payments availability before loading profile so upgrade UI is correct
+    await initPaymentsAvailability();
+
+    // Now load the main profile UI
     loadProfile();
   });
 })();
