@@ -19,28 +19,24 @@ const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/service');
 const ratingRoutes = require('./routes/rating'); // ratings API
 const messagesRoutes = require('./routes/messages'); // messages API (if present)
+const paymentsRoutes = require('./routes/payments'); // payments + webhook
 
 const app = express();
 
 /* ----------------- Basic hardening ----------------- */
-// Hide X-Powered-By header
 app.disable('x-powered-by');
 
-// Warn if JWT_SECRET missing in production — common source of auth errors
 if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
   console.warn('⚠️ JWT_SECRET is not set. Authentication will fail when creating or verifying tokens.');
 }
 
-/* ----------------- Trust proxy (for X-Forwarded-* headers) ----------------- */
+/* ----------------- Trust proxy ----------------- */
 if (process.env.NODE_ENV === 'production') {
-  // if behind a load balancer (Render/Heroku/GCP), trust the proxy
   app.set('trust proxy', 1);
 }
 
 /* ---------------------- Security + performance ---------------------- */
-const helmetOptions = (process.env.NODE_ENV === 'production')
-  ? {}
-  : { contentSecurityPolicy: false };
+const helmetOptions = (process.env.NODE_ENV === 'production') ? {} : { contentSecurityPolicy: false };
 app.use(helmet(helmetOptions));
 app.use(compression());
 
@@ -53,11 +49,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 /* ---------------------------- CORS setup ---------------------------- */
-const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
-  .split(',')
-  .map(s => s.trim())
-  .filter(Boolean);
-
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
 console.info('CORS allowedOrigins:', (allowedOrigins.length ? allowedOrigins : '[none configured]'));
 
 if (process.env.NODE_ENV === 'production' && allowedOrigins.length === 0) {
@@ -119,7 +111,7 @@ app.use((req, res, next) => {
   next();
 });
 
-/* ------------------- Dev-only API request logger (helps debugging) ------------------ */
+/* ------------------- Dev-only API request logger ------------------ */
 if (process.env.NODE_ENV !== 'production') {
   app.use((req, res, next) => {
     if (req.path && req.path.startsWith('/api/')) {
@@ -128,6 +120,13 @@ if (process.env.NODE_ENV !== 'production') {
     next();
   });
 }
+
+/* --------------------------- Webhook (raw body) -------------------------- */
+/**
+ * Stripe requires the raw request body for signature verification.
+ * Register the webhook BEFORE express.json() is used for other routes.
+ */
+app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), paymentsRoutes.webhookHandler);
 
 /* --------------------------- Body parsing --------------------------- */
 app.use(express.json());
@@ -143,6 +142,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/messages', messagesRoutes);
+
+// mount payments for non-webhook routes
+app.use('/api/payments', paymentsRoutes);
 
 /* --------------------------- Static Files -------------------------- */
 const publicDir = path.join(__dirname, '../public');

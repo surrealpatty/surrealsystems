@@ -21,6 +21,12 @@ const authenticateToken = require('../middlewares/authenticateToken');
 const { body, param, oneOf, query } = require('express-validator');
 const validate = require('../middlewares/validate');
 
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const PRICE_ID = process.env.STRIPE_PRICE_ID;
+const FRONTEND_URL = (process.env.FRONTEND_URL || '').replace(/\/+$/, '');
+const SUCCESS_URL = (FRONTEND_URL || '') + '/profile.html?from=checkout_success';
+const CANCEL_URL  = (FRONTEND_URL || '') + '/profile.html?from=checkout_cancel';
+
 /**
  * Wrap bcrypt.hash/compare so we can `await` regardless of whether the
  * installed implementation supports promises or only callback style.
@@ -29,17 +35,11 @@ async function hashPassword(password, rounds = 10) {
   // Try promise-style first (works with native bcrypt v5+ or bcrypt that returns Promise)
   try {
     const maybe = bcrypt.hash(password, rounds);
-    // If the implementation returned a Promise, await it
     if (maybe && typeof maybe.then === 'function') {
       return await maybe;
     }
-    // Otherwise, fall through to callback-style wrapper below
-  } catch (_) {
-    // fallthrough to callback wrapper
-  }
-
+  } catch (_) {}
   return new Promise((resolve, reject) => {
-    // callback signature supported by both bcrypt and bcryptjs
     bcrypt.hash(password, rounds, (err, hash) => {
       if (err) return reject(err);
       resolve(hash);
@@ -53,10 +53,7 @@ async function comparePassword(password, hashed) {
     if (maybe && typeof maybe.then === 'function') {
       return await maybe;
     }
-  } catch (_) {
-    // fallthrough
-  }
-
+  } catch (_) {}
   return new Promise((resolve, reject) => {
     bcrypt.compare(password, hashed, (err, ok) => {
       if (err) return reject(err);
@@ -97,7 +94,6 @@ router.post(
   [
     body('username').trim().isString().isLength({ min: 3 }),
     body('email').trim().isEmail().normalizeEmail(),
-    // match client-side requirement: min 8 characters
     body('password').isString().isLength({ min: 8 }),
     body('description').optional({ nullable: true }).isString().isLength({ max: 500 }).trim()
   ],
@@ -106,7 +102,6 @@ router.post(
     try {
       const { username, email, password, description } = req.body;
 
-      // Helpful debug log (no password)
       console.info('Register attempt payload:', { username, email, hasDescription: !!description });
 
       const [existingEmail, existingUsername] = await Promise.all([
@@ -126,7 +121,6 @@ router.post(
         tier: 'free'
       });
 
-      // Use the first configured signing secret (supports JWT_SECRETS rotation)
       const signingSecret = getSigningSecret();
       if (!signingSecret) return sendError(res, 'Server misconfigured', 500);
       const token = jwt.sign({ id: newUser.id, email: newUser.email }, signingSecret, { expiresIn: '1d' });
@@ -134,28 +128,20 @@ router.post(
       const user = normalizeUsername(toSafeUser(newUser));
       return respondCompat(res, { token, user }, 201);
     } catch (err) {
-      // Always log full stack for server-side debugging
       console.error('Register error:', err && err.stack ? err.stack : err);
-
-      // Handle common Sequelize errors with friendly messages
       if (err && err.name === 'SequelizeUniqueConstraintError') {
         const details = (err.errors || []).map(e => (e && e.message) ? e.message : (e && e.path ? `${e.path} must be unique` : String(e)));
         return sendError(res, 'Conflict: duplicate value', 409, details);
       }
-
       if (err && err.name === 'SequelizeValidationError') {
         const details = (err.errors || []).map(e => (e && e.message) ? e.message : String(e));
         return sendError(res, 'Validation failed', 400, details);
       }
-
-      // In non-production show the underlying message to help dev debugging.
       if (process.env.NODE_ENV && process.env.NODE_ENV !== 'production') {
         const message = err && err.message ? `Registration failed: ${err.message}` : 'Registration failed';
-        // include stack in details to make debugging easier in dev
         const details = err && err.stack ? [err.stack] : undefined;
         return sendError(res, message, 500, details);
       }
-
       return sendError(res, 'Registration failed', 500);
     }
   }
@@ -180,7 +166,6 @@ router.post(
       const valid = await comparePassword(password, userRec.password);
       if (!valid) return sendError(res, 'Invalid credentials', 401);
 
-      // Use the first configured signing secret (supports JWT_SECRETS rotation)
       const signingSecret = getSigningSecret();
       if (!signingSecret) return sendError(res, 'Server misconfigured', 500);
       const token = jwt.sign({ id: userRec.id, email: userRec.email }, signingSecret, { expiresIn: '1d' });
@@ -189,17 +174,14 @@ router.post(
       return respondCompat(res, { token, user });
     } catch (err) {
       console.error('Login error:', err && err.stack ? err.stack : err);
-
       if (err && err.name === 'SequelizeValidationError') {
         const details = (err.errors || []).map(e => (e && e.message) ? e.message : String(e));
         return sendError(res, 'Validation failed', 400, details);
       }
-
       if (process.env.NODE_ENV && process.env.NODE_ENV !== 'production') {
         const message = err && err.message ? `Login failed: ${err.message}` : 'Login failed';
         return sendError(res, message, 500);
       }
-
       return sendError(res, 'Login failed', 500);
     }
   }
@@ -208,7 +190,7 @@ router.post(
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const me = await User.findByPk(req.user.id, {
-      attributes: ['id', 'username', 'email', 'description', 'tier', 'createdAt', 'updatedAt']
+      attributes: ['id', 'username', 'email', 'description', 'tier', 'createdAt', 'updatedAt', 'stripeCustomerId']
     });
     if (!me) return sendError(res, 'User not found', 404);
     const user = normalizeUsername(toSafeUser(me));
@@ -292,17 +274,43 @@ router.put('/me/description', authenticateToken, [body('description').exists().i
   }
 });
 
-router.put('/me/upgrade', authenticateToken, async (req, res) => {
+/**
+ * POST /me/upgrade
+ * Start Stripe Checkout flow - returns session url/sessionId.
+ */
+router.post('/me/upgrade', authenticateToken, async (req, res) => {
   try {
+    if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_PRICE_ID) {
+      return sendError(res, 'Payment provider not configured', 500);
+    }
+
     const userRec = await User.findByPk(req.user.id);
     if (!userRec) return sendError(res, 'User not found', 404);
-    userRec.tier = 'paid';
-    await userRec.save();
-    const user = normalizeUsername(toSafeUser(userRec));
-    return respondCompat(res, { message: 'Account upgraded to paid', user });
+
+    // Create customer if missing
+    if (!userRec.stripeCustomerId) {
+      const customer = await stripe.customers.create({
+        email: userRec.email,
+        metadata: { userId: String(userRec.id) }
+      });
+      userRec.stripeCustomerId = customer.id;
+      await userRec.save();
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      customer: userRec.stripeCustomerId,
+      payment_method_types: ['card'],
+      line_items: [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
+      success_url: SUCCESS_URL,
+      cancel_url: CANCEL_URL,
+      metadata: { userId: String(userRec.id) }
+    });
+
+    return res.json({ url: session.url, sessionId: session.id });
   } catch (err) {
     console.error('Upgrade error:', err && err.stack ? err.stack : err);
-    return sendError(res, 'Failed to upgrade account', 500);
+    return sendError(res, 'Failed to create checkout session', 500);
   }
 });
 
