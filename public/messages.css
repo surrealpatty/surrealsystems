@@ -58,7 +58,7 @@ h1 { color: #4e54c8; margin-bottom: 1rem; }
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
-    margin-top: 1rem; /* moved from inline style */
+    margin-top: 1rem;
 }
 
 /* Message Card */
