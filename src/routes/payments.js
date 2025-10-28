@@ -1,9 +1,23 @@
 // src/routes/payments.js
 const express = require('express');
 const router = express.Router();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const authenticateToken = require('../middlewares/authenticateToken');
 const { User, Billing } = require('../models');
+
+/**
+ * Safe stripe initialization (do not crash at module load time if not configured).
+ */
+let stripe = null;
+if (process.env.STRIPE_SECRET_KEY) {
+  try {
+    stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+  } catch (e) {
+    console.error('Failed to initialize Stripe:', e && e.message ? e.message : e);
+    stripe = null;
+  }
+} else {
+  console.warn('STRIPE_SECRET_KEY is not configured. Stripe features are disabled.');
+}
 
 const PRICE_ID = process.env.STRIPE_PRICE_ID;
 const FRONTEND_URL = (process.env.FRONTEND_URL || '').replace(/\/+$/, '');
@@ -11,29 +25,23 @@ const SUCCESS_URL = (FRONTEND_URL || '') + '/profile.html?from=checkout_success'
 const CANCEL_URL  = (FRONTEND_URL || '') + '/profile.html?from=checkout_cancel';
 
 if (!process.env.STRIPE_SECRET_KEY) {
-  console.warn('STRIPE_SECRET_KEY is not configured.');
-}
-if (!PRICE_ID) {
-  console.warn('STRIPE_PRICE_ID is not configured.');
+  console.warn('STRIPE_SECRET_KEY is not configured. Payments endpoints will return 500 if used.');
 }
 
 /**
  * POST /api/payments/create-checkout-session
- * Authenticated route to create a Stripe Checkout session for subscription.
  */
 router.post('/create-checkout-session', authenticateToken, async (req, res) => {
   try {
-    if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_PRICE_ID) {
+    if (!stripe || !process.env.STRIPE_PRICE_ID) {
       return res.status(500).json({ error: 'Payment provider not configured' });
     }
 
-    // Ensure authenticated user
     if (!req.user || !req.user.id) return res.status(401).json({ error: 'Unauthorized' });
 
     const user = await User.findByPk(req.user.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    // Create Stripe customer if missing
     if (!user.stripeCustomerId) {
       const customer = await stripe.customers.create({
         email: user.email,
@@ -62,12 +70,11 @@ router.post('/create-checkout-session', authenticateToken, async (req, res) => {
 
 /**
  * POST /api/payments/create-portal-session
- * Optional: create Stripe Billing Portal session for customer management.
- * Body: { returnUrl?: string } (optional)
  */
 router.post('/create-portal-session', authenticateToken, async (req, res) => {
   try {
-    if (!process.env.STRIPE_SECRET_KEY) return res.status(500).json({ error: 'Payment provider not configured' });
+    if (!stripe) return res.status(500).json({ error: 'Payment provider not configured' });
+
     const user = await User.findByPk(req.user.id);
     if (!user || !user.stripeCustomerId) return res.status(404).json({ error: 'Customer not found' });
 
@@ -85,10 +92,14 @@ router.post('/create-portal-session', authenticateToken, async (req, res) => {
 });
 
 /**
- * webhookHandler(req, res)
- * Expects raw body (express.raw({ type: 'application/json' }))
+ * webhookHandler(req,res) - expects raw body
  */
 async function webhookHandler(req, res) {
+  if (!stripe) {
+    console.error('Stripe not configured - webhook received but stripe client missing.');
+    return res.status(500).send('Stripe not configured');
+  }
+
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
@@ -115,7 +126,6 @@ async function webhookHandler(req, res) {
         if (userId && stripeSubscriptionId) {
           const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
 
-          // Upsert billing by subscription id
           let billing = await Billing.findOne({ where: { stripeSubscriptionId } });
           if (!billing) {
             billing = await Billing.create({
@@ -133,7 +143,6 @@ async function webhookHandler(req, res) {
             await billing.save();
           }
 
-          // Update user
           const user = await User.findByPk(Number(userId));
           if (user) {
             user.stripeCustomerId = stripeCustomerId || user.stripeCustomerId;
@@ -197,7 +206,7 @@ async function webhookHandler(req, res) {
       }
 
       default:
-        // Ignore other events
+        // ignore other events
     }
 
     return res.json({ received: true });

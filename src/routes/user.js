@@ -4,7 +4,6 @@ const router = express.Router();
 const { User, Service, Message } = require('../models');
 let bcrypt;
 try {
-  // prefer native bcrypt (fast), but fall back to bcryptjs if needed
   bcrypt = require('bcrypt');
 } catch (e) {
   try {
@@ -16,23 +15,35 @@ try {
   }
 }
 const jwt = require('jsonwebtoken');
-const { getSigningSecret } = require('../lib/jwtSecrets'); // <- new helper import
+const { getSigningSecret } = require('../lib/jwtSecrets');
 const authenticateToken = require('../middlewares/authenticateToken');
 const { body, param, oneOf, query } = require('express-validator');
 const validate = require('../middlewares/validate');
 
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+/**
+ * Safe Stripe initialization: only require/construct if STRIPE_SECRET_KEY is present.
+ * This prevents the app from crashing during module load if the env var isn't set.
+ */
+let stripe = null;
+if (process.env.STRIPE_SECRET_KEY) {
+  try {
+    stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+  } catch (e) {
+    console.error('Failed to initialize Stripe:', e && e.message ? e.message : e);
+    stripe = null;
+  }
+} else {
+  console.warn('STRIPE_SECRET_KEY is not configured. Stripe features are disabled.');
+}
+
 const PRICE_ID = process.env.STRIPE_PRICE_ID;
 const FRONTEND_URL = (process.env.FRONTEND_URL || '').replace(/\/+$/, '');
 const SUCCESS_URL = (FRONTEND_URL || '') + '/profile.html?from=checkout_success';
 const CANCEL_URL  = (FRONTEND_URL || '') + '/profile.html?from=checkout_cancel';
 
-/**
- * Wrap bcrypt.hash/compare so we can `await` regardless of whether the
- * installed implementation supports promises or only callback style.
- */
+/* ---------------- helpers (unchanged) ---------------- */
+
 async function hashPassword(password, rounds = 10) {
-  // Try promise-style first (works with native bcrypt v5+ or bcrypt that returns Promise)
   try {
     const maybe = bcrypt.hash(password, rounds);
     if (maybe && typeof maybe.then === 'function') {
@@ -62,7 +73,6 @@ async function comparePassword(password, hashed) {
   });
 }
 
-/* ------------------ helpers ------------------ */
 function toSafeUser(user) {
   if (!user) return user;
   const raw = user.toJSON ? user.toJSON() : user;
@@ -101,7 +111,6 @@ router.post(
   async (req, res) => {
     try {
       const { username, email, password, description } = req.body;
-
       console.info('Register attempt payload:', { username, email, hasDescription: !!description });
 
       const [existingEmail, existingUsername] = await Promise.all([
@@ -280,7 +289,8 @@ router.put('/me/description', authenticateToken, [body('description').exists().i
  */
 router.post('/me/upgrade', authenticateToken, async (req, res) => {
   try {
-    if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_PRICE_ID) {
+    // Check that Stripe is configured and stripe client exists
+    if (!stripe || !process.env.STRIPE_PRICE_ID) {
       return sendError(res, 'Payment provider not configured', 500);
     }
 
