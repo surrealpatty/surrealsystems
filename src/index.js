@@ -4,6 +4,18 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
+// --- support JWT_SECRETS rotation env var (first secret used if JWT_SECRET missing) ---
+if (!process.env.JWT_SECRET && process.env.JWT_SECRETS) {
+  const first = String(process.env.JWT_SECRETS || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)[0];
+  if (first) {
+    process.env.JWT_SECRET = first;
+    console.info('Using first secret from JWT_SECRETS as JWT_SECRET (rotation supported).');
+  }
+}
+
 // --- ENV check to help debug runtime configuration ---
 console.info('ENV CHECK: NODE_ENV=%s, CORS_ALLOWED_ORIGINS=%s, DATABASE_URL defined? %s',
   process.env.NODE_ENV,
@@ -157,33 +169,42 @@ app.get('*', (req, res, next) => {
 
 const PORT = process.env.PORT || 10000;
 
-/* ------------------------- App startup ----------------------------- */
-(async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('✅ Database connected');
+/* ------------------------- App startup (exportable) ----------------------------- */
+/**
+ * startServer()
+ *  - authenticates DB
+ *  - optionally runs sequelize.sync in non-production if DB_ALTER=true (keeps prior behavior)
+ *  - when run directly (node src/index.js) it starts listening
+ *  - when imported, it performs DB init and returns the app (without starting listener)
+ */
+async function startServer() {
+  await sequelize.authenticate();
+  console.log('✅ Database connected');
 
-    // Keep schema in sync during development only when explicitly enabled.
-    if (process.env.NODE_ENV !== 'production') {
-      const useAlter = process.env.DB_ALTER === 'true';
-      if (useAlter) {
-        console.log('⚠️ Running sequelize.sync({ alter: true }) - development only');
-      } else {
-        console.log('ℹ️ Skipping sequelize.sync (DB_ALTER not enabled)');
-      }
-      await sequelize.sync({ alter: useAlter });
+  // Keep schema in sync during development only when explicitly enabled.
+  if (process.env.NODE_ENV !== 'production') {
+    const useAlter = (process.env.DB_ALTER === 'true' || process.env.DB_SYNC_ALTER === 'true');
+    if (useAlter) {
+      console.log('⚠️ Running sequelize.sync({ alter: true }) - development only');
     } else {
-      console.log('⚠️ Production mode: skipping sequelize.sync. Apply migrations before starting the app.');
+      console.log('ℹ️ Skipping sequelize.sync (DB_ALTER not enabled)');
     }
+    await sequelize.sync({ alter: useAlter });
+  } else {
+    console.log('⚠️ Production mode: skipping sequelize.sync. Apply migrations before starting the app.');
+  }
 
-    app.listen(PORT, () => {
+  // If the file was run directly, start listening.
+  if (require.main === module) {
+    const server = app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
-  } catch (err) {
-    console.error('❌ DB init error:', err && err.message ? err.message : err);
-    process.exit(1);
+    return server;
   }
-})();
+
+  // When imported, return the app for tests or external servers.
+  return app;
+}
 
 /* -------------------- Global error / rejection handlers ------------------ */
 process.on('unhandledRejection', (reason) => {
@@ -192,3 +213,14 @@ process.on('unhandledRejection', (reason) => {
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
 });
+
+// Export app & startServer for tests / external run
+module.exports = { app, startServer };
+
+// If run directly, call startServer and handle failures by exiting.
+if (require.main === module) {
+  startServer().catch(err => {
+    console.error('❌ DB init error:', err && err.message ? err.message : err);
+    process.exit(1);
+  });
+}

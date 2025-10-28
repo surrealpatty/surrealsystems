@@ -9,7 +9,8 @@
     "dev": "nodemon src/index.js",
     "migrate": "npx sequelize-cli db:migrate",
     "migrate:undo": "npx sequelize-cli db:migrate:undo",
-    "migrate:status": "npx sequelize-cli db:migrate:status"
+    "migrate:status": "npx sequelize-cli db:migrate:status",
+    "test": "NODE_ENV=test jest --runInBand --detectOpenHandles --forceExit"
   },
   "engines": {
     "node": "20.x"
@@ -30,6 +31,8 @@
     "stripe": "^19.1.0"
   },
   "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.4.0",
     "nodemon": "^3.0.2",
     "sequelize-cli": "^6.6.3"
   },
