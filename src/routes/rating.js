@@ -1,8 +1,23 @@
 // src/routes/rating.js
 const express = require('express');
 const router = express.Router();
-const { Rating, User, sequelize } = require('../models');
+const { Rating, User, sequelize, Billing } = require('../models');
 const authenticateToken = require('../middlewares/authenticateToken');
+
+/**
+ * Helper: return true if user has paid access (tier=paid or billing active/trialing)
+ */
+async function isUserPaid(user) {
+  if (!user) return false;
+  if (user.tier === 'paid') return true;
+
+  const bill = await Billing.findOne({
+    where: { userId: user.id },
+    order: [['id', 'DESC']]
+  });
+  if (!bill) return false;
+  return ['active', 'trialing'].includes(String(bill.status));
+}
 
 /**
  * GET /api/ratings/user/:userId
@@ -34,10 +49,8 @@ router.get('/user/:userId', async (req, res) => {
       ratings,
     });
   } catch (err) {
-    // Log the full stack so we can debug
     console.error('Get ratings error (stack):', err && err.stack ? err.stack : err);
 
-    // Return an empty payload so the UI doesn't hang
     return res.json({
       summary: { count: 0, average: 0.0 },
       ratings: [],
@@ -52,17 +65,14 @@ router.get('/user/:userId', async (req, res) => {
  */
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    // Debug input
     console.log('POST /api/ratings body:', req.body);
     console.log('POST /api/ratings req.user:', req.user && { id: req.user.id });
 
-    // Ensure authenticated user
     if (!req.user || !req.user.id) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     const raterId = Number(req.user.id);
 
-    // Validate inputs
     const rawRatee = req.body.rateeId;
     const rawStars = req.body.stars;
     const comment = req.body.comment || null;
@@ -72,7 +82,6 @@ router.post('/', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Invalid rateeId' });
     }
 
-    // parse stars robustly and clamp
     const parsedStars = parseInt(rawStars, 10);
     if (Number.isNaN(parsedStars)) {
       return res.status(400).json({ error: 'Invalid stars value' });
@@ -81,16 +90,16 @@ router.post('/', authenticateToken, async (req, res) => {
 
     if (raterId === rateeId) return res.status(400).json({ error: 'You cannot rate yourself' });
 
-    // Ensure rater exists and is paid
     const rater = await User.findByPk(raterId);
     if (!rater) return res.status(404).json({ error: 'User not found' });
-    if (rater.tier !== 'paid') return res.status(403).json({ error: 'Upgrade to a paid account to rate others.' });
 
-    // Ensure ratee exists
+    if (!(await isUserPaid(rater))) {
+      return res.status(403).json({ error: 'Upgrade to a paid account to rate others.' });
+    }
+
     const ratee = await User.findByPk(rateeId);
     if (!ratee) return res.status(404).json({ error: 'Ratee not found' });
 
-    // Upsert with findOrCreate to reduce race conditions
     const [rating, created] = await Rating.findOrCreate({
       where: { raterId, rateeId },
       defaults: { stars, comment },
@@ -99,7 +108,6 @@ router.post('/', authenticateToken, async (req, res) => {
       await rating.update({ stars, comment });
     }
 
-    // One-shot aggregate for summary (COUNT + AVG)
     const agg = await Rating.findOne({
       where: { rateeId },
       attributes: [
@@ -117,7 +125,6 @@ router.post('/', authenticateToken, async (req, res) => {
       summary: { count, average },
     });
   } catch (err) {
-    // Verbose debug output (helpful during development)
     console.error('Upsert rating error (name):', err.name);
     console.error('Upsert rating error (message):', err.message);
     console.error('Upsert rating error (stack):', err.stack);
@@ -125,12 +132,10 @@ router.post('/', authenticateToken, async (req, res) => {
       console.error('Sequelize validation errors:', err.errors.map(e => ({ path: e.path, message: e.message, value: e.value })));
     }
 
-    // If Sequelize ValidationError -> return 400 with details
     if (err && err.name === 'SequelizeValidationError' && err.errors) {
       return res.status(400).json({ error: 'Validation failed', details: err.errors.map(e => e.message) });
     }
 
-    // Generic fallback
     return res.status(500).json({ error: 'Failed to save rating', details: err.message });
   }
 });
