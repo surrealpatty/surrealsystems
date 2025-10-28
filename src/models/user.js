@@ -8,7 +8,15 @@ module.exports = (sequelize) => {
     email: { type: DataTypes.STRING, allowNull: false, unique: true },
     password: { type: DataTypes.STRING, allowNull: false }, // bcrypt hash
     description: { type: DataTypes.TEXT, allowNull: true },
-    tier: { type: DataTypes.STRING, allowNull: false, defaultValue: 'free' }
+    tier: { type: DataTypes.STRING, allowNull: false, defaultValue: 'free' },
+
+    // Map the JS attribute stripeCustomerId to the existing lower-case DB column `stripecustomerid`
+    stripeCustomerId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: 'stripecustomerid'
+    }
+
   }, {
     tableName: 'users',
     timestamps: true,
