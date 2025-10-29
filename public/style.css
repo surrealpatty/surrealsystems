@@ -1,5 +1,5 @@
 /* public/style.css
-   Polished / accessibility-forward version of the stylesheet you provided.
+   Polished / accessibility-forward version of the stylesheet.
 */
 
 /* -------------------- Theme variables -------------------- */
@@ -22,7 +22,7 @@
   --shadow-2: 0 12px 30px rgba(0,0,0,0.15);
   --transition-fast: 180ms;
 
-  /* Computed focus color: mix(20% var(--brand-b), 80% white) => #cceeff */
+  /* Computed focus color */
   --focus-ring: #cceeff;
 }
 
@@ -41,7 +41,7 @@ html, body {
 }
 
 body {
-  min-height: 100vh; /* <- was 100% */
+  min-height: 100vh;
   background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
   color: #fff;
   -webkit-tap-highlight-color: transparent;
@@ -49,26 +49,38 @@ body {
 }
 
 /* -------------------- Container -------------------- */
+/* Keep the .container structural semantics, but allow the gradient to show through. */
 .container {
   max-width: 900px;
   width: 90%;
-  padding: 2.5rem 2rem 140px 2rem; /* extra bottom space to account for floating buttons */
+  padding: 2.5rem 2rem 140px 2rem;
   margin: 50px auto 0;
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  background: var(--glass);
+
+  /* make visually transparent so the body gradient remains visible */
+  background: transparent;
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-2);
-  color: var(--card-text);
+  box-shadow: none;
+
+  /* text on gradient should be white */
+  color: #fff;
   text-align: center;
 }
 
 /* -------------------- Headings -------------------- */
+/* Ensure headings are white on the gradient */
 h1, h2 {
-  color: var(--brand-a);
+  color: #fff;
   margin: 0 0 0.5rem;
   line-height: 1.1;
+}
+
+/* header paragraph */
+header p {
+  color: rgba(255,255,255,0.95);
+  margin: 0 0 1rem;
 }
 
 /* -------------------- Spinner -------------------- */
@@ -82,10 +94,7 @@ h1, h2 {
   animation: spin 0.8s linear infinite;
   vertical-align: middle;
 }
-@keyframes spin {
-  0%   { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 /* -------------------- Fade-in -------------------- */
 .fade-in {
@@ -93,11 +102,8 @@ h1, h2 {
   transform: translateY(10px);
   animation: fadeIn 0.5s ease forwards;
 }
-@keyframes fadeIn {
-  to { opacity: 1; transform: translateY(0); }
-}
+@keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
 
-/* Respect reduced motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .spinner { animation: none; }
   .fade-in { animation: none; transform: none; opacity: 1; }
@@ -143,28 +149,20 @@ button:active {
   box-shadow: 0 14px 32px rgba(0,0,0,0.14);
 }
 
-/* Visible focus for keyboard users
-   Replaced `color-mix(...)` with a computed hex fallback (#cceeff) for wide browser support.
-*/
 button:focus-visible {
-  /* Friendly, widely-supported focus ring */
   outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
-
-  /* Additional box-shadow ensures the ring matches rounded corners and looks consistent */
   box-shadow: 0 0 0 3px var(--focus-ring);
   border-radius: var(--radius-sm);
 }
 
 /* Variant buttons */
-.logout-btn {
-  background-color: var(--danger);
-}
+.logout-btn { background-color: var(--danger); }
 .logout-btn:hover { background-color: #c30000; }
 
 .btn-success { background-color: var(--success); color: #fff; }
-.btn-info { background-color: var(--info); color: #fff; }
-.btn-warning { background-color: var(--accent); color: #333; }
+.btn-info    { background-color: var(--info);    color: #fff; }
+.btn-warning { background-color: var(--accent);  color: #333; }
 
 /* -------------------- Services Grid -------------------- */
 #services-list {
@@ -174,6 +172,7 @@ button:focus-visible {
   align-items: start;
 }
 
+/* .card remains for other pages; feature-card overrides it for appearance on the gradient */
 .card {
   background: var(--card-bg);
   border-radius: var(--radius-md);
@@ -190,9 +189,6 @@ button:focus-visible {
 
 .card h3 { margin: 0 0 8px; color: var(--brand-a); font-size: 1.1rem; }
 .card p { margin: 0; color: var(--muted); font-size: 0.95rem; word-break: break-word; }
-
-/* Ensure long content wraps */
-.card .meta { font-size: 0.9rem; color: #888; }
 
 /* -------------------- New Service Section -------------------- */
 #newServiceSection {
@@ -229,12 +225,10 @@ button:focus-visible {
   touch-action: manipulation;
 }
 
-/* Individual floating buttons positioned from bottom */
 #goToServicesBtn { background-color: var(--success); bottom: 160px; }
 #goToMessagesBtn { background-color: var(--info); bottom: 100px; }
 #addNewServiceBtn { background-color: var(--accent); color: #333; bottom: 40px; }
 
-/* Give the floating buttons a slightly larger hit area on small screens */
 @media (max-width: 480px) {
   .floating-btn {
     right: 12px;
@@ -308,45 +302,57 @@ button:focus-visible {
   margin: 0;
 }
 
-/* Feature card — consistent with .card visual style already in the file */
+/* Feature card — show on the gradient (transparent, white text) */
+/* Keep this after .card so it overrides white-card defaults on this page */
 .feature-card {
-  background: var(--card-bg);
+  background: transparent;       /* allow gradient through */
   border-radius: var(--radius-md);
   padding: 18px;
-  box-shadow: var(--shadow-1);
-  color: var(--card-text);
+  box-shadow: none;
+  color: rgba(255,255,255,0.95);
   text-align: left;
 }
+.feature-card h3 { color: #fff; }
+.feature-card p  { color: rgba(255,255,255,0.9); }
 
-/* Login card — a compact, centered card */
+/* Login card — subtle translucent panel so login remains readable */
 .login-container {
   width: 360px;
   margin: 0 auto;
-  background: var(--glass);
+  background: rgba(255,255,255,0.06); /* faint panel so gradient is visible */
   padding: 18px;
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-2);
+  box-shadow: none;
   text-align: left;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
-/* Inputs inside login card */
+/* Inputs inside login card — translucent with white text */
 .login-container input[type="email"],
 .login-container input[type="password"] {
   width: 100%;
   padding: 10px 12px;
   margin-bottom: 10px;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
   font-size: 1rem;
-  background: #fff;
-  color: var(--card-text);
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  outline: none;
+}
+
+/* subtle focus styles for login inputs */
+.login-container input:focus {
+  box-shadow: 0 0 0 3px rgba(204,238,255,0.14);
+  border-color: rgba(204,238,255,0.5);
 }
 
 /* Message area (error/success) */
 .message { color: var(--danger); min-height: 1.25em; margin-bottom: 8px; }
 
 /* Links */
-.login-container a { color: var(--brand-b); text-decoration: underline; }
+.login-container a { color: #fff; text-decoration: underline; }
 
 /* tiny accessibility helper for labels hidden visually but still available to screen readers */
 .visually-hidden {
