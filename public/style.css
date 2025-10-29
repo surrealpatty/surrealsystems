@@ -296,3 +296,69 @@ button:focus-visible {
     gap: 12px;
   }
 }
+
+/* -------------------- Page-specific additions -------------------- */
+
+/* Feature grid for the three highlight cards */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  align-items: start;
+  margin: 0;
+}
+
+/* Feature card — consistent with .card visual style already in the file */
+.feature-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  box-shadow: var(--shadow-1);
+  color: var(--card-text);
+  text-align: left;
+}
+
+/* Login card — a compact, centered card */
+.login-container {
+  width: 360px;
+  margin: 0 auto;
+  background: var(--glass);
+  padding: 18px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-2);
+  text-align: left;
+}
+
+/* Inputs inside login card */
+.login-container input[type="email"],
+.login-container input[type="password"] {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0,0,0,0.08);
+  font-size: 1rem;
+  background: #fff;
+  color: var(--card-text);
+}
+
+/* Message area (error/success) */
+.message { color: var(--danger); min-height: 1.25em; margin-bottom: 8px; }
+
+/* Links */
+.login-container a { color: var(--brand-b); text-decoration: underline; }
+
+/* tiny accessibility helper for labels hidden visually but still available to screen readers */
+.visually-hidden {
+  position: absolute !important;
+  height: 1px; width: 1px;
+  overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px);
+  white-space: nowrap;
+}
+
+/* Responsive: make login card full width on small screens */
+@media (max-width: 480px) {
+  .login-container { width: 100%; padding: 14px; }
+  .features { grid-template-columns: 1fr; }
+}
