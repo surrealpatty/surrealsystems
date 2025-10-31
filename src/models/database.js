@@ -1,6 +1,6 @@
 // src/models/database.js
-require('dotenv').config();
-const { Sequelize } = require('sequelize');
+require("dotenv").config();
+const { Sequelize } = require("sequelize");
 
 /**
  * Default dialectOptions we want for hosted Postgres (Render, Heroku, etc.)
@@ -10,8 +10,8 @@ const { Sequelize } = require('sequelize');
 const DEFAULT_DIALECT_OPTIONS = {
   ssl: {
     require: true,
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false,
+  },
 };
 
 let sequelize;
@@ -22,29 +22,28 @@ let sequelize;
  */
 if (process.env.DATABASE_URL) {
   sequelize = new Sequelize(process.env.DATABASE_URL, {
-    dialect: 'postgres',
+    dialect: "postgres",
     dialectOptions: DEFAULT_DIALECT_OPTIONS,
-    logging: false
+    logging: false,
   });
 } else {
   // Construct from DB_* envs (existing behaviour)
-  const useSsl = (
-    process.env.DB_REQUIRE_SSL === 'true' ||
-    process.env.NODE_ENV === 'production' ||
-    !!process.env.DATABASE_URL // defensive: if URL existed we'd have used it above
-  );
+  const useSsl =
+    process.env.DB_REQUIRE_SSL === "true" ||
+    process.env.NODE_ENV === "production" ||
+    !!process.env.DATABASE_URL; // defensive: if URL existed we'd have used it above
 
   sequelize = new Sequelize(
-    process.env.DB_NAME || 'codecrowds',
-    process.env.DB_USER || 'postgres',
+    process.env.DB_NAME || "codecrowds",
+    process.env.DB_USER || "postgres",
     process.env.DB_PASSWORD || null,
     {
-      host: process.env.DB_HOST || 'localhost',
+      host: process.env.DB_HOST || "localhost",
       port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432,
-      dialect: 'postgres',
+      dialect: "postgres",
       dialectOptions: useSsl ? DEFAULT_DIALECT_OPTIONS : {},
-      logging: false
-    }
+      logging: false,
+    },
   );
 }
 
@@ -52,9 +51,9 @@ if (process.env.DATABASE_URL) {
 const testConnection = async () => {
   try {
     await sequelize.authenticate();
-    console.log('✅ Database connection established');
+    console.log("✅ Database connection established");
   } catch (err) {
-    console.error('❌ Unable to connect to database:', err);
+    console.error("❌ Unable to connect to database:", err);
     throw err;
   }
 };

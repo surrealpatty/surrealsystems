@@ -1,1 +1,5 @@
-﻿{ "title":"Fix CSS + layout", "description":"I fix layout issues", "price":"59.99" }
+﻿{
+  "title": "Fix CSS + layout",
+  "description": "I fix layout issues",
+  "price": "59.99"
+}

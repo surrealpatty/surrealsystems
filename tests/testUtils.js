@@ -1,11 +1,11 @@
 // tests/testUtils.js
 // Helper to start the app and expose sequelize for tests.
 
-process.env.JWT_SECRETS = process.env.JWT_SECRETS || 'testsecret';
-process.env.NODE_ENV = process.env.NODE_ENV || 'test';
+process.env.JWT_SECRETS = process.env.JWT_SECRETS || "testsecret";
+process.env.NODE_ENV = process.env.NODE_ENV || "test";
 
-const { startServer } = require('../src/index');
-const { sequelize } = require('../src/config/database');
+const { startServer } = require("../src/index");
+const { sequelize } = require("../src/config/database");
 
 let appInstance = null;
 

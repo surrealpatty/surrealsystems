@@ -1,28 +1,28 @@
 // src/config/database.js
-const { Sequelize } = require('sequelize');
-require('dotenv').config();
+const { Sequelize } = require("sequelize");
+require("dotenv").config();
 
 const baseOpts = {
-  dialect: 'postgres',
-  logging: process.env.SQL_LOG === 'true' ? console.log : false,
+  dialect: "postgres",
+  logging: process.env.SQL_LOG === "true" ? console.log : false,
   pool: {
     max: Number(process.env.DB_POOL_MAX || 10),
     min: Number(process.env.DB_POOL_MIN || 2),
     idle: Number(process.env.DB_POOL_IDLE || 10000),
-    acquire: Number(process.env.DB_POOL_ACQUIRE || 30000)
+    acquire: Number(process.env.DB_POOL_ACQUIRE || 30000),
   },
   dialectOptions: {
     keepAlive: true,
     statement_timeout: Number(process.env.PG_STATEMENT_TIMEOUT || 5000),
-    query_timeout: Number(process.env.PG_QUERY_TIMEOUT || 0)
+    query_timeout: Number(process.env.PG_QUERY_TIMEOUT || 0),
   },
 
   // IMPORTANT: Use camelCase timestamp and foreign key names to match existing DB.
   // If you prefer snake_case DB columns (created_at) then set underscored: true
   // but your current DB uses `createdAt` / `updatedAt`.
   define: {
-    underscored: false
-  }
+    underscored: false,
+  },
 };
 
 /**
@@ -32,17 +32,21 @@ const baseOpts = {
  *  - OR the DATABASE_URL contains "sslmode=require" (Render/managed PG)
  */
 function ensureSslIfNeeded(opts) {
-  const dbRequireSslEnv = String(process.env.DB_REQUIRE_SSL || '').toLowerCase();
-  const dbRequiresSsl = (
-    process.env.NODE_ENV === 'production' ||
-    dbRequireSslEnv === 'true' || dbRequireSslEnv === '1' || dbRequireSslEnv === 'yes' ||
-    (process.env.DATABASE_URL && /sslmode=require/i.test(process.env.DATABASE_URL))
-  );
+  const dbRequireSslEnv = String(
+    process.env.DB_REQUIRE_SSL || "",
+  ).toLowerCase();
+  const dbRequiresSsl =
+    process.env.NODE_ENV === "production" ||
+    dbRequireSslEnv === "true" ||
+    dbRequireSslEnv === "1" ||
+    dbRequireSslEnv === "yes" ||
+    (process.env.DATABASE_URL &&
+      /sslmode=require/i.test(process.env.DATABASE_URL));
 
   if (dbRequiresSsl) {
     opts.dialectOptions = {
       ...opts.dialectOptions,
-      ssl: { require: true, rejectUnauthorized: false }
+      ssl: { require: true, rejectUnauthorized: false },
     };
   }
 
@@ -53,7 +57,9 @@ let sequelize;
 
 // Safe initialization: validate DATABASE_URL before passing to Sequelize.
 // If DATABASE_URL is missing or invalid, fall back to DB_* env vars.
-const rawDbUrl = process.env.DATABASE_URL ? String(process.env.DATABASE_URL).trim() : '';
+const rawDbUrl = process.env.DATABASE_URL
+  ? String(process.env.DATABASE_URL).trim()
+  : "";
 
 if (rawDbUrl) {
   // If the URL appears valid per the WHATWG URL constructor, try to use it.
@@ -68,13 +74,20 @@ if (rawDbUrl) {
     // Try to initialize Sequelize with the URL
     sequelize = new Sequelize(rawDbUrl, opts);
   } catch (err) {
-    console.warn('Warning: invalid or unsupported DATABASE_URL. Falling back to DB_* env vars. Error:', err && err.message ? err.message : err);
+    console.warn(
+      "Warning: invalid or unsupported DATABASE_URL. Falling back to DB_* env vars. Error:",
+      err && err.message ? err.message : err,
+    );
     // fallback to DB_* env vars
     sequelize = new Sequelize(
       process.env.DB_NAME,
       process.env.DB_USER,
       process.env.DB_PASSWORD,
-      ensureSslIfNeeded({ ...baseOpts, host: process.env.DB_HOST, port: Number(process.env.DB_PORT) || 5432 })
+      ensureSslIfNeeded({
+        ...baseOpts,
+        host: process.env.DB_HOST,
+        port: Number(process.env.DB_PORT) || 5432,
+      }),
     );
   }
 } else {
@@ -83,16 +96,23 @@ if (rawDbUrl) {
     process.env.DB_NAME,
     process.env.DB_USER,
     process.env.DB_PASSWORD,
-    ensureSslIfNeeded({ ...baseOpts, host: process.env.DB_HOST, port: Number(process.env.DB_PORT) || 5432 })
+    ensureSslIfNeeded({
+      ...baseOpts,
+      host: process.env.DB_HOST,
+      port: Number(process.env.DB_PORT) || 5432,
+    }),
   );
 }
 
 const testConnection = async () => {
   try {
     await sequelize.authenticate();
-    console.log('✅ PostgreSQL connection established successfully.');
+    console.log("✅ PostgreSQL connection established successfully.");
   } catch (err) {
-    console.error('❌ Unable to connect to PostgreSQL:', err && err.message ? err.message : err);
+    console.error(
+      "❌ Unable to connect to PostgreSQL:",
+      err && err.message ? err.message : err,
+    );
     throw err;
   }
 };

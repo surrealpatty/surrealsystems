@@ -16,7 +16,6 @@ This folder contains integration tests that exercise the main API flows.
   Install with `nvm`, `fnm`, or your system package manager if needed.
 
 - **Postgres** for local tests. Tests call `sequelize.sync({ force: true })` and rely on the DB specified by your `.env` or environment variables.
-
   - Use the split DB vars in `.env.example` (DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME), **or**
   - Set `DATABASE_URL` (recommended in production/CI).
 
@@ -30,3 +29,4 @@ This folder contains integration tests that exercise the main API flows.
 
    ```powershell
    docker run --rm -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres -p 5432:5432 postgres:14
+   ```

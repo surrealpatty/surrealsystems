@@ -1,24 +1,26 @@
 // src/routes/user.js
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { User, Service, Message } = require('../models');
+const { User, Service, Message } = require("../models");
 let bcrypt;
 try {
-  bcrypt = require('bcrypt');
+  bcrypt = require("bcrypt");
 } catch (e) {
   try {
-    bcrypt = require('bcryptjs');
-    console.warn('bcrypt not available — falling back to bcryptjs');
+    bcrypt = require("bcryptjs");
+    console.warn("bcrypt not available — falling back to bcryptjs");
   } catch (e2) {
-    console.error('No bcrypt implementation available. Install "bcrypt" or "bcryptjs".');
+    console.error(
+      'No bcrypt implementation available. Install "bcrypt" or "bcryptjs".',
+    );
     throw e2;
   }
 }
-const jwt = require('jsonwebtoken');
-const { getSigningSecret } = require('../lib/jwtSecrets');
-const authenticateToken = require('../middlewares/authenticateToken');
-const { body, param, oneOf, query } = require('express-validator');
-const validate = require('../middlewares/validate');
+const jwt = require("jsonwebtoken");
+const { getSigningSecret } = require("../lib/jwtSecrets");
+const authenticateToken = require("../middlewares/authenticateToken");
+const { body, param, oneOf, query } = require("express-validator");
+const validate = require("../middlewares/validate");
 
 /**
  * Safe Stripe initialization: only require/construct if STRIPE_SECRET_KEY is present.
@@ -27,26 +29,32 @@ const validate = require('../middlewares/validate');
 let stripe = null;
 if (process.env.STRIPE_SECRET_KEY) {
   try {
-    stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
   } catch (e) {
-    console.error('Failed to initialize Stripe:', e && e.message ? e.message : e);
+    console.error(
+      "Failed to initialize Stripe:",
+      e && e.message ? e.message : e,
+    );
     stripe = null;
   }
 } else {
-  console.warn('STRIPE_SECRET_KEY is not configured. Stripe features are disabled.');
+  console.warn(
+    "STRIPE_SECRET_KEY is not configured. Stripe features are disabled.",
+  );
 }
 
 const PRICE_ID = process.env.STRIPE_PRICE_ID;
-const FRONTEND_URL = (process.env.FRONTEND_URL || '').replace(/\/+$/, '');
-const SUCCESS_URL = (FRONTEND_URL || '') + '/profile.html?from=checkout_success';
-const CANCEL_URL  = (FRONTEND_URL || '') + '/profile.html?from=checkout_cancel';
+const FRONTEND_URL = (process.env.FRONTEND_URL || "").replace(/\/+$/, "");
+const SUCCESS_URL =
+  (FRONTEND_URL || "") + "/profile.html?from=checkout_success";
+const CANCEL_URL = (FRONTEND_URL || "") + "/profile.html?from=checkout_cancel";
 
 /* ---------------- helpers (unchanged) ---------------- */
 
 async function hashPassword(password, rounds = 10) {
   try {
     const maybe = bcrypt.hash(password, rounds);
-    if (maybe && typeof maybe.then === 'function') {
+    if (maybe && typeof maybe.then === "function") {
       return await maybe;
     }
   } catch (_) {}
@@ -61,7 +69,7 @@ async function hashPassword(password, rounds = 10) {
 async function comparePassword(password, hashed) {
   try {
     const maybe = bcrypt.compare(password, hashed);
-    if (maybe && typeof maybe.then === 'function') {
+    if (maybe && typeof maybe.then === "function") {
       return await maybe;
     }
   } catch (_) {}
@@ -82,16 +90,21 @@ function toSafeUser(user) {
 function normalizeUsername(u) {
   if (!u) return u;
   const out = { ...u };
-  if (!out.username || String(out.username).trim() === '') {
-    const fromEmail = out.email ? String(out.email).split('@')[0] : '';
-    out.username = out.name || out.displayName || fromEmail || 'User';
+  if (!out.username || String(out.username).trim() === "") {
+    const fromEmail = out.email ? String(out.email).split("@")[0] : "";
+    out.username = out.name || out.displayName || fromEmail || "User";
   }
   return out;
 }
 function respondCompat(res, payload, status = 200) {
   return res.status(status).json({ success: true, ...payload, data: payload });
 }
-function sendError(res, message = 'Something went wrong', status = 500, details) {
+function sendError(
+  res,
+  message = "Something went wrong",
+  status = 500,
+  details,
+) {
   const payload = { success: false, error: { message } };
   if (details) payload.error.details = details;
   return res.status(status).json(payload);
@@ -100,25 +113,34 @@ function sendError(res, message = 'Something went wrong', status = 500, details)
 /* ------------------ routes ------------------ */
 
 router.post(
-  '/register',
+  "/register",
   [
-    body('username').trim().isString().isLength({ min: 3 }),
-    body('email').trim().isEmail().normalizeEmail(),
-    body('password').isString().isLength({ min: 8 }),
-    body('description').optional({ nullable: true }).isString().isLength({ max: 500 }).trim()
+    body("username").trim().isString().isLength({ min: 3 }),
+    body("email").trim().isEmail().normalizeEmail(),
+    body("password").isString().isLength({ min: 8 }),
+    body("description")
+      .optional({ nullable: true })
+      .isString()
+      .isLength({ max: 500 })
+      .trim(),
   ],
   validate,
   async (req, res) => {
     try {
       const { username, email, password, description } = req.body;
-      console.info('Register attempt payload:', { username, email, hasDescription: !!description });
+      console.info("Register attempt payload:", {
+        username,
+        email,
+        hasDescription: !!description,
+      });
 
       const [existingEmail, existingUsername] = await Promise.all([
         User.findOne({ where: { email } }),
-        User.findOne({ where: { username } })
+        User.findOne({ where: { username } }),
       ]);
-      if (existingEmail) return sendError(res, 'Email already used', 400);
-      if (existingUsername) return sendError(res, 'Username already taken', 400);
+      if (existingEmail) return sendError(res, "Email already used", 400);
+      if (existingUsername)
+        return sendError(res, "Username already taken", 400);
 
       const hashedPassword = await hashPassword(password, 10);
 
@@ -126,201 +148,285 @@ router.post(
         username,
         email,
         password: hashedPassword,
-        description: (description || '').trim(),
-        tier: 'free'
+        description: (description || "").trim(),
+        tier: "free",
       });
 
       const signingSecret = getSigningSecret();
-      if (!signingSecret) return sendError(res, 'Server misconfigured', 500);
-      const token = jwt.sign({ id: newUser.id, email: newUser.email }, signingSecret, { expiresIn: '1d' });
+      if (!signingSecret) return sendError(res, "Server misconfigured", 500);
+      const token = jwt.sign(
+        { id: newUser.id, email: newUser.email },
+        signingSecret,
+        { expiresIn: "1d" },
+      );
 
       const user = normalizeUsername(toSafeUser(newUser));
       return respondCompat(res, { token, user }, 201);
     } catch (err) {
-      console.error('Register error:', err && err.stack ? err.stack : err);
-      if (err && err.name === 'SequelizeUniqueConstraintError') {
-        const details = (err.errors || []).map(e => (e && e.message) ? e.message : (e && e.path ? `${e.path} must be unique` : String(e)));
-        return sendError(res, 'Conflict: duplicate value', 409, details);
+      console.error("Register error:", err && err.stack ? err.stack : err);
+      if (err && err.name === "SequelizeUniqueConstraintError") {
+        const details = (err.errors || []).map((e) =>
+          e && e.message
+            ? e.message
+            : e && e.path
+              ? `${e.path} must be unique`
+              : String(e),
+        );
+        return sendError(res, "Conflict: duplicate value", 409, details);
       }
-      if (err && err.name === 'SequelizeValidationError') {
-        const details = (err.errors || []).map(e => (e && e.message) ? e.message : String(e));
-        return sendError(res, 'Validation failed', 400, details);
+      if (err && err.name === "SequelizeValidationError") {
+        const details = (err.errors || []).map((e) =>
+          e && e.message ? e.message : String(e),
+        );
+        return sendError(res, "Validation failed", 400, details);
       }
-      if (process.env.NODE_ENV && process.env.NODE_ENV !== 'production') {
-        const message = err && err.message ? `Registration failed: ${err.message}` : 'Registration failed';
+      if (process.env.NODE_ENV && process.env.NODE_ENV !== "production") {
+        const message =
+          err && err.message
+            ? `Registration failed: ${err.message}`
+            : "Registration failed";
         const details = err && err.stack ? [err.stack] : undefined;
         return sendError(res, message, 500, details);
       }
-      return sendError(res, 'Registration failed', 500);
+      return sendError(res, "Registration failed", 500);
     }
-  }
+  },
 );
 
 router.post(
-  '/login',
+  "/login",
   [
-    oneOf([
-      body('email').exists({ checkFalsy: true }).isEmail().normalizeEmail(),
-      body('username').exists({ checkFalsy: true }).isString().isLength({ min: 3 }).trim()
-    ], 'Either a valid email or a username is required'),
-    body('password').exists({ checkFalsy: true })
+    oneOf(
+      [
+        body("email").exists({ checkFalsy: true }).isEmail().normalizeEmail(),
+        body("username")
+          .exists({ checkFalsy: true })
+          .isString()
+          .isLength({ min: 3 })
+          .trim(),
+      ],
+      "Either a valid email or a username is required",
+    ),
+    body("password").exists({ checkFalsy: true }),
   ],
   validate,
   async (req, res) => {
     try {
       const { email, username, password } = req.body;
-      const userRec = await User.findOne({ where: email ? { email } : { username } });
-      if (!userRec) return sendError(res, 'Invalid credentials', 401);
+      const userRec = await User.findOne({
+        where: email ? { email } : { username },
+      });
+      if (!userRec) return sendError(res, "Invalid credentials", 401);
 
       const valid = await comparePassword(password, userRec.password);
-      if (!valid) return sendError(res, 'Invalid credentials', 401);
+      if (!valid) return sendError(res, "Invalid credentials", 401);
 
       const signingSecret = getSigningSecret();
-      if (!signingSecret) return sendError(res, 'Server misconfigured', 500);
-      const token = jwt.sign({ id: userRec.id, email: userRec.email }, signingSecret, { expiresIn: '1d' });
+      if (!signingSecret) return sendError(res, "Server misconfigured", 500);
+      const token = jwt.sign(
+        { id: userRec.id, email: userRec.email },
+        signingSecret,
+        { expiresIn: "1d" },
+      );
 
       const user = normalizeUsername(toSafeUser(userRec));
       return respondCompat(res, { token, user });
     } catch (err) {
-      console.error('Login error:', err && err.stack ? err.stack : err);
-      if (err && err.name === 'SequelizeValidationError') {
-        const details = (err.errors || []).map(e => (e && e.message) ? e.message : String(e));
-        return sendError(res, 'Validation failed', 400, details);
+      console.error("Login error:", err && err.stack ? err.stack : err);
+      if (err && err.name === "SequelizeValidationError") {
+        const details = (err.errors || []).map((e) =>
+          e && e.message ? e.message : String(e),
+        );
+        return sendError(res, "Validation failed", 400, details);
       }
-      if (process.env.NODE_ENV && process.env.NODE_ENV !== 'production') {
-        const message = err && err.message ? `Login failed: ${err.message}` : 'Login failed';
+      if (process.env.NODE_ENV && process.env.NODE_ENV !== "production") {
+        const message =
+          err && err.message ? `Login failed: ${err.message}` : "Login failed";
         return sendError(res, message, 500);
       }
-      return sendError(res, 'Login failed', 500);
+      return sendError(res, "Login failed", 500);
     }
-  }
+  },
 );
 
-router.get('/me', authenticateToken, async (req, res) => {
+router.get("/me", authenticateToken, async (req, res) => {
   try {
     const me = await User.findByPk(req.user.id, {
-      attributes: ['id', 'username', 'email', 'description', 'tier', 'createdAt', 'updatedAt', 'stripeCustomerId']
+      attributes: [
+        "id",
+        "username",
+        "email",
+        "description",
+        "tier",
+        "createdAt",
+        "updatedAt",
+        "stripeCustomerId",
+      ],
     });
-    if (!me) return sendError(res, 'User not found', 404);
+    if (!me) return sendError(res, "User not found", 404);
     const user = normalizeUsername(toSafeUser(me));
 
-    res.set('Cache-Control', 'private, max-age=15');
+    res.set("Cache-Control", "private, max-age=15");
     return respondCompat(res, { user });
   } catch (err) {
-    console.error('Get /me error:', err && err.stack ? err.stack : err);
-    return sendError(res, 'Failed to fetch user', 500);
+    console.error("Get /me error:", err && err.stack ? err.stack : err);
+    return sendError(res, "Failed to fetch user", 500);
   }
 });
 
 router.get(
-  '/me/messages',
+  "/me/messages",
   authenticateToken,
-  [query('limit').optional().isInt({ min: 1, max: 100 }).toInt()],
+  [query("limit").optional().isInt({ min: 1, max: 100 }).toInt()],
   validate,
   async (req, res) => {
     try {
       const limit = req.query.limit ?? 20;
       const rows = await Message.findAll({
         where: { receiverId: req.user.id },
-        attributes: ['id','senderId','receiverId','content','createdAt','updatedAt'],
-        include: [{ model: User, as: 'sender', attributes: ['id','username'] }],
-        order: [['createdAt','DESC']],
-        limit
+        attributes: [
+          "id",
+          "senderId",
+          "receiverId",
+          "content",
+          "createdAt",
+          "updatedAt",
+        ],
+        include: [
+          { model: User, as: "sender", attributes: ["id", "username"] },
+        ],
+        order: [["createdAt", "DESC"]],
+        limit,
       });
-      res.set('Cache-Control', 'private, max-age=10');
-      return res.status(200).json({ success: true, messages: rows, data: { messages: rows } });
+      res.set("Cache-Control", "private, max-age=10");
+      return res
+        .status(200)
+        .json({ success: true, messages: rows, data: { messages: rows } });
     } catch (e) {
-      console.error('GET /api/users/me/messages error:', e && e.stack ? e.stack : e);
-      return res.status(500).json({ success: false, error: { message: 'Failed to load messages' } });
+      console.error(
+        "GET /api/users/me/messages error:",
+        e && e.stack ? e.stack : e,
+      );
+      return res
+        .status(500)
+        .json({
+          success: false,
+          error: { message: "Failed to load messages" },
+        });
     }
-  }
+  },
 );
 
-router.get('/me/services', authenticateToken, async (req, res) => {
+router.get("/me/services", authenticateToken, async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 20, 50);
     const offset = Number(req.query.offset) || 0;
     const rows = await Service.findAll({
       where: { userId: req.user.id },
-      attributes: ['id','title','price','createdAt','updatedAt'],
-      order: [['createdAt','DESC']],
+      attributes: ["id", "title", "price", "createdAt", "updatedAt"],
+      order: [["createdAt", "DESC"]],
       limit,
-      offset
+      offset,
     });
     const payload = { services: rows, nextOffset: offset + rows.length };
-    res.set('Cache-Control', 'private, max-age=15');
+    res.set("Cache-Control", "private, max-age=15");
     return respondCompat(res, payload);
   } catch (err) {
-    console.error('Get /me/services error:', err && err.stack ? err.stack : err);
-    return sendError(res, 'Failed to fetch services', 500);
+    console.error(
+      "Get /me/services error:",
+      err && err.stack ? err.stack : err,
+    );
+    return sendError(res, "Failed to fetch services", 500);
   }
 });
 
-router.get('/:id', [param('id').isInt({ min: 1 }).withMessage('Invalid user id')], validate, async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-    const userRec = await User.findByPk(id, { attributes: { exclude: ['password'] } });
-    if (!userRec) return sendError(res, 'User not found', 404);
-    const user = normalizeUsername(toSafeUser(userRec));
-    return respondCompat(res, { user });
-  } catch (err) {
-    console.error('Get user by id error:', err && err.stack ? err.stack : err);
-    return sendError(res, 'Failed to fetch user', 500);
-  }
-});
+router.get(
+  "/:id",
+  [param("id").isInt({ min: 1 }).withMessage("Invalid user id")],
+  validate,
+  async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const userRec = await User.findByPk(id, {
+        attributes: { exclude: ["password"] },
+      });
+      if (!userRec) return sendError(res, "User not found", 404);
+      const user = normalizeUsername(toSafeUser(userRec));
+      return respondCompat(res, { user });
+    } catch (err) {
+      console.error(
+        "Get user by id error:",
+        err && err.stack ? err.stack : err,
+      );
+      return sendError(res, "Failed to fetch user", 500);
+    }
+  },
+);
 
-router.put('/me/description', authenticateToken, [body('description').exists().isString().isLength({ max: 500 }).trim()], validate, async (req, res) => {
-  try {
-    const userRec = await User.findByPk(req.user.id);
-    if (!userRec) return sendError(res, 'User not found', 404);
-    userRec.description = req.body.description.trim();
-    await userRec.save();
-    const user = normalizeUsername(toSafeUser(userRec));
-    return respondCompat(res, { message: 'Description updated successfully', user });
-  } catch (err) {
-    console.error('Update description error:', err && err.stack ? err.stack : err);
-    return sendError(res, 'Failed to save description', 500);
-  }
-});
+router.put(
+  "/me/description",
+  authenticateToken,
+  [body("description").exists().isString().isLength({ max: 500 }).trim()],
+  validate,
+  async (req, res) => {
+    try {
+      const userRec = await User.findByPk(req.user.id);
+      if (!userRec) return sendError(res, "User not found", 404);
+      userRec.description = req.body.description.trim();
+      await userRec.save();
+      const user = normalizeUsername(toSafeUser(userRec));
+      return respondCompat(res, {
+        message: "Description updated successfully",
+        user,
+      });
+    } catch (err) {
+      console.error(
+        "Update description error:",
+        err && err.stack ? err.stack : err,
+      );
+      return sendError(res, "Failed to save description", 500);
+    }
+  },
+);
 
 /**
  * POST /me/upgrade
  * Start Stripe Checkout flow - returns session url/sessionId.
  */
-router.post('/me/upgrade', authenticateToken, async (req, res) => {
+router.post("/me/upgrade", authenticateToken, async (req, res) => {
   try {
     // Check that Stripe is configured and stripe client exists
     if (!stripe || !process.env.STRIPE_PRICE_ID) {
-      return sendError(res, 'Payment provider not configured', 500);
+      return sendError(res, "Payment provider not configured", 500);
     }
 
     const userRec = await User.findByPk(req.user.id);
-    if (!userRec) return sendError(res, 'User not found', 404);
+    if (!userRec) return sendError(res, "User not found", 404);
 
     // Create customer if missing
     if (!userRec.stripeCustomerId) {
       const customer = await stripe.customers.create({
         email: userRec.email,
-        metadata: { userId: String(userRec.id) }
+        metadata: { userId: String(userRec.id) },
       });
       userRec.stripeCustomerId = customer.id;
       await userRec.save();
     }
 
     const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
+      mode: "subscription",
       customer: userRec.stripeCustomerId,
-      payment_method_types: ['card'],
+      payment_method_types: ["card"],
       line_items: [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
       success_url: SUCCESS_URL,
       cancel_url: CANCEL_URL,
-      metadata: { userId: String(userRec.id) }
+      metadata: { userId: String(userRec.id) },
     });
 
     return res.json({ url: session.url, sessionId: session.id });
   } catch (err) {
-    console.error('Upgrade error:', err && err.stack ? err.stack : err);
-    return sendError(res, 'Failed to create checkout session', 500);
+    console.error("Upgrade error:", err && err.stack ? err.stack : err);
+    return sendError(res, "Failed to create checkout session", 500);
   }
 });
 

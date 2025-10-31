@@ -1,5 +1,5 @@
-﻿const m = require('./src/models');
-const { QueryTypes } = require('sequelize');
+﻿const m = require("./src/models");
+const { QueryTypes } = require("sequelize");
 (async () => {
   try {
     await m.sequelize.authenticate();
@@ -13,13 +13,13 @@ const { QueryTypes } = require('sequelize');
        WHERE service_id IS NOT NULL
        GROUP BY service_id
        LIMIT 5`,
-      { type: QueryTypes.SELECT }
+      { type: QueryTypes.SELECT },
     );
 
-    console.log('\nAGG RAW:');
+    console.log("\nAGG RAW:");
     console.log(JSON.stringify(rows, null, 2));
   } catch (e) {
-    console.error('\nAGG ERR:');
+    console.error("\nAGG ERR:");
     console.error(e && e.stack ? e.stack : e);
     process.exit(1);
   }

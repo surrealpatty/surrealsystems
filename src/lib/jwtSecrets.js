@@ -1,5 +1,5 @@
 // src/lib/jwtSecrets.js
-'use strict';
+"use strict";
 
 /**
  * Returns an array of secrets to try for verification.
@@ -10,10 +10,10 @@
  * are "previous" secrets kept for verification during rotation.
  */
 function getJwtSecrets() {
-  const raw = process.env.JWT_SECRETS || process.env.JWT_SECRET || '';
+  const raw = process.env.JWT_SECRETS || process.env.JWT_SECRET || "";
   return raw
-    .split(',')
-    .map(s => String(s || '').trim())
+    .split(",")
+    .map((s) => String(s || "").trim())
     .filter(Boolean);
 }
 
