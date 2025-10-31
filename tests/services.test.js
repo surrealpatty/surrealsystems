@@ -1,6 +1,6 @@
 // tests/services.test.js
-const request = require('supertest');
-const { getApp, sequelize } = require('./testUtils');
+const request = require("supertest");
+const { getApp, sequelize } = require("./testUtils");
 
 let app;
 
@@ -16,23 +16,23 @@ afterAll(async () => {
   await sequelize.close();
 });
 
-describe('Services API', () => {
+describe("Services API", () => {
   let token;
   let userId;
 
   beforeEach(async () => {
     // create a user and get token
-    const username = 'svcuser';
-    const email = 'svcuser@example.com';
-    const password = 'password123';
+    const username = "svcuser";
+    const email = "svcuser@example.com";
+    const password = "password123";
 
     await request(app)
-      .post('/api/users/register')
+      .post("/api/users/register")
       .send({ username, email, password })
       .expect(201);
 
     const login = await request(app)
-      .post('/api/users/login')
+      .post("/api/users/login")
       .send({ email, password })
       .expect(200);
 
@@ -40,17 +40,21 @@ describe('Services API', () => {
     userId = login.body.user?.id;
   });
 
-  test('create, list, get, update, delete service', async () => {
+  test("create, list, get, update, delete service", async () => {
     // create
     const create = await request(app)
-      .post('/api/services')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ title: 'Test Service', description: 'Do the thing', price: '12.50' })
+      .post("/api/services")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        title: "Test Service",
+        description: "Do the thing",
+        price: "12.50",
+      })
       .expect(201);
 
     const svc = create.body.service;
     expect(svc).toBeDefined();
-    expect(svc.title).toBe('Test Service');
+    expect(svc.title).toBe("Test Service");
 
     const serviceId = svc.id;
 
@@ -59,9 +63,13 @@ describe('Services API', () => {
       .get(`/api/services?userId=${userId}`)
       .expect(200);
 
-    expect(Array.isArray(list.body.services || list.body.data?.services)).toBeTruthy();
-    const servicesList = (list.body.services || list.body.data?.services) || [];
-    expect(servicesList.find(s => Number(s.id) === Number(serviceId))).toBeTruthy();
+    expect(
+      Array.isArray(list.body.services || list.body.data?.services),
+    ).toBeTruthy();
+    const servicesList = list.body.services || list.body.data?.services || [];
+    expect(
+      servicesList.find((s) => Number(s.id) === Number(serviceId)),
+    ).toBeTruthy();
 
     // get by id
     const get = await request(app)
@@ -70,10 +78,10 @@ describe('Services API', () => {
     expect(get.body.service || get.body.data?.service).toBeDefined();
 
     // update
-    const newTitle = 'Updated Title';
+    const newTitle = "Updated Title";
     const upd = await request(app)
       .put(`/api/services/${serviceId}`)
-      .set('Authorization', `Bearer ${token}`)
+      .set("Authorization", `Bearer ${token}`)
       .send({ title: newTitle })
       .expect(200);
 
@@ -83,12 +91,10 @@ describe('Services API', () => {
     // delete
     await request(app)
       .delete(`/api/services/${serviceId}`)
-      .set('Authorization', `Bearer ${token}`)
+      .set("Authorization", `Bearer ${token}`)
       .expect(200);
 
     // ensure gone
-    await request(app)
-      .get(`/api/services/${serviceId}`)
-      .expect(404);
+    await request(app).get(`/api/services/${serviceId}`).expect(404);
   });
 });

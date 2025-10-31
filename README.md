@@ -19,14 +19,14 @@ Built with **Node.js, Express, Sequelize**, and **PostgreSQL**, it connects free
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|-------|-------------|
-| **Backend** | Node.js, Express |
-| **ORM** | Sequelize |
-| **Database** | PostgreSQL (Render-hosted, SSL enabled) |
-| **Frontend** | HTML, CSS, JavaScript |
-| **Authentication** | JWT (Bearer Tokens) |
-| **Utilities** | dotenv, body-parser, CORS |
+| Layer              | Technology                              |
+| ------------------ | --------------------------------------- |
+| **Backend**        | Node.js, Express                        |
+| **ORM**            | Sequelize                               |
+| **Database**       | PostgreSQL (Render-hosted, SSL enabled) |
+| **Frontend**       | HTML, CSS, JavaScript                   |
+| **Authentication** | JWT (Bearer Tokens)                     |
+| **Utilities**      | dotenv, body-parser, CORS               |
 
 ---
 
@@ -38,3 +38,4 @@ Built with **Node.js, Express, Sequelize**, and **PostgreSQL**, it connects free
 git clone https://github.com/surrealpatty/CodeCrowds.git
 cd CodeCrowds
 npm install
+```

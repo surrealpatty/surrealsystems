@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "allowJs": true,             // <--- allow JS files
-    "checkJs": false,            // optional, only check JS if true
+    "allowJs": true, // <--- allow JS files
+    "checkJs": false, // optional, only check JS if true
     "target": "ES2020",
     "module": "CommonJS",
     "rootDir": "src",

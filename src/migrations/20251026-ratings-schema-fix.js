@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 module.exports = {
   async up(queryInterface, Sequelize) {
@@ -8,18 +8,21 @@ module.exports = {
     try {
       // Columns (IF NOT EXISTS semantics via try/catch on addColumn)
       const add = async (name, def) => {
-        try { await qi.addColumn('ratings', name, def, { transaction: t }); } catch (_) {}
+        try {
+          await qi.addColumn("ratings", name, def, { transaction: t });
+        } catch (_) {}
       };
 
-      await add('service_id', { type: Sequelize.INTEGER, allowNull: true });
-      await add('rater_id',   { type: Sequelize.INTEGER, allowNull: true });
-      await add('ratee_id',   { type: Sequelize.INTEGER, allowNull: true });
-      await add('stars',      { type: Sequelize.INTEGER, allowNull: true });
-      await add('score',      { type: Sequelize.INTEGER, allowNull: true });
-      await add('comment',    { type: Sequelize.TEXT,    allowNull: true });
+      await add("service_id", { type: Sequelize.INTEGER, allowNull: true });
+      await add("rater_id", { type: Sequelize.INTEGER, allowNull: true });
+      await add("ratee_id", { type: Sequelize.INTEGER, allowNull: true });
+      await add("stars", { type: Sequelize.INTEGER, allowNull: true });
+      await add("score", { type: Sequelize.INTEGER, allowNull: true });
+      await add("comment", { type: Sequelize.TEXT, allowNull: true });
 
       // Backfill from user_id -> rater_id if present
-      await qi.sequelize.query(`
+      await qi.sequelize.query(
+        `
         DO $$
         BEGIN
           IF EXISTS (SELECT 1 FROM information_schema.columns
@@ -27,10 +30,13 @@ module.exports = {
             UPDATE ratings SET rater_id = COALESCE(rater_id, user_id) WHERE rater_id IS NULL;
           END IF;
         END$$;
-      `, { transaction: t });
+      `,
+        { transaction: t },
+      );
 
       // Backfill stars from rating or score
-      await qi.sequelize.query(`
+      await qi.sequelize.query(
+        `
         DO $$
         BEGIN
           IF EXISTS (SELECT 1 FROM information_schema.columns
@@ -40,22 +46,33 @@ module.exports = {
             UPDATE ratings SET stars = COALESCE(stars, score) WHERE stars IS NULL;
           END IF;
         END$$;
-      `, { transaction: t });
+      `,
+        { transaction: t },
+      );
 
-      await qi.sequelize.query(`
+      await qi.sequelize.query(
+        `
         UPDATE ratings SET stars = LEAST(5, GREATEST(1, stars)) WHERE stars IS NOT NULL;
-      `, { transaction: t });
+      `,
+        { transaction: t },
+      );
 
       // Partial unique index (ignore if already exists)
-      await qi.sequelize.query(`
+      await qi.sequelize.query(
+        `
         CREATE UNIQUE INDEX IF NOT EXISTS ratings_unique_rater_ratee
           ON ratings (rater_id, ratee_id)
           WHERE ratee_id IS NOT NULL;
-      `, { transaction: t });
+      `,
+        { transaction: t },
+      );
 
-      await qi.sequelize.query(`
+      await qi.sequelize.query(
+        `
         CREATE INDEX IF NOT EXISTS ratings_ratee_idx ON ratings (ratee_id);
-      `, { transaction: t });
+      `,
+        { transaction: t },
+      );
 
       await t.commit();
     } catch (e) {
@@ -66,7 +83,11 @@ module.exports = {
 
   async down(queryInterface, Sequelize) {
     // Non-destructive down: just drop the indexes (leave columns/data intact)
-    await queryInterface.sequelize.query(`DROP INDEX IF EXISTS ratings_unique_rater_ratee;`);
-    await queryInterface.sequelize.query(`DROP INDEX IF EXISTS ratings_ratee_idx;`);
-  }
+    await queryInterface.sequelize.query(
+      `DROP INDEX IF EXISTS ratings_unique_rater_ratee;`,
+    );
+    await queryInterface.sequelize.query(
+      `DROP INDEX IF EXISTS ratings_ratee_idx;`,
+    );
+  },
 };

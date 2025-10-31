@@ -3,7 +3,7 @@
 */
 
 /* -------------------- Theme variables -------------------- */
-:root{
+:root {
   --brand-a: #4e54c8;
   --brand-b: #00aaff;
   --accent: #ffc107;
@@ -13,13 +13,13 @@
   --card-bg: #ffffff;
   --card-text: #333333;
   --muted: #555555;
-  --glass: rgba(255,255,255,0.95);
+  --glass: rgba(255, 255, 255, 0.95);
 
   --radius-lg: 16px;
   --radius-md: 12px;
   --radius-sm: 8px;
-  --shadow-1: 0 8px 20px rgba(0,0,0,0.12);
-  --shadow-2: 0 12px 30px rgba(0,0,0,0.15);
+  --shadow-1: 0 8px 20px rgba(0, 0, 0, 0.12);
+  --shadow-2: 0 12px 30px rgba(0, 0, 0, 0.15);
   --transition-fast: 180ms;
 
   /* Computed focus color */
@@ -29,15 +29,18 @@
 /* -------------------- Global -------------------- */
 *,
 *::before,
-*::after { box-sizing: border-box; }
+*::after {
+  box-sizing: border-box;
+}
 
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
@@ -71,7 +74,8 @@ body {
 
 /* -------------------- Headings -------------------- */
 /* Ensure headings are white on the gradient */
-h1, h2 {
+h1,
+h2 {
   color: #fff;
   margin: 0 0 0.5rem;
   line-height: 1.1;
@@ -79,7 +83,7 @@ h1, h2 {
 
 /* header paragraph */
 header p {
-  color: rgba(255,255,255,0.95);
+  color: rgba(255, 255, 255, 0.95);
   margin: 0 0 1rem;
 }
 
@@ -94,7 +98,14 @@ header p {
   animation: spin 0.8s linear infinite;
   vertical-align: middle;
 }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
 
 /* -------------------- Fade-in -------------------- */
 .fade-in {
@@ -102,12 +113,25 @@ header p {
   transform: translateY(10px);
   animation: fadeIn 0.5s ease forwards;
 }
-@keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .spinner { animation: none; }
-  .fade-in { animation: none; transform: none; opacity: 1; }
-  * { transition: none !important; }
+  .spinner {
+    animation: none;
+  }
+  .fade-in {
+    animation: none;
+    transform: none;
+    opacity: 1;
+  }
+  * {
+    transition: none !important;
+  }
 }
 
 /* -------------------- Profile description -------------------- */
@@ -138,7 +162,10 @@ button {
   border-radius: var(--radius-sm);
   cursor: pointer;
   margin-top: 5px;
-  transition: transform var(--transition-fast) ease, opacity var(--transition-fast) ease, box-shadow var(--transition-fast) ease;
+  transition:
+    transform var(--transition-fast) ease,
+    opacity var(--transition-fast) ease,
+    box-shadow var(--transition-fast) ease;
   box-shadow: var(--shadow-1);
 }
 
@@ -146,7 +173,7 @@ button:hover,
 button:active {
   transform: translateY(-4px);
   opacity: 0.95;
-  box-shadow: 0 14px 32px rgba(0,0,0,0.14);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.14);
 }
 
 button:focus-visible {
@@ -157,12 +184,25 @@ button:focus-visible {
 }
 
 /* Variant buttons */
-.logout-btn { background-color: var(--danger); }
-.logout-btn:hover { background-color: #c30000; }
+.logout-btn {
+  background-color: var(--danger);
+}
+.logout-btn:hover {
+  background-color: #c30000;
+}
 
-.btn-success { background-color: var(--success); color: #fff; }
-.btn-info    { background-color: var(--info);    color: #fff; }
-.btn-warning { background-color: var(--accent);  color: #333; }
+.btn-success {
+  background-color: var(--success);
+  color: #fff;
+}
+.btn-info {
+  background-color: var(--info);
+  color: #fff;
+}
+.btn-warning {
+  background-color: var(--accent);
+  color: #333;
+}
 
 /* -------------------- Services Grid -------------------- */
 #services-list {
@@ -179,16 +219,30 @@ button:focus-visible {
   padding: 20px;
   box-shadow: var(--shadow-1);
   color: var(--card-text);
-  transition: transform 200ms ease, box-shadow 200ms ease;
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease;
   text-align: left;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
-.card:hover { transform: translateY(-6px); box-shadow: 0 18px 36px rgba(0,0,0,0.12); }
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.12);
+}
 
-.card h3 { margin: 0 0 8px; color: var(--brand-a); font-size: 1.1rem; }
-.card p { margin: 0; color: var(--muted); font-size: 0.95rem; word-break: break-word; }
+.card h3 {
+  margin: 0 0 8px;
+  color: var(--brand-a);
+  font-size: 1.1rem;
+}
+.card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  word-break: break-word;
+}
 
 /* -------------------- New Service Section -------------------- */
 #newServiceSection {
@@ -218,16 +272,26 @@ button:focus-visible {
   color: #fff;
   display: block;
   z-index: 100;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
   touch-action: manipulation;
 }
 
-#goToServicesBtn { background-color: var(--success); bottom: 160px; }
-#goToMessagesBtn { background-color: var(--info); bottom: 100px; }
-#addNewServiceBtn { background-color: var(--accent); color: #333; bottom: 40px; }
+#goToServicesBtn {
+  background-color: var(--success);
+  bottom: 160px;
+}
+#goToMessagesBtn {
+  background-color: var(--info);
+  bottom: 100px;
+}
+#addNewServiceBtn {
+  background-color: var(--accent);
+  color: #333;
+  bottom: 40px;
+}
 
 @media (max-width: 480px) {
   .floating-btn {
@@ -249,9 +313,9 @@ button:focus-visible {
   justify-content: space-around;
   padding: 10px 10px;
   gap: 6px;
-  background-color: rgba(255,255,255,0.95);
+  background-color: rgba(255, 255, 255, 0.95);
   z-index: 9999;
-  box-shadow: 0 -6px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.08);
 }
 .mobile-button-row button {
   flex: 1;
@@ -261,18 +325,31 @@ button:focus-visible {
   padding: 10px;
   background-color: var(--brand-a);
   color: #fff;
-  transition: transform var(--transition-fast), opacity var(--transition-fast);
+  transition:
+    transform var(--transition-fast),
+    opacity var(--transition-fast);
 }
-.mobile-button-row button:hover { transform: translateY(-4px); }
+.mobile-button-row button:hover {
+  transform: translateY(-4px);
+}
 
 /* -------------------- Utility classes -------------------- */
-.hidden { display: none !important; }
+.hidden {
+  display: none !important;
+}
 
 /* -------------------- Responsive tweaks -------------------- */
 @media (max-width: 480px) {
-  .floating-btn { display: none; }
-  .mobile-button-row { display: flex; }
-  button { font-size: 0.95rem; padding: 8px 14px; }
+  .floating-btn {
+    display: none;
+  }
+  .mobile-button-row {
+    display: flex;
+  }
+  button {
+    font-size: 0.95rem;
+    padding: 8px 14px;
+  }
 
   /* Reduce container padding a bit on small screens */
   .container {
@@ -305,27 +382,36 @@ button:focus-visible {
 /* Feature card — show on the gradient (transparent, white text) */
 /* Keep this after .card so it overrides white-card defaults on this page */
 .feature-card {
-  background: transparent;       /* allow gradient through */
+  background: transparent; /* allow gradient through */
   border-radius: var(--radius-md);
   padding: 18px;
   box-shadow: none;
-  color: rgba(255,255,255,0.95);
+  color: rgba(255, 255, 255, 0.95);
   text-align: left;
 }
-.feature-card h3 { color: #fff; }
-.feature-card p  { color: rgba(255,255,255,0.9); }
+.feature-card h3 {
+  color: #fff;
+}
+.feature-card p {
+  color: rgba(255, 255, 255, 0.9);
+}
 
 /* Login card — subtle translucent panel so login remains readable */
 .login-container {
   width: 360px;
   margin: 0 auto;
-  background: rgba(255,255,255,0.06); /* faint panel so gradient is visible */
+  background: rgba(
+    255,
+    255,
+    255,
+    0.06
+  ); /* faint panel so gradient is visible */
   padding: 18px;
   border-radius: var(--radius-md);
   box-shadow: none;
   text-align: left;
   color: #fff;
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* Inputs inside login card — translucent with white text */
@@ -335,29 +421,37 @@ button:focus-visible {
   padding: 10px 12px;
   margin-bottom: 10px;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(255,255,255,0.18);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   font-size: 1rem;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
   color: #fff;
   outline: none;
 }
 
 /* subtle focus styles for login inputs */
 .login-container input:focus {
-  box-shadow: 0 0 0 3px rgba(204,238,255,0.14);
-  border-color: rgba(204,238,255,0.5);
+  box-shadow: 0 0 0 3px rgba(204, 238, 255, 0.14);
+  border-color: rgba(204, 238, 255, 0.5);
 }
 
 /* Message area (error/success) */
-.message { color: var(--danger); min-height: 1.25em; margin-bottom: 8px; }
+.message {
+  color: var(--danger);
+  min-height: 1.25em;
+  margin-bottom: 8px;
+}
 
 /* Links */
-.login-container a { color: #fff; text-decoration: underline; }
+.login-container a {
+  color: #fff;
+  text-decoration: underline;
+}
 
 /* tiny accessibility helper for labels hidden visually but still available to screen readers */
 .visually-hidden {
   position: absolute !important;
-  height: 1px; width: 1px;
+  height: 1px;
+  width: 1px;
   overflow: hidden;
   clip: rect(1px, 1px, 1px, 1px);
   white-space: nowrap;
@@ -365,6 +459,11 @@ button:focus-visible {
 
 /* Responsive: make login card full width on small screens */
 @media (max-width: 480px) {
-  .login-container { width: 100%; padding: 14px; }
-  .features { grid-template-columns: 1fr; }
+  .login-container {
+    width: 100%;
+    padding: 14px;
+  }
+  .features {
+    grid-template-columns: 1fr;
+  }
 }
