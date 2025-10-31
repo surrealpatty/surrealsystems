@@ -1,4 +1,4 @@
-@'
+﻿@'
 node_modules/
 .env
 dist/
@@ -6,4 +6,4 @@ coverage/
 npm-debug.log
 .DS_Store
 '@ | Set-Content -Path .gitignore -Encoding utf8
- .env
+.env
