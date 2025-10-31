@@ -1,5 +1,8 @@
+@'
+node_modules/
 .env
-.env.*
-node_modules
-dist
-build
+dist/
+coverage/
+npm-debug.log
+.DS_Store
+'@ | Set-Content -Path .gitignore -Encoding utf8
