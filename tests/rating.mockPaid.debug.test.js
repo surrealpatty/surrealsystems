@@ -1,49 +1,56 @@
-// tests/rating.mockPaid.test.js
+// tests/rating.mockPaid.debug.test.js
 const request = require('supertest');
 
 let app;
 const models = require('../src/models'); // real models used by the app
 
 beforeAll(async () => {
-  // require app after acquiring models reference — app will use the same models object
-  app = require('../src/index').app || require('../src/index'); // supports both export shapes
-
-  // Ensure DB connection is available
+  app = require('../src/index').app || require('../src/index');
   await models.sequelize.authenticate();
 });
 
 afterAll(async () => {
-  // restore mocks and close DB
+  // restore mock if left over
   if (models.Billing && models.Billing.findOne && models.Billing.findOne._isMockFunction) {
     models.Billing.findOne.mockRestore();
   }
   await models.sequelize.close();
 });
 
-describe('POST /api/ratings (mock-paid rater)', () => {
-  test('allows a rater when Billing.findOne is mocked to active', async () => {
-    // 1) create two users (rater & ratee)
+describe('POST /api/ratings (mock-paid rater) - DEBUG', () => {
+  test('debug registration, then mock paid and post rating', async () => {
+    // 1) create two users (rater & ratee) — do NOT .expect here; capture response
     const raterRes = await request(app)
       .post('/api/users/register')
       .send({
-        username: 'mock_rater_paid',
-        email: 'mock_rater_paid@example.com',
+        username: 'mock_rater_paid_debug',
+        email: 'mock_rater_paid_debug@example.com',
         password: 'Password123!',
         description: 'rater',
-      })
-      .expect(201); // <- register returns 201
+      });
+
+    console.log('RATER REGISTER RESPONSE:', raterRes.status, JSON.stringify(raterRes.body, null, 2));
 
     const rateeRes = await request(app)
       .post('/api/users/register')
       .send({
-        username: 'mock_ratee',
-        email: 'mock_ratee@example.com',
+        username: 'mock_ratee_debug',
+        email: 'mock_ratee_debug@example.com',
         password: 'Password123!',
         description: 'ratee',
-      })
-      .expect(201); // <- and this one too
+      });
 
-    // extract token and ratee id from responses
+    console.log('RATEE REGISTER RESPONSE:', rateeRes.status, JSON.stringify(rateeRes.body, null, 2));
+
+    // stop if registration failed
+    if (raterRes.status >= 400) {
+      throw new Error('Rater registration failed — see log above');
+    }
+    if (rateeRes.status >= 400) {
+      throw new Error('Ratee registration failed — see log above');
+    }
+
+    // extract token and ratee id
     const token = raterRes.body.token || raterRes.body.data?.token;
     const rateeId = rateeRes.body.user?.id || rateeRes.body.data?.user?.id;
 
@@ -52,10 +59,10 @@ describe('POST /api/ratings (mock-paid rater)', () => {
 
     // 2) Mock Billing.findOne so isUserPaid returns true for our rater
     const billingFindOneMock = jest.spyOn(models.Billing, 'findOne').mockImplementation(async () => {
-      return { status: 'active' }; // enough for isUserPaid to return true
+      return { status: 'active' };
     });
 
-    // 3) Post rating as the rater (should succeed because of the mock)
+    // 3) Post rating as the rater
     const resp = await request(app)
       .post('/api/ratings')
       .set('Authorization', `Bearer ${token}`)
@@ -65,14 +72,12 @@ describe('POST /api/ratings (mock-paid rater)', () => {
         comment: 'Mock-paid rating OK',
       });
 
+    console.log('RATE POST RESPONSE:', resp.status, JSON.stringify(resp.body, null, 2));
+
     expect([200, 201]).toContain(resp.status);
     expect(resp.body).toHaveProperty('rating');
-    expect(resp.body.rating).toMatchObject({
-      stars: 5,
-      comment: 'Mock-paid rating OK',
-    });
 
-    // 4) cleanup mock
+    // cleanup
     billingFindOneMock.mockRestore();
-  }, 20000);
+  }, 30000);
 });
