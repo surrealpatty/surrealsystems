@@ -73,3 +73,6 @@ describe('POST /api/ratings (mock-paid rater)', () => {
     billingFindOneMock.mockRestore();
   }, 20000);
 });
+
+// CHORE: small edit to trigger PR
+
