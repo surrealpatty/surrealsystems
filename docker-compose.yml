@@ -1,13 +1,13 @@
-﻿  web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    environment:
-      DATABASE_URL: postgres://codecrowds:pass@db:5432/codecrowds
-    ports:
-      - "10000:10000"
-    depends_on:
-      - db
-    entrypoint: ["sh", "/app/docker-entrypoint.sh"]
+﻿web:
+  build:
+    context: .
+    dockerfile: Dockerfile
+  env_file:
+    - .env
+  environment:
+    DATABASE_URL: postgres://codecrowds:pass@db:5432/codecrowds
+  ports:
+    - '10000:10000'
+  depends_on:
+    - db
+  entrypoint: ['sh', '/app/docker-entrypoint.sh']

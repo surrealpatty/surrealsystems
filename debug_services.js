@@ -13,17 +13,17 @@ const models = require('./src/models');
     // Raw SQL rows
     const raw = await sequelize.query(
       'SELECT id, user_id, title, created_at FROM services ORDER BY created_at DESC LIMIT 20',
-      { type: QueryTypes.SELECT }
+      { type: QueryTypes.SELECT },
     );
     console.log('== Raw services rows (DB columns) ==');
     console.log(JSON.stringify(raw, null, 2), '\n');
 
     // Query referenced user_ids
-    const userIds = Array.from(new Set(raw.map(r => r.user_id).filter(Boolean)));
+    const userIds = Array.from(new Set(raw.map((r) => r.user_id).filter(Boolean)));
     if (userIds.length) {
       const users = await sequelize.query(
         `SELECT id, username, email FROM users WHERE id IN (${userIds.join(',')})`,
-        { type: QueryTypes.SELECT }
+        { type: QueryTypes.SELECT },
       );
       console.log('== Users referenced by services ==');
       console.log(JSON.stringify(users, null, 2), '\n');
@@ -36,15 +36,15 @@ const models = require('./src/models');
     const orm = await models.Service.findAll({
       limit: 20,
       include: [{ model: models.User, as: 'owner', attributes: ['id', 'username'] }],
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC']],
     });
 
-    const ormPlain = orm.map(s => ({
+    const ormPlain = orm.map((s) => ({
       id: s.id,
       userId: s.userId,
       title: s.title,
       createdAt: s.createdAt,
-      owner: s.owner ? { id: s.owner.id, username: s.owner.username } : null
+      owner: s.owner ? { id: s.owner.id, username: s.owner.username } : null,
     }));
     console.log(JSON.stringify(ormPlain, null, 2), '\n');
 
@@ -53,7 +53,9 @@ const models = require('./src/models');
     process.exit(0);
   } catch (err) {
     console.error('DEBUG ERROR:', err && err.stack ? err.stack : err);
-    try { await sequelize.close(); } catch(e) {}
+    try {
+      await sequelize.close();
+    } catch (e) {}
     process.exit(1);
   }
 })();
