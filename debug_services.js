@@ -1,31 +1,59 @@
-// debug_query.js
-const models = require('./src/models');
-const { sequelize } = models;
+// debug_services.js
+require('dotenv').config();
+const { sequelize } = require('./src/config/database');
 const { QueryTypes } = require('sequelize');
+const models = require('./src/models');
 
 (async () => {
   try {
-    const sql =
-      'SELECT "Service"."id", "Service"."userId", "Service"."title", "Service"."description", "Service"."price", "Service"."created_at" AS "createdAt", "Service"."updated_at" AS "updatedAt", "owner"."id" AS "owner.id", "owner"."username" AS "owner.username" FROM "services" AS "Service" LEFT OUTER JOIN "users" AS "owner" ON "Service"."userId" = "owner"."id" ORDER BY "createdAt" DESC LIMIT 20;';
-    console.log('=== RUNNING RAW SQL ===\n', sql, '\n=======================');
-    const rows = await sequelize.query(sql, { type: QueryTypes.SELECT });
-    console.log('RAW QUERY RESULT:\n', JSON.stringify(rows, null, 2));
-  } catch (e) {
-    console.error('---- FULL ERROR START ----');
-    console.error('error.name:', e && e.name);
-    console.error('error.message:', e && e.message);
-    console.error('error.stack:', e && e.stack);
-    console.error('error.sql:', e && e.sql);
-    // Sequelize wraps native error in `original`
-    console.error(
-      'error.original:',
-      e && e.original && (e.original.code ? JSON.stringify(e.original) : e.original.message),
+    console.log('== DEBUG: connecting to DB with sequelize ==');
+    await sequelize.authenticate();
+    console.log('✅ DB connected (sequelize.authenticate OK)\n');
+
+    // Raw SQL rows
+    const raw = await sequelize.query(
+      'SELECT id, user_id, title, created_at FROM services ORDER BY created_at DESC LIMIT 20',
+      { type: QueryTypes.SELECT }
     );
-    console.error('---- FULL ERROR END ----');
-  } finally {
-    try {
-      await sequelize.close();
-    } catch (e) {}
-    process.exit();
+    console.log('== Raw services rows (DB columns) ==');
+    console.log(JSON.stringify(raw, null, 2), '\n');
+
+    // Query referenced user_ids
+    const userIds = Array.from(new Set(raw.map(r => r.user_id).filter(Boolean)));
+    if (userIds.length) {
+      const users = await sequelize.query(
+        `SELECT id, username, email FROM users WHERE id IN (${userIds.join(',')})`,
+        { type: QueryTypes.SELECT }
+      );
+      console.log('== Users referenced by services ==');
+      console.log(JSON.stringify(users, null, 2), '\n');
+    } else {
+      console.log('No user_id values found in those service rows.\n');
+    }
+
+    // ORM query (Sequelize + association) — show owner if attached
+    console.log('== ORM result: Service.findAll(...) with owner association ==');
+    const orm = await models.Service.findAll({
+      limit: 20,
+      include: [{ model: models.User, as: 'owner', attributes: ['id', 'username'] }],
+      order: [['createdAt', 'DESC']]
+    });
+
+    const ormPlain = orm.map(s => ({
+      id: s.id,
+      userId: s.userId,
+      title: s.title,
+      createdAt: s.createdAt,
+      owner: s.owner ? { id: s.owner.id, username: s.owner.username } : null
+    }));
+    console.log(JSON.stringify(ormPlain, null, 2), '\n');
+
+    console.log('== DONE ==');
+    await sequelize.close();
+    process.exit(0);
+  } catch (err) {
+    console.error('DEBUG ERROR:', err && err.stack ? err.stack : err);
+    try { await sequelize.close(); } catch(e) {}
+    process.exit(1);
   }
 })();

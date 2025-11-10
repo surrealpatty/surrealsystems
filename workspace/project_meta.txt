@@ -1,0 +1,3 @@
+﻿C:\Users\Patty\Desktop\Surreal Systems\CodeCrowds\package.json
+C:\Users\Patty\Desktop\Surreal Systems\CodeCrowds\package-lock.json
+C:\Users\Patty\Desktop\Surreal Systems\CodeCrowds\.env

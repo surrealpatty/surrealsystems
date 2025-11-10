@@ -4,19 +4,19 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('ratings', {
       id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
-      serviceId: {
+      service_id: {
         type: Sequelize.INTEGER,
         allowNull: true,
         references: { model: 'services', key: 'id' },
         onDelete: 'SET NULL',
       },
-      raterId: {
+      rater_id: {
         type: Sequelize.INTEGER,
         allowNull: true,
         references: { model: 'users', key: 'id' },
         onDelete: 'CASCADE',
       },
-      rateeId: {
+      ratee_id: {
         type: Sequelize.INTEGER,
         allowNull: true,
         references: { model: 'users', key: 'id' },
@@ -37,12 +37,11 @@ module.exports = {
       },
     });
 
-    // Use camelCase column names here to match model (underscored: false)
-    await queryInterface.addIndex('ratings', ['raterId', 'rateeId'], {
+    await queryInterface.addIndex('ratings', ['rater_id', 'ratee_id'], {
       unique: true,
       name: 'ratings_unique_rater_ratee',
       where: {
-        rateeId: { [Sequelize.Op.ne]: null },
+        ratee_id: { [Sequelize.Op.ne]: null },
       },
     });
 

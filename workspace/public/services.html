@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Services - CodeCrowds</title>
+
+    <!-- Page CSS (external file only) -->
+    <link rel="stylesheet" href="services.css" />
+
+    <!-- Init MUST run before script.js so API_URL is set -->
+    <script src="init.js" defer></script>
+
+    <!-- Shared helpers (apiFetch, etc.) -->
+    <script src="script.js" defer></script>
+
+    <!-- Page-specific JS -->
+    <script src="services.js" defer></script>
+  </head>
+  <body>
+    <div id="diagBanner"><span id="diagMsg"></span></div>
+
+    <div class="container">
+      <h1>All Services</h1>
+      <p class="subtle">
+        Browse everything users are offering across CodeCrowds.
+      </p>
+
+      <div
+        class="controls"
+        role="group"
+        aria-label="Service search and sorting"
+      >
+        <label class="sr-only" for="search">Search services</label>
+        <input
+          id="search"
+          placeholder="Search services…"
+          aria-describedby="searchHelp"
+        />
+        <span id="searchHelp" class="sr-only"
+          >Type to filter services by title, description, or username</span
+        >
+
+        <label class="sr-only" for="sort">Sort services</label>
+        <select id="sort" title="Sort services">
+          <option value="newest">Newest</option>
+          <option value="priceLow">Price: Low → High</option>
+          <option value="priceHigh">Price: High → Low</option>
+        </select>
+      </div>
+
+      <div id="services-list" aria-live="polite">
+        <p><span class="spinner"></span> Loading services…</p>
+      </div>
+
+      <!-- Compose Message Modal -->
+      <div
+        id="messageModal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="messageTitle"
+        aria-hidden="true"
+      >
+        <div class="modal-content" role="document">
+          <h2 id="messageTitle">Message <span id="messageRecipient"></span></h2>
+
+          <div class="field-wrap">
+            <textarea
+              id="messageContent"
+              placeholder="Write your message…"
+              maxlength="2000"
+              aria-label="Message body"
+            ></textarea>
+          </div>
+
+          <p id="sendError" class="error" aria-live="polite" hidden></p>
+
+          <div class="modal-meta">
+            <span id="charCount" aria-live="polite">0 / 2000</span>
+          </div>
+          <div class="modal-actions">
+            <button type="button" id="sendMessageBtn">Send</button>
+            <button
+              type="button"
+              id="cancelMessageBtn"
+              class="button-secondary"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions-row">
+        <button
+          type="button"
+          id="goToProfileBtn"
+          class="button-secondary"
+          aria-label="Back to your profile"
+        >
+          Back to Profile
+        </button>
+        <button
+          type="button"
+          id="refreshBtn"
+          aria-label="Refresh services list"
+        >
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+﻿public\app.js
+public\index.html
+public\messages.html
+public\profile.css
+public\profile.html
+public\profile.js
+public\register.css
+public\register.html
+public\script.js
+public\services.css
+public\services.html
+public\style.css

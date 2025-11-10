@@ -1,28 +1,13 @@
-services:
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_USER: codecrowds
-      POSTGRES_PASSWORD: pass
-      POSTGRES_DB: codecrowds
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    ports:
-      - '5432:5432'
-
-  web:
+﻿  web:
     build:
       context: .
       dockerfile: Dockerfile
     env_file:
       - .env
     environment:
-      # When using docker-compose for DB, point the app at the "db" service
       DATABASE_URL: postgres://codecrowds:pass@db:5432/codecrowds
     ports:
-      - '10000:10000'
+      - "10000:10000"
     depends_on:
       - db
-
-volumes:
-  db_data:
+    entrypoint: ["sh", "/app/docker-entrypoint.sh"]

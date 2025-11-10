@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CodeCrowds - Showcase & Sell Your Skills</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container fade-in">
+      <header>
+        <h1><span class="brand">CodeCrowds</span></h1>
+        <p>
+          Showcase your coding skills, offer services, and connect with clients
+          worldwide. Join a community where talent meets opportunity!
+        </p>
+      </header>
+
+      <main>
+        <section class="features" aria-label="Highlights">
+          <article class="feature-card card">
+            <h3>Offer Your Services</h3>
+            <p>
+              Create posts to sell your coding skills and get noticed by clients
+              worldwide.
+            </p>
+          </article>
+
+          <article class="feature-card card">
+            <h3>Connect & Collaborate</h3>
+            <p>
+              Rate and interact with other developers, build credibility, and
+              grow your network.
+            </p>
+          </article>
+
+          <article class="feature-card card">
+            <h3>Ad-Free & Premium</h3>
+            <p>
+              Upgrade to premium for extra features like ad-free experience,
+              lower fees, and more visibility.
+            </p>
+          </article>
+        </section>
+
+        <aside class="login-container" aria-labelledby="login-heading">
+          <h2 id="login-heading">Login</h2>
+          <form id="loginForm" novalidate>
+            <label for="loginEmail" class="visually-hidden">Email</label>
+            <input
+              id="loginEmail"
+              type="email"
+              placeholder="Email"
+              autocomplete="username"
+              required
+            />
+            <label for="loginPassword" class="visually-hidden">Password</label>
+            <input
+              id="loginPassword"
+              type="password"
+              placeholder="Password"
+              autocomplete="current-password"
+              required
+            />
+            <button type="submit" class="btn">Login</button>
+          </form>
+
+          <p
+            id="loginMessage"
+            class="message"
+            role="status"
+            aria-live="polite"
+          ></p>
+          <p>Don't have an account? <a href="register.html">Sign up here</a></p>
+        </aside>
+      </main>
+
+      <footer>
+        &copy; <span id="year"></span> CodeCrowds. All rights reserved.
+      </footer>
+    </div>
+
+    <!-- Init (external to avoid CSP inline-script blocking) -->
+    <script src="init.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

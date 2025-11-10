@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile - CodeCrowds (Diag)</title>
+    <link rel="stylesheet" href="profile.css" />
+
+    <style>
+      .hidden {
+        display: none;
+      }
+      .spinner {
+        display: inline-block;
+      }
+      .muted {
+        color: #666;
+      }
+      .card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+        margin-bottom: 12px;
+      }
+      .floating-btn {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        border-radius: 999px;
+        padding: 10px 14px;
+      }
+      #diagBanner {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: #b91c1c;
+        color: #fff;
+        padding: 10px 14px;
+        font:
+          500 14px/1.4 system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          sans-serif;
+        z-index: 999999;
+      }
+      #diagBanner .muted {
+        color: #ffe2e2;
+      }
+      body {
+        padding-top: 0;
+      }
+    </style>
+
+    <!-- shared helpers -->
+    <script src="script.js" defer></script>
+
+    <!-- profile client logic -->
+    <script src="profile.js" defer></script>
+  </head>
+  <body>
+    <div id="diagBanner" class="hidden"></div>
+
+    <main class="container">
+      <header>
+        <h1 id="profile-username">
+          <span class="spinner"></span> Loading username...
+        </h1>
+        <p id="profile-description">
+          <span class="spinner"></span> Loading description...
+        </p>
+        <div id="descControls" class="hidden">
+          <button type="button" id="editDescBtn">Edit Description</button>
+        </div>
+      </header>
+
+      <section>
+        <h2>User's Services</h2>
+        <p class="section-subtle">These also appear on the Services page.</p>
+        <div id="services-list">
+          <p><span class="spinner"></span> Loading services...</p>
+        </div>
+        <div class="row row-center row-gap-8 justify-center">
+          <button type="button" id="loadMoreServicesBtn" class="hidden">
+            Load more
+          </button>
+        </div>
+        <div id="newServiceSection" class="new-service hidden">
+          <input type="text" id="newServiceTitle" placeholder="Service Title" />
+          <textarea
+            id="newServiceDesc"
+            placeholder="Service Description"
+          ></textarea>
+          <input
+            type="number"
+            id="newServicePrice"
+            placeholder="Price in USD"
+          />
+          <button type="button" id="createServiceBtn">Create Service</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Ratings & Reviews</h2>
+        <div id="ratings-summary" class="card">
+          <p>
+            <strong><span id="avg-stars">0.0</span> / 5.0</strong> •
+            <span id="ratings-count">0</span> ratings
+          </p>
+        </div>
+
+        <div id="rate-form" class="card hidden" aria-labelledby="rateFormTitle">
+          <h3 id="rateFormTitle">Leave a rating</h3>
+          <div class="row row-center row-gap-8">
+            <label for="rateStars">Stars</label>
+            <select id="rateStars" title="Select stars">
+              <option value="5">5</option>
+              <option value="4">4</option>
+              <option value="3">3</option>
+              <option value="2">2</option>
+              <option value="1">1</option>
+            </select>
+          </div>
+          <textarea
+            id="rateComment"
+            class="w-full"
+            placeholder="Say something helpful (optional)"
+            rows="3"
+          ></textarea>
+          <button type="button" id="submitRatingBtn">Submit Rating</button>
+          <p id="rateMsg" class="muted"></p>
+          <div id="rateUpgradeHint" class="hidden muted">
+            Rating is a paid feature.
+            <button type="button" id="upgradeInlineBtn" class="upgrade-btn">
+              Upgrade to Paid
+            </button>
+          </div>
+        </div>
+
+        <div id="ratings-list" class="review-list">
+          <p><span class="spinner"></span> Loading ratings...</p>
+        </div>
+      </section>
+
+      <div class="row row-center row-gap-8 justify-center">
+        <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
+        <button type="button" id="upgradeBtn" class="upgrade-btn hidden">
+          Upgrade to Paid
+        </button>
+      </div>
+    </main>
+
+    <!-- Floating shortcuts (only on your own profile) -->
+    <button type="button" class="floating-btn hidden" id="goToServicesBtn">
+      Services
+    </button>
+    <button type="button" class="floating-btn hidden" id="goToMessagesBtn">
+      Messages
+    </button>
+    <button type="button" class="floating-btn hidden" id="addNewServiceBtn">
+      + Service
+    </button>
+    <button type="button" class="floating-btn hidden" id="editDescBtnFloat">
+      Edit Bio
+    </button>
+
+    <!-- Back to my profile (visible only when viewing someone else) -->
+    <button type="button" class="floating-btn hidden" id="backToMyProfileBtn">
+      ← My Profile
+    </button>
+
+    <nav
+      class="mobile-button-row hidden"
+      id="mobileRow"
+      aria-label="Mobile actions"
+    >
+      <button type="button" id="mobileServicesBtn">Services</button>
+      <button type="button" id="mobileMessagesBtn">Messages</button>
+      <button type="button" id="mobileAddServiceBtn">+ Service</button>
+      <button type="button" id="mobileBackBtn" class="hidden">
+        My Profile
+      </button>
+    </nav>
+  </body>
+</html>

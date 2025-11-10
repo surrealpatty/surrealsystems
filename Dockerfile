@@ -1,27 +1,32 @@
-# Dockerfile for CodeCrowds
+﻿# Dockerfile for CodeCrowds (production-friendly, installs dev deps at build time)
 FROM node:20-alpine
 
 WORKDIR /app
 
-ENV NODE_ENV=production
-ENV PORT=10000
+# Install build-time dependencies (including devDeps such as sequelize-cli)
+# Use npm_config_production=false to ensure devDependencies are installed during the build.
+# We temporarily set NODE_ENV to development during install and switch to production for runtime.
+ENV npm_config_production=false
 
-# copy package files and install (including dev deps so sequelize-cli is available)
+# Copy package files and install
 COPY package*.json ./
-
 RUN npm ci --silent
 
-# copy app source
+# Copy app source
 COPY . .
 
 # Fix CRLF if files were edited on Windows and make the entrypoint executable
 RUN if [ -f ./docker-entrypoint.sh ]; then sed -i 's/\r$//' ./docker-entrypoint.sh || true && chmod +x ./docker-entrypoint.sh; fi
 
-# Expose app port
+# Now set production runtime vars
+ENV NODE_ENV=production
+ENV PORT=10000
+
 EXPOSE 10000
 
-# Switch to non-root node user (node image provides a 'node' user)
+# Use non-root user for runtime (node user provided by official image)
 USER node
 
-# Entrypoint will handle migrations then start the app
-ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
+# Default CMD (can be overridden by docker-compose or CLI)
+CMD ["node", "src/index.js"]

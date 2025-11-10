@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "allowJs": true, // <--- allow JS files
+    "checkJs": false, // optional, only check JS if true
+    "target": "ES2020",
+    "module": "CommonJS",
+    "rootDir": "src",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

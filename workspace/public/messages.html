@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Messages - CodeCrowds</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="messages.css" />
+  </head>
+  <body>
+    <main class="container" role="main" aria-labelledby="messages-title">
+      <h1 id="messages-title">Your Messages</h1>
+
+      <nav class="tabbar" role="navigation" aria-label="Messages view">
+        <button id="inboxBtn" class="tab active" aria-pressed="true">
+          Received
+        </button>
+        <button id="sentBtn" class="tab" aria-pressed="false">Sent</button>
+        <button id="goBackBtn" class="tab">Back to Profile</button>
+      </nav>
+
+      <section id="messages-list" class="messages-list" aria-live="polite">
+        <p class="loading">Loading messages…</p>
+      </section>
+    </main>
+
+    <script src="messages.js" defer></script>
+  </body>
+</html>
