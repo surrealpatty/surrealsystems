@@ -1,8 +1,9 @@
-﻿/* eslint-disable no-unused-vars */
-/* eslint-disable no-console, node/no-extraneous-require, node/no-missing-require, no-process-exit */
+﻿/* eslint-disable no-console, node/no-extraneous-require, node/no-missing-require, no-process-exit */
 // src/sync.js
 const sequelize = require('./config/database');
+/* eslint-disable-next-line no-unused-vars */
 const { User } = require('./models/User');
+/* eslint-disable-next-line no-unused-vars */
 const { Service } = require('./models/Service');
 
 (async () => {
