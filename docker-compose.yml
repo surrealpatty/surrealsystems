@@ -1,13 +1,44 @@
-﻿web:
-  build:
-    context: .
-    dockerfile: Dockerfile
-  env_file:
-    - .env
-  environment:
-    DATABASE_URL: postgres://codecrowds:pass@db:5432/codecrowds
-  ports:
-    - '10000:10000'
-  depends_on:
-    - db
-  entrypoint: ['sh', '/app/docker-entrypoint.sh']
+﻿version: "3.8"
+
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: codecrowds_test
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+    depends_on:
+      db:
+        condition: service_healthy
+    # Mount your host entrypoint (the cleaned file) so the container uses it.
+    # On Windows PowerShell, ${PWD} works; compose will expand it.
+    volumes:
+      - ./:/app:cached
+      - ./docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
+    environment:
+      NODE_ENV: development         # dev mode so local Postgres doesn't require SSL
+      DATABASE_URL: postgres://postgres:postgres@db:5432/codecrowds_test
+      JWT_SECRETS: testsecret
+      CORS_ALLOWED_ORIGINS: http://localhost:3000
+      ENABLE_PAYMENTS: "false"
+    ports:
+      - "10002:10000"
+    entrypoint: ["sh","./docker-entrypoint.sh"]
+    restart: on-failure
+
+volumes:
+  db_data:
