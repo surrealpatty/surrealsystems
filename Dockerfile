@@ -16,7 +16,11 @@ RUN npm ci --silent
 COPY . .
 
 # Fix CRLF if files were edited on Windows and make the entrypoint executable
-RUN if [ -f ./docker-entrypoint.sh ]; then sed -i 's/\r$//' ./docker-entrypoint.sh || true && chmod +x ./docker-entrypoint.sh; fi
+RUN if [ -f ./docker-entrypoint.sh ]; then sed -i 's/RUN if [ -f ./docker-entrypoint.sh ]; then \
+  echo "Cleaning entrypoint: remove BOM (if present), normalize CRLF->LF, chmod +x"; \
+  node -e "const fs=require('fs');let b=fs.readFileSync('docker-entrypoint.sh'); if(b[0]==0xEF && b[1]==0xBB && b[2]==0xBF) b=b.slice(3); let s=b.toString('utf8').replace(/\r\n/g,'\n'); fs.writeFileSync('docker-entrypoint.sh',s);" ; \
+  chmod +x docker-entrypoint.sh; \
+fir$//' ./docker-entrypoint.sh || true && chmod +x ./docker-entrypoint.sh; fi
 
 # Now set production runtime vars
 ENV NODE_ENV=production
