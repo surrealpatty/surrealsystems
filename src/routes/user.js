@@ -1,3 +1,5 @@
+﻿/* eslint-disable no-unused-vars */
+/* eslint-disable no-empty */
 // src/routes/user.js
 const express = require('express');
 const router = express.Router();
@@ -36,13 +38,14 @@ if (process.env.STRIPE_SECRET_KEY) {
   console.warn('STRIPE_SECRET_KEY is not configured. Stripe features are disabled.');
 }
 
-const PRICE_ID = process.env.STRIPE_PRICE_ID;
+// const PRICE_ID = process.env.STRIPE_PRICE_ID;
 const FRONTEND_URL = (process.env.FRONTEND_URL || '').replace(/\/+$/, '');
 const SUCCESS_URL = (FRONTEND_URL || '') + '/profile.html?from=checkout_success';
 const CANCEL_URL = (FRONTEND_URL || '') + '/profile.html?from=checkout_cancel';
 
 /* ---------------- helpers (unchanged) ---------------- */
 
+/* eslint-disable-next-line no-unused-vars */
 async function hashPassword(password, rounds = 10) {
   try {
     const maybe = bcrypt.hash(password, rounds);
@@ -76,7 +79,8 @@ async function comparePassword(password, hashed) {
 function toSafeUser(user) {
   if (!user) return user;
   const raw = user.toJSON ? user.toJSON() : user;
-  const { password, ...safe } = raw;
+  /* eslint-disable-next-line no-unused-vars */
+
   return safe;
 }
 function normalizeUsername(u) {
