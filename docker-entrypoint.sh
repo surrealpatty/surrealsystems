@@ -1,4 +1,4 @@
-﻿#!/bin/sh
+#!/bin/sh
 set -e
 
 # This entrypoint will attempt to run migrations (retrying while DB boots),

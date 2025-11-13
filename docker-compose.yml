@@ -1,4 +1,4 @@
-﻿version: "3.8"
+version: "3.8"
 
 services:
   db:
@@ -38,6 +38,7 @@ services:
     ports:
       - "10002:10000"
     entrypoint: ["sh","./docker-entrypoint.sh"]
+    command: ["node","src/index.js"]
     restart: on-failure
 
 volumes:
