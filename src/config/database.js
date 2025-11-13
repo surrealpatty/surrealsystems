@@ -2,11 +2,6 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-// Temporary small test: in production, if DB_REQUIRE_SSL is not set, force it to 'true'.
-// This is a minimal, reversible diagnostic to ensure the client uses SSL for managed Postgres.
-if (process.env.NODE_ENV === 'production' && !process.env.DB_REQUIRE_SSL)
-  process.env.DB_REQUIRE_SSL = 'true';
-
 const baseOpts = {
   dialect: 'postgres',
   logging: process.env.SQL_LOG === 'true' ? console.log : false,
@@ -23,8 +18,6 @@ const baseOpts = {
   },
 
   // IMPORTANT: Use camelCase timestamp and foreign key names to match existing DB.
-  // If you prefer snake_case DB columns (created_at) then set underscored: true
-  // but your current DB uses `createdAt` / `updatedAt`.
   define: {
     underscored: false,
   },
@@ -33,9 +26,6 @@ const baseOpts = {
 /**
  * Helper to enable SSL when explicitly requested or when the DATABASE_URL
  * indicates sslmode=require.
- *
- * We DO NOT force SSL simply because NODE_ENV === 'production' — forcing SSL
- * for all production runs can terminate connections for DBs that do not use SSL.
  *
  * Enable SSL by setting DB_REQUIRE_SSL=true (or 1/yes), or include
  * sslmode=require in your DATABASE_URL (common on some managed PG providers).
@@ -65,8 +55,6 @@ let sequelize;
 const rawDbUrl = process.env.DATABASE_URL ? String(process.env.DATABASE_URL).trim() : '';
 
 if (rawDbUrl) {
-  // If the URL appears valid per the WHATWG URL constructor, try to use it.
-  // If that fails, we'll gracefully fall back to DB_* variables.
   try {
     // Validate URL syntax
     new URL(rawDbUrl);
@@ -74,7 +62,7 @@ if (rawDbUrl) {
     // Make a copy of baseOpts and enable SSL if needed
     const opts = ensureSslIfNeeded({ ...baseOpts });
 
-    // Try to initialize Sequelize with the URL
+    // Initialize Sequelize with the URL
     sequelize = new Sequelize(rawDbUrl, opts);
   } catch (err) {
     console.warn(
@@ -113,7 +101,7 @@ const testConnection = async () => {
     console.log('✅ PostgreSQL connection established successfully.');
   } catch (err) {
     console.error('❌ Unable to connect to PostgreSQL:', err && err.message ? err.message : err);
-    // tiny safe change: print full stack so we can diagnose
+    // tiny, safe improvement: print the full stack so logs show the root cause
     if (err && err.stack) console.error(err.stack);
     throw err;
   }
