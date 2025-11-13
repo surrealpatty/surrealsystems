@@ -24,6 +24,38 @@ console.info(
   !!process.env.DATABASE_URL,
 );
 
+// --- quick, safe DATABASE_URL diagnostic (no passwords printed) ---
+(function diagDatabaseUrl() {
+  const raw = process.env.DATABASE_URL ? String(process.env.DATABASE_URL) : '';
+  const startsWithQuote = raw.startsWith('"') || raw.startsWith("'");
+  const endsWithQuote = raw.endsWith('"') || raw.endsWith("'");
+  let parsed = null;
+  try {
+    if (raw) parsed = new URL(raw);
+  } catch (e) {
+    parsed = null;
+  }
+
+  const parsedInfo = parsed
+    ? {
+        host: parsed.hostname,
+        port: parsed.port || 5432,
+        database: (parsed.pathname || '').replace(/^\//, ''),
+        user: parsed.username,
+        sslmode: parsed.searchParams.get('sslmode') || null,
+      }
+    : null;
+
+  console.info('SANITIZED DB DEBUG:', {
+    defined: !!raw,
+    length: raw.length,
+    startsWithQuote,
+    endsWithQuote,
+    parsed: parsedInfo,
+    env_DB_REQUIRE_SSL: process.env.DB_REQUIRE_SSL || null,
+  });
+})();
+
 const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');

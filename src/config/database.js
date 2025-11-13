@@ -2,6 +2,11 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
+// Temporary small test: in production, if DB_REQUIRE_SSL is not set, force it to 'true'.
+// This is a minimal, reversible diagnostic to ensure the client uses SSL for managed Postgres.
+if (process.env.NODE_ENV === 'production' && !process.env.DB_REQUIRE_SSL)
+  process.env.DB_REQUIRE_SSL = 'true';
+
 const baseOpts = {
   dialect: 'postgres',
   logging: process.env.SQL_LOG === 'true' ? console.log : false,
