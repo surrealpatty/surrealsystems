@@ -26,15 +26,18 @@ const baseOpts = {
 };
 
 /**
- * Helper to enable SSL if:
- *  - NODE_ENV === 'production'
- *  - OR DB_REQUIRE_SSL is explicitly true
- *  - OR the DATABASE_URL contains "sslmode=require" (Render/managed PG)
+ * Helper to enable SSL when explicitly requested or when the DATABASE_URL
+ * indicates sslmode=require.
+ *
+ * We DO NOT force SSL simply because NODE_ENV === 'production' — forcing SSL
+ * for all production runs can terminate connections for DBs that do not use SSL.
+ *
+ * Enable SSL by setting DB_REQUIRE_SSL=true (or 1/yes), or include
+ * sslmode=require in your DATABASE_URL (common on some managed PG providers).
  */
 function ensureSslIfNeeded(opts) {
   const dbRequireSslEnv = String(process.env.DB_REQUIRE_SSL || '').toLowerCase();
   const dbRequiresSsl =
-    process.env.NODE_ENV === 'production' ||
     dbRequireSslEnv === 'true' ||
     dbRequireSslEnv === '1' ||
     dbRequireSslEnv === 'yes' ||
