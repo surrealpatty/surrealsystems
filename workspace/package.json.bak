@@ -1,4 +1,4 @@
-{
+﻿{
   "name":"codecrowds-workspace",
   "version": "1.0.0",
   "description": "CodeCrowds is a Fiverr-like platform where users can sell their skills, post services, and hire others for tasks.",
@@ -63,5 +63,4 @@
   },
   "homepage": "https://github.com/surrealpatty/CodeCrowds#readme"
 }
-
 
