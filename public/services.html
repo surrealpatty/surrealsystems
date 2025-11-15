@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Services - CodeCrowds</title>
 
+    <!-- Global design system -->
+    <link rel="stylesheet" href="/style.css" />
+
     <!-- Page CSS (external file only) -->
     <link rel="stylesheet" href="services.css" />
 
@@ -22,27 +25,15 @@
 
     <div class="container">
       <h1>All Services</h1>
-      <p class="subtle">
-        Browse everything users are offering across CodeCrowds.
-      </p>
+      <p class="subtle">Browse everything users are offering across CodeCrowds.</p>
 
-      <div
-        class="controls"
-        role="group"
-        aria-label="Service search and sorting"
-      >
+      <div class="controls" role="group" aria-label="Service search and sorting">
         <label class="sr-only" for="search">Search services</label>
-        <input
-          id="search"
-          placeholder="Search services…"
-          aria-describedby="searchHelp"
-        />
-        <span id="searchHelp" class="sr-only"
-          >Type to filter services by title, description, or username</span
-        >
+        <input id="search" class="input" placeholder="Search services…" aria-describedby="searchHelp" />
+        <span id="searchHelp" class="sr-only">Type to filter services by title, description, or username</span>
 
         <label class="sr-only" for="sort">Sort services</label>
-        <select id="sort" title="Sort services">
+        <select id="sort" class="input" title="Sort services">
           <option value="newest">Newest</option>
           <option value="priceLow">Price: Low → High</option>
           <option value="priceHigh">Price: High → Low</option>
@@ -54,23 +45,12 @@
       </div>
 
       <!-- Compose Message Modal -->
-      <div
-        id="messageModal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="messageTitle"
-        aria-hidden="true"
-      >
+      <div id="messageModal" role="dialog" aria-modal="true" aria-labelledby="messageTitle" aria-hidden="true">
         <div class="modal-content" role="document">
           <h2 id="messageTitle">Message <span id="messageRecipient"></span></h2>
 
           <div class="field-wrap">
-            <textarea
-              id="messageContent"
-              placeholder="Write your message…"
-              maxlength="2000"
-              aria-label="Message body"
-            ></textarea>
+            <textarea id="messageContent" class="input" placeholder="Write your message…" maxlength="2000" aria-label="Message body"></textarea>
           </div>
 
           <p id="sendError" class="error" aria-live="polite" hidden></p>
@@ -79,34 +59,15 @@
             <span id="charCount" aria-live="polite">0 / 2000</span>
           </div>
           <div class="modal-actions">
-            <button type="button" id="sendMessageBtn">Send</button>
-            <button
-              type="button"
-              id="cancelMessageBtn"
-              class="button-secondary"
-            >
-              Cancel
-            </button>
+            <button type="button" id="sendMessageBtn" class="btn btn--primary">Send</button>
+            <button type="button" id="cancelMessageBtn" class="btn btn--ghost">Cancel</button>
           </div>
         </div>
       </div>
 
       <div class="actions-row">
-        <button
-          type="button"
-          id="goToProfileBtn"
-          class="button-secondary"
-          aria-label="Back to your profile"
-        >
-          Back to Profile
-        </button>
-        <button
-          type="button"
-          id="refreshBtn"
-          aria-label="Refresh services list"
-        >
-          Refresh
-        </button>
+        <button type="button" id="goToProfileBtn" class="btn btn--ghost" aria-label="Back to your profile">Back to Profile</button>
+        <button type="button" id="refreshBtn" class="btn btn--primary" aria-label="Refresh services list">Refresh</button>
       </div>
     </div>
 

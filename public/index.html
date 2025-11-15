@@ -5,26 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CodeCrowds - Showcase & Sell Your Skills</title>
 
-    <!-- Your stylesheet -->
-    <link rel="stylesheet" href="style.css" />
-
-    <!-- Small helper CSS if you don't have it in style.css -->
-    <style>
-      /* visually-hidden utility for screen readers */
-      .visually-hidden {
-        position: absolute !important;
-        height: 1px; width: 1px;
-        overflow: hidden; clip: rect(1px, 1px, 1px, 1px);
-        white-space: nowrap; border: 0; padding: 0; margin: -1px;
-      }
-      .message { margin-top: 0.5rem; color: #333; }
-      .message.error { color: #b00020; }
-      .message.success { color: #0b803c; }
-    </style>
+    <!-- Global design system -->
+    <link rel="stylesheet" href="/style.css" />
   </head>
 
   <body>
-    <div class="container fade-in">
+    <div class="container container--transparent fade-in">
       <header role="banner">
         <h1><span class="brand">CodeCrowds</span></h1>
         <p>
@@ -68,6 +54,7 @@
             <input
               id="loginEmail"
               type="email"
+              class="input"
               placeholder="Email"
               autocomplete="username"
               required
@@ -77,12 +64,13 @@
             <input
               id="loginPassword"
               type="password"
+              class="input"
               placeholder="Password"
               autocomplete="current-password"
               required
             />
 
-            <button type="submit" class="btn" id="loginBtn">Login</button>
+            <button type="submit" class="btn btn--primary" id="loginBtn">Login</button>
           </form>
 
           <p id="loginMessage" class="message" role="status" aria-live="polite"></p>
@@ -99,7 +87,7 @@
     <!-- init sets simple UI things (non-module) -->
     <script src="init.js"></script>
 
-    <!-- script.js uses ES modules so mark it module -->
+    <!-- script.js uses ES modules -->
     <script type="module" src="script.js"></script>
   </body>
 </html>

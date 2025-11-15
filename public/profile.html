@@ -4,55 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Profile - CodeCrowds (Diag)</title>
-    <link rel="stylesheet" href="profile.css" />
 
-    <style>
-      .hidden {
-        display: none;
-      }
-      .spinner {
-        display: inline-block;
-      }
-      .muted {
-        color: #666;
-      }
-      .card {
-        background: #fff;
-        border-radius: 12px;
-        padding: 16px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-        margin-bottom: 12px;
-      }
-      .floating-btn {
-        position: fixed;
-        right: 16px;
-        bottom: 16px;
-        border-radius: 999px;
-        padding: 10px 14px;
-      }
-      #diagBanner {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        background: #b91c1c;
-        color: #fff;
-        padding: 10px 14px;
-        font:
-          500 14px/1.4 system-ui,
-          -apple-system,
-          Segoe UI,
-          Roboto,
-          sans-serif;
-        z-index: 999999;
-      }
-      #diagBanner .muted {
-        color: #ffe2e2;
-      }
-      body {
-        padding-top: 0;
-      }
-    </style>
+    <!-- Global design system -->
+    <link rel="stylesheet" href="/style.css" />
+
+    <!-- Page-specific styles -->
+    <link rel="stylesheet" href="profile.css" />
 
     <!-- shared helpers -->
     <script src="script.js" defer></script>
@@ -61,7 +18,7 @@
     <script src="profile.js" defer></script>
   </head>
   <body>
-    <div id="diagBanner" class="hidden"></div>
+    <div id="diagBanner" class="hidden" role="status" aria-live="polite"></div>
 
     <main class="container">
       <header>
@@ -72,7 +29,7 @@
           <span class="spinner"></span> Loading description...
         </p>
         <div id="descControls" class="hidden">
-          <button type="button" id="editDescBtn">Edit Description</button>
+          <button type="button" id="editDescBtn" class="btn btn--ghost">Edit Description</button>
         </div>
       </header>
 
@@ -83,22 +40,15 @@
           <p><span class="spinner"></span> Loading services...</p>
         </div>
         <div class="row row-center row-gap-8 justify-center">
-          <button type="button" id="loadMoreServicesBtn" class="hidden">
+          <button type="button" id="loadMoreServicesBtn" class="btn btn--primary hidden">
             Load more
           </button>
         </div>
         <div id="newServiceSection" class="new-service hidden">
-          <input type="text" id="newServiceTitle" placeholder="Service Title" />
-          <textarea
-            id="newServiceDesc"
-            placeholder="Service Description"
-          ></textarea>
-          <input
-            type="number"
-            id="newServicePrice"
-            placeholder="Price in USD"
-          />
-          <button type="button" id="createServiceBtn">Create Service</button>
+          <input type="text" id="newServiceTitle" class="input" placeholder="Service Title" />
+          <textarea id="newServiceDesc" class="input" placeholder="Service Description"></textarea>
+          <input type="number" id="newServicePrice" class="input input-number" placeholder="Price in USD" />
+          <button type="button" id="createServiceBtn" class="btn btn--primary">Create Service</button>
         </div>
       </section>
 
@@ -115,7 +65,7 @@
           <h3 id="rateFormTitle">Leave a rating</h3>
           <div class="row row-center row-gap-8">
             <label for="rateStars">Stars</label>
-            <select id="rateStars" title="Select stars">
+            <select id="rateStars" title="Select stars" class="input">
               <option value="5">5</option>
               <option value="4">4</option>
               <option value="3">3</option>
@@ -123,19 +73,12 @@
               <option value="1">1</option>
             </select>
           </div>
-          <textarea
-            id="rateComment"
-            class="w-full"
-            placeholder="Say something helpful (optional)"
-            rows="3"
-          ></textarea>
-          <button type="button" id="submitRatingBtn">Submit Rating</button>
+          <textarea id="rateComment" class="input w-full" placeholder="Say something helpful (optional)" rows="3"></textarea>
+          <button type="button" id="submitRatingBtn" class="btn btn--primary">Submit Rating</button>
           <p id="rateMsg" class="muted"></p>
           <div id="rateUpgradeHint" class="hidden muted">
             Rating is a paid feature.
-            <button type="button" id="upgradeInlineBtn" class="upgrade-btn">
-              Upgrade to Paid
-            </button>
+            <button type="button" id="upgradeInlineBtn" class="btn btn--primary upgrade-btn">Upgrade to Paid</button>
           </div>
         </div>
 
@@ -145,43 +88,24 @@
       </section>
 
       <div class="row row-center row-gap-8 justify-center">
-        <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
-        <button type="button" id="upgradeBtn" class="upgrade-btn hidden">
-          Upgrade to Paid
-        </button>
+        <button type="button" id="logoutBtn" class="btn btn--danger">Logout</button>
+        <button type="button" id="upgradeBtn" class="btn btn--primary hidden">Upgrade to Paid</button>
       </div>
     </main>
 
-    <!-- Floating shortcuts (only on your own profile) -->
-    <button type="button" class="floating-btn hidden" id="goToServicesBtn">
-      Services
-    </button>
-    <button type="button" class="floating-btn hidden" id="goToMessagesBtn">
-      Messages
-    </button>
-    <button type="button" class="floating-btn hidden" id="addNewServiceBtn">
-      + Service
-    </button>
-    <button type="button" class="floating-btn hidden" id="editDescBtnFloat">
-      Edit Bio
-    </button>
+    <!-- Unified action rail (floating shortcuts for this page) -->
+    <div class="action-rail" aria-hidden="true">
+      <button class="btn btn--primary" id="goToServicesBtn">Services</button>
+      <button class="btn btn--accent" id="goToMessagesBtn">Messages</button>
+      <button class="btn btn--accent" id="addNewServiceBtn">+ Service</button>
+      <button class="btn btn--ghost" id="editDescBtnFloat">Edit Bio</button>
+    </div>
 
-    <!-- Back to my profile (visible only when viewing someone else) -->
-    <button type="button" class="floating-btn hidden" id="backToMyProfileBtn">
-      ← My Profile
-    </button>
-
-    <nav
-      class="mobile-button-row hidden"
-      id="mobileRow"
-      aria-label="Mobile actions"
-    >
-      <button type="button" id="mobileServicesBtn">Services</button>
-      <button type="button" id="mobileMessagesBtn">Messages</button>
-      <button type="button" id="mobileAddServiceBtn">+ Service</button>
-      <button type="button" id="mobileBackBtn" class="hidden">
-        My Profile
-      </button>
+    <nav class="mobile-button-row hidden" id="mobileRow" aria-label="Mobile actions">
+      <button type="button" id="mobileServicesBtn" class="btn btn--primary">Services</button>
+      <button type="button" id="mobileMessagesBtn" class="btn btn--accent">Messages</button>
+      <button type="button" id="mobileAddServiceBtn" class="btn btn--accent">+ Service</button>
+      <button type="button" id="mobileBackBtn" class="btn btn--ghost hidden">My Profile</button>
     </nav>
   </body>
 </html>
