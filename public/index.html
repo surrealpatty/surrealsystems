@@ -6,14 +6,14 @@
     <title>CodeCrowds - Showcase & Sell Your Skills</title>
 
     <!-- Global design system -->
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="/style.css" />
   </head>
 
   <body>
     <div class="container container--transparent fade-in">
-      <header role="banner">
-        <h1><span class="brand">CodeCrowds</span></h1>
-        <p>
+      <header role="banner" class="site-header">
+        <h1 class="site-title"><span class="brand">CodeCrowds</span></h1>
+        <p class="site-subtitle">
           Showcase your coding skills, offer services, and connect with clients
           worldwide. Join a community where talent meets opportunity!
         </p>
@@ -46,7 +46,7 @@
           </article>
         </section>
 
-        <!-- Login card: use .card to match the Register page visual language -->
+        <!-- Login card: .card to match Register page visual language -->
         <aside class="login-container card" aria-labelledby="login-heading">
           <h2 id="login-heading">Login</h2>
 
@@ -54,6 +54,7 @@
             <label for="loginEmail" class="visually-hidden">Email</label>
             <input
               id="loginEmail"
+              name="email"
               type="email"
               class="input"
               placeholder="Email"
@@ -64,6 +65,7 @@
             <label for="loginPassword" class="visually-hidden">Password</label>
             <input
               id="loginPassword"
+              name="password"
               type="password"
               class="input"
               placeholder="Password"
@@ -71,22 +73,21 @@
               required
             />
 
-            <!-- Use the canonical button classes -->
             <button type="submit" class="btn btn--primary">Login</button>
           </form>
 
           <p id="loginMessage" class="message" role="status" aria-live="polite"></p>
 
-          <p class="signup-switch">Don't have an account? <a href="register.html">Sign up here</a></p>
+          <p class="signup-switch">Don't have an account? <a href="/register.html">Sign up here</a></p>
         </aside>
       </main>
 
-      <footer class="site-footer">
+      <footer class="site-footer" role="contentinfo">
         &copy; <span id="year"></span> CodeCrowds. All rights reserved.
       </footer>
     </div>
 
-    <!-- Unified action rail (floating buttons on desktop) -->
+    <!-- Unified action rail (desktop) -->
     <nav class="action-rail" aria-label="Quick actions">
       <a class="btn" href="/services.html" role="button">Services</a>
       <a class="btn" href="/messages.html" role="button">Messages</a>
@@ -94,24 +95,21 @@
       <a class="btn" href="/profile.html" role="button">Edit Bio</a>
     </nav>
 
-    <!-- Mobile quick actions (visible only on small screens via CSS) -->
+    <!-- Mobile quick actions (small screens only via CSS) -->
     <div class="mobile-button-row" role="navigation" aria-label="Quick actions">
       <button onclick="location.href='/services.html'">Services</button>
       <button onclick="location.href='/messages.html'">Messages</button>
       <button onclick="location.href='/services.html#new'">+ Service</button>
     </div>
 
-    <!-- Small year script -->
+    <!-- Small year script (no inline styling) -->
     <script>
       try {
         document.getElementById('year').textContent = new Date().getFullYear();
       } catch (e) { /* ignore */ }
     </script>
 
-    <!-- init sets simple UI things (non-module) -->
-    <script src="init.js"></script>
-
-    <!-- script.js uses ES modules -->
-    <script type="module" src="script.js"></script>
+    <script src="/init.js"></script>
+    <script type="module" src="/script.js"></script>
   </body>
 </html>
