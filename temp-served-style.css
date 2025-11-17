@@ -323,7 +323,7 @@ main {
 }
 .login-container.card h2 { color: var(--brand-a); margin-top:0; font-size:1.2rem; }
 .login-container.card input[type="email"],
-login-container.card input[type="password"] {
+.login-container.card input[type="password"] {
   background: #ffffff;
   color: #222;
   border: 1px solid #e6e9ef;
@@ -331,7 +331,7 @@ login-container.card input[type="password"] {
   width: 100%;
   border-radius: var(--radius-sm);
 }
-login-container.card .message { color: var(--danger); min-height:1.25em; margin-bottom:8px; }
+.login-container.card .message { color: var(--danger); min-height:1.25em; margin-bottom:8px; }
 
 /* Message area, footer, signup */
 .message { color: var(--danger); min-height: 1.25em; margin-bottom:8px; }
@@ -363,14 +363,8 @@ login-container.card .message { color: var(--danger); min-height:1.25em; margin-
 }
 
 /* Hide floating action rail and mobile actions on the public hero (index/sign-in) */
-/* REPLACED: descendant selector didn't match because action-rail is outside .container */
-/* Use sibling selectors to hide rail/mobile row when the transparent hero container exists */
-.container--transparent + .action-rail,
-.container--transparent ~ .action-rail,
-.container--transparent + .mobile-button-row,
-.container--transparent ~ .mobile-button-row {
-  display: none !important;
-}
+.container--transparent .action-rail { display: none !important; }
+.container--transparent .mobile-button-row { display: none !important; }
 
 /* Slightly stronger login card shadow for the white card variant */
 .login-container.card {
