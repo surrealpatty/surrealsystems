@@ -5,7 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CodeCrowds - Showcase & Sell Your Skills</title>
 
-    <!-- Global design system (relative paths so local and hosted envs work) -->
+    <!-- make API_URL sensible for local testing; override in production if needed -->
+    <script>
+      // If you have a separate API server (e.g. http://localhost:3000/api),
+      // set window.API_URL here or via server-side injection.
+      window.API_URL = window.API_URL || (window.location.origin.replace(/\/$/, "") + "/api");
+    </script>
+
+    <!-- stylesheet (relative so it works when serving from a subpath/local) -->
     <link rel="stylesheet" href="style.css" />
   </head>
 
@@ -109,7 +116,7 @@
       } catch (e) { /* ignore */ }
     </script>
 
-    <!-- init must load first to set API_BASE, then script.js -->
+    <!-- Init must load first to set API_BASE, then script.js -->
     <script src="init.js"></script>
     <script type="module" src="script.js"></script>
   </body>
