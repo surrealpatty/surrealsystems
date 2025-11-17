@@ -264,7 +264,20 @@ function initLoginPage() {
       location.replace("profile.html");
     } catch (err) {
       show(msg);
-      setText(msg, err.message || "Login failed");
+      // Provide clearer guidance for 405 and other specific statuses
+      const status = err && err.status ? err.status : null;
+      if (status === 405) {
+        setText(
+          msg,
+          "Login failed: server returned 'Method Not Allowed' (405). " +
+          "This indicates the backend rejected the POST. Check the API URL, server routing, and allowed methods. " +
+          "Open DevTools Network to inspect the request/response."
+        );
+      } else if (status === 401 || status === 403) {
+        setText(msg, "Login failed: invalid credentials or access denied.");
+      } else {
+        setText(msg, err && err.message ? err.message : "Login failed");
+      }
     }
   });
 }

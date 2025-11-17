@@ -1,24 +1,6 @@
-/* DEBUG (TEMPORARY) - REMOVE AFTER VERIFICATION
-   This block forces a very-visible white card and strong shadows so you can
-   confirm the CSS is being loaded. Remove this entire comment + block when done.
+/* public/style.css
+   Polished / accessibility-forward version of the stylesheet.
 */
-.login-container.card {
-  background: #ffffff !important;
-  color: #222222 !important;
-  border: 2px solid #e6e9ef !important;
-  box-shadow: 0 24px 60px rgba(0,0,0,0.22) !important;
-  width: 480px !important;
-  padding: 28px !important;
-  margin: 0 !important;
-  border-radius: 14px !important;
-}
-.login-container.card h2 { color: #4e54c8 !important; }
-.btn, .btn.btn--primary {
-  background: linear-gradient(90deg, #4e54c8, #00aaff) !important;
-  color: #fff !important;
-  box-shadow: 0 14px 36px rgba(0,0,0,0.18) !important;
-}
-.action-rail .btn { min-width: 160px !important; }
 
 /* -------------------- Load UI font + Theme variables -------------------- */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
@@ -361,6 +343,33 @@ main {
 
 /* Anchor contrast override for transparent hero */
 .container--transparent a { color: #fff; }
+
+/* -------------------- HERO READABILITY & ACTION-RAIL VISIBILITY -------------------- */
+/* Improve contrast for left-side feature cards on the gradient hero */
+.container--transparent .feature-card {
+  color: rgba(255,255,255,0.97);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.20);
+}
+.container--transparent .feature-card h3 {
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.06rem;
+  margin-bottom: 8px;
+}
+.container--transparent .feature-card p {
+  color: rgba(255,255,255,0.92);
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+/* Hide floating action rail and mobile actions on the public hero (index/sign-in) */
+.container--transparent .action-rail { display: none !important; }
+.container--transparent .mobile-button-row { display: none !important; }
+
+/* Slightly stronger login card shadow for the white card variant */
+.login-container.card {
+  box-shadow: 0 22px 50px rgba(20,30,60,0.10);
+}
 
 /* small screens */
 @media (max-width: 480px) {

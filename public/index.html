@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CodeCrowds - Showcase & Sell Your Skills</title>
 
-    <!-- Global design system -->
-    <link rel="stylesheet" href="/style.css" />
+    <!-- Global design system (relative paths so local and hosted envs work) -->
+    <link rel="stylesheet" href="style.css" />
   </head>
 
   <body>
@@ -78,7 +78,7 @@
 
           <p id="loginMessage" class="message" role="status" aria-live="polite"></p>
 
-          <p class="signup-switch">Don't have an account? <a href="/register.html">Sign up here</a></p>
+          <p class="signup-switch">Don't have an account? <a href="register.html">Sign up here</a></p>
         </aside>
       </main>
 
@@ -87,19 +87,19 @@
       </footer>
     </div>
 
-    <!-- Unified action rail (desktop) -->
+    <!-- Unified action rail (desktop) - relative links -->
     <nav class="action-rail" aria-label="Quick actions">
-      <a class="btn" href="/services.html" role="button">Services</a>
-      <a class="btn" href="/messages.html" role="button">Messages</a>
-      <a class="btn btn--primary" href="/services.html#new" role="button">+ Service</a>
-      <a class="btn" href="/profile.html" role="button">Edit Bio</a>
+      <a class="btn" href="services.html" role="button">Services</a>
+      <a class="btn" href="messages.html" role="button">Messages</a>
+      <a class="btn btn--primary" href="services.html#new" role="button">+ Service</a>
+      <a class="btn" href="profile.html" role="button">Edit Bio</a>
     </nav>
 
-    <!-- Mobile quick actions (small screens only via CSS) -->
+    <!-- Mobile quick actions (visible only on small screens via CSS) -->
     <div class="mobile-button-row" role="navigation" aria-label="Quick actions">
-      <button onclick="location.href='/services.html'">Services</button>
-      <button onclick="location.href='/messages.html'">Messages</button>
-      <button onclick="location.href='/services.html#new'">+ Service</button>
+      <button onclick="location.href='services.html'">Services</button>
+      <button onclick="location.href='messages.html'">Messages</button>
+      <button onclick="location.href='services.html#new'">+ Service</button>
     </div>
 
     <!-- Small year script (no inline styling) -->
@@ -109,7 +109,8 @@
       } catch (e) { /* ignore */ }
     </script>
 
-    <script src="/init.js"></script>
-    <script type="module" src="/script.js"></script>
+    <!-- init must load first to set API_BASE, then script.js -->
+    <script src="init.js"></script>
+    <script type="module" src="script.js"></script>
   </body>
 </html>
