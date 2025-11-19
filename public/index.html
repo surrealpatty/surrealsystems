@@ -1,121 +1,367 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CodeCrowds - Showcase & Sell Your Skills</title>
+/* public/style.css
+   Polished / accessibility-forward version of the stylesheet.
+   This file includes header/logo styles moved from inline into the external CSS.
+*/
 
-    <!-- make API_URL sensible for local testing; override in production if needed -->
-    <script>
-      // Replace with your real API host that accepts POST /users/login
-      window.API_URL = 'https://your-api-host.example.com/api';
-      console.info("Init: API_URL =", window.API_URL);
-    </script>
+/* -------------------- Load UI font + Theme variables -------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
 
-    <!-- stylesheet (relative so it works when serving from a subpath/local) -->
-    <link rel="stylesheet" href="style.css" />
-  </head>
+:root {
+  --brand-a: #4e54c8;
+  --brand-b: #00aaff;
+  --accent: #ffc107;
+  --success: #28a745;
+  --info: #17a2b8;
+  --danger: #ff4d4f;
+  --card-bg: #ffffff;
+  --card-text: #333333;
+  --muted: #555555;
 
-  <body>
-    <div class="container container--transparent fade-in">
-      <header role="banner" class="site-header">
-        <!-- Top of page shows only the brand name per request -->
-        <h1 class="site-title"><span class="brand">Code Crowds</span></h1>
-        <!-- Subtitle intentionally removed -->
-      </header>
+  --glass-light: rgba(255,255,255,0.95);
+  --glass-translucent: rgba(255,255,255,0.06);
+  --glass-dark: rgba(0,0,0,0.18);
 
-      <main>
-        <section class="features" aria-label="Highlights">
-          <article class="feature-card card">
-            <h3>Offer Your Services</h3>
-            <p>
-              Create posts to sell your coding skills and get noticed by clients
-              worldwide.
-            </p>
-          </article>
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --shadow-1: 0 8px 20px rgba(0,0,0,0.12);
+  --shadow-2: 0 12px 30px rgba(0,0,0,0.15);
+  --transition-fast: 180ms;
 
-          <article class="feature-card card">
-            <h3>Connect & Collaborate</h3>
-            <p>
-              Rate and interact with other developers, build credibility, and
-              grow your network.
-            </p>
-          </article>
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  --color-primary: var(--brand-a);
+  --color-primary-2: var(--brand-b);
+  --color-accent: var(--accent);
+  --color-card: var(--card-bg);
+  --color-text: var(--card-text);
+  --color-muted: var(--muted);
+  --focus-ring: #cceeff;
 
-          <article class="feature-card card">
-            <h3>Ad-Free & Premium</h3>
-            <p>
-              Upgrade to premium for extra features like ad-free experience,
-              lower fees, and more visibility.
-            </p>
-          </article>
-        </section>
+  --max-width: 1100px;
+  --space-sm: 8px;
+  --space-md: 20px;
+  --space-lg: 32px;
 
-        <!-- Login card: .card to match Register page visual language -->
-        <aside class="login-container card" aria-labelledby="login-heading">
-          <h2 id="login-heading">Login</h2>
+  --btn-gradient: linear-gradient(180deg, var(--brand-a), var(--brand-b));
+  --btn-bg: var(--brand-a);
+  --btn-text: #ffffff;
+}
 
-          <form id="loginForm" novalidate>
-            <label for="loginEmail" class="visually-hidden">Email</label>
-            <input
-              id="loginEmail"
-              name="email"
-              type="email"
-              class="input"
-              placeholder="Email"
-              autocomplete="username"
-              required
-            />
+/* -------------------- Global Reset + Typography -------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html, body, .container, .card, .row, .meta-row {
+  min-width: 0;
+}
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.45;
+  color: var(--color-text);
+}
 
-            <label for="loginPassword" class="visually-hidden">Password</label>
-            <input
-              id="loginPassword"
-              name="password"
-              type="password"
-              class="input"
-              placeholder="Password"
-              autocomplete="current-password"
-              required
-            />
+/* Page background gradient */
+body {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
+  -webkit-tap-highlight-color: transparent;
+}
 
-            <button type="submit" class="btn btn--primary">Login</button>
-          </form>
+/* -------------------- Container (default = white card) -------------------- */
+.container {
+  max-width: var(--max-width);
+  width: 90%;
+  padding: 2.5rem 2rem 140px 2rem;
+  margin: 30px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 
-          <p id="loginMessage" class="message" role="status" aria-live="polite"></p>
+  background: var(--color-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-2);
 
-          <p class="signup-switch">Don't have an account? <a href="register.html">Sign up here</a></p>
-        </aside>
-      </main>
+  color: var(--color-text);
+  text-align: left;
 
-      <footer class="site-footer" role="contentinfo">
-        &copy; <span id="year"></span> Code Crowds. All rights reserved.
-      </footer>
-    </div>
+  align-items: center;
+}
 
-    <!-- Unified action rail (desktop) - relative links -->
-    <nav class="action-rail" aria-label="Quick actions">
-      <a class="btn" href="services.html" role="button">Services</a>
-      <a class="btn" href="messages.html" role="button">Messages</a>
-      <a class="btn btn--primary" href="services.html#new" role="button">+ Service</a>
-      <a class="btn" href="profile.html" role="button">Edit Bio</a>
-    </nav>
+/* Constrain and center content inside the container */
+.container > header,
+.container > section,
+.container > .card,
+.container > form {
+  width: 100%;
+  max-width: 920px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
 
-    <!-- Mobile quick actions (visible only on small screens via CSS) -->
-    <div class="mobile-button-row" role="navigation" aria-label="Quick actions">
-      <button onclick="location.href='services.html'">Services</button>
-      <button onclick="location.href='messages.html'">Messages</button>
-      <button onclick="location.href='services.html#new'">+ Service</button>
-    </div>
+/* Transparent hero is centered and stretches children horizontally */
+.container--transparent {
+  background: transparent;
+  box-shadow: none;
+  color: #fff;
+  text-align: center;
+  align-items: stretch;
+}
 
-    <!-- Small year script (no inline styling) -->
-    <script>
-      try {
-        document.getElementById('year').textContent = new Date().getFullYear();
-      } catch (e) { /* ignore */ }
-    </script>
+/* -------------------- Header / Logo styles (moved from inline) -------------------- */
+/* Header layout */
+.site-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 0;
+}
 
-    <!-- Init must load first to set API_BASE, then script.js -->
-    <script src="init.js"></script>
-    <script type="module" src="script.js"></script>
-  </body>
-</html>
+/* Logo wrapper: holds logo variants */
+.logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Anchor around the SVG logo */
+.site-logo {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+/* Ensure SVGs scale nicely */
+.site-logo svg {
+  height: 56px;
+  width: auto;
+  display: block;
+}
+
+/* Logo variant panels (tabpanel) */
+.logo-variant { display: none; }
+.logo-variant.active { display: inline-block; }
+
+/* Logo selection controls (tablist) */
+.logo-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.logo-controls button {
+  background: transparent;
+  border: 2px solid rgba(255,255,255,0.12);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+.logo-controls button[aria-selected="true"] {
+  background: linear-gradient(180deg,#4e54c8,#00aaff);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  border-color: transparent;
+}
+
+/* Responsive logo sizes */
+@media (max-width: 900px) {
+  .site-logo svg { height: 44px; }
+  .logo-controls button { padding: 6px 8px; font-size: 13px; }
+}
+
+/* Visually-hidden helper */
+.visually-hidden {
+  position: absolute !important;
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px);
+  white-space: nowrap;
+  border: 0;
+  padding: 0;
+  margin: -1px;
+}
+
+/* -------------------- Headings -------------------- */
+.site-title { font-weight: 700; }
+h1, h2 { margin: 0 0 0.5rem; line-height: 1.1; color: var(--color-primary); }
+.container--transparent h1, .container--transparent h2 {
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.35);
+}
+h3 { margin: 0 0 0.5rem; }
+
+header p { margin: 0 0 1rem; color: var(--color-muted); }
+.container--transparent header p { color: rgba(255,255,255,0.95); font-size: 1.03rem; }
+
+/* -------------------- Spinner / Fade-in -------------------- */
+.spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #dcdcdc; border-top-color: var(--brand-a); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.fade-in { opacity: 0; transform: translateY(10px); animation: fadeIn 0.5s ease forwards; }
+@keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .spinner, .fade-in { animation: none; transform: none; opacity: 1; } * { transition: none !important; } }
+
+/* -------------------- Card (canonical) -------------------- */
+.card {
+  background: var(--color-card);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-1);
+  color: var(--color-text);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.card:hover { transform: translateY(-6px); box-shadow: 0 18px 36px rgba(0,0,0,0.12); }
+.card h3 { color: var(--color-primary); font-size: 1.1rem; margin: 0 0 8px; }
+.card p { margin: 0; color: var(--color-muted); font-size: 0.95rem; }
+
+/* -------------------- Buttons (system) -------------------- */
+button, .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border-radius: 10px; font-weight: 700;
+  border: none; cursor: pointer; transition: transform var(--transition-fast), opacity var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: var(--shadow-1); font-size: 1rem; color: var(--btn-text); background-image: var(--btn-gradient); background-size: 200% 100%; text-decoration: none;
+}
+button:hover, .btn:hover { transform: translateY(-4px); opacity: 0.96; box-shadow: 0 14px 32px rgba(0,0,0,0.14); }
+button:active, .btn:active { transform: translateY(-2px); }
+button:focus-visible, .btn:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; box-shadow: 0 0 0 3px var(--focus-ring); border-radius: var(--radius-sm); }
+
+/* Button variants */
+.btn--primary, .btn-primary, .btn.btn-primary {
+  background-image: var(--btn-gradient); color: var(--btn-text); box-shadow: 0 8px 20px rgba(37, 61, 180, 0.12); padding: 12px 18px; border-radius: 10px;
+}
+
+/* Destructive / logout */
+.logout-btn { background: var(--danger); color: #fff; box-shadow: 0 8px 20px rgba(255, 77, 79, 0.10); }
+
+/* Secondary (outline) */
+.btn--secondary { background: transparent; color: var(--btn-text); border: 2px solid rgba(255,255,255,0.18); }
+
+/* -------------------- Inputs / Forms -------------------- */
+.input, input, textarea, select { padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08); font-size: 15px; color: var(--color-text); background: #fff; width: 100%; box-sizing: border-box; }
+.input:focus, input:focus, textarea:focus, select:focus { outline: none; box-shadow: 0 0 0 4px rgba(108,52,235,0.12); border-color: rgba(108,52,235,0.6); }
+
+/* -------------------- Layout helpers -------------------- */
+#services-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; align-items: start; }
+#newServiceSection { display: none; flex-direction: column; gap: 10px; margin-top: 10px; }
+
+/* -------------------- Unified Action Rail (floating) -------------------- */
+.action-rail { position: fixed; right: 20px; bottom: 28px; display: flex; flex-direction: column; gap: 12px; z-index: 60; }
+.action-rail .btn { min-width: 150px; border-radius: 999px; background-image: var(--btn-gradient); color: var(--btn-text); box-shadow: 0 10px 30px rgba(0,0,0,0.16); text-decoration: none; }
+.action-rail .btn.btn--primary, .action-rail .btn.btn--primary:hover { box-shadow: 0 16px 40px rgba(78,84,200,0.18); }
+.action-rail .btn:hover { transform: translateY(-4px); }
+
+/* Legacy floating pills (kept minimal for compatibility) */
+.floating-btn { display:none; }
+
+/* -------------------- Mobile Bottom Row -------------------- */
+.mobile-button-row { display:none; position: fixed; bottom:0; left:0; width:100%; justify-content:space-around; padding:10px; gap:6px; background-color: rgba(255,255,255,0.95); z-index: 9999; box-shadow:0 -6px 20px rgba(0,0,0,0.08); }
+.mobile-button-row button { flex:1; border-radius:8px; font-weight:700; font-size:1rem; padding:10px; background-image:var(--btn-gradient); color:#fff; transition: transform var(--transition-fast), opacity var(--transition-fast); }
+
+/* -------------------- Utility classes -------------------- */
+.hidden { display:none !important; }
+.mb-sm { margin-bottom: var(--space-sm); }
+.mb-md { margin-bottom: var(--space-md); }
+.mb-lg { margin-bottom: var(--space-lg); }
+.row { display: flex; }
+.row-center { display:flex; align-items:center; }
+.w-full { width: 100%; }
+
+/* -------------------- Responsive tweaks -------------------- */
+@media (max-width: 480px) {
+  .action-rail { right: 12px; bottom: 18px; display:none; }
+  .mobile-button-row { display: flex; }
+  button, .btn { font-size: 0.95rem; padding: 8px 14px; }
+  .container { width: 94%; padding: 1.5rem 1rem 140px 1rem; margin: 36px auto 0; gap: 1.25rem; align-items: stretch; }
+}
+
+/* -------------------- Small screen cards stacking -------------------- */
+@media (max-width: 360px) {
+  #services-list { grid-template-columns: 1fr; gap: 12px; }
+}
+
+/* -------------------- Page-specific helpers -------------------- */
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; align-items: start; margin: 0; }
+.feature-card { background: var(--color-card); border-radius: var(--radius-md); padding: 18px; box-shadow: var(--shadow-1); color: var(--color-text); text-align: left; }
+
+/* Hero feature cards (glass look on gradient) */
+.container--transparent .feature-card {
+  background: var(--glass-dark);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  box-shadow: var(--shadow-1);
+  color: rgba(255,255,255,0.97);
+  text-align: left;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.container--transparent .feature-card h3 { color: #fff; font-weight: 700; font-size: 1.06rem; margin-bottom: 8px; }
+.container--transparent .feature-card p { color: rgba(255,255,255,0.92); font-weight: 500; line-height: 1.6; }
+
+/* Compact hero feature cards */
+@media (min-width: 900px) {
+  .container--transparent .features, .features { grid-template-columns: 1fr; gap: 18px; align-items: start; }
+  .container--transparent .feature-card, .feature-card {
+    min-height: 120px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-radius: 12px;
+  }
+  .container--transparent .feature-card h3, .feature-card h3 { margin-bottom: 8px; font-size: 1.02rem; }
+  .container--transparent .feature-card p, .feature-card p { margin: 0; line-height: 1.45; font-size: 0.95rem; }
+  main { gap: 28px; }
+}
+
+/* Homepage main layout */
+main { display: grid; grid-template-columns: 1fr 440px; gap: 40px; align-items: start; padding-top: 8px; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; gap: 20px; } .login-container { width: 100%; } }
+
+/* Login container styles */
+.login-container { width: 360px; margin: 0 auto; background: var(--glass-translucent); padding: 18px; border-radius: var(--radius-md); box-shadow: none; text-align: left; color: #fff; border: 1px solid rgba(255,255,255,0.06); }
+.container--transparent .login-container { background: var(--glass-dark); border: 1px solid rgba(255,255,255,0.06); color: #fff; box-shadow: var(--shadow-1); margin-top: 26px; }
+
+/* Signup link styling on login card */
+.login-container .signup-switch { color: rgba(255,255,255,0.85); margin-top: 10px; }
+.login-container .signup-switch a { color: var(--brand-b); font-weight: 700; text-decoration: none; }
+.login-container .signup-switch a:hover { text-decoration: underline; }
+
+/* White-card variant for login (register look) */
+.login-container.card { width: 440px; margin: 0; background: var(--color-card); color: var(--color-text); padding: 24px; border-radius: var(--radius-md); box-shadow: 0 18px 40px rgba(24,34,80,0.08); border: 1px solid #e9eef8; }
+.login-container.card h2 { color: var(--brand-a); margin-top: 0; font-size: 1.2rem; }
+.login-container.card input[type="email"], .login-container.card input[type="password"] { background: #ffffff; color: #222; border: 1px solid #e6e9ef; padding: 12px; width: 100%; border-radius: var(--radius-sm); }
+.login-container.card .message { color: var(--danger); min-height: 1.25em; margin-bottom: 8px; }
+
+/* Message area */
+.message { color: var(--danger); min-height: 1.25em; margin-bottom: 8px; }
+
+/* Accessibility helper */
+.visually-hidden { position: absolute !important; height: 1px; width: 1px; overflow: hidden; clip: rect(1px,1px,1px,1px); white-space: nowrap; }
+
+/* Hide action rail when hero container is present */
+.container--transparent + .action-rail,
+.container--transparent ~ .action-rail,
+.container--transparent + .mobile-button-row,
+.container--transparent ~ .mobile-button-row {
+  display: none !important;
+}
+
+/* Slightly stronger login card shadow for white card variant */
+.login-container.card { box-shadow: 0 22px 50px rgba(20,30,60,0.10); }
+
+/* Responsive login tweaks */
+@media (max-width: 480px) { .login-container { width: 100%; padding: 14px; } .features { grid-template-columns: 1fr; } }
