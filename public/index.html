@@ -5,116 +5,54 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>CodeCrowds - Showcase & Sell Your Skills</title>
 
-    <!-- For local testing; override in production -->
+    <!-- Local/test API host (override in production) -->
     <script>window.API_URL = 'https://your-api-host.example.com/api';</script>
 
-    <!-- External stylesheet (no inline styles) -->
+    <!-- External stylesheet -->
     <link rel="stylesheet" href="style.css" />
   </head>
 
   <body>
     <div class="container container--transparent fade-in">
       <header role="banner" class="site-header">
-        <!-- Accessible single H1 (visually hidden) -->
+        <!-- Hidden H1 for SEO/accessibility -->
         <h1 class="visually-hidden">Code Crowds</h1>
 
         <div class="header-inner">
-          <!-- Monogram (larger, stronger stroke) -->
-          <a class="site-logo" href="/" aria-label="Code Crowds home — monogram">
+          <!-- Monogram: app-friendly square with clear C shapes -->
+          <a class="site-logo" href="/" aria-label="Code Crowds home">
             <svg viewBox="0 0 160 72" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="logoTitle logoDesc" focusable="false">
               <title id="logoTitle">Code Crowds</title>
-              <desc id="logoDesc">Code Crowds logo: monogram and wordmark</desc>
+              <desc id="logoDesc">Code Crowds logo: monogram</desc>
 
               <defs>
                 <linearGradient id="brandGrad" x1="0" x2="1" y1="0" y2="1">
-                  <stop offset="0" stop-color="#4e54c8" />
-                  <stop offset="1" stop-color="#00aaff" />
+                  <stop offset="0" stop-color="#4e54c8"/>
+                  <stop offset="1" stop-color="#00aaff"/>
                 </linearGradient>
               </defs>
 
               <!-- rounded square background -->
-              <rect x="6" y="6" width="64" height="64" rx="14" fill="url(#brandGrad)" />
+              <rect x="6" y="6" width="64" height="64" rx="14" fill="url(#brandGrad)"/>
 
-              <!-- stronger, balanced C shapes -->
+              <!-- two balanced C shapes -->
               <g transform="translate(18,18)" fill="none" stroke="#fff" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round">
-                <!-- left C -->
                 <path d="M6 12c-6 4-6 12 0 16" />
                 <path d="M46 12c6 4 6 12 0 16" />
-              </g>
-
-              <!-- wordmark to the right -->
-              <g transform="translate(84,52)" font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial" font-weight="800" >
-                <text x="0" y="0" font-size="36" fill="#ffffff" letter-spacing="0.2">Code</text>
-                <text x="120" y="0" font-size="36" fill="#ffffff" letter-spacing="0.2">Crowds</text>
               </g>
             </svg>
           </a>
 
-          <!-- controls and subtle subtitle -->
-          <div class="brand-controls" aria-hidden="false">
-            <div class="logo-controls" role="tablist" aria-label="Logo variants">
-              <!-- type="button" added; aria-controls matches id of panels -->
-              <button type="button" id="tab-monogram" role="tab" aria-selected="true" aria-controls="logo-monogram" tabindex="0" data-target="logo-monogram">Monogram</button>
-              <button type="button" id="tab-brackets" role="tab" aria-selected="false" aria-controls="logo-brackets" tabindex="-1" data-target="logo-brackets">Brackets</button>
-              <button type="button" id="tab-bubble" role="tab" aria-selected="false" aria-controls="logo-bubble" tabindex="-1" data-target="logo-bubble">Bubble</button>
-            </div>
-
-            <p class="header-subtle">Showcase your coding skills and connect with clients</p>
-          </div>
-        </div>
-
-        <!-- Hidden panels for the logo previews -->
-        <div class="logo-previews" aria-hidden="true">
-          <div id="logo-monogram" class="logo-variant active" role="tabpanel" aria-labelledby="tab-monogram" aria-hidden="false">
-            <!-- Monogram SVG (same as header icon) -->
-            <svg viewBox="0 0 160 72" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" focusable="false">
-              <defs>
-                <linearGradient id="brandGradPreview" x1="0" x2="1" y1="0" y2="1">
-                  <stop offset="0" stop-color="#4e54c8" />
-                  <stop offset="1" stop-color="#00aaff" />
-                </linearGradient>
-              </defs>
-              <rect x="6" y="6" width="64" height="64" rx="14" fill="url(#brandGradPreview)" />
-              <g transform="translate(18,18)" fill="none" stroke="#fff" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6 12c-6 4-6 12 0 16" />
-                <path d="M46 12c6 4 6 12 0 16" />
-              </g>
-            </svg>
-          </div>
-
-          <div id="logo-brackets" class="logo-variant" role="tabpanel" aria-labelledby="tab-brackets" aria-hidden="true">
-            <svg viewBox="0 0 200 72" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" focusable="false">
-              <defs>
-                <linearGradient id="brandGradB" x1="0" x2="1" y1="0" y2="1">
-                  <stop offset="0" stop-color="#4e54c8"/>
-                  <stop offset="1" stop-color="#00aaff"/>
-                </linearGradient>
-              </defs>
-              <rect x="6" y="8" width="56" height="56" rx="12" fill="url(#brandGradB)"/>
-              <path d="M22 22 L14 36 L22 50" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M58 22 L66 36 L58 50" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-
-          <div id="logo-bubble" class="logo-variant" role="tabpanel" aria-labelledby="tab-bubble" aria-hidden="true">
-            <svg viewBox="0 0 220 72" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" focusable="false">
-              <defs>
-                <linearGradient id="brandGradC" x1="0" x2="1" y1="0" y2="1">
-                  <stop offset="0" stop-color="#4e54c8"/>
-                  <stop offset="1" stop-color="#00aaff"/>
-                </linearGradient>
-              </defs>
-              <path d="M12 12 h48 a14 14 0 0 1 14 14 v10 a14 14 0 0 1 -14 14 h-44 l-10 10 v-10 a14 14 0 0 1 -4 -4 14 14 0 0 1 -2 -6 v-14 a14 14 0 0 1 14 -14 z" fill="url(#brandGradC)" />
-              <g transform="translate(22,30)" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-                <path d="M6 2 L0 12 L6 22"/>
-                <path d="M64 2 L70 12 L64 22"/>
-              </g>
-            </svg>
-          </div>
+          <!-- Wordmark (text) — gradient on 'Code', white 'Crowds' -->
+          <a class="brand-wordmark" href="/" aria-label="Code Crowds home">
+            <span class="brand-code">Code</span>
+            <span class="brand-crowds">Crowds</span>
+          </a>
         </div>
       </header>
 
       <main>
+        <!-- Features on left, login on right (hero) -->
         <section class="features" aria-label="Highlights">
           <article class="feature-card card">
             <h3>Offer Your Services</h3>
@@ -171,56 +109,10 @@
     </div>
 
     <script>
-      try { document.getElementById('year').textContent = new Date().getFullYear(); } catch(e) {}
+      try { document.getElementById('year').textContent = new Date().getFullYear(); } catch (e) { /* ignore */ }
     </script>
 
-    <!-- Accessible tab behavior for logos (keeps aria values synchronized) -->
-    <script>
-      (function () {
-        const tabs = Array.from(document.querySelectorAll('.logo-controls [role="tab"]'));
-        const panels = Array.from(document.querySelectorAll('.logo-variant[role="tabpanel"]'));
-
-        function activateTab(tab) {
-          tabs.forEach(t => {
-            const isActive = t === tab;
-            t.setAttribute('aria-selected', isActive ? 'true' : 'false');
-            t.setAttribute('tabindex', isActive ? '0' : '-1');
-          });
-
-          panels.forEach(p => {
-            const isActive = p.id === tab.dataset.target;
-            p.classList.toggle('active', isActive);
-            p.setAttribute('aria-hidden', isActive ? 'false' : 'true');
-          });
-
-          tab.focus();
-        }
-
-        function handleKeyDown(e, i) {
-          if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-            e.preventDefault();
-            const next = e.key === 'ArrowRight' ? (i + 1) % tabs.length : (i - 1 + tabs.length) % tabs.length;
-            activateTab(tabs[next]);
-          }
-        }
-
-        tabs.forEach((tab, i) => {
-          tab.addEventListener('click', () => activateTab(tab));
-          tab.addEventListener('keydown', (e) => {
-            if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); activateTab(tab); }
-            handleKeyDown(e, i);
-          });
-        });
-
-        // init
-        (function init() {
-          const activeTab = tabs.find(t => t.getAttribute('aria-selected') === 'true') || tabs[0];
-          tabs.forEach((t, i) => { t.setAttribute('tabindex', t === activeTab ? '0' : '-1'); });
-          panels.forEach(p => p.setAttribute('aria-hidden', p.id === activeTab.dataset.target ? 'false' : 'true'));
-        })();
-      })();
-    </script>
-
+    <!-- Project scripts -->
     <script src="init.js"></script>
     <script type="module" src="script.js"></script>
   </body>

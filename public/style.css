@@ -1,6 +1,6 @@
 /* public/style.css
    Polished / accessibility-forward version of the stylesheet.
-   Cleaned and corrected — header/logo styles moved here (no inline styles).
+   Includes header/logo rules (permanent monogram + wordmark).
 */
 
 /* -------------------- Load UI font + Theme variables -------------------- */
@@ -87,51 +87,56 @@ body{
   align-items:center;
 }
 
-/* Constrain and center primary content */
+/* Constrain main content */
 .container>header,
 .container>section,
 .container>.card,
 .container>form{width:100%;max-width:920px;margin-left:auto;margin-right:auto;box-sizing:border-box;}
 .container--transparent{background:transparent;box-shadow:none;color:#fff;text-align:center;align-items:stretch;}
 
-/* -------------------- Header / Logo styles -------------------- */
-.site-header{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:28px 0 20px;}
-@media(min-width:900px){.site-header{flex-direction:row;gap:28px;justify-content:center;align-items:center;}}
-.logo-wrap{display:flex;align-items:center;gap:14px;}
-.site-logo{display:inline-flex;align-items:center;text-decoration:none;}
-.site-logo svg{height:64px;width:auto;display:block;}
-.logo-variant{display:none;}
-.logo-variant.active{display:inline-block;}
-.logo-controls{display:flex;gap:8px;align-items:center;margin-top:10px;}
-.logo-controls button{background:transparent;border:2px solid rgba(255,255,255,0.12);color:#fff;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:700;font-family:var(--font-sans);font-size:14px;}
-.logo-controls button[aria-selected="true"]{background:var(--btn-gradient);box-shadow:0 8px 24px rgba(0,0,0,0.18);border-color:transparent;}
-@media(max-width:900px){.site-logo svg{height:48px}.logo-controls button{padding:6px 8px;font-size:13px;}}
+/* -------------------- Header / Logo styles (permanent) -------------------- */
+.site-header{padding-top:28px;padding-bottom:20px;}
+.header-inner{display:flex;align-items:center;justify-content:center;gap:28px;width:100%;}
+@media(max-width:900px){
+  .header-inner{flex-direction:column;gap:10px;padding-top:12px;}
+}
 
-/* Visually hidden helper */
-.visually-hidden{position:absolute!important;height:1px;width:1px;overflow:hidden;clip:rect(1px,1px,1px,1px);white-space:nowrap;border:0;padding:0;margin:-1px;}
+/* monogram sizing */
+.site-logo{display:inline-flex;align-items:center;text-decoration:none;flex-shrink:0;}
+.site-logo svg{height:84px;width:auto;display:block;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.08));}
 
-/* -------------------- Headings -------------------- */
-.site-title{font-weight:700;}
-h1,h2{margin:0 0 0.5rem;line-height:1.1;color:var(--color-primary);}
-.container--transparent h1,.container--transparent h2{color:#fff;text-shadow:0 2px 12px rgba(0,0,0,0.35);}
-h3{margin:0 0 0.5rem;}
-header p{margin:0 0 1rem;color:var(--color-muted);}
-.container--transparent header p{color:rgba(255,255,255,0.95);font-size:1.03rem;}
+/* brand wordmark (text) */
+.brand-wordmark{display:inline-flex;align-items:baseline;gap:8px;text-decoration:none;line-height:1;}
+.brand-code{
+  font-family:var(--font-sans);font-weight:800;font-size:40px;
+  background:linear-gradient(90deg,var(--brand-a),var(--brand-b));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;display:inline-block;
+}
+.brand-crowds{
+  font-family:var(--font-sans);font-weight:800;font-size:40px;color:#ffffff;display:inline-block;
+}
+@media(max-width:900px){
+  .site-logo svg{height:56px}
+  .brand-code,.brand-crowds{font-size:28px}
+}
+@media(max-width:420px){
+  .header-inner{gap:12px;padding-top:10px}
+  .brand-code,.brand-crowds{font-size:22px}
+  .site-logo svg{height:48px}
+}
 
-/* -------------------- Spinner / Fade-in -------------------- */
-.spinner{display:inline-block;width:20px;height:20px;border:3px solid #dcdcdc;border-top-color:var(--brand-a);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;}
-@keyframes spin{to{transform:rotate(360deg)}}
-.fade-in{opacity:0;transform:translateY(10px);animation:fadeIn .5s ease forwards;}
-@keyframes fadeIn{to{opacity:1;transform:translateY(0)}}
-@media(prefers-reduced-motion:reduce){.spinner,.fade-in{animation:none;transform:none;opacity:1}*{transition:none!important}}
+/* Visually hidden */
+.visually-hidden{position:absolute!important;height:1px;width:1px;overflow:hidden;clip:rect(1px,1px,1px,1px);white-space:nowrap;border:0;padding:0;margin:-1px}
 
-/* -------------------- Card -------------------- */
+/* -------------------- Card, Buttons, Inputs, etc. (unchanged) -------------------- */
+/* Reuse the rest of the polished CSS for cards, buttons, inputs, features, layout, etc. */
+/* Cards */
 .card{background:var(--color-card);border-radius:var(--radius-md);padding:var(--space-md);box-shadow:var(--shadow-1);color:var(--color-text);transition:transform 200ms ease,box-shadow 200ms ease;text-align:left;display:flex;flex-direction:column;gap:12px;}
 .card:hover{transform:translateY(-6px);box-shadow:0 18px 36px rgba(0,0,0,0.12);}
 .card h3{color:var(--color-primary);font-size:1.1rem;margin:0 0 8px;}
 .card p{margin:0;color:var(--color-muted);font-size:0.95rem;}
 
-/* -------------------- Buttons -------------------- */
+/* Buttons */
 button,.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:10px;font-weight:700;border:none;cursor:pointer;transition:transform var(--transition-fast),opacity var(--transition-fast),box-shadow var(--transition-fast);box-shadow:var(--shadow-1);font-size:1rem;color:var(--btn-text);background-image:var(--btn-gradient);background-size:200% 100%;text-decoration:none;}
 button:hover,.btn:hover{transform:translateY(-4px);opacity:.96;box-shadow:0 14px 32px rgba(0,0,0,0.14);}
 button:active,.btn:active{transform:translateY(-2px);}
@@ -140,25 +145,24 @@ button:focus-visible,.btn:focus-visible{outline:3px solid var(--focus-ring);outl
 .logout-btn{background:var(--danger);color:#fff;box-shadow:0 8px 20px rgba(255,77,79,0.10);}
 .btn--secondary{background:transparent;color:var(--btn-text);border:2px solid rgba(255,255,255,0.18);}
 
-/* -------------------- Inputs / Forms -------------------- */
+/* Inputs */
 .input,input,textarea,select{padding:10px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.08);font-size:15px;color:var(--color-text);background:#fff;width:100%;box-sizing:border-box;}
 .input:focus,input:focus,textarea:focus,select:focus{outline:none;box-shadow:0 0 0 4px rgba(108,52,235,0.12);border-color:rgba(108,52,235,0.6);}
 
-/* -------------------- Layout helpers -------------------- */
+/* Layout helpers */
 #services-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;align-items:start;}
 #newServiceSection{display:none;flex-direction:column;gap:10px;margin-top:10px;}
 
-/* -------------------- Action rail -------------------- */
+/* Action rail */
 .action-rail{position:fixed;right:20px;bottom:28px;display:flex;flex-direction:column;gap:12px;z-index:60;}
 .action-rail .btn{min-width:150px;border-radius:999px;background-image:var(--btn-gradient);color:var(--btn-text);box-shadow:0 10px 30px rgba(0,0,0,0.16);text-decoration:none;}
 .action-rail .btn.btn--primary,.action-rail .btn.btn--primary:hover{box-shadow:0 16px 40px rgba(78,84,200,0.18);}
-.action-rail .btn:hover{transform:translateY(-4px);}
 
-/* -------------------- Mobile bottom row -------------------- */
+/* Mobile bottom row */
 .mobile-button-row{display:none;position:fixed;bottom:0;left:0;width:100%;justify-content:space-around;padding:10px;gap:6px;background-color:rgba(255,255,255,0.95);z-index:9999;box-shadow:0 -6px 20px rgba(0,0,0,0.08);}
 .mobile-button-row button{flex:1;border-radius:8px;font-weight:700;font-size:1rem;padding:10px;background-image:var(--btn-gradient);color:#fff;transition:transform var(--transition-fast),opacity var(--transition-fast);}
 
-/* -------------------- Utilities -------------------- */
+/* Utilities */
 .hidden{display:none!important}
 .mb-sm{margin-bottom:var(--space-sm)}
 .mb-md{margin-bottom:var(--space-md)}
@@ -167,7 +171,7 @@ button:focus-visible,.btn:focus-visible{outline:3px solid var(--focus-ring);outl
 .row-center{display:flex;align-items:center}
 .w-full{width:100%}
 
-/* -------------------- Responsive tweaks -------------------- */
+/* Responsive tweaks */
 @media(max-width:480px){
   .action-rail{right:12px;bottom:18px;display:none}
   .mobile-button-row{display:flex}
@@ -175,19 +179,16 @@ button:focus-visible,.btn:focus-visible{outline:3px solid var(--focus-ring);outl
   .container{width:94%;padding:1.5rem 1rem 140px 1rem;margin:36px auto 0;gap:1.25rem;align-items:stretch}
 }
 
-/* Small screen cards stacking */
+/* Small-screen */
 @media(max-width:360px){#services-list{grid-template-columns:1fr;gap:12px}}
 
-/* -------------------- Page helpers -------------------- */
+/* Features & hero */
 .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;align-items:start;margin:0}
 .feature-card{background:var(--color-card);border-radius:var(--radius-md);padding:18px;box-shadow:var(--shadow-1);color:var(--color-text);text-align:left}
-
-/* Hero feature cards on gradient */
 .container--transparent .feature-card{background:var(--glass-dark);border-radius:var(--radius-md);padding:18px;box-shadow:var(--shadow-1);color:rgba(255,255,255,0.97);text-align:left;border:1px solid rgba(255,255,255,0.06)}
 .container--transparent .feature-card h3{color:#fff;font-weight:700;font-size:1.06rem;margin-bottom:8px}
 .container--transparent .feature-card p{color:rgba(255,255,255,0.92);font-weight:500;line-height:1.6}
 
-/* Compact hero cards */
 @media(min-width:900px){
   .container--transparent .features,.features{grid-template-columns:1fr;gap:18px;align-items:start}
   .container--transparent .feature-card,.feature-card{min-height:120px;padding:16px 18px;display:flex;flex-direction:column;justify-content:center;border-radius:12px}
@@ -196,35 +197,21 @@ button:focus-visible,.btn:focus-visible{outline:3px solid var(--focus-ring);outl
   main{gap:28px}
 }
 
-/* Homepage layout */
 main{display:grid;grid-template-columns:1fr 440px;gap:40px;align-items:start;padding-top:8px}
 @media(max-width:900px){main{grid-template-columns:1fr;gap:20px}.login-container{width:100%}}
 
-/* Login container */
 .login-container{width:360px;margin:0 auto;background:var(--glass-translucent);padding:18px;border-radius:var(--radius-md);box-shadow:none;text-align:left;color:#fff;border:1px solid rgba(255,255,255,0.06)}
 .container--transparent .login-container{background:var(--glass-dark);border:1px solid rgba(255,255,255,0.06);color:#fff;box-shadow:var(--shadow-1);margin-top:26px}
-
-/* Signup link */
 .login-container .signup-switch{color:rgba(255,255,255,0.85);margin-top:10px}
 .login-container .signup-switch a{color:var(--brand-b);font-weight:700;text-decoration:none}
 .login-container .signup-switch a:hover{text-decoration:underline}
 
-/* White card variant */
 .login-container.card{width:440px;margin:0;background:var(--color-card);color:var(--color-text);padding:24px;border-radius:var(--radius-md);box-shadow:0 18px 40px rgba(24,34,80,0.08);border:1px solid #e9eef8}
 .login-container.card h2{color:var(--brand-a);margin-top:0;font-size:1.2rem}
 .login-container.card input[type="email"],.login-container.card input[type="password"]{background:#ffffff;color:#222;border:1px solid #e6e9ef;padding:12px;width:100%;border-radius:var(--radius-sm)}
 .login-container.card .message{color:var(--danger);min-height:1.25em;margin-bottom:8px}
 
-/* Message */
 .message{color:var(--danger);min-height:1.25em;margin-bottom:8px}
-
-/* Hide action rail on hero */
-.container--transparent + .action-rail,
-.container--transparent ~ .action-rail,
-.container--transparent + .mobile-button-row,
-.container--transparent ~ .mobile-button-row{display:none!important}
-
-/* Slightly stronger card shadow */
+.container--transparent + .action-rail,.container--transparent ~ .action-rail,.container--transparent + .mobile-button-row,.container--transparent ~ .mobile-button-row{display:none!important}
 .login-container.card{box-shadow:0 22px 50px rgba(20,30,60,0.10)}
-
 @media(max-width:480px){.login-container{width:100%;padding:14px}.features{grid-template-columns:1fr}}
