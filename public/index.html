@@ -19,125 +19,38 @@
   <body>
     <div class="container container--transparent fade-in">
       <header role="banner" class="site-header">
-        <!-- H1 for SEO / accessibility (visually hidden) -->
-        <h1 class="visually-hidden">Code Crowds</h1>
+  <h1 class="visually-hidden">Code Crowds</h1>
 
-        <!-- logos area: three accessible panels (only one visible at a time) -->
-        <div class="logo-wrap" aria-hidden="false">
-          <!-- 1) Monogram + Wordmark (default active) -->
-          <div
-            id="logo-monogram"
-            class="logo-variant active"
-            role="tabpanel"
-            aria-labelledby="tab-monogram"
-            aria-hidden="false"
-          >
-            <a class="site-logo" href="/" aria-label="Code Crowds home — monogram">
-              <svg viewBox="0 0 240 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="monTitle monDesc">
-                <title id="monTitle">Code Crowds</title>
-                <desc id="monDesc">Monogram and wordmark for Code Crowds</desc>
-                <defs>
-                  <linearGradient id="brandGrad1" x1="0" x2="1" y1="0" y2="1">
-                    <stop offset="0" stop-color="#4e54c8"/>
-                    <stop offset="1" stop-color="#00aaff"/>
-                  </linearGradient>
-                  <filter id="monoShadow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#08102a" flood-opacity="0.12"/>
-                  </filter>
-                </defs>
+  <div class="logo-wrap" aria-hidden="false">
+    <!-- Wordmark: bespoke "C" ligature -->
+    <a class="site-logo" href="/" aria-label="Code Crowds home — wordmark">
+      <svg viewBox="0 0 420 72" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="wmTitle wmDesc">
+        <title id="wmTitle">Code Crowds</title>
+        <desc id="wmDesc">Wordmark logo: bespoke C ligature and modern type for Code Crowds</desc>
 
-                <!-- Monogram -->
-                <g transform="translate(0,0)">
-                  <rect x="0" y="0" width="48" height="48" rx="10" fill="url(#brandGrad1)" filter="url(#monoShadow)"/>
-                  <path d="M16 14 A8 8 0 1 0 16 34" fill="none" stroke="#fff" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M30 14 A8 8 0 1 0 30 34" fill="none" stroke="#fff" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/>
-                </g>
+        <defs>
+          <linearGradient id="gA" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#4e54c8"/>
+            <stop offset="1" stop-color="#00aaff"/>
+          </linearGradient>
+        </defs>
 
-                <!-- Wordmark -->
-                <g transform="translate(64,34)" font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial" font-weight="700">
-                  <text x="0" y="0" font-size="22" fill="#ffffff" letter-spacing="0.3">Code</text>
-                  <text x="58" y="0" font-size="22" fill="#ffffff" opacity="0.94" letter-spacing="0.3">Crowds</text>
-                </g>
-              </svg>
-            </a>
-          </div>
+        <!-- Bespoke C (stroked) -->
+        <g transform="translate(12,12)">
+          <path d="M18 36 C18 26, 28 20, 40 20 L44 20" fill="none" stroke="url(#gA)" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M18 36 C18 46, 28 52, 40 52" fill="none" stroke="url(#gA)" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
 
-          <!-- 2) Wordmark only -->
-          <div
-            id="logo-wordmark"
-            class="logo-variant"
-            role="tabpanel"
-            aria-labelledby="tab-wordmark"
-            aria-hidden="true"
-          >
-            <a class="site-logo" href="/" aria-label="Code Crowds home — wordmark">
-              <svg viewBox="0 0 320 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="wordTitle wordDesc">
-                <title id="wordTitle">Code Crowds</title>
-                <desc id="wordDesc">Wordmark for Code Crowds</desc>
-                <defs>
-                  <linearGradient id="brandGrad2" x1="0" x2="1" y1="0" y2="1">
-                    <stop offset="0" stop-color="#4e54c8"/>
-                    <stop offset="1" stop-color="#00aaff"/>
-                  </linearGradient>
-                </defs>
+        <!-- Wordmark -->
+        <g transform="translate(90,46)" font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial" font-weight="700">
+          <text x="0" y="0" font-size="34" fill="url(#gA)" letter-spacing="0.2">Code</text>
+          <text x="120" y="0" font-size="34" fill="#ffffff" letter-spacing="0.2">Crowds</text>
+        </g>
+      </svg>
+    </a>
+  </div>
+  </header>
 
-                <g transform="translate(0,32)" font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial" font-weight="800">
-                  <text x="0" y="0" font-size="24" fill="url(#brandGrad2)" letter-spacing="0.6">Code</text>
-                  <text x="90" y="0" font-size="24" fill="#ffffff" opacity="0.95" font-weight="700" letter-spacing="0.4">Crowds</text>
-                </g>
-              </svg>
-            </a>
-          </div>
-
-          <!-- 3) Emblem / Badge -->
-          <div
-            id="logo-badge"
-            class="logo-variant"
-            role="tabpanel"
-            aria-labelledby="tab-badge"
-            aria-hidden="true"
-          >
-            <a class="site-logo" href="/" aria-label="Code Crowds home — badge">
-              <svg viewBox="0 0 240 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="badgeTitle badgeDesc">
-                <title id="badgeTitle">Code Crowds</title>
-                <desc id="badgeDesc">Badge logo for Code Crowds</desc>
-                <defs>
-                  <linearGradient id="brandGrad3" x1="0" x2="1" y1="0" y2="1">
-                    <stop offset="0" stop-color="#4e54c8"/>
-                    <stop offset="1" stop-color="#00aaff"/>
-                  </linearGradient>
-                  <filter id="badgeShadow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#08102a" flood-opacity="0.12"/>
-                  </filter>
-                </defs>
-
-                <g transform="translate(0,0)">
-                  <circle cx="24" cy="24" r="24" fill="url(#brandGrad3)" filter="url(#badgeShadow)"/>
-                  <path d="M30 16 L22 24 L30 32" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M6 16 L14 24 L6 32" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-                  <g transform="translate(10,28)">
-                    <circle cx="8" cy="0" r="1.8" fill="#ffffff" opacity="0.95"/>
-                    <circle cx="14" cy="0" r="1.8" fill="#ffffff" opacity="0.95"/>
-                    <circle cx="20" cy="0" r="1.8" fill="#ffffff" opacity="0.95"/>
-                  </g>
-                </g>
-
-                <g transform="translate(56,34)" font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial" font-weight="700">
-                  <text x="0" y="0" font-size="20" fill="#ffffff">Code</text>
-                  <text x="54" y="0" font-size="20" fill="#ffffff" opacity="0.92">Crowds</text>
-                </g>
-              </svg>
-            </a>
-          </div>
-        </div>
-
-        <!-- logo selector (accessible tablist) -->
-        <div class="logo-controls" role="tablist" aria-label="Logo variants">
-          <button type="button" id="tab-monogram" role="tab" aria-selected="true" aria-controls="logo-monogram" tabindex="0" data-target="logo-monogram">Monogram</button>
-          <button type="button" id="tab-wordmark" role="tab" aria-selected="false" aria-controls="logo-wordmark" tabindex="-1" data-target="logo-wordmark">Wordmark</button>
-          <button type="button" id="tab-badge" role="tab" aria-selected="false" aria-controls="logo-badge" tabindex="-1" data-target="logo-badge">Badge</button>
-        </div>
-      </header>
 
       <main>
         <section class="features" aria-label="Highlights">
