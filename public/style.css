@@ -424,21 +424,4 @@ main {
 /* -------------------- HERO READABILITY & ACTION-RAIL VISIBILITY -------------------- */
 /* Hide floating action rail and mobile actions on the public hero (index/sign-in).
    The action-rail / mobile-button-row are outside the .container element, so
-   use sibling selectors to target them when the hero container is present. */
-.container--transparent + .action-rail,
-.container--transparent ~ .action-rail,
-.container--transparent + .mobile-button-row,
-.container--transparent ~ .mobile-button-row {
-  display: none !important;
-}
-
-/* Slightly stronger login card shadow for the white card variant */
-.login-container.card {
-  box-shadow: 0 22px 50px rgba(20,30,60,0.10);
-}
-
-/* Responsive tweaks for login card */
-@media (max-width: 480px) {
-  .login-container { width: 100%; padding: 14px; }
-  .features { grid-template-columns: 1fr; }
-}
+   use sibling selecto
