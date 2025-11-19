@@ -7,11 +7,10 @@
 
     <!-- make API_URL sensible for local testing; override in production if needed -->
     <script>
-  // Replace with your real API host that accepts POST /users/login
-  window.API_URL = 'https://your-api-host.example.com/api';
-  console.info("Init: API_URL =", window.API_URL);
-</script>
-
+      // Replace with your real API host that accepts POST /users/login
+      window.API_URL = 'https://your-api-host.example.com/api';
+      console.info("Init: API_URL =", window.API_URL);
+    </script>
 
     <!-- stylesheet (relative so it works when serving from a subpath/local) -->
     <link rel="stylesheet" href="style.css" />
@@ -20,11 +19,9 @@
   <body>
     <div class="container container--transparent fade-in">
       <header role="banner" class="site-header">
-        <h1 class="site-title"><span class="brand">CodeCrowds</span></h1>
-        <p class="site-subtitle">
-          Showcase your coding skills, offer services, and connect with clients
-          worldwide. Join a community where talent meets opportunity!
-        </p>
+        <!-- Top of page shows only the brand name per request -->
+        <h1 class="site-title"><span class="brand">Code Crowds</span></h1>
+        <!-- Subtitle intentionally removed -->
       </header>
 
       <main>
@@ -55,7 +52,6 @@
         </section>
 
         <!-- Login card: .card to match Register page visual language -->
-        <!-- NOTE: this includes the "card" class so the white/solid card styles apply -->
         <aside class="login-container card" aria-labelledby="login-heading">
           <h2 id="login-heading">Login</h2>
 
@@ -92,7 +88,7 @@
       </main>
 
       <footer class="site-footer" role="contentinfo">
-        &copy; <span id="year"></span> CodeCrowds. All rights reserved.
+        &copy; <span id="year"></span> Code Crowds. All rights reserved.
       </footer>
     </div>
 

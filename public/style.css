@@ -419,12 +419,28 @@ main {
   border: 1px solid rgba(255,255,255,0.06);
 }
 
-/* Stronger dark glass when login is on the transparent hero for readability */
+/* Stronger dark glass when login is on the transparent hero for readability
+   + slight downward shift for symmetry */
 .container--transparent .login-container {
   background: var(--glass-dark);
   border: 1px solid rgba(255,255,255,0.06);
   color: #fff;
   box-shadow: var(--shadow-1);
+  margin-top: 26px; /* move down for symmetry */
+}
+
+/* Make the signup link visible and brand-blue on the hero/login card */
+.login-container .signup-switch {
+  color: rgba(255,255,255,0.85);
+  margin-top: 10px;
+}
+.login-container .signup-switch a {
+  color: var(--brand-b);
+  font-weight: 700;
+  text-decoration: none;
+}
+.login-container .signup-switch a:hover {
+  text-decoration: underline;
 }
 
 /* When login container is used with .card, make it match the register look (white card) */
@@ -447,11 +463,10 @@ main {
   width: 100%;
   border-radius: var(--radius-sm);
 }
-.login-container.card .message { color: var(--danger); min-height: 1.25em; margin-bottom: 8px; }
+login-container.card .message { color: var(--danger); min-height: 1.25em; margin-bottom: 8px; }
 
 /* Message area (error/success) */
 .message { color: var(--danger); min-height: 1.25em; margin-bottom: 8px; }
-.login-container a { color: #fff; text-decoration: underline; }
 
 /* tiny accessibility helper for labels hidden visually but still available to screen readers */
 .visually-hidden {
