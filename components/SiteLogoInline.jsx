@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -29,7 +29,7 @@ export default function SiteLogoInline({ size = 160, color = '#062e7f', idSuffix
         aria-labelledby={`${titleId} ${descId}`}
         preserveAspectRatio="xMinYMin meet"
       >
-        <title id={titleId}>Code Crowds — Monogram (open right, no tail)</title>
+        <title id={titleId}>Code Crowds â€” Monogram (open right, no tail)</title>
         <desc id={descId}>
           Rounded-square badge with centered C opening to the right (no terminal tail)
         </desc>
