@@ -74,8 +74,9 @@ body{
 .container{
   max-width:var(--max-width);
   width:90%;
-  padding:2.5rem 2rem 140px 2rem;
-  margin:30px auto 0;
+  /* reduced top padding and slightly reduced top margin to tighten header */
+  padding:1.25rem 2rem 140px 2rem; /* was 2.5rem */
+  margin:12px auto 0;             /* was 30px */
   display:flex;
   flex-direction:column;
   gap:2rem;
@@ -95,17 +96,24 @@ body{
 .container--transparent{background:transparent;box-shadow:none;color:#fff;text-align:center;align-items:stretch;}
 
 /* -------------------- Header / Logo styles (permanent) -------------------- */
-.site-header{padding-top:28px;padding-bottom:20px;}
+.site-header{padding-top:8px;padding-bottom:12px;} /* tightened */
 .header-inner{display:flex;align-items:center;justify-content:center;gap:28px;width:100%;}
 @media(max-width:900px){
   .header-inner{flex-direction:column;gap:10px;padding-top:12px;}
 }
 
-/* monogram sizing */
+/* monogram sizing (supports inline svg and <img src="...svg"> fallback) */
 .site-logo{display:inline-flex;align-items:center;text-decoration:none;flex-shrink:0;}
-.site-logo svg{height:84px;width:auto;display:block;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.08));}
+.site-logo svg,
+.site-logo img,
+.site-logo__img{
+  height:64px; /* reduced from 84px to tighten header */
+  width:auto;
+  display:block;
+  filter:drop-shadow(0 6px 12px rgba(0,0,0,0.06));
+}
 
-/* brand wordmark (text) */
+/* brand wordmark (text) - kept for fallback / React component usage */
 .brand-wordmark{display:inline-flex;align-items:baseline;gap:8px;text-decoration:none;line-height:1;}
 .brand-code{
   font-family:var(--font-sans);font-weight:800;font-size:40px;
@@ -205,6 +213,11 @@ main{display:grid;grid-template-columns:1fr 440px;gap:40px;align-items:start;pad
 .login-container .signup-switch{color:rgba(255,255,255,0.85);margin-top:10px}
 .login-container .signup-switch a{color:var(--brand-b);font-weight:700;text-decoration:none}
 .login-container .signup-switch a:hover{text-decoration:underline}
+
+/* Ensure the signup switch is dark text when the login container is the white card */
+.login-container.card .signup-switch {
+  color: var(--color-text); /* #333 by default */
+}
 
 .login-container.card{width:440px;margin:0;background:var(--color-card);color:var(--color-text);padding:24px;border-radius:var(--radius-md);box-shadow:0 18px 40px rgba(24,34,80,0.08);border:1px solid #e9eef8}
 .login-container.card h2{color:var(--brand-a);margin-top:0;font-size:1.2rem}
