@@ -16,36 +16,46 @@
 
   <body>
     <div class="container container--transparent fade-in">
-      <!-- Option 1: Network Node Mark -->
-<header class="site-header">
-  <a class="site-logo" href="/" aria-label="Code Crowds - network mark">
-    <svg viewBox="0 0 160 72" xmlns="http://www.w3.org/2000/svg" width="160" height="72" role="img" aria-hidden="false">
-      <defs>
-        <linearGradient id="gN" x1="0" x2="1">
-          <stop offset="0" stop-color="#4e54c8"/>
-          <stop offset="1" stop-color="#00aaff"/>
-        </linearGradient>
-      </defs>
+      <header role="banner" class="site-header" aria-label="Code Crowds header">
+  <h1 class="visually-hidden">Code Crowds</h1>
 
-      <!-- hexagon -->
-      <g transform="translate(6,4)">
-        <path d="M32 0 L64 16 L64 48 L32 64 L0 48 L0 16 Z" fill="url(#gN)"/>
-        <!-- nodes -->
-        <circle cx="20" cy="22" r="3.6" fill="#fff"/>
-        <circle cx="44" cy="22" r="3.6" fill="#fff"/>
-        <circle cx="32" cy="40" r="3.6" fill="#fff"/>
-        <!-- links -->
-        <path d="M20 22 L32 40 L44 22" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-      </g>
+  <div class="header-inner">
+    <a class="site-logo" href="/" aria-label="Code Crowds home">
+      <svg viewBox="0 0 200 72" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="logoC-title logoC-desc" focusable="false" width="200" height="72" preserveAspectRatio="xMinYMid meet">
+        <title id="logoC-title">Code Crowds</title>
+        <desc id="logoC-desc">Badge logo for Code Crowds</desc>
+        <defs>
+          <linearGradient id="C-grad" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#4e54c8"/>
+            <stop offset="1" stop-color="#00aaff"/>
+          </linearGradient>
+        </defs>
 
-      <!-- wordmark -->
-      <g transform="translate(84,52)" font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial" font-weight="800" font-size="30" fill="#fff">
-        <text x="0" y="0">Code</text>
-        <text x="108" y="0">Crowds</text>
-      </g>
-    </svg>
-  </a>
+        <g>
+          <circle cx="36" cy="36" r="28" fill="url(#C-grad)"/>
+          <!-- bracket hints -->
+          <path d="M30 26 L22 36 L30 46" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M42 26 L50 36 L42 46" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- crowd dots -->
+          <g transform="translate(14,52)">
+            <circle cx="8" cy="0" r="1.9" fill="#fff"/>
+            <circle cx="18" cy="0" r="1.9" fill="#fff"/>
+            <circle cx="28" cy="0" r="1.9" fill="#fff"/>
+          </g>
+        </g>
+
+        <g transform="translate(76,52)" font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial" font-weight="800" font-size="34" fill="#ffffff">
+          <text x="0" y="0">Code</text>
+          <text x="112" y="0">Crowds</text>
+        </g>
+      </svg>
+    </a>
+  </div>
 </header>
+
+
+
+
       <main>
         <section class="features" aria-label="Highlights">
           <article class="feature-card card">
