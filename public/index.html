@@ -55,7 +55,8 @@
         <aside class="login-container card" aria-labelledby="login-heading">
           <h2 id="login-heading">Login</h2>
 
-          <form id="loginForm" novalidate>
+          <!-- method/action are set so non-JS fallback uses POST to the correct server route -->
+          <form id="loginForm" method="post" action="/api/users/login" novalidate>
             <label for="loginEmail" class="visually-hidden">Email</label>
             <input id="loginEmail" name="email" type="email" class="input" placeholder="Email" autocomplete="username" required />
 
@@ -75,8 +76,77 @@
       </footer>
     </div>
 
+    <!-- Client JS: safely POSTs to /api/users/login and prevents credentials ending up in the URL -->
     <script>
-      try { document.getElementById('year').textContent = new Date().getFullYear(); } catch (e) { /* ignore */ }
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('loginForm');
+      const msg = document.getElementById('loginMessage');
+
+      if (!form) return;
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault(); // prevent default (no GET in URL)
+
+        msg.textContent = ''; // clear prior messages
+
+        const email = (form.email && form.email.value || '').trim();
+        const password = (form.password && form.password.value) || '';
+
+        if (!email || !password) {
+          msg.textContent = 'Please enter both email and password.';
+          return;
+        }
+
+        // show a simple "working" state (optional)
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const prevText = submitBtn ? submitBtn.textContent : '';
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Signing in...';
+        }
+
+        try {
+          // POST JSON to the server route the app mounts at: /api/users/login
+          const res = await fetch('/api/users/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+            credentials: 'same-origin' // same-origin; server returns token JSON
+          });
+
+          const payload = await res.json().catch(() => null);
+
+          if (!res.ok) {
+            // server returns { success: false, error: { message } }
+            const errorMsg = payload && payload.error && payload.error.message
+              ? payload.error.message
+              : `Login failed (${res.status})`;
+            msg.textContent = errorMsg;
+            return;
+          }
+
+          // success: server responds with { token, user }
+          if (payload && payload.token) {
+            // Save token locally for subsequent API calls (the server uses JWT)
+            localStorage.setItem('codecrowds_token', payload.token);
+          }
+
+          // Redirect to profile or reload to show auth state
+          window.location.href = '/profile.html';
+        } catch (err) {
+          console.error('Login failed', err);
+          msg.textContent = 'Network error — please try again.';
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = prevText;
+          }
+        }
+      });
+    });
+
+    // small year filler
+    try { document.getElementById('year').textContent = new Date().getFullYear(); } catch (e) {}
     </script>
   </body>
 </html>
