@@ -240,27 +240,27 @@ function initLoginPage() {
         method: "POST",
         body: { email, password },
         timeoutMs: 10000,
+        withCredentials: true,
       });
 
       const token = out?.token;
       const user = out?.user || {};
       const userId = String(user?.id || "");
 
-      if (!token || !userId) {
-        show(msg);
-        setText(msg, "Login succeeded but token/userId missing.");
+      if (token && userId) {
+        setToken(token);
+        setUserId(userId);
+        try {
+          localStorage.setItem("cc_me", JSON.stringify(user));
+          const dn = getDisplayName(user);
+          if (dn) localStorage.setItem("username", dn);
+        } catch {}
+        location.replace("profile.html");
         return;
       }
 
-      setToken(token);
-      setUserId(userId);
-
-      try {
-        localStorage.setItem("cc_me", JSON.stringify(user));
-        const dn = getDisplayName(user);
-        if (dn) localStorage.setItem("username", dn);
-      } catch {}
-
+      // No token returned but API call was successful. Assume server set an HttpOnly cookie.
+      // Redirect to profile page.
       location.replace("profile.html");
     } catch (err) {
       show(msg);

@@ -11,8 +11,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
-    <!-- Use absolute path so the stylesheet resolves from any route -->
-    <link rel="stylesheet" href="/style.css" />
+    <!-- Use relative path so stylesheet resolves when site is served under a subpath -->
+    <link rel="stylesheet" href="style.css" />
   </head>
 
   <body>
@@ -76,73 +76,8 @@
       </footer>
     </div>
 
-    <!-- Client JavaScript: intercept form, POST JSON, and avoid credentials in URL.
-         Uses credentials: 'include' and DOES NOT store the token in localStorage.
-         Instead the server should set an HttpOnly secure cookie on success. -->
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        const form = document.getElementById('loginForm');
-        const msg = document.getElementById('loginMessage');
-        if (!form) return;
-
-        form.addEventListener('submit', async (e) => {
-          // prevent the browser from doing a GET that leaks credentials in the URL
-          e.preventDefault();
-          msg.textContent = '';
-
-          const email = (form.email && form.email.value || '').trim();
-          const password = (form.password && form.password.value) || '';
-
-          if (!email || !password) {
-            msg.textContent = 'Please enter both email and password.';
-            return;
-          }
-
-          const submitBtn = form.querySelector('button[type="submit"]');
-          const prevText = submitBtn ? submitBtn.textContent : '';
-          if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Signing in...';
-          }
-
-          try {
-            // POST JSON and include credentials so any server-set cookie is accepted
-            const res = await fetch('/api/users/login', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include', // important for receiving HttpOnly cookie
-              body: JSON.stringify({ email, password })
-            });
-
-            // try parse JSON response
-            const payload = await res.json().catch(() => null);
-
-            if (!res.ok) {
-              const message = payload && payload.error && payload.error.message
-                ? payload.error.message
-                : `Login failed (${res.status})`;
-              msg.textContent = message;
-              return;
-            }
-
-            // Successful login:
-            // - We DO NOT save token to localStorage here (more secure to use HttpOnly cookie)
-            // - Redirect to profile or wherever is appropriate
-            window.location.href = '/profile.html';
-          } catch (err) {
-            console.error('Login error', err);
-            msg.textContent = 'Network error, please try again.';
-          } finally {
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.textContent = prevText;
-            }
-          }
-        });
-      });
-
-      // fill year in footer
-      try { document.getElementById('year').textContent = new Date().getFullYear(); } catch (e) {}
-    </script>
+    <!-- Client JavaScript: init must load first to set API_BASE if needed, then script -->
+    <script src="init.js" defer></script>
+    <script src="script.js" defer></script>
   </body>
 </html>
