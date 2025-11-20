@@ -4,10 +4,16 @@
     es2024: true,
     jest: true,
   },
+
+  // Allow top-level import/export and JSX by default (modern projects)
   parserOptions: {
     ecmaVersion: 2024,
-    sourceType: 'script',
+    sourceType: 'module', // <-- enables `import` / `export`
+    ecmaFeatures: {
+      jsx: true, // <-- enables JSX parsing
+    },
   },
+
   extends: ['eslint:recommended', 'plugin:node/recommended', 'prettier'],
   plugins: ['prettier'],
   rules: {
@@ -19,6 +25,29 @@
 
   // Per-file exceptions
   overrides: [
+    // React / frontend code: treat as browser modules, enable react settings
+    {
+      // match common front-end locations and extensions
+      files: [
+        '**/*.jsx',
+        '**/*.tsx',
+        'src/**/*.{jsx,tsx,js,ts}',
+        'components/**',
+        'pages/**',
+        'app/**',
+      ],
+      env: { browser: true, node: false, es2024: true },
+      parserOptions: {
+        ecmaVersion: 2024,
+        sourceType: 'module',
+        ecmaFeatures: { jsx: true },
+      },
+      settings: {
+        react: { version: 'detect' },
+      },
+      extends: ['plugin:react/recommended'],
+    },
+
     // Server code: allow console logging (your app uses console.* extensively)
     {
       files: ['src/**/*.js'],
@@ -38,6 +67,10 @@
         'sync.js',
         'dbTest.js',
       ],
+      parserOptions: {
+        // parse these as scripts (CommonJS / non-module) so old-style code is accepted
+        sourceType: 'script',
+      },
       rules: {
         'no-console': 'off',
         'no-process-exit': 'off',
@@ -82,6 +115,7 @@
       files: ['src/routes/payments.js'],
       rules: { 'no-inner-declarations': 'off' },
     },
+
     {
       files: ['migrations/**', 'seeders/**', 'src/migrations/**', 'src/seeders/**'],
       rules: {
