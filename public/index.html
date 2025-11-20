@@ -76,7 +76,9 @@
       </footer>
     </div>
 
-    <!-- Client JavaScript: intercept form, POST JSON, and avoid credentials in URL -->
+    <!-- Client JavaScript: intercept form, POST JSON, and avoid credentials in URL.
+         Uses credentials: 'include' and DOES NOT store the token in localStorage.
+         Instead the server should set an HttpOnly secure cookie on success. -->
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         const form = document.getElementById('loginForm');
@@ -104,14 +106,15 @@
           }
 
           try {
-            // POST to your server API (matches src/routes/user.js which expects JSON)
+            // POST JSON and include credentials so any server-set cookie is accepted
             const res = await fetch('/api/users/login', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              credentials: 'same-origin', // include cookies if server sets them
+              credentials: 'include', // important for receiving HttpOnly cookie
               body: JSON.stringify({ email, password })
             });
 
+            // try parse JSON response
             const payload = await res.json().catch(() => null);
 
             if (!res.ok) {
@@ -122,13 +125,9 @@
               return;
             }
 
-            // success: server returns { token, user } according to your server file
-            if (payload && payload.token) {
-              // store token for client usage — consider server-set HttpOnly cookie if preferred
-              localStorage.setItem('codecrowds_token', payload.token);
-            }
-
-            // redirect after successful login to profile page
+            // Successful login:
+            // - We DO NOT save token to localStorage here (more secure to use HttpOnly cookie)
+            // - Redirect to profile or wherever is appropriate
             window.location.href = '/profile.html';
           } catch (err) {
             console.error('Login error', err);
