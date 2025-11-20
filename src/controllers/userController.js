@@ -1,5 +1,9 @@
-﻿const { User, Service } = require('../models');
-const bcrypt = require('bcrypt');
+﻿// src/controllers/userController.js
+const { User, Service } = require('../models');
+const bcrypt = require('bcryptjs'); // use bcryptjs to avoid native build issues
+const { promisify } = require('util');
+const bcryptHash = promisify(bcrypt.hash);
+const bcryptCompare = promisify(bcrypt.compare);
 const jwt = require('jsonwebtoken');
 
 // Helper: remove sensitive fields
@@ -41,7 +45,8 @@ const register = async (req, res) => {
     });
     if (existingUsername) return res.status(400).json({ error: 'Username already taken' });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Use promisified bcrypt.hash to allow await
+    const hashedPassword = await bcryptHash(password, 10);
     const user = await User.create({
       username: normUsername,
       email: normEmail,
@@ -54,7 +59,7 @@ const register = async (req, res) => {
       expiresIn: '1d',
     });
 
-    // âœ… Always return token+user on success
+    // ✓ Always return token+user on success
     res.status(201).json({ token, user: toSafeUser(user) });
   } catch (err) {
     console.error('Register error:', err);
@@ -78,7 +83,8 @@ const login = async (req, res) => {
     const user = await User.findOne({ where });
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const valid = await bcrypt.compare(password, user.password);
+    // Use promisified bcrypt.compare
+    const valid = await bcryptCompare(password, user.password);
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
     if (!requireJwtSecretOr500(res)) return;
