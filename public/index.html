@@ -6,12 +6,12 @@
     <title>CodeCrowds - Showcase & Sell Your Skills</title>
     <meta name="description" content="Code Crowds — show and sell your coding skills, connect with developers, and grow your network." />
 
-    <!-- Load fonts/styles -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
 
-    <!-- Use absolute path so the stylesheet resolves from any route -->
+    <!-- Main stylesheet -->
     <link rel="stylesheet" href="/style.css" />
   </head>
 
@@ -22,7 +22,7 @@
     <div class="container container--transparent fade-in">
       <header class="site-header" role="banner">
         <div class="header-inner">
-          <!-- Single heading + link for the site brand (text-only wordmark) -->
+          <!-- Text-only wordmark (accessible H1) -->
           <h1 class="brand-heading">
             <a href="/" class="site-logo" aria-label="Code Crowds home">
               <span class="brand-wordmark">
@@ -35,6 +35,7 @@
       </header>
 
       <main id="main">
+        <!-- Features (left column) -->
         <section class="features" aria-label="Highlights">
           <article class="feature-card card">
             <h3>Offer Your Services</h3>
@@ -52,6 +53,7 @@
           </article>
         </section>
 
+        <!-- Login (right column) -->
         <aside class="login-container card" aria-labelledby="login-heading">
           <h2 id="login-heading">Login</h2>
 

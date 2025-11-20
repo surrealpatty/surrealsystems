@@ -1,25 +1,22 @@
 /* public/style.css
-   Final polished stylesheet:
-   - Text-only wordmark (Fiverr-like): large, light-weight Poppins display
-   - Clean white wordmark on the blue gradient; brand colors on white card
-   - No inline styles; accessibility-friendly
-   - Kept the rest of your polished styles (cards, buttons, inputs, layout)
+   Polished / professional stylesheet for CodeCrowds
+   - refined blue hero, cleaner headline, glassy cards, polished login
+   - no inline styles, accessible heading structure
 */
 
-/* -------------------- Load UI fonts + Theme variables -------------------- */
-/* Inter for body; Poppins for the large display wordmark */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Poppins:wght@300;400;600&display=swap');
+/* -------------------- Fonts + variables -------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Poppins:wght@300;400;500&display=swap');
 
 :root{
-  --brand-a:#4e54c8;
-  --brand-b:#00aaff;
+  --brand-a:#2b5ac6;   /* deeper, professional left stop */
+  --brand-b:#00b4ff;   /* vivid right stop */
   --accent:#ffc107;
   --success:#28a745;
   --info:#17a2b8;
   --danger:#ff4d4f;
   --card-bg:#ffffff;
-  --card-text:#333333;
-  --muted:#555555;
+  --card-text:#1f2b3a;
+  --muted:#6b7280;
 
   --glass-light:rgba(255,255,255,0.95);
   --glass-translucent:rgba(255,255,255,0.06);
@@ -28,236 +25,142 @@
   --radius-lg:16px;
   --radius-md:12px;
   --radius-sm:8px;
-  --shadow-1:0 8px 20px rgba(0,0,0,0.12);
-  --shadow-2:0 12px 30px rgba(0,0,0,0.15);
+  --shadow-1:0 8px 20px rgba(10,20,40,0.08);
+  --shadow-2:0 12px 30px rgba(10,20,40,0.10);
   --transition-fast:180ms;
 
   --font-sans:"Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   --font-display:"Poppins", var(--font-sans);
-  --color-primary:var(--brand-a);
-  --color-primary-2:var(--brand-b);
-  --color-accent:var(--accent);
-  --color-card:var(--card-bg);
-  --color-text:var(--card-text);
-  --color-muted:var(--muted);
-  --focus-ring:#cceeff;
 
   --max-width:1200px;
   --space-sm:8px;
   --space-md:20px;
   --space-lg:32px;
 
-  --btn-gradient:linear-gradient(180deg,var(--brand-a),var(--brand-b));
-  --btn-bg:var(--brand-a);
+  --btn-gradient:linear-gradient(180deg,#3553d6,#00aaff);
   --btn-text:#ffffff;
 }
 
-/* -------------------- Global Reset + Typography -------------------- */
+/* -------------------- Global Reset + base -------------------- */
 *,
 *::before,
 *::after{box-sizing:border-box;}
-html,body,.container,.card,.row,.meta-row{min-width:0;}
-html,body{
-  height:100%;
-  margin:0;
-  padding:0;
-  font-family:var(--font-sans);
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-  line-height:1.45;
-  color:var(--color-text);
-  background:linear-gradient(135deg,var(--brand-a),var(--brand-b));
+html,body{height:100%;margin:0;padding:0;font-family:var(--font-sans);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;color:var(--card-text);line-height:1.45;}
+body{
+  min-height:100vh;
+  background: linear-gradient(135deg,var(--brand-a) 0%, #1797ff 60%, var(--brand-b) 100%);
+  -webkit-tap-highlight-color:transparent;
+  background-attachment: fixed;
 }
 
-/* -------------------- Container (default = white card) -------------------- */
+/* -------------------- Container -------------------- */
 .container{
   max-width:var(--max-width);
   width:92%;
-  /* more breathing room for the large wordmark like Fiverr */
-  padding:3.5rem 2rem 140px 2rem;
+  padding:3rem 2rem 120px 2rem; /* slightly tighter than before */
   margin:12px auto 0;
   display:flex;
   flex-direction:column;
   gap:2rem;
-  background:var(--color-card);
+  background:var(--card-bg);
   border-radius:var(--radius-lg);
   box-shadow:var(--shadow-2);
-  color:var(--color-text);
+  color:var(--card-text);
   text-align:left;
   align-items:center;
 }
+.container--transparent{background:transparent;color:#fff;box-shadow:none;text-align:center;align-items:stretch;}
 
-/* Constrain main content */
-.container>header,
-.container>section,
-.container>.card,
-.container>form{width:100%;max-width:920px;margin-left:auto;margin-right:auto;box-sizing:border-box;}
-.container--transparent{background:transparent;box-shadow:none;color:#fff;text-align:center;align-items:stretch;}
-
-/* -------------------- Header / Wordmark (Fiverr-inspired) -------------------- */
-/* header spacing and alignment */
+/* -------------------- Header / wordmark -------------------- */
 .site-header{padding-top:8px;padding-bottom:16px;}
 .header-inner{display:flex;align-items:center;justify-content:center;gap:28px;width:100%;}
 @media(max-width:900px){ .header-inner{flex-direction:column;gap:10px;padding-top:12px;} }
 
-/* H1 reset and accessibility */
-.brand-heading{
-  margin:0;
-  font-size:inherit;
-  font-weight:inherit;
-  text-align:center;
-  line-height:1;
-}
+.brand-heading{margin:0;font-size:inherit;font-weight:inherit;text-align:center;line-height:1;}
+.site-logo{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;flex-shrink:0;padding:0;border-radius:8px;position:relative;}
 
-/* wordmark container (no heavy background) */
-.site-logo{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  text-decoration:none;
-  flex-shrink:0;
-  padding:0;
-  border-radius:8px;
-  position:relative;
-}
+/* subtle halo removed for a cleaner look */
 
-/* subtle halo to increase perceived contrast (very light) */
-.site-logo::before{
-  content:"";
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  width:calc(100% + 20px);
-  height:calc(100% + 12px);
-  pointer-events:none;
-  border-radius:12px;
-  background: radial-gradient(ellipse at center, rgba(0,0,0,0.06), rgba(0,0,0,0.02) 30%, transparent 50%);
-  filter: blur(4px);
-  opacity:0.9;
-  z-index:-1;
-}
-
-/* wordmark layout */
+/* wordmark */
 .brand-wordmark{display:inline-flex;align-items:baseline;gap:10px;text-decoration:none;line-height:1;margin:0;padding:0;}
-.brand-code,
-.brand-crowds{
-  font-family:var(--font-display);
-  font-weight:300;     /* light-weight for airy, sophisticated look */
-  display:inline-block;
-  letter-spacing:-0.01em;
-  line-height:1;
-  margin:0;
-  -webkit-font-smoothing:antialiased;
-}
+.brand-code,.brand-crowds{font-family:var(--font-display);font-weight:400;display:inline-block;letter-spacing:-0.01em;line-height:1;margin:0;-webkit-font-smoothing:antialiased;}
+.brand-code{font-size:72px;color:#fff;text-shadow:0 6px 18px rgba(0,0,0,0.08);}
+.brand-crowds{font-size:72px;font-weight:500;color:#fff;text-shadow:0 6px 18px rgba(0,0,0,0.08);}
 
-/* large display sizes for desktop */
-.brand-code{
-  font-size:120px;
-  color:#ffffff; /* default for gradient view */
-  text-shadow: 0 10px 28px rgba(0,0,0,0.16);
-  -webkit-font-smoothing:antialiased;
-}
-.brand-crowds{
-  font-size:120px;
-  font-weight:400; /* slightly heavier to provide rhythm */
-  color:#ffffff;
-  text-shadow: 0 10px 28px rgba(0,0,0,0.16);
-}
-
-/* On white card (non-transparent) use brand gradient for Code and brand color for Crowds */
+/* on white card (non-transparent) show brand colors */
 .container:not(.container--transparent) .brand-code{
-  background: linear-gradient(90deg, var(--brand-a), var(--brand-b));
-  -webkit-background-clip:text;
-  background-clip:text;
-  -webkit-text-fill-color:transparent;
-  color:var(--brand-a);
-  text-shadow: 0 6px 14px rgba(0,0,0,0.06);
+  background: linear-gradient(90deg,var(--brand-a),var(--brand-b));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--brand-a);text-shadow:0 6px 14px rgba(0,0,0,0.06);
 }
-.container:not(.container--transparent) .brand-crowds{
-  color:var(--brand-b);
-  text-shadow: 0 6px 14px rgba(0,0,0,0.06);
+.container:not(.container--transparent) .brand-crowds{color:var(--brand-b);text-shadow:0 6px 14px rgba(0,0,0,0.06);}
+
+/* responsive headline sizes */
+@media (max-width:1100px){ .brand-code,.brand-crowds{font-size:56px;} }
+@media (max-width:900px){ .brand-code,.brand-crowds{font-size:40px;} }
+@media (max-width:420px){ .brand-code,.brand-crowds{font-size:28px;} }
+
+/* -------------------- Main layout -------------------- */
+main{
+  display:grid;
+  grid-template-columns:1fr 440px;
+  gap:40px;
+  align-items:start;
+  padding-top:8px;
 }
+@media(max-width:900px){ main{grid-template-columns:1fr;gap:20px;} .login-container{width:100%} }
 
-/* -------------------- Layout for main (features + login) -------------------- */
-main{display:grid;grid-template-columns:1fr 440px;gap:40px;align-items:start;padding-top:8px;}
-@media(max-width:900px){
-  main{grid-template-columns:1fr;gap:20px}
-  .login-container{width:100%}
+/* -------------------- Feature cards -------------------- */
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;align-items:start;margin:0}
+.feature-card{
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  border-radius:12px;padding:18px;box-shadow:0 14px 30px rgba(10,25,60,0.06);border:1px solid rgba(255,255,255,0.04);color:rgba(255,255,255,0.95);text-align:left;
 }
+.feature-card h3{font-weight:700;font-size:1.02rem;margin:0 0 10px;}
+.feature-card p{margin:0;color:rgba(255,255,255,0.92);font-weight:500;line-height:1.45;}
 
-/* Responsive scale-down for the wordmark */
-@media (max-width:1100px){ .brand-code,.brand-crowds{ font-size:84px; } }
-@media (max-width:900px){ .brand-code,.brand-crowds{ font-size:48px; } }
-@media (max-width:420px){ .brand-code,.brand-crowds{ font-size:28px; } }
+/* -------------------- Login card -------------------- */
+.login-container{width:360px;margin:0 auto;background:var(--glass-translucent);padding:18px;border-radius:var(--radius-md);box-shadow:none;text-align:left;color:#fff;border:1px solid rgba(255,255,255,0.06)}
+.login-container.card{
+  width:420px;margin:0;background:var(--card-bg);color:var(--card-text);padding:22px;border-radius:12px;box-shadow:0 18px 40px rgba(15,30,60,0.06);border:1px solid rgba(230,235,245,0.7);
+}
+.login-container.card h2{color:var(--brand-a);margin-top:0;font-size:1.2rem}
+.login-container.card input[type="email"],.login-container.card input[type="password"]{background:#fff;color:#222;border:1px solid rgba(0,0,0,0.06);padding:12px;width:100%;border-radius:8px}
 
-/* -------------------- Visually hidden -------------------- */
-.visually-hidden{position:absolute!important;height:1px;width:1px;overflow:hidden;clip:rect(1px,1px,1px,1px);white-space:nowrap;border:0;padding:0;margin:-1px}
+/* CTA button */
+.btn--primary{background-image:var(--btn-gradient);color:var(--btn-text);border-radius:10px;padding:10px 18px;box-shadow:0 8px 20px rgba(17,85,210,0.12)}
 
-/* -------------------- Card, Buttons, Inputs, etc. (unchanged) -------------------- */
-/* Cards */
-.card{background:var(--color-card);border-radius:var(--radius-md);padding:var(--space-md);box-shadow:var(--shadow-1);color:var(--color-text);transition:transform 200ms ease,box-shadow 200ms ease;text-align:left;display:flex;flex-direction:column;gap:12px;}
-.card:hover{transform:translateY(-6px);box-shadow:0 18px 36px rgba(0,0,0,0.12);}
+/* Signup link color fix */
+.login-container .signup-switch{color:rgba(255,255,255,0.85);margin-top:10px}
+.login-container.card .signup-switch{ color: var(--card-text); }
+
+/* -------------------- Cards, buttons, inputs defaults -------------------- */
+.card{background:var(--card-bg);border-radius:var(--radius-md);padding:var(--space-md);box-shadow:var(--shadow-1);color:var(--card-text);transition:transform 200ms ease,box-shadow 200ms ease;text-align:left;display:flex;flex-direction:column;gap:12px;}
+.card:hover{transform:translateY(-6px);box-shadow:0 18px 36px rgba(10,25,60,0.08);}
 .card h3{color:var(--color-primary);font-size:1.1rem;margin:0 0 8px;}
 .card p{margin:0;color:var(--color-muted);font-size:0.95rem;}
 
-/* Buttons */
-button,.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:10px;font-weight:700;border:none;cursor:pointer;transition:transform var(--transition-fast),opacity var(--transition-fast),box-shadow var(--transition-fast);box-shadow:var(--shadow-1);font-size:1rem;color:var(--btn-text);background-image:var(--btn-gradient);background-size:200% 100%;text-decoration:none;}
-button:hover,.btn:hover{transform:translateY(-4px);opacity:.96;box-shadow:0 14px 32px rgba(0,0,0,0.14);}
+/* Buttons and inputs */
+button,.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:10px;font-weight:700;border:none;cursor:pointer;transition:transform var(--transition-fast),opacity var(--transition-fast),box-shadow var(--transition-fast);box-shadow:var(--shadow-1);font-size:1rem;background-image:var(--btn-gradient);color:var(--btn-text);background-size:200% 100%;text-decoration:none;}
+button:hover,.btn:hover{transform:translateY(-4px);opacity:.96;box-shadow:0 14px 32px rgba(10,25,60,0.12);}
 button:active,.btn:active{transform:translateY(-2px);}
-button:focus-visible,.btn:focus-visible{outline:3px solid var(--focus-ring);outline-offset:3px;box-shadow:0 0 0 3px var(--focus-ring);border-radius:var(--radius-sm);}
-.btn--primary,.btn-primary,.btn.btn-primary{background-image:var(--btn-gradient);color:var(--btn-text);box-shadow:0 8px 20px rgba(37,61,180,0.12);padding:12px 18px;border-radius:10px;}
-.logout-btn{background:var(--danger);color:#fff;box-shadow:0 8px 20px rgba(255,77,79,0.10);}
-.btn--secondary{background:transparent;color:var(--btn-text);border:2px solid rgba(255,255,255,0.18);}
+button:focus-visible,.btn:focus-visible{outline:3px solid rgba(204,238,255,0.6);outline-offset:3px;border-radius:var(--radius-sm);}
 
 /* Inputs */
-.input,input,textarea,select{padding:10px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.08);font-size:15px;color:var(--color-text);background:#fff;width:100%;box-sizing:border-box;}
+.input,input,textarea,select{padding:10px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.08);font-size:15px;color:var(--card-text);background:#fff;width:100%;box-sizing:border-box;}
 .input:focus,input:focus,textarea:focus,select:focus{outline:none;box-shadow:0 0 0 4px rgba(108,52,235,0.12);border-color:rgba(108,52,235,0.6);}
 
-/* Layout helpers */
-#services-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;align-items:start;}
-#newServiceSection{display:none;flex-direction:column;gap:10px;margin-top:10px;}
+/* -------------------- Footer -------------------- */
+.site-footer{padding:28px 0;text-align:center;color:rgba(255,255,255,0.9)}
+.container:not(.container--transparent) .site-footer{color:var(--card-text)}
 
-/* Action rail (kept in CSS in case used on other pages) */
-.action-rail{position:fixed;right:20px;bottom:28px;display:flex;flex-direction:column;gap:12px;z-index:60;}
-.action-rail .btn{min-width:150px;border-radius:999px;background-image:var(--btn-gradient);color:var(--btn-text);box-shadow:0 10px 30px rgba(0,0,0,0.16);text-decoration:none;}
-.action-rail .btn.btn--primary,.action-rail .btn.btn--primary:hover{box-shadow:0 16px 40px rgba(78,84,200,0.18);}
-
-/* Mobile bottom row */
-.mobile-button-row{display:none;position:fixed;bottom:0;left:0;width:100%;justify-content:space-around;padding:10px;gap:6px;background-color:rgba(255,255,255,0.95);z-index:9999;box-shadow:0 -6px 20px rgba(0,0,0,0.08);}
-.mobile-button-row button{flex:1;border-radius:8px;font-weight:700;font-size:1rem;padding:10px;background-image:var(--btn-gradient);color:#fff;transition:transform var(--transition-fast),opacity var(--transition-fast);}
-
-/* Utilities */
+/* -------------------- Utilities & responsiveness -------------------- */
 .hidden{display:none!important}
 .mb-sm{margin-bottom:var(--space-sm)}
 .mb-md{margin-bottom:var(--space-md)}
 .mb-lg{margin-bottom:var(--space-lg)}
-.row{display:flex}
-.row-center{display:flex;align-items:center}
-.w-full{width:100%}
 
-/* Responsive tweaks */
 @media(max-width:480px){
-  .action-rail{right:12px;bottom:18px;display:none}
   .mobile-button-row{display:flex}
   button,.btn{font-size:.95rem;padding:8px 14px}
   .container{width:94%;padding:1.5rem 1rem 140px 1rem;margin:36px auto 0;gap:1.25rem;align-items:stretch}
 }
-
-/* Small-screen */
-@media(max-width:360px){#services-list{grid-template-columns:1fr;gap:12px}}
-
-/* Features & hero */
-.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;align-items:start;margin:0}
-.feature-card{background:var(--color-card);border-radius:var(--radius-md);padding:18px;box-shadow:var(--shadow-1);color:var(--color-text);text-align:left}
-.container--transparent .feature-card{background:var(--glass-dark);border-radius:var(--radius-md);padding:18px;box-shadow:var(--shadow-1);color:rgba(255,255,255,0.97);text-align:left;border:1px solid rgba(255,255,255,0.06)}
-.container--transparent .feature-card h3{color:#fff;font-weight:700;font-size:1.06rem;margin-bottom:8px}
-.container--transparent .feature-card p{color:rgba(255,255,255,0.92);font-weight:500;line-height:1.6}
-
-/* Footer spacing */
-.site-footer{padding:28px 0;text-align:center;color:rgba(255,255,255,0.95)}
-.container:not(.container--transparent) .site-footer{color:var(--color-text)}
-
-/* Login container color fix */
-.login-container .signup-switch{color:rgba(255,255,255,0.85);margin-top:10px}
-.login-container.card .signup-switch{ color: var(--color-text); } /* ensure black text on white card */
