@@ -9,8 +9,9 @@
       ? `https://${AUTO_HOST}/api`
       : "/api";
 
-  const token = localStorage.getItem("token");
-  const userId = localStorage.getItem("userId");
+  // allow updating after server auth check
+  let token = localStorage.getItem("token");
+  let userId = localStorage.getItem("userId");
 
   const messagesList = document.getElementById("messages-list");
   const goBackBtn = document.getElementById("goBackBtn");
@@ -19,24 +20,56 @@
 
   let lastView = "inbox";
 
-  if (!token || !userId) {
-    // If you're debugging, comment the redirect to stay on page
-    console.warn("Missing token or userId; redirecting to login.");
-    window.location.href = "index.html";
-    return;
+  // --- Attempt server-side auth (cookie) before redirecting ---
+  async function ensureAuthenticated() {
+    const localToken = localStorage.getItem("token");
+    const localUserId = localStorage.getItem("userId");
+
+    const headers = {};
+    if (localToken) headers["Authorization"] = `Bearer ${localToken}`;
+
+    try {
+      const resp = await fetch(`${API_URL}/users/me`, {
+        method: "GET",
+        headers,
+        credentials: "include", // send cookies for cookie-based auth
+      });
+
+      if (!resp.ok) {
+        // server says not authenticated
+        return null;
+      }
+
+      const data = await resp.json().catch(() => null);
+      const user = (data && (data.user || data)) || null;
+      if (user && user.id) {
+        // ensure userId stored locally for compatibility with rest of the page
+        if (!localUserId) localStorage.setItem("userId", String(user.id));
+        return { user, tokenPresent: !!localToken };
+      }
+      return null;
+    } catch (e) {
+      // network/CORS error — we cannot verify; treat as unauthenticated to be safe
+      console.warn("[ensureAuthenticated] network error:", e);
+      return null;
+    }
   }
 
-  goBackBtn.addEventListener("click", () => {
-    window.location.href = "profile.html";
-  });
-  inboxBtn.addEventListener("click", () => {
-    setActiveTab("inbox");
-    loadInbox();
-  });
-  sentBtn.addEventListener("click", () => {
-    setActiveTab("sent");
-    loadSent();
-  });
+  // Wire up navigation handlers (safe to do before auth check)
+  goBackBtn &&
+    goBackBtn.addEventListener("click", () => {
+      window.location.href = "profile.html";
+    });
+  inboxBtn &&
+    inboxBtn.addEventListener("click", () => {
+      setActiveTab("inbox");
+      loadInbox();
+    });
+  sentBtn &&
+    sentBtn.addEventListener("click", () => {
+      setActiveTab("sent");
+      loadSent();
+    });
 
   function setActiveTab(tab) {
     lastView = tab;
@@ -72,13 +105,13 @@
   }
 
   function renderStatus(text) {
-    messagesList.innerHTML = `<p class="loading">${escapeHtml(text)}</p>`;
+    if (messagesList) messagesList.innerHTML = `<p class="loading">${escapeHtml(text)}</p>`;
   }
   function renderError(text) {
-    messagesList.innerHTML = `<p class="error">${escapeHtml(text)}</p>`;
+    if (messagesList) messagesList.innerHTML = `<p class="error">${escapeHtml(text)}</p>`;
   }
   function renderEmpty(text = "No messages") {
-    messagesList.innerHTML = `<p class="empty">${escapeHtml(text)}</p>`;
+    if (messagesList) messagesList.innerHTML = `<p class="empty">${escapeHtml(text)}</p>`;
   }
 
   function renderMessageCard(m, kind = "inbox") {
@@ -119,7 +152,7 @@
   async function doFetch(path, opts = {}) {
     const url = path.startsWith("http") ? path : `${API_URL}${path}`;
     const headers = Object.assign({}, opts.headers || {}, {
-      Authorization: `Bearer ${token}`,
+      Authorization: token ? `Bearer ${token}` : undefined,
     });
 
     // For GET/HEAD don't add Content-Type; only add for requests with a body
@@ -305,8 +338,51 @@
   }
 
   // initialize
-  window.addEventListener("load", () => {
+  (async function init() {
+    const auth = await ensureAuthenticated();
+    if (!auth) {
+      console.warn("Not authenticated — redirecting to login");
+      window.location.href = "index.html";
+      return;
+    }
+
+    // update token & userId variables (ensure they reflect any newly stored values)
+    token = localStorage.getItem("token") || token;
+    userId = localStorage.getItem("userId") || (auth.user && String(auth.user.id)) || userId;
+
     console.info("[messages] API_URL=", API_URL, "userIdPresent=", !!userId);
     loadInbox();
-  });
+  })();
+
+  // small helper previously used above
+  async function ensureAuthenticated() {
+    const localToken = localStorage.getItem("token");
+    const localUserId = localStorage.getItem("userId");
+
+    const headers = {};
+    if (localToken) headers["Authorization"] = `Bearer ${localToken}`;
+
+    try {
+      const resp = await fetch(`${API_URL}/users/me`, {
+        method: "GET",
+        headers,
+        credentials: "include", // send cookies
+      });
+
+      if (!resp.ok) {
+        return null;
+      }
+
+      const data = await resp.json().catch(() => null);
+      const user = (data && (data.user || data)) || null;
+      if (user && user.id) {
+        if (!localUserId) localStorage.setItem("userId", String(user.id));
+        return { user, tokenPresent: !!localToken };
+      }
+      return null;
+    } catch (e) {
+      console.warn("[ensureAuthenticated] network error:", e);
+      return null;
+    }
+  }
 })();
