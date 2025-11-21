@@ -294,6 +294,21 @@
       const viewingSelf = profileUserId === String(loggedInUserId);
       showOwnerUI(viewingSelf);
 
+      // ---- UNHIDE action-rail / mobile-row for owner or when logged-in ----
+      try {
+        const shouldShowRail =
+          viewingSelf || (typeof isLoggedIn === "function" && isLoggedIn());
+        document
+          .querySelectorAll(".action-rail, .mobile-button-row")
+          .forEach((el) => {
+            if (!el) return;
+            if (shouldShowRail) el.classList.remove("hidden");
+            else el.classList.add("hidden");
+          });
+      } catch (e) {
+        // ignore
+      }
+
       const canRate = !viewingSelf && currentUserTier === "paid";
       if (rateForm) rateForm.classList.toggle("hidden", !canRate);
       if (rateUpgradeHint) rateUpgradeHint.classList.add("hidden");
@@ -451,83 +466,6 @@
     const btn = e.currentTarget;
     const id = btn.getAttribute("data-id");
     deleteService(id);
-  }
-
-  async function editService(div, service) {
-    const titleEl =
-      div.querySelector("h3") || div.querySelector(".service-title");
-    const descEl = div.querySelector("p") || div.querySelector(".service-desc");
-
-    const origTitle = (titleEl?.textContent || "").trim();
-    const origDesc = (descEl?.textContent || "").trim();
-    const origPrice = (
-      div.querySelector(".service-price")?.textContent || ""
-    ).trim();
-
-    titleEl.innerHTML = `<input type="text" value="${esc(origTitle)}" class="edit-title">`;
-    descEl.innerHTML = `<textarea class="edit-desc">${esc(origDesc)}</textarea>`;
-
-    if (div.querySelector(".service-price")) {
-      div.querySelector(".service-price").innerHTML =
-        `<input type="number" value="${Number(origPrice || 0)}" class="edit-price">`;
-    }
-
-    const buttonsDiv = div.querySelector(".service-buttons");
-    if (!buttonsDiv) {
-      div.insertAdjacentHTML(
-        "beforeend",
-        `<div class="service-buttons"><button class="save-btn">Save</button><button class="cancel-btn">Cancel</button></div>`,
-      );
-    } else {
-      buttonsDiv.innerHTML = `<button class="save-btn">Save</button><button class="cancel-btn">Cancel</button>`;
-    }
-
-    const saveBtn = div.querySelector(".save-btn");
-    const cancelBtn = div.querySelector(".cancel-btn");
-
-    const onSave = async () => {
-      const updatedTitle = div.querySelector(".edit-title")?.value.trim();
-      const updatedDesc = div.querySelector(".edit-desc")?.value.trim();
-      const updatedPrice = div.querySelector(".edit-price")?.value.trim();
-      if (!updatedTitle || !updatedDesc || !updatedPrice)
-        return alert("All fields are required.");
-      try {
-        await doFetch(
-          `services/${service.id}`,
-          {
-            method: "PUT",
-            body: {
-              title: updatedTitle,
-              description: updatedDesc,
-              price: updatedPrice,
-            },
-          },
-          8000,
-        );
-        await loadServices({ reset: true, userId: getUserId() });
-      } catch (err) {
-        console.error(err);
-        alert("Failed to update service.");
-      }
-    };
-
-    saveBtn.addEventListener("click", onSave, { once: true });
-    cancelBtn.addEventListener(
-      "click",
-      () => loadServices({ reset: true, userId: getUserId() }),
-      { once: true },
-    );
-  }
-
-  async function deleteService(serviceId) {
-    if (!confirm("Are you sure you want to delete this service?")) return;
-    try {
-      await doFetch(`services/${serviceId}`, { method: "DELETE" }, 8000);
-      await loadServices({ reset: true, userId: getUserId() });
-    } catch (err) {
-      console.error(err);
-      alert("Failed to delete service.");
-    }
   }
 
   // ---- NEW toggleNewService (fixed to toggle classes) ----
@@ -757,35 +695,29 @@
       );
 
     if (goToServicesBtn)
-      goToServicesBtn.addEventListener(
-        "click",
-        () => (location.href = "services.html"),
+      goToServicesBtn.addEventListener("click", () =>
+        (location.href = "services.html"),
       );
     if (goToMessagesBtn)
-      goToMessagesBtn.addEventListener(
-        "click",
-        () => (location.href = "messages.html"),
+      goToMessagesBtn.addEventListener("click", () =>
+        (location.href = "messages.html"),
       );
     if (mobileServicesBtn)
-      mobileServicesBtn.addEventListener(
-        "click",
-        () => (location.href = "services.html"),
+      mobileServicesBtn.addEventListener("click", () =>
+        (location.href = "services.html"),
       );
     if (mobileMessagesBtn)
-      mobileMessagesBtn.addEventListener(
-        "click",
-        () => (location.href = "messages.html"),
+      mobileMessagesBtn.addEventListener("click", () =>
+        (location.href = "messages.html"),
       );
 
     if (backToMyProfileBtn)
-      backToMyProfileBtn.addEventListener(
-        "click",
-        () => (location.href = "profile.html"),
+      backToMyProfileBtn.addEventListener("click", () =>
+        (location.href = "profile.html"),
       );
     if (mobileBackBtn)
-      mobileBackBtn.addEventListener(
-        "click",
-        () => (location.href = "profile.html"),
+      mobileBackBtn.addEventListener("click", () =>
+        (location.href = "profile.html"),
       );
 
     if (logoutBtn)
@@ -948,4 +880,4 @@
     // Now load the main profile UI
     loadProfile();
   });
-})();
+})();``
