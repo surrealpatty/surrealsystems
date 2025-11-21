@@ -4,15 +4,34 @@ const { getJwtSecrets } = require('../lib/jwtSecrets');
 
 module.exports = function authenticateToken(req, res, next) {
   try {
-    const auth = req.headers.authorization || req.headers.Authorization || '';
-    if (!auth || !auth.startsWith('Bearer ')) {
+    // First try the Authorization header
+    const authHeader = req.headers.authorization || req.headers.Authorization || '';
+    let token = null;
+
+    if (authHeader && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+      token = authHeader.slice('Bearer '.length).trim();
+    } else {
+      // Fallback: try to read cookie named 'codecrowds_token' from Cookie header
+      // (we avoid adding cookie-parser as a dependency and parse the header directly)
+      const cookieHeader = req.headers.cookie || '';
+      if (cookieHeader && typeof cookieHeader === 'string') {
+        const m = cookieHeader.match(/(?:^|;\s*)codecrowds_token=([^;]+)/);
+        if (m && m[1]) {
+          try {
+            token = decodeURIComponent(m[1]);
+          } catch (e) {
+            token = m[1];
+          }
+        }
+      }
+    }
+
+    if (!token) {
       return res.status(401).json({
         success: false,
         error: { message: 'Missing or invalid Authorization header' },
       });
     }
-    const token = auth.slice('Bearer '.length).trim();
-    if (!token) return res.status(401).json({ success: false, error: { message: 'Empty token' } });
 
     const secrets = getJwtSecrets();
     if (!secrets.length) {
@@ -20,8 +39,7 @@ module.exports = function authenticateToken(req, res, next) {
       return res.status(500).json({ success: false, error: { message: 'Server misconfigured' } });
     }
 
-    // Try all secrets; if any verifies, we accept the payload.
-    // If token is expired we return an explicit message immediately.
+    // Try each secret (support rotation). If expired, return explicit message.
     let payload = null;
     for (const secret of secrets) {
       try {
@@ -29,10 +47,10 @@ module.exports = function authenticateToken(req, res, next) {
         break;
       } catch (e) {
         if (e && e.name === 'TokenExpiredError') {
-          // Expired token -> return explicit message
+          // Expired token -> explicit message.
           return res.status(401).json({ success: false, error: { message: 'Token expired' } });
         }
-        // Invalid signature for this secret -> try next secret
+        // else try next secret
       }
     }
 
@@ -46,7 +64,7 @@ module.exports = function authenticateToken(req, res, next) {
       return res.status(401).json({ success: false, error: { message: 'Invalid token payload' } });
     }
 
-    // Expose useful payload information on req.user for downstream handlers
+    // Expose payload on req.user
     req.user = {
       id: userId,
       email: payload.email,
@@ -55,7 +73,6 @@ module.exports = function authenticateToken(req, res, next) {
 
     next();
   } catch (err) {
-    // Unexpected errors: if it's TokenExpiredError, be explicit; else generic invalid
     const msg = err && err.name === 'TokenExpiredError' ? 'Token expired' : 'Invalid token';
     return res.status(401).json({ success: false, error: { message: msg } });
   }

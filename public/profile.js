@@ -52,6 +52,7 @@
   };
 
   // doFetch - uses apiFetch if available, otherwise falls back to fetch
+  // FIX: support opts.withCredentials and default to 'same-origin' credentials
   async function doFetch(pathOrUrl, opts = {}, timeoutMs = 8000) {
     const isAbsolute =
       typeof pathOrUrl === "string" && /^https?:\/\//i.test(pathOrUrl);
@@ -62,6 +63,7 @@
         : API_URL + "/" + pathOrUrl.replace(/^\/+/, "");
 
     if (apiFetch) {
+      // apiFetch local helper understands withCredentials and other opts
       return apiFetch(pathOrUrl, { timeoutMs, ...opts });
     }
 
@@ -72,6 +74,12 @@
     if (opts.body !== undefined && !headers["Content-Type"])
       headers["Content-Type"] = "application/json";
 
+    // Determine credentials mode:
+    // - if opts.withCredentials is true -> include (send cookies even for cross-origin)
+    // - otherwise default to 'same-origin' (send cookies for same-origin requests)
+    const withCredentials = !!opts.withCredentials;
+    const credentials = withCredentials ? "include" : "same-origin";
+
     const init = {
       method: opts.method || "GET",
       headers,
@@ -80,6 +88,7 @@
           ? opts.body
           : JSON.stringify(opts.body),
       signal: opts.signal,
+      credentials,
     };
 
     if (Number.isFinite(timeoutMs) && timeoutMs > 0) {
@@ -248,7 +257,8 @@
 
   // ---- data loaders ----
   async function fetchMe() {
-    const me = await doFetch("users/me", {}, 8000);
+    // request credentials explicitly so cookie-based login works reliably
+    const me = await doFetch("users/me", { withCredentials: true }, 8000);
     const u = me?.user || me || {};
     if (!getUserId() && u.id) setUserId && setUserId(String(u.id));
     try {
@@ -560,15 +570,7 @@
       return;
     }
 
-    const token =
-      typeof getToken === "function"
-        ? getToken()
-        : localStorage.getItem("token");
-    if (!token) {
-      alert("You appear to be logged out. Please sign in and try again.");
-      return;
-    }
-
+    // NOTE: don't block when no local token exists — support cookie-based auth (server sets HttpOnly cookie).
     createServiceBtn.disabled = true;
     const prevText = createServiceBtn.textContent;
     createServiceBtn.textContent = "Creating…";
@@ -577,6 +579,7 @@
     console.log("createService: payload=", payload);
 
     try {
+      // rely on cookies (same-origin) or Authorization header if available.
       const out = await doFetch(
         "services",
         { method: "POST", body: payload },
@@ -726,6 +729,7 @@
   async function saveDescription() {
     const newDesc = profileDescription?.textContent?.trim();
     try {
+      // ensure cookie-based auth works by letting doFetch send same-origin credentials
       const out = await doFetch(
         "users/me/description",
         { method: "PUT", body: { description: newDesc } },
