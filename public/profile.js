@@ -1,5 +1,6 @@
 /* profile.js - canonical profile client
    Uses script.js helpers when available and falls back safely.
+   Fixed/cleaned version: robust fetch helper, cookie-friendly auth, defensive DOM handling.
 */
 
 (function () {
@@ -30,10 +31,23 @@
   );
   const apiFetch =
     typeof window.apiFetch === "function" ? window.apiFetch : null;
-  const API_URL = (window.API_URL || window.location.origin + "/api").replace(
-    /\/+$/,
-    "",
-  );
+
+  // Normalize API_URL:
+  // - If window.API_URL present, normalize trailing slash
+  // - Otherwise default to origin + /api (works for same-origin deployments)
+  const API_URL = (function () {
+    try {
+      if (typeof window !== "undefined" && window.API_URL) {
+        return String(window.API_URL).replace(/\/+$/, "");
+      }
+    } catch {}
+    try {
+      return window.location.origin.replace(/\/$/, "") + "/api";
+    } catch {
+      // Fallback to '/api' (relative)
+      return "/api";
+    }
+  })();
 
   // Diagnostic banner
   const Diag = {
@@ -51,34 +65,49 @@
     },
   };
 
-  // doFetch - uses apiFetch if available, otherwise falls back to fetch
-  // FIX: support opts.withCredentials and default to 'same-origin' credentials
+  /**
+   * doFetch
+   * - pathOrUrl: string path (relative) or absolute URL
+   * - opts: { method, headers, body, signal, withCredentials }
+   * - timeoutMs: optional timeout in ms (default 8000)
+   */
   async function doFetch(pathOrUrl, opts = {}, timeoutMs = 8000) {
     const isAbsolute =
       typeof pathOrUrl === "string" && /^https?:\/\//i.test(pathOrUrl);
-    const url = isAbsolute
-      ? pathOrUrl
-      : pathOrUrl.startsWith("/")
-        ? API_URL + pathOrUrl
-        : API_URL + "/" + pathOrUrl.replace(/^\/+/, "");
+
+    // Build url robustly:
+    // - if it's absolute, use as-is
+    // - if pathOrUrl begins with /api and API_URL is '/api' or similar, avoid duplication
+    let url;
+    if (isAbsolute) {
+      url = pathOrUrl;
+    } else {
+      if (pathOrUrl.startsWith("/api")) {
+        // remove leading /api so API_URL + '/some' becomes '/api/some' (not '/api/api/some')
+        url = API_URL + pathOrUrl.replace(/^\/api/, "");
+      } else if (pathOrUrl.startsWith("/")) {
+        url = API_URL + pathOrUrl;
+      } else {
+        url = API_URL + "/" + pathOrUrl.replace(/^\/+/, "");
+      }
+    }
 
     if (apiFetch) {
-      // apiFetch local helper understands withCredentials and other opts
+      // local wrapper may understand withCredentials + timeout
       return apiFetch(pathOrUrl, { timeoutMs, ...opts });
     }
 
     const headers = Object.assign({}, opts.headers || {});
     const token = getToken();
-    if (token && !headers["Authorization"])
+    if (token && !headers["Authorization"]) {
       headers["Authorization"] = `Bearer ${token}`;
-    if (opts.body !== undefined && !headers["Content-Type"])
+    }
+    if (opts.body !== undefined && !headers["Content-Type"]) {
       headers["Content-Type"] = "application/json";
+    }
 
-    // Determine credentials mode:
-    // - if opts.withCredentials is true -> include (send cookies even for cross-origin)
-    // - otherwise default to 'same-origin' (send cookies for same-origin requests)
-    const withCredentials = !!opts.withCredentials;
-    const credentials = withCredentials ? "include" : "same-origin";
+    // credentials: include if withCredentials true, otherwise same-origin
+    const credentials = !!opts.withCredentials ? "include" : "same-origin";
 
     const init = {
       method: opts.method || "GET",
@@ -91,6 +120,7 @@
       credentials,
     };
 
+    // Timeout support with AbortController
     if (Number.isFinite(timeoutMs) && timeoutMs > 0) {
       const timeoutController = new AbortController();
       const tid = setTimeout(() => timeoutController.abort(), timeoutMs);
@@ -116,8 +146,7 @@
           throw new Error(text || `${res.status} ${res.statusText}`);
         }
         const ct = (res.headers.get("content-type") || "").toLowerCase();
-        if (ct.includes("application/json") || ct.includes("+json"))
-          return res.json();
+        if (ct.includes("application/json") || ct.includes("+json")) return res.json();
         return res.text();
       } catch (e) {
         clearTimeout(tid);
@@ -131,13 +160,12 @@
         throw new Error(text || `${res.status} ${res.statusText}`);
       }
       const ct = (res.headers.get("content-type") || "").toLowerCase();
-      if (ct.includes("application/json") || ct.includes("+json"))
-        return res.json();
+      if (ct.includes("application/json") || ct.includes("+json")) return res.json();
       return res.text();
     }
   }
 
-  // ---- DOM refs ----
+  // ---- DOM refs (defensive) ----
   const profileUsername = document.getElementById("profile-username");
   const profileDescription = document.getElementById("profile-description");
   const descControls = document.getElementById("descControls");
@@ -188,10 +216,9 @@
 
   // ---- utils ----
   function esc(s) {
-    return String(s ?? "")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+    return String(s ?? "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
+
   function showOwnerUI(isOwner) {
     [
       goToServicesBtn,
@@ -201,7 +228,10 @@
       mobileRow,
       descControls,
     ].forEach((el) => {
-      if (el) el.classList.toggle("hidden", !isOwner);
+      if (!el) return;
+      try {
+        el.classList.toggle("hidden", !isOwner);
+      } catch {}
     });
     if (backToMyProfileBtn)
       backToMyProfileBtn.classList.toggle("hidden", isOwner);
@@ -230,26 +260,18 @@
       const out = await doFetch("payments/available", {}, 4000);
       paymentsEnabled = !!(out && out.enabled);
     } catch (e) {
-      // network error — be conservative and treat as disabled
       paymentsEnabled = false;
     }
 
-    // Apply the availability to the UI if upgrade button present
     try {
       const upgradeBtns = [upgradeBtn, upgradeInlineBtn];
       upgradeBtns.forEach((btn) => {
         if (!btn) return;
-        if (!paymentsEnabled) {
-          btn.classList.add("hidden");
-        } else {
-          // leave visibility to existing logic (loadProfile decides owner/tier)
-          btn.classList.remove("hidden");
-        }
+        if (!paymentsEnabled) btn.classList.add("hidden");
+        else btn.classList.remove("hidden");
       });
 
-      // hide inline upgrade hint if payments disabled
-      if (!paymentsEnabled && rateUpgradeHint)
-        rateUpgradeHint.classList.add("hidden");
+      if (!paymentsEnabled && rateUpgradeHint) rateUpgradeHint.classList.add("hidden");
     } catch (e) {
       // ignore UI errors
     }
@@ -285,26 +307,21 @@
         : { user: me };
       const u = data.user || data || {};
 
-      if (profileUsername)
-        profileUsername.textContent = getDisplayName(u) || "User";
-      if (profileDescription)
-        profileDescription.textContent =
-          getDescription(u) || "No description yet.";
+      if (profileUsername) profileUsername.textContent = getDisplayName(u) || "User";
+      if (profileDescription) profileDescription.textContent = getDescription(u) || "No description yet.";
 
       const viewingSelf = profileUserId === String(loggedInUserId);
       showOwnerUI(viewingSelf);
 
-      // ---- UNHIDE action-rail / mobile-row for owner or when logged-in ----
+      // show action rail/mobile row when owner OR when logged in
       try {
-        const shouldShowRail =
-          viewingSelf || (typeof isLoggedIn === "function" && isLoggedIn());
-        document
-          .querySelectorAll(".action-rail, .mobile-button-row")
-          .forEach((el) => {
-            if (!el) return;
-            if (shouldShowRail) el.classList.remove("hidden");
-            else el.classList.add("hidden");
-          });
+        const isLogged = (typeof isLoggedIn === "function" && isLoggedIn()) || Boolean(getToken());
+        const shouldShowRail = viewingSelf || isLogged;
+        document.querySelectorAll(".action-rail, .mobile-button-row").forEach((el) => {
+          if (!el) return;
+          if (shouldShowRail) el.classList.remove("hidden");
+          else el.classList.add("hidden");
+        });
       } catch (e) {
         // ignore
       }
@@ -313,15 +330,11 @@
       if (rateForm) rateForm.classList.toggle("hidden", !canRate);
       if (rateUpgradeHint) rateUpgradeHint.classList.add("hidden");
 
-      // only show upgrade if payments are enabled
-      if (viewingSelf && currentUserTier === "free" && paymentsEnabled)
-        upgradeBtn && upgradeBtn.classList.remove("hidden");
+      if (viewingSelf && currentUserTier === "free" && paymentsEnabled) upgradeBtn && upgradeBtn.classList.remove("hidden");
       else upgradeBtn && upgradeBtn.classList.add("hidden");
 
       await loadServices({ reset: true, userId: profileUserId });
-      (window.requestIdleCallback
-        ? requestIdleCallback
-        : (cb) => setTimeout(cb, 0))(() => loadRatings(profileUserId));
+      (window.requestIdleCallback ? requestIdleCallback : (cb) => setTimeout(cb, 0))(() => loadRatings(profileUserId));
     } catch (err) {
       console.error("Profile load error:", err);
       Diag.show("Failed to load profile. Check console and server logs.");
@@ -333,19 +346,19 @@
     return `<div class="card">
       <h3>${esc(s.title)}</h3>
       <p>${esc(s.description)}</p>
-      <p><strong>Price:</strong> $${Number(s.price).toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
+      <p><strong>Price:</strong> $${Number(s.price || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
       <div class="service-buttons ${isOwner ? "" : "hidden"}">
         <button class="edit-service-btn" data-id="${s.id}">Edit</button>
         <button class="delete-service-btn" data-id="${s.id}">Delete</button>
       </div>
     </div>`;
   }
+
   function renderServicesHTML(list, loggedInUserId) {
     if (!list?.length) return "";
     let out = "";
     for (const s of list) {
-      const isOwner =
-        String(loggedInUserId) === String(s.user?.id || s.userId || "");
+      const isOwner = String(loggedInUserId) === String(s.user?.id || s.userId || "");
       out += serviceCardHTML(s, isOwner);
     }
     return out;
@@ -367,30 +380,20 @@
             return null;
           }
         })();
-        if (
-          cached &&
-          Date.now() - (cached.ts || 0) < 60000 &&
-          Array.isArray(cached.items) &&
-          cached.items.length
-        ) {
-          servicesList.innerHTML = renderServicesHTML(
-            cached.items,
-            loggedInUserId,
-          );
-          loadMoreBtn.classList.toggle("hidden", !cached.hasMore);
+        if (cached && Date.now() - (cached.ts || 0) < 60000 && Array.isArray(cached.items) && cached.items.length) {
+          servicesList.innerHTML = renderServicesHTML(cached.items, loggedInUserId);
+          loadMoreBtn && loadMoreBtn.classList.toggle("hidden", !cached.hasMore);
         } else {
-          servicesList.innerHTML = Array.from({ length: 3 })
-            .map(
-              () => `
-            <div class="card fade-in">
-              <h3 style="background:#eee;height:18px;width:60%;border-radius:6px;"></h3>
-              <p style="background:#f2f2f2;height:14px;width:100%;border-radius:6px;"></p>
-              <p style="background:#f2f2f2;height:14px;width:80%;border-radius:6px;"></p>
-            </div>
-          `,
-            )
-            .join("");
-          loadMoreBtn.classList.add("hidden");
+          if (servicesList) {
+            servicesList.innerHTML = Array.from({ length: 3 }).map(() => `
+              <div class="card fade-in">
+                <h3 style="background:#eee;height:18px;width:60%;border-radius:6px;"></h3>
+                <p style="background:#f2f2f2;height:14px;width:100%;border-radius:6px;"></p>
+                <p style="background:#f2f2f2;height:14px;width:80%;border-radius:6px;"></p>
+              </div>
+            `).join("");
+          }
+          loadMoreBtn && loadMoreBtn.classList.add("hidden");
         }
       }
 
@@ -400,54 +403,46 @@
       url.searchParams.set("page", String(svcPage));
 
       if (svcAborter) {
-        try {
-          svcAborter.abort();
-        } catch {}
+        try { svcAborter.abort(); } catch {}
       }
       svcAborter = new AbortController();
 
-      // === FIXED: pass absolute URL (url.href) into doFetch so we don't double-prefix /api when API_URL === '/api'
       const data = await doFetch(url.href, { signal: svcAborter.signal }, 8000);
       const list = data.services || [];
       const hasMore = !!data.hasMore;
 
       try {
-        localStorage.setItem(
-          cacheKey,
-          JSON.stringify({ ts: Date.now(), items: list, hasMore }),
-        );
+        localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), items: list, hasMore }));
       } catch {}
 
       const html = renderServicesHTML(list, loggedInUserId);
-      if (reset) servicesList.innerHTML = html;
-      else servicesList.insertAdjacentHTML("beforeend", html);
+      if (reset) servicesList && (servicesList.innerHTML = html);
+      else servicesList && servicesList.insertAdjacentHTML("beforeend", html);
 
-      loadMoreBtn.classList.toggle("hidden", !hasMore);
+      loadMoreBtn && loadMoreBtn.classList.toggle("hidden", !hasMore);
       if (hasMore) svcPage += 1;
 
       if (!list.length && svcPage === 2 && reset) {
-        servicesList.innerHTML =
-          '<div class="card"><h3>No Services Yet</h3><p class="muted">Nothing posted yet.</p></div>';
-        loadMoreBtn.classList.add("hidden");
+        servicesList && (servicesList.innerHTML = '<div class="card"><h3>No Services Yet</h3><p class="muted">Nothing posted yet.</p></div>');
+        loadMoreBtn && loadMoreBtn.classList.add("hidden");
       }
 
-      // wire up edit/delete buttons
-      servicesList.querySelectorAll(".edit-service-btn").forEach((btn) => {
-        btn.removeEventListener("click", onEditServiceClick);
-        btn.addEventListener("click", onEditServiceClick);
-      });
-      servicesList.querySelectorAll(".delete-service-btn").forEach((btn) => {
-        btn.removeEventListener("click", onDeleteServiceClick);
-        btn.addEventListener("click", onDeleteServiceClick);
-      });
+      // wire up edit/delete buttons (use event delegation fallback if needed)
+      if (servicesList) {
+        servicesList.querySelectorAll(".edit-service-btn").forEach((btn) => {
+          btn.removeEventListener("click", onEditServiceClick);
+          btn.addEventListener("click", onEditServiceClick);
+        });
+        servicesList.querySelectorAll(".delete-service-btn").forEach((btn) => {
+          btn.removeEventListener("click", onDeleteServiceClick);
+          btn.addEventListener("click", onDeleteServiceClick);
+        });
+      }
     } catch (err) {
       if (err?.name !== "AbortError") {
-        Diag.show(
-          'Failed to load services. <span class="muted">Check <code>/api/services</code> and server logs.</span>',
-        );
+        Diag.show('Failed to load services. <span class="muted">Check <code>/api/services</code> and server logs.</span>');
         console.error(err);
-        if (svcPage === 1)
-          servicesList.innerHTML = "<p>Failed to load services.</p>";
+        if (svcPage === 1 && servicesList) servicesList.innerHTML = "<p>Failed to load services.</p>";
       }
     } finally {
       svcLoading = false;
@@ -468,18 +463,69 @@
     deleteService(id);
   }
 
-  // ---- NEW toggleNewService (fixed to toggle classes) ----
+  async function editService(div, service) {
+    const titleEl = div.querySelector("h3") || div.querySelector(".service-title");
+    const descEl = div.querySelector("p") || div.querySelector(".service-desc");
+
+    const origTitle = (titleEl?.textContent || "").trim();
+    const origDesc = (descEl?.textContent || "").trim();
+    const origPrice = (div.querySelector(".service-price")?.textContent || "").trim();
+
+    titleEl.innerHTML = `<input type="text" value="${esc(origTitle)}" class="edit-title">`;
+    descEl.innerHTML = `<textarea class="edit-desc">${esc(origDesc)}</textarea>`;
+
+    if (div.querySelector(".service-price")) {
+      div.querySelector(".service-price").innerHTML =
+        `<input type="number" value="${Number(origPrice || 0)}" class="edit-price">`;
+    }
+
+    const buttonsDiv = div.querySelector(".service-buttons");
+    if (!buttonsDiv) {
+      div.insertAdjacentHTML("beforeend", `<div class="service-buttons"><button class="save-btn">Save</button><button class="cancel-btn">Cancel</button></div>`);
+    } else {
+      buttonsDiv.innerHTML = `<button class="save-btn">Save</button><button class="cancel-btn">Cancel</button>`;
+    }
+
+    const saveBtn = div.querySelector(".save-btn");
+    const cancelBtn = div.querySelector(".cancel-btn");
+
+    const onSave = async () => {
+      const updatedTitle = div.querySelector(".edit-title")?.value.trim();
+      const updatedDesc = div.querySelector(".edit-desc")?.value.trim();
+      const updatedPrice = div.querySelector(".edit-price")?.value.trim();
+      if (!updatedTitle || !updatedDesc || !updatedPrice) return alert("All fields are required.");
+      try {
+        await doFetch(`services/${service.id}`, { method: "PUT", body: { title: updatedTitle, description: updatedDesc, price: updatedPrice }, withCredentials: true }, 8000);
+        await loadServices({ reset: true, userId: getUserId() });
+      } catch (err) {
+        console.error(err);
+        alert("Failed to update service.");
+      }
+    };
+
+    saveBtn && saveBtn.addEventListener("click", onSave, { once: true });
+    cancelBtn && cancelBtn.addEventListener("click", () => loadServices({ reset: true, userId: getUserId() }), { once: true });
+  }
+
+  async function deleteService(serviceId) {
+    if (!confirm("Are you sure you want to delete this service?")) return;
+    try {
+      await doFetch(`services/${serviceId}`, { method: "DELETE", withCredentials: true }, 8000);
+      await loadServices({ reset: true, userId: getUserId() });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete service.");
+    }
+  }
+
+  // ---- toggleNewService ----
   function toggleNewService() {
     if (!newServiceSection) return;
-    // Use classes (do not rely on inline style alone because .hidden uses !important)
     if (newServiceSection.classList.contains("hidden")) {
       newServiceSection.classList.remove("hidden");
       newServiceSection.classList.add("show-flex");
       newServiceSection.style.display = "flex";
-      // focus the title
-      try {
-        newServiceTitle && newServiceTitle.focus();
-      } catch {}
+      try { newServiceTitle && newServiceTitle.focus(); } catch {}
     } else {
       newServiceSection.classList.add("hidden");
       newServiceSection.classList.remove("show-flex");
@@ -487,7 +533,7 @@
     }
   }
 
-  // ---- NEW createService (robust + logs) ----
+  // ---- createService ----
   async function createService() {
     if (!createServiceBtn) {
       console.warn("createServiceBtn not found");
@@ -508,7 +554,6 @@
       return;
     }
 
-    // NOTE: don't block when no local token exists — support cookie-based auth (server sets HttpOnly cookie).
     createServiceBtn.disabled = true;
     const prevText = createServiceBtn.textContent;
     createServiceBtn.textContent = "Creating…";
@@ -517,23 +562,12 @@
     console.log("createService: payload=", payload);
 
     try {
-      // rely on cookies (same-origin) or Authorization header if available.
-      const out = await doFetch(
-        "services",
-        { method: "POST", body: payload },
-        12000,
-      );
+      const out = await doFetch("services", { method: "POST", body: payload, withCredentials: true }, 12000);
       console.log("createService: server response:", out);
 
-      if (out == null) {
-        throw new Error("Empty server response");
-      }
+      if (out == null) throw new Error("Empty server response");
       if (out.error || out.errors) {
-        const msg =
-          out.error ||
-          (Array.isArray(out.errors)
-            ? out.errors.join(", ")
-            : JSON.stringify(out.errors));
+        const msg = out.error || (Array.isArray(out.errors) ? out.errors.join(", ") : JSON.stringify(out.errors));
         throw new Error(msg);
       }
 
@@ -551,10 +585,7 @@
       setTimeout(() => Diag.hide(), 2000);
     } catch (err) {
       console.error("Create service failed:", err);
-      const msg =
-        err?.message ||
-        (err?.payload && JSON.stringify(err.payload)) ||
-        "Failed to create service";
+      const msg = err?.message || (err?.payload && JSON.stringify(err.payload)) || "Failed to create service";
       alert(msg);
       Diag.show(`Create service failed. <span class="muted">${msg}</span>`);
     } finally {
@@ -572,69 +603,35 @@
   async function loadRatings(userId) {
     const cacheKey = `cc_ratings_${userId}`;
     const cachedRaw = (function () {
-      try {
-        return JSON.parse(localStorage.getItem(cacheKey));
-      } catch {
-        return null;
-      }
+      try { return JSON.parse(localStorage.getItem(cacheKey)); } catch { return null; }
     })();
-    if (
-      cachedRaw &&
-      Date.now() - (cachedRaw.ts || 0) < 60000 &&
-      Array.isArray(cachedRaw.ratings)
-    ) {
-      paintRatings(
-        cachedRaw.summary || { average: 0, count: 0 },
-        cachedRaw.ratings,
-      );
+    if (cachedRaw && Date.now() - (cachedRaw.ts || 0) < 60000 && Array.isArray(cachedRaw.ratings)) {
+      paintRatings(cachedRaw.summary || { average: 0, count: 0 }, cachedRaw.ratings);
     } else {
-      if (ratingsList)
-        ratingsList.innerHTML =
-          '<p><span class="spinner"></span> Loading ratings...</p>';
+      if (ratingsList) ratingsList.innerHTML = '<p><span class="spinner"></span> Loading ratings...</p>';
     }
 
-    if (ratingsAborter) {
-      try {
-        ratingsAborter.abort();
-      } catch {}
-    }
+    if (ratingsAborter) try { ratingsAborter.abort(); } catch {}
     ratingsAborter = new AbortController();
     try {
-      const data = await doFetch(
-        `ratings/user/${userId}`,
-        { signal: ratingsAborter.signal },
-        8000,
-      );
-      const summary = {
-        average: data.summary?.average ?? 0,
-        count: data.summary?.count ?? 0,
-      };
+      const data = await doFetch(`ratings/user/${userId}`, { signal: ratingsAborter.signal }, 8000);
+      const summary = { average: data.summary?.average ?? 0, count: data.summary?.count ?? 0 };
       const ratings = data.ratings || [];
-      try {
-        localStorage.setItem(
-          cacheKey,
-          JSON.stringify({ ts: Date.now(), summary, ratings }),
-        );
-      } catch {}
+      try { localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), summary, ratings })); } catch {}
       paintRatings(summary, ratings);
     } catch (err) {
       if (err?.name !== "AbortError") {
         console.error(err);
-        if (!cachedRaw)
-          ratingsList &&
-            (ratingsList.innerHTML =
-              '<p class="muted">Failed to load ratings.</p>');
+        if (!cachedRaw && ratingsList) ratingsList.innerHTML = '<p class="muted">Failed to load ratings.</p>';
       }
     }
   }
 
   function paintRatings(summary, ratings) {
-    if (avgStarsEl)
-      avgStarsEl.textContent = Number(summary.average || 0).toFixed(1);
+    if (avgStarsEl) avgStarsEl.textContent = Number(summary.average || 0).toFixed(1);
     if (ratingsCountEl) ratingsCountEl.textContent = summary.count || 0;
     if (!ratings?.length) {
-      if (ratingsList)
-        ratingsList.innerHTML = '<p class="muted">No ratings yet.</p>';
+      if (ratingsList) ratingsList.innerHTML = '<p class="muted">No ratings yet.</p>';
       return;
     }
     let html = "";
@@ -657,25 +654,16 @@
   function toggleDescEdit(force) {
     editingDesc = typeof force === "boolean" ? force : !editingDesc;
     if (profileDescription) profileDescription.contentEditable = editingDesc;
-    if (editDescBtn)
-      editDescBtn.textContent = editingDesc
-        ? "Save Description"
-        : "Edit Description";
+    if (editDescBtn) editDescBtn.textContent = editingDesc ? "Save Description" : "Edit Description";
     if (editingDesc && profileDescription) profileDescription.focus();
     else profileDescription && profileDescription.blur();
   }
   async function saveDescription() {
     const newDesc = profileDescription?.textContent?.trim();
     try {
-      // ensure cookie-based auth works by letting doFetch send same-origin credentials
-      const out = await doFetch(
-        "users/me/description",
-        { method: "PUT", body: { description: newDesc } },
-        8000,
-      );
+      const out = await doFetch("users/me/description", { method: "PUT", body: { description: newDesc }, withCredentials: true }, 8000);
       const saved = out?.user || {};
-      if (profileDescription)
-        profileDescription.textContent = getDescription(saved) || newDesc || "";
+      if (profileDescription) profileDescription.textContent = getDescription(saved) || newDesc || "";
     } catch {
       alert("Failed to save description");
     } finally {
@@ -685,104 +673,50 @@
 
   // ---- handlers wiring ----
   function wireHandlers() {
-    if (editDescBtn)
-      editDescBtn.addEventListener("click", () =>
-        !editingDesc ? toggleDescEdit(true) : saveDescription(),
-      );
-    if (editDescBtnFloat)
-      editDescBtnFloat.addEventListener("click", () =>
-        !editingDesc ? toggleDescEdit(true) : saveDescription(),
-      );
+    if (editDescBtn) editDescBtn.addEventListener("click", () => !editingDesc ? toggleDescEdit(true) : saveDescription());
+    if (editDescBtnFloat) editDescBtnFloat.addEventListener("click", () => !editingDesc ? toggleDescEdit(true) : saveDescription());
 
-    if (goToServicesBtn)
-      goToServicesBtn.addEventListener("click", () =>
-        (location.href = "services.html"),
-      );
-    if (goToMessagesBtn)
-      goToMessagesBtn.addEventListener("click", () =>
-        (location.href = "messages.html"),
-      );
-    if (mobileServicesBtn)
-      mobileServicesBtn.addEventListener("click", () =>
-        (location.href = "services.html"),
-      );
-    if (mobileMessagesBtn)
-      mobileMessagesBtn.addEventListener("click", () =>
-        (location.href = "messages.html"),
-      );
+    if (goToServicesBtn) goToServicesBtn.addEventListener("click", () => (location.href = "services.html"));
+    if (goToMessagesBtn) goToMessagesBtn.addEventListener("click", () => (location.href = "messages.html"));
+    if (mobileServicesBtn) mobileServicesBtn.addEventListener("click", () => (location.href = "services.html"));
+    if (mobileMessagesBtn) mobileMessagesBtn.addEventListener("click", () => (location.href = "messages.html"));
 
-    if (backToMyProfileBtn)
-      backToMyProfileBtn.addEventListener("click", () =>
-        (location.href = "profile.html"),
-      );
-    if (mobileBackBtn)
-      mobileBackBtn.addEventListener("click", () =>
-        (location.href = "profile.html"),
-      );
+    if (backToMyProfileBtn) backToMyProfileBtn.addEventListener("click", () => (location.href = "profile.html"));
+    if (mobileBackBtn) mobileBackBtn.addEventListener("click", () => (location.href = "profile.html"));
 
-    if (logoutBtn)
-      logoutBtn.addEventListener("click", () => {
-        localStorage.clear();
-        location.replace("/");
-      });
+    if (logoutBtn) logoutBtn.addEventListener("click", () => { localStorage.clear(); location.replace("/"); });
 
-    if (upgradeBtn)
-      upgradeBtn.addEventListener("click", async () => {
-        try {
-          if (!paymentsEnabled) {
-            alert("Payments are currently disabled.");
-            return;
-          }
-          if (!confirm("Upgrade to a paid account?")) return;
-          // changed to POST to match backend
-          await doFetch("users/me/upgrade", { method: "POST" }, 8000);
-          alert("Upgraded successfully!");
-          currentUserTier = "paid";
-          await loadProfile();
-        } catch (err) {
-          alert(err.message || "Upgrade failed");
-        }
-      });
+    if (upgradeBtn) upgradeBtn.addEventListener("click", async () => {
+      try {
+        if (!paymentsEnabled) { alert("Payments are currently disabled."); return; }
+        if (!confirm("Upgrade to a paid account?")) return;
+        await doFetch("users/me/upgrade", { method: "POST", withCredentials: true }, 8000);
+        alert("Upgraded successfully!");
+        currentUserTier = "paid";
+        await loadProfile();
+      } catch (err) { alert(err.message || "Upgrade failed"); }
+    });
 
-    if (addNewServiceBtn)
-      addNewServiceBtn.addEventListener("click", toggleNewService);
-    if (mobileAddServiceBtn)
-      mobileAddServiceBtn.addEventListener("click", toggleNewService);
-    if (createServiceBtn)
-      createServiceBtn.addEventListener("click", createService);
-    if (loadMoreBtn)
-      loadMoreBtn.addEventListener("click", () =>
-        loadServices({ reset: false }),
-      );
+    if (addNewServiceBtn) addNewServiceBtn.addEventListener("click", toggleNewService);
+    if (mobileAddServiceBtn) mobileAddServiceBtn.addEventListener("click", toggleNewService);
+    if (createServiceBtn) createServiceBtn.addEventListener("click", createService);
+    if (loadMoreBtn) loadMoreBtn.addEventListener("click", () => loadServices({ reset: false }));
 
     if (submitRatingBtn) {
       submitRatingBtn.addEventListener("click", async () => {
         const stars = parseInt(rateStars?.value || "0", 10) || 0;
         const comment = (rateComment?.value || "").trim();
-        const rateeId =
-          currentProfileUserId ||
-          new URLSearchParams(location.search).get("userId") ||
-          getUserId();
+        const rateeId = currentProfileUserId || new URLSearchParams(location.search).get("userId") || getUserId();
 
-        if (!rateeId) {
-          showRateMsg("No target user to rate", true);
-          return;
-        }
-        if (!stars || stars < 1 || stars > 5) {
-          showRateMsg("Please pick 1–5 stars", true);
-          return;
-        }
+        if (!rateeId) { showRateMsg("No target user to rate", true); return; }
+        if (!stars || stars < 1 || stars > 5) { showRateMsg("Please pick 1–5 stars", true); return; }
 
         submitRatingBtn.disabled = true;
         showRateMsg("Submitting…");
 
         try {
           const payload = { rateeId, stars, comment: comment || null };
-          const out = await doFetch(
-            "ratings",
-            { method: "POST", body: payload },
-            8000,
-          );
+          const out = await doFetch("ratings", { method: "POST", body: payload, withCredentials: true }, 8000);
           showRateMsg(out?.message || "Rating saved");
           await loadRatings(rateeId);
           if (rateComment) rateComment.value = "";
@@ -805,19 +739,13 @@
     if (upgradeInlineBtn) {
       upgradeInlineBtn.addEventListener("click", async () => {
         try {
-          if (!paymentsEnabled) {
-            alert("Payments are currently disabled.");
-            return;
-          }
+          if (!paymentsEnabled) { alert("Payments are currently disabled."); return; }
           if (!confirm("Upgrade to a paid account?")) return;
-          // changed to POST to match backend
-          await doFetch("users/me/upgrade", { method: "POST" }, 8000);
+          await doFetch("users/me/upgrade", { method: "POST", withCredentials: true }, 8000);
           alert("Upgraded successfully!");
           currentUserTier = "paid";
           await loadProfile();
-        } catch (err) {
-          alert(err?.message || "Upgrade failed");
-        }
+        } catch (err) { alert(err?.message || "Upgrade failed"); }
       });
     }
   }
@@ -827,9 +755,7 @@
     rateMsg.textContent = txt || "";
     rateMsg.style.color = isError ? "#b91c1c" : "#2b7a2b";
     if (!txt) return;
-    setTimeout(() => {
-      if (rateMsg) rateMsg.textContent = "";
-    }, 4500);
+    setTimeout(() => { if (rateMsg) rateMsg.textContent = ""; }, 4500);
   }
 
   // ---- init ----
@@ -838,40 +764,30 @@
       const cached = JSON.parse(localStorage.getItem("cc_me") || "null");
       if (cached) {
         const cachedName = getDisplayName(cached);
-        if (cachedName && profileUsername)
-          profileUsername.textContent = cachedName;
+        if (cachedName && profileUsername) profileUsername.textContent = cachedName;
         const cachedDesc = getDescription(cached);
-        if (cachedDesc && profileDescription)
-          profileDescription.textContent = cachedDesc;
+        if (cachedDesc && profileDescription) profileDescription.textContent = cachedDesc;
 
         const params = new URLSearchParams(location.search);
         if (cached.id && !params.get("userId")) showOwnerUI(true);
       }
-    } catch {
-      /* ignore */
-    }
+    } catch { /* ignore */ }
 
     wireHandlers();
 
     try {
       if (typeof window.isLoggedIn === "function") {
         if (!isLoggedIn()) {
-          Diag.show(
-            'You appear to be logged out. <span class="muted">No token found. UI will load, but protected API calls will fail.</span>',
-          );
+          Diag.show('You appear to be logged out. <span class="muted">No token found. UI will load, but protected API calls will fail.</span>');
         }
       } else {
         const token = getToken();
         if (!token) {
-          Diag.show(
-            'You appear to be logged out. <span class="muted">No token found. UI will load, but protected API calls will fail.</span>',
-          );
+          Diag.show('You appear to be logged out. <span class="muted">No token found. UI will load, but protected API calls will fail.</span>');
         }
       }
     } catch (e) {
-      Diag.show(
-        'Login guard error. <span class="muted">Check <code>isLoggedIn()</code> or <code>script.js</code>.</span>',
-      );
+      Diag.show('Login guard error. <span class="muted">Check <code>isLoggedIn()</code> or <code>script.js</code>.</span>');
     }
 
     // Wait for payments availability before loading profile so upgrade UI is correct
@@ -880,4 +796,4 @@
     // Now load the main profile UI
     loadProfile();
   });
-})();``
+})();

@@ -1,112 +1,104 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Profile - CodeCrowds (Diag)</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>CodeCrowds - Register</title>
+    <meta name="description" content="Create your CodeCrowds account." />
 
-    <!-- Global design system -->
+    <!-- Global fonts/styles -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css" />
-
-    <!-- Page-specific styles -->
-    <link rel="stylesheet" href="profile.css" />
-
-    <!-- shared helpers -->
-    <script src="script.js" defer></script>
-
-    <!-- profile client logic -->
-    <script src="profile.js" defer></script>
+    <link rel="stylesheet" href="/register.css" />
   </head>
-  <body>
-    <div id="diagBanner" class="hidden" role="status" aria-live="polite"></div>
 
-    <main class="container">
-      <header>
-        <h1 id="profile-username">
-          <span class="spinner"></span> Loading username...
-        </h1>
-        <p id="profile-description">
-          <span class="spinner"></span> Loading description...
-        </p>
-        <div id="descControls" class="hidden">
-          <button type="button" id="editDescBtn" class="btn btn--ghost">Edit Description</button>
+  <body>
+    <a class="visually-hidden" href="#main">Skip to content</a>
+
+    <div class="container container--transparent fade-in">
+      <header class="site-header" role="banner">
+        <div class="header-inner">
+          <h1 class="brand-heading">
+            <a href="/" class="site-logo" aria-label="Code Crowds home">
+              <span class="brand-wordmark">
+                <span class="brand-code">Code</span>
+                <span class="brand-crowds">Crowds</span>
+              </span>
+            </a>
+          </h1>
         </div>
       </header>
 
-      <section>
-        <h2>User's Services</h2>
-        <p class="section-subtle">These also appear on the Services page.</p>
-        <div id="services-list">
-          <p><span class="spinner"></span> Loading services...</p>
-        </div>
-        <div class="row row-center row-gap-8 justify-center">
-          <button type="button" id="loadMoreServicesBtn" class="btn btn--primary hidden">
-            Load more
-          </button>
-        </div>
-        <div id="newServiceSection" class="new-service hidden">
-          <input type="text" id="newServiceTitle" class="input" placeholder="Service Title" />
-          <textarea id="newServiceDesc" class="input" placeholder="Service Description"></textarea>
-          <input type="number" id="newServicePrice" class="input input-number" placeholder="Price in USD" />
-          <button type="button" id="createServiceBtn" class="btn btn--primary">Create Service</button>
-        </div>
-      </section>
+      <main id="main">
+        <section class="features" aria-label="Highlights">
+          <article class="feature-card card">
+            <h3>Offer Your Services</h3>
+            <p>Create posts to sell your coding skills and get noticed by clients worldwide.</p>
+          </article>
 
-      <section>
-        <h2>Ratings & Reviews</h2>
-        <div id="ratings-summary" class="card">
-          <p>
-            <strong><span id="avg-stars">0.0</span> / 5.0</strong> •
-            <span id="ratings-count">0</span> ratings
-          </p>
-        </div>
+          <article class="feature-card card">
+            <h3>Connect & Collaborate</h3>
+            <p>Rate and interact with other developers, build credibility, and grow your network.</p>
+          </article>
 
-        <div id="rate-form" class="card hidden" aria-labelledby="rateFormTitle">
-          <h3 id="rateFormTitle">Leave a rating</h3>
-          <div class="row row-center row-gap-8">
-            <label for="rateStars">Stars</label>
-            <select id="rateStars" title="Select stars" class="input">
-              <option value="5">5</option>
-              <option value="4">4</option>
-              <option value="3">3</option>
-              <option value="2">2</option>
-              <option value="1">1</option>
-            </select>
-          </div>
-          <textarea id="rateComment" class="input w-full" placeholder="Say something helpful (optional)" rows="3"></textarea>
-          <button type="button" id="submitRatingBtn" class="btn btn--primary">Submit Rating</button>
-          <p id="rateMsg" class="muted"></p>
-          <div id="rateUpgradeHint" class="hidden muted">
-            Rating is a paid feature.
-            <button type="button" id="upgradeInlineBtn" class="btn btn--primary upgrade-btn">Upgrade to Paid</button>
-          </div>
-        </div>
+          <article class="feature-card card">
+            <h3>Ad-Free & Premium</h3>
+            <p>Upgrade to premium for extra features like ad-free experience, lower fees, and more visibility.</p>
+          </article>
+        </section>
 
-        <div id="ratings-list" class="review-list">
-          <p><span class="spinner"></span> Loading ratings...</p>
-        </div>
-      </section>
+        <!-- Right column: register card uses same login-container/card styling as index -->
+        <aside class="login-container card" aria-labelledby="register-heading">
+          <h2 id="register-heading">Create your account</h2>
 
-      <div class="row row-center row-gap-8 justify-center">
-        <button type="button" id="logoutBtn" class="btn btn--danger">Logout</button>
-        <button type="button" id="upgradeBtn" class="btn btn--primary hidden">Upgrade to Paid</button>
-      </div>
-    </main>
+          <form id="registerForm" novalidate>
+            <div class="field">
+              <label for="registerUsername">Username</label>
+              <input id="registerUsername" name="username" type="text" class="input" placeholder="e.g. dev_ally" autocomplete="username" required minlength="3" maxlength="32" />
+              <div class="hint">3-32 characters, letters/numbers/underscores.</div>
+            </div>
 
-    <!-- Unified action rail (floating shortcuts for this page) -->
-    <div class="action-rail" aria-hidden="true">
-      <button class="btn btn--primary" id="goToServicesBtn">Services</button>
-      <button class="btn btn--accent" id="goToMessagesBtn">Messages</button>
-      <button class="btn btn--accent" id="addNewServiceBtn">+ Service</button>
-      <button class="btn btn--ghost" id="editDescBtnFloat">Edit Bio</button>
+            <div class="field">
+              <label for="registerEmail">Email</label>
+              <input id="registerEmail" name="email" type="email" class="input" placeholder="you@example.com" autocomplete="email" required />
+            </div>
+
+            <div class="field">
+              <label for="registerPassword">Password</label>
+              <div class="password-row">
+                <input id="registerPassword" name="password" type="password" class="input" placeholder="Create a strong password" autocomplete="new-password" required minlength="8" />
+                <button type="button" id="togglePassword" class="btn-icon" aria-pressed="false" title="Show password">Show</button>
+              </div>
+              <div id="passwordStrength" class="strength" aria-live="polite">Use at least 8 characters with a mix of letters, numbers, and symbols.</div>
+            </div>
+
+            <div class="field">
+              <label for="registerDescription">Tell us about yourself (optional)</label>
+              <textarea id="registerDescription" name="description" rows="4" maxlength="400" placeholder="What do you offer? What are your skills?"></textarea>
+              <div class="meta-row"><small id="descCounter" class="hint">0 / 400</small></div>
+            </div>
+
+            <div class="form-actions">
+              <button id="submitBtn" class="btn btn-primary" type="submit">Create account</button>
+            </div>
+
+            <p id="registerMessage" class="message" role="status" aria-live="polite"></p>
+
+            <p class="signup-switch">Already have an account? <a href="index.html">Log in</a></p>
+          </form>
+        </aside>
+      </main>
+
+      <footer class="site-footer" role="contentinfo">
+        &copy; <span id="year"></span> Code Crowds. All rights reserved.
+      </footer>
     </div>
 
-    <nav class="mobile-button-row hidden" id="mobileRow" aria-label="Mobile actions">
-      <button type="button" id="mobileServicesBtn" class="btn btn--primary">Services</button>
-      <button type="button" id="mobileMessagesBtn" class="btn btn--accent">Messages</button>
-      <button type="button" id="mobileAddServiceBtn" class="btn btn--accent">+ Service</button>
-      <button type="button" id="mobileBackBtn" class="btn btn--ghost hidden">My Profile</button>
-    </nav>
+    <!-- Scripts (init/script if present on site) -->
+    <script src="init.js" defer></script>
+    <script src="script.js" defer></script>
+    <script src="/register.js" defer></script>
   </body>
 </html>
-
