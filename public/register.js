@@ -121,7 +121,7 @@
       }, 300);
     }
 
-    // New: robust error extractor
+    // Robust error extractor
     function extractErrorText(resp) {
       if (!resp) return null;
       if (typeof resp === "string" && resp.trim()) return resp;
@@ -251,6 +251,21 @@
         .then(async function (r) {
           console.log("[register] response:", r);
 
+          // NEW: treat server success containing `user` as success even if no token returned
+          if (r.ok && r.data && r.data.user) {
+            // store userId locally if present
+            try {
+              if (r.data.user.id != null) localStorage.setItem("userId", String(r.data.user.id));
+              if (r.data.user.username) localStorage.setItem("username", r.data.user.username);
+            } catch (e) {
+              console.warn("Could not save user info locally", e);
+            }
+            setMsg("Registration successful! Redirecting…", "success");
+            redirectToProfile();
+            return;
+          }
+
+          // previous behavior: save token if returned
           const gotToken = r.ok && saveAuth(r.data);
           if (gotToken) {
             setMsg("Registration successful! Redirecting…", "success");
@@ -259,7 +274,7 @@
           }
 
           if (r.ok) {
-            // try login fallback
+            // try login fallback (rare)
             try {
               const tryEmail = payload.email
                 ? await postJSON(USERS + "/login", {
