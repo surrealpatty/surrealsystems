@@ -1,83 +1,398 @@
-﻿<!doctype html>
+﻿<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>CodeCrowds - Showcase & Sell Your Skills</title>
-    <meta name="description" content="Code Crowds — show and sell your coding skills, connect with developers, and grow your network." />
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login · CodeCrowds</title>
 
-    <!-- Load fonts/styles -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Optional: same font as register page -->
+    <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
 
-    <!-- Use relative path so stylesheet resolves when site is served under a subpath -->
-    <link rel="stylesheet" href="style.css" />
-  </head>
+    <style>
+        :root {
+            --bg: #020617;
+            --bg-card: #020617;
+            --border-subtle: #1f2937;
+            --accent: #3b82f6;
+            --accent-soft: rgba(59, 130, 246, 0.12);
+            --text-main: #e5e7eb;
+            --text-muted: #9ca3af;
+            --radius-xl: 1.25rem;
+        }
 
-  <body>
-    <!-- Skip link for keyboard users -->
-    <a class="visually-hidden" href="#main">Skip to content</a>
+        * {
+            box-sizing: border-box;
+        }
 
-    <div class="container container--transparent fade-in">
-      <header class="site-header" role="banner">
-        <div class="header-inner">
-          <!-- Single heading + link for the site brand (text-only wordmark) -->
-          <h1 class="brand-heading">
-            <a href="/" class="site-logo" aria-label="Code Crowds home">
-              <span class="brand-wordmark">
-                <span class="brand-code">Code</span>
-                <span class="brand-crowds">Crowds</span>
-              </span>
-            </a>
-          </h1>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                sans-serif;
+            background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
+            color: var(--text-main);
+        }
+
+        .page {
+            width: 100%;
+            max-width: 1040px;
+            padding: 32px 16px 40px;
+        }
+
+        .logo-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 1.1rem;
+            margin-bottom: 24px;
+        }
+
+        .logo-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #22c55e, #3b82f6);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+            gap: 28px;
+        }
+
+        @media (max-width: 840px) {
+            .layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        /* LEFT – marketing copy */
+        .pitch {
+            padding: 24px 24px 28px;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-subtle);
+            background:
+                radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 55%),
+                radial-gradient(circle at bottom right, rgba(34, 197, 94, 0.08), transparent 55%),
+                var(--bg-card);
+        }
+
+        .pitch-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0 0 8px;
+        }
+
+        .pitch-subtitle {
+            margin: 0 0 20px;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .pitch-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 16px;
+        }
+
+        .pitch-item {
+            padding: 12px 12px 12px 12px;
+            border-radius: 0.9rem;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(51, 65, 85, 0.8);
+        }
+
+        .pitch-item h3 {
+            margin: 0 0 4px;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .pitch-item p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            line-height: 1.4;
+        }
+
+        .badge-premium {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            padding: 4px 9px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: #bfdbfe;
+            margin-top: 6px;
+        }
+
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: var(--accent);
+        }
+
+        /* RIGHT – login card */
+        .card {
+            padding: 24px 22px 26px;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-subtle);
+            background: rgba(15, 23, 42, 0.96);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .card h2 {
+            margin: 0 0 4px;
+            font-size: 1.4rem;
+        }
+
+        .card p {
+            margin: 0 0 18px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 0.86rem;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .hint {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        input {
+            border-radius: 0.7rem;
+            border: 1px solid #374151;
+            background: #020617;
+            padding: 9px 11px;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+        }
+
+        input::placeholder {
+            color: #6b7280;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4);
+            background: #020617;
+        }
+
+        .password-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .password-row input {
+            flex: 1;
+        }
+
+        .toggle-password {
+            padding: 7px 10px;
+            border-radius: 999px;
+            border: 1px solid #4b5563;
+            background: #020617;
+            color: #e5e7eb;
+            font-size: 0.78rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .toggle-password:hover {
+            border-color: var(--accent);
+        }
+
+        .actions {
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .primary-btn {
+            border: none;
+            border-radius: 999px;
+            padding: 10px 14px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #3b82f6, #22c55e);
+            color: #0b1120;
+            cursor: pointer;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .primary-btn:hover {
+            filter: brightness(1.05);
+        }
+
+        .subtext {
+            font-size: 0.83rem;
+            color: var(--text-muted);
+        }
+
+        .subtext a {
+            color: #93c5fd;
+            text-decoration: none;
+        }
+
+        .subtext a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            margin-top: 18px;
+            font-size: 0.8rem;
+            color: #4b5563;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a href="/" class="logo-link">
+            <span class="logo-dot"></span>
+            <span>CodeCrowds</span>
+        </a>
+
+        <div class="layout">
+            <!-- LEFT: same marketing content as register page -->
+            <section class="pitch">
+                <h1 class="pitch-title">Offer your coding skills to the world.</h1>
+                <p class="pitch-subtitle">
+                    Create posts, connect with developers, and get noticed by clients worldwide.
+                </p>
+
+                <div class="pitch-grid">
+                    <article class="pitch-item">
+                        <h3>Offer Your Services</h3>
+                        <p>
+                            Create posts to sell your skills and showcase your best work. Attract clients
+                            looking for exactly what you do.
+                        </p>
+                    </article>
+
+                    <article class="pitch-item">
+                        <h3>Connect &amp; Collaborate</h3>
+                        <p>
+                            Rate and interact with other developers, build credibility, and grow your
+                            professional network.
+                        </p>
+                    </article>
+
+                    <article class="pitch-item">
+                        <h3>Ad-Free &amp; Premium</h3>
+                        <p>
+                            Upgrade to premium for ad-free experience, lower fees, and more visibility on
+                            the marketplace.
+                        </p>
+                        <div class="badge-premium">
+                            <span class="badge-dot"></span>
+                            <span>Premium perks for power users</span>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <!-- RIGHT: login card -->
+            <section class="card">
+                <h2>Welcome back</h2>
+                <p>Log in to manage your posts, messages, and projects.</p>
+
+                <form action="/login" method="post">
+                    <!-- Email -->
+                    <div class="field">
+                        <label for="email">
+                            <span>Email</span>
+                        </label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            placeholder="you@example.com"
+                            required
+                        />
+                    </div>
+
+                    <!-- Password -->
+                    <div class="field">
+                        <label for="password">
+                            <span>Password</span>
+                        </label>
+                        <div class="password-row">
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="Your password"
+                                required
+                            />
+                            <button
+                                type="button"
+                                class="toggle-password"
+                                id="togglePassword"
+                                aria-label="Show password"
+                            >
+                                Show
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button type="submit" class="primary-btn">Login</button>
+                        <div class="subtext">
+                            Don’t have an account?
+                            <a href="/register.html">Sign up here</a>
+                        </div>
+                    </div>
+                </form>
+
+                <footer>© 2025 CodeCrowds. All rights reserved.</footer>
+            </section>
         </div>
-      </header>
-
-      <main id="main">
-        <section class="features" aria-label="Highlights">
-          <article class="feature-card card">
-            <h3>Offer Your Services</h3>
-            <p>Create posts to sell your coding skills and get noticed by clients worldwide.</p>
-          </article>
-
-          <article class="feature-card card">
-            <h3>Connect & Collaborate</h3>
-            <p>Rate and interact with other developers, build credibility, and grow your network.</p>
-          </article>
-
-          <article class="feature-card card">
-            <h3>Ad-Free & Premium</h3>
-            <p>Upgrade to premium for extra features like ad-free experience, lower fees, and more visibility.</p>
-          </article>
-        </section>
-
-        <aside class="login-container card" aria-labelledby="login-heading">
-          <h2 id="login-heading">Login</h2>
-
-          <!-- METHOD + ACTION: non-JS fallback will POST to the API route -->
-          <form id="loginForm" method="post" action="/api/users/login" novalidate>
-            <label for="loginEmail" class="visually-hidden">Email</label>
-            <input id="loginEmail" name="email" type="email" class="input" placeholder="Email" autocomplete="username" required />
-
-            <label for="loginPassword" class="visually-hidden">Password</label>
-            <input id="loginPassword" name="password" type="password" class="input" placeholder="Password" autocomplete="current-password" required />
-
-            <button type="submit" class="btn btn--primary">Login</button>
-          </form>
-
-          <p id="loginMessage" class="message" role="status" aria-live="polite"></p>
-          <p class="signup-switch">Don't have an account? <a href="register.html">Sign up here</a></p>
-        </aside>
-      </main>
-
-      <footer class="site-footer" role="contentinfo">
-        &copy; <span id="year"></span> Code Crowds. All rights reserved.
-      </footer>
     </div>
 
-    <!-- Client JavaScript: init must load first to set API_BASE if needed, then script -->
-    <script src="init.js" defer></script>
-    <script src="script.js" defer></script>
-  </body>
+    <script>
+        // Password show/hide
+        const passwordInput = document.getElementById('password');
+        const togglePassword = document.getElementById('togglePassword');
+        togglePassword.addEventListener('click', () => {
+            const isHidden = passwordInput.type === 'password';
+            passwordInput.type = isHidden ? 'text' : 'password';
+            togglePassword.textContent = isHidden ? 'Hide' : 'Show';
+        });
+    </script>
+</body>
 </html>
