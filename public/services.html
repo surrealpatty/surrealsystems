@@ -1,78 +1,388 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Services - CodeCrowds</title>
+/* public/messages.js */
+(() => {
+  const AUTO_HOST = "codecrowds.onrender.com";
 
-    <!-- Global design system -->
-    <link rel="stylesheet" href="style.css" />
+  // choose API base URL intelligently
+  const API_URL =
+    window.location.hostname === AUTO_HOST ||
+    window.location.hostname.endsWith(".onrender.com")
+      ? `https://${AUTO_HOST}/api`
+      : "/api";
 
-    <!-- Page CSS (external file only) -->
-    <link rel="stylesheet" href="services.css" />
+  // allow updating after server auth check
+  let token = localStorage.getItem("token");
+  let userId = localStorage.getItem("userId");
 
-    <!-- Init MUST run before script.js so API_URL is set -->
-    <script src="init.js" defer></script>
+  const messagesList = document.getElementById("messages-list");
+  const goBackBtn = document.getElementById("goBackBtn");
+  const inboxBtn = document.getElementById("inboxBtn");
+  const sentBtn = document.getElementById("sentBtn");
 
-    <!-- Shared helpers (apiFetch, etc.) -->
-    <script src="script.js" defer></script>
+  let lastView = "inbox";
 
-    <!-- Page-specific JS -->
-    <script src="services.js" defer></script>
-  </head>
-  <body>
-    <div id="diagBanner"><span id="diagMsg"></span></div>
+  // --- Attempt server-side auth (cookie) before redirecting ---
+  async function ensureAuthenticated() {
+    const localToken = localStorage.getItem("token");
+    const localUserId = localStorage.getItem("userId");
 
-    <div class="container">
-      <h1>All Services</h1>
-      <p class="subtle">Browse everything users are offering across CodeCrowds.</p>
+    const headers = {};
+    if (localToken) headers["Authorization"] = `Bearer ${localToken}`;
 
-      <div class="controls" role="group" aria-label="Service search and sorting">
-        <label class="sr-only" for="search">Search services</label>
-        <input id="search" class="input" placeholder="Search services…" aria-describedby="searchHelp" />
-        <span id="searchHelp" class="sr-only">Type to filter services by title, description, or username</span>
+    try {
+      const resp = await fetch(`${API_URL}/users/me`, {
+        method: "GET",
+        headers,
+        credentials: "include", // send cookies for cookie-based auth
+      });
 
-        <label class="sr-only" for="sort">Sort services</label>
-        <select id="sort" class="input" title="Sort services">
-          <option value="newest">Newest</option>
-          <option value="priceLow">Price: Low → High</option>
-          <option value="priceHigh">Price: High → Low</option>
-        </select>
-      </div>
+      if (!resp.ok) {
+        // server says not authenticated
+        return null;
+      }
 
-      <div id="services-list" aria-live="polite">
-        <p><span class="spinner"></span> Loading services…</p>
-      </div>
+      const data = await resp.json().catch(() => null);
+      const user = (data && (data.user || data)) || null;
+      if (user && user.id) {
+        // ensure userId stored locally for compatibility with rest of the page
+        if (!localUserId) localStorage.setItem("userId", String(user.id));
+        return { user, tokenPresent: !!localToken };
+      }
+      return null;
+    } catch (e) {
+      // network/CORS error — we cannot verify; treat as unauthenticated to be safe
+      console.warn("[ensureAuthenticated] network error:", e);
+      return null;
+    }
+  }
 
-      <!-- Compose Message Modal -->
-      <div id="messageModal" role="dialog" aria-modal="true" aria-labelledby="messageTitle" aria-hidden="true">
-        <div class="modal-content" role="document">
-          <h2 id="messageTitle">Message <span id="messageRecipient"></span></h2>
+  // Wire up navigation handlers (safe to do before auth check)
+  goBackBtn &&
+    goBackBtn.addEventListener("click", () => {
+      window.location.href = "profile.html";
+    });
+  inboxBtn &&
+    inboxBtn.addEventListener("click", () => {
+      setActiveTab("inbox");
+      loadInbox();
+    });
+  sentBtn &&
+    sentBtn.addEventListener("click", () => {
+      setActiveTab("sent");
+      loadSent();
+    });
 
-          <div class="field-wrap">
-            <textarea id="messageContent" class="input" placeholder="Write your message…" maxlength="2000" aria-label="Message body"></textarea>
-          </div>
+  function setActiveTab(tab) {
+    lastView = tab;
+    if (tab === "inbox") {
+      inboxBtn.classList.add("active");
+      inboxBtn.setAttribute("aria-pressed", "true");
+      sentBtn.classList.remove("active");
+      sentBtn.setAttribute("aria-pressed", "false");
+    } else {
+      sentBtn.classList.add("active");
+      sentBtn.setAttribute("aria-pressed", "true");
+      inboxBtn.classList.remove("active");
+      inboxBtn.setAttribute("aria-pressed", "false");
+    }
+  }
 
-          <p id="sendError" class="error" aria-live="polite" hidden></p>
+  function escapeHtml(unsafe) {
+    return String(unsafe || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
 
-          <div class="modal-meta">
-            <span id="charCount" aria-live="polite">0 / 2000</span>
-          </div>
-          <div class="modal-actions">
-            <button type="button" id="sendMessageBtn" class="btn btn--primary">Send</button>
-            <button type="button" id="cancelMessageBtn" class="btn btn--ghost">Cancel</button>
-          </div>
-        </div>
-      </div>
+  function extractMessages(payload) {
+    if (!payload) return [];
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload.messages)) return payload.messages;
+    if (payload.data && Array.isArray(payload.data.messages))
+      return payload.data.messages;
+    return [];
+  }
 
-      <div class="actions-row">
-        <button type="button" id="goToProfileBtn" class="btn btn--ghost" aria-label="Back to your profile">Back to Profile</button>
-        <button type="button" id="refreshBtn" class="btn btn--primary" aria-label="Refresh services list">Refresh</button>
-      </div>
-    </div>
+  function renderStatus(text) {
+    if (messagesList) messagesList.innerHTML = `<p class="loading">${escapeHtml(text)}</p>`;
+  }
+  function renderError(text) {
+    if (messagesList) messagesList.innerHTML = `<p class="error">${escapeHtml(text)}</p>`;
+  }
+  function renderEmpty(text = "No messages") {
+    if (messagesList) messagesList.innerHTML = `<p class="empty">${escapeHtml(text)}</p>`;
+  }
 
-    <!-- Toast -->
-    <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
-  </body>
-</html>
+  function renderMessageCard(m, kind = "inbox") {
+    const article = document.createElement("article");
+    article.className = "card";
+    article.tabIndex = 0;
 
+    if (kind === "inbox") {
+      const fromName = m.sender?.username || "Unknown";
+      article.innerHTML = `
+        <h3>From: ${escapeHtml(fromName)}</h3>
+        <p>${escapeHtml(m.content || "")}</p>
+        <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
+        <div class="card-actions"><button class="viewConversationBtn" data-userid="${m.sender?.id || m.senderId}" data-username="${escapeHtml(fromName)}">View Conversation</button></div>
+      `;
+    } else {
+      const toName = m.receiver?.username || "Unknown";
+      article.innerHTML = `
+        <h3>To: ${escapeHtml(toName)}</h3>
+        <p>${escapeHtml(m.content || "")}</p>
+        <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
+        <div class="card-actions"><button class="viewConversationBtn" data-userid="${m.receiver?.id || m.receiverId}" data-username="${escapeHtml(toName)}">View Conversation</button></div>
+      `;
+    }
+    return article;
+  }
+
+  function attachConversationButtons() {
+    document.querySelectorAll(".viewConversationBtn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const otherUserId = btn.dataset.userid;
+        const otherUsername = btn.dataset.username;
+        loadConversation(otherUserId, otherUsername);
+      });
+    });
+  }
+
+  async function doFetch(path, opts = {}) {
+    const url = path.startsWith("http") ? path : `${API_URL}${path}`;
+    const headers = Object.assign({}, opts.headers || {}, {
+      Authorization: token ? `Bearer ${token}` : undefined,
+    });
+
+    // For GET/HEAD don't add Content-Type; only add for requests with a body
+    const fetchOpts = {
+      method: opts.method || "GET",
+      headers,
+      body: opts.body !== undefined ? opts.body : undefined,
+      credentials: opts.credentials || "same-origin",
+    };
+
+    console.debug("[doFetch] url=", url, "opts=", fetchOpts);
+    try {
+      const res = await fetch(url, fetchOpts);
+      const ct = res.headers.get("content-type") || "";
+      const text = await res.text();
+      let data = null;
+      if (ct.includes("application/json")) {
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          data = text;
+        }
+      } else {
+        data = text;
+      }
+      console.debug("[doFetch] status=", res.status, "body=", data);
+
+      if (!res.ok)
+        throw { status: res.status, body: data, statusText: res.statusText };
+
+      return data;
+    } catch (err) {
+      // network / CORS errors typically are TypeError
+      if (
+        err instanceof TypeError ||
+        (err && err.message && err.message.includes("NetworkError"))
+      ) {
+        console.error("[doFetch] Network/CORS error", err);
+        throw { type: "network", message: err.message || "Network/CORS error" };
+      }
+      throw err;
+    }
+  }
+
+  async function loadInbox() {
+    setActiveTab("inbox");
+    inboxBtn.disabled = true;
+    sentBtn.disabled = false;
+    renderStatus("Loading received messages…");
+
+    try {
+      const data = await doFetch("/messages/inbox");
+      const messages = extractMessages(data);
+      if (!messages.length) {
+        renderEmpty("No messages yet.");
+        return;
+      }
+      messagesList.innerHTML = "";
+      messages.forEach((m) =>
+        messagesList.appendChild(renderMessageCard(m, "inbox")),
+      );
+      attachConversationButtons();
+    } catch (err) {
+      console.error("[loadInbox] error:", err);
+      if (err.type === "network") {
+        renderError(
+          "Network/CORS error while fetching inbox. See console for details.",
+        );
+      } else if (err.status === 401) {
+        renderError("Unauthorized (401). Please log in again.");
+      } else if (err.status === 403) {
+        renderError(
+          "Forbidden (403). CORS or permission issue. Check server logs and CORS_ALLOWED_ORIGINS.",
+        );
+      } else {
+        const msg =
+          err.body?.error?.message ||
+          err.body ||
+          err.statusText ||
+          err.message ||
+          "Unknown";
+        renderError(`Failed to load messages: ${msg}`);
+      }
+    } finally {
+      inboxBtn.disabled = false;
+    }
+  }
+
+  async function loadSent() {
+    setActiveTab("sent");
+    sentBtn.disabled = true;
+    inboxBtn.disabled = false;
+    renderStatus("Loading sent messages…");
+
+    try {
+      const data = await doFetch("/messages/sent");
+      const messages = extractMessages(data);
+      if (!messages.length) {
+        renderEmpty("No sent messages yet.");
+        return;
+      }
+      messagesList.innerHTML = "";
+      messages.forEach((m) =>
+        messagesList.appendChild(renderMessageCard(m, "sent")),
+      );
+      attachConversationButtons();
+    } catch (err) {
+      console.error("[loadSent] error:", err);
+      if (err.type === "network") {
+        renderError(
+          "Network/CORS error while fetching sent messages. See console for details.",
+        );
+      } else if (err.status === 401) {
+        renderError("Unauthorized (401). Please log in again.");
+      } else if (err.status === 403) {
+        renderError(
+          "Forbidden (403). CORS or permission issue. Check server logs and CORS_ALLOWED_ORIGINS.",
+        );
+      } else {
+        const msg =
+          err.body?.error?.message ||
+          err.body ||
+          err.statusText ||
+          err.message ||
+          "Unknown";
+        renderError(`Failed to load sent messages: ${msg}`);
+      }
+    } finally {
+      sentBtn.disabled = false;
+    }
+  }
+
+  async function loadConversation(otherUserId, otherUsername) {
+    renderStatus(`Loading conversation with ${otherUsername}…`);
+    try {
+      const data = await doFetch(`/messages/thread/${otherUserId}`);
+      const conversation = extractMessages(data);
+      messagesList.innerHTML = `<h2>Conversation with ${escapeHtml(otherUsername)}</h2>`;
+
+      if (!conversation.length) {
+        messagesList.innerHTML +=
+          '<p class="empty">No messages in this conversation yet.</p>';
+      } else {
+        conversation.forEach((m) => {
+          const article = document.createElement("article");
+          article.className = "card";
+          article.tabIndex = 0;
+          const isMine = Number(m.senderId) === Number(userId);
+          const who = isMine ? "You" : m.sender?.username || "Unknown";
+          article.innerHTML = `<h3>${escapeHtml(who)}</h3><p>${escapeHtml(m.content || "")}</p><p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>`;
+          messagesList.appendChild(article);
+        });
+      }
+
+      const footer = document.createElement("div");
+      footer.className = "conversation-footer";
+      const backBtn = document.createElement("button");
+      backBtn.textContent = "Back";
+      backBtn.addEventListener("click", () => {
+        if (lastView === "sent") loadSent();
+        else loadInbox();
+      });
+      footer.appendChild(backBtn);
+      messagesList.appendChild(footer);
+    } catch (err) {
+      console.error("[loadConversation] error:", err);
+      if (err.type === "network") {
+        renderError(
+          "Network/CORS error while loading conversation. See console for details.",
+        );
+      } else if (err.status === 401) {
+        renderError("Unauthorized (401). Please log in again.");
+      } else {
+        const msg =
+          err.body?.error?.message ||
+          err.body ||
+          err.statusText ||
+          err.message ||
+          "Unknown";
+        renderError(`Failed to load conversation: ${msg}`);
+      }
+    }
+  }
+
+  // initialize
+  (async function init() {
+    const auth = await ensureAuthenticated();
+    if (!auth) {
+      console.warn("Not authenticated — redirecting to login");
+      window.location.href = "index.html";
+      return;
+    }
+
+    // update token & userId variables (ensure they reflect any newly stored values)
+    token = localStorage.getItem("token") || token;
+    userId = localStorage.getItem("userId") || (auth.user && String(auth.user.id)) || userId;
+
+    console.info("[messages] API_URL=", API_URL, "userIdPresent=", !!userId);
+    loadInbox();
+  })();
+
+  // small helper previously used above
+  async function ensureAuthenticated() {
+    const localToken = localStorage.getItem("token");
+    const localUserId = localStorage.getItem("userId");
+
+    const headers = {};
+    if (localToken) headers["Authorization"] = `Bearer ${localToken}`;
+
+    try {
+      const resp = await fetch(`${API_URL}/users/me`, {
+        method: "GET",
+        headers,
+        credentials: "include", // send cookies
+      });
+
+      if (!resp.ok) {
+        return null;
+      }
+
+      const data = await resp.json().catch(() => null);
+      const user = (data && (data.user || data)) || null;
+      if (user && user.id) {
+        if (!localUserId) localStorage.setItem("userId", String(user.id));
+        return { user, tokenPresent: !!localToken };
+      }
+      return null;
+    } catch (e) {
+      console.warn("[ensureAuthenticated] network error:", e);
+      return null;
+    }
+  }
+})();

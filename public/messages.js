@@ -56,23 +56,30 @@
   }
 
   // Wire up navigation handlers (safe to do before auth check)
-  goBackBtn &&
+  if (goBackBtn) {
     goBackBtn.addEventListener("click", () => {
       window.location.href = "profile.html";
     });
-  inboxBtn &&
+  }
+
+  if (inboxBtn) {
     inboxBtn.addEventListener("click", () => {
       setActiveTab("inbox");
       loadInbox();
     });
-  sentBtn &&
+  }
+
+  if (sentBtn) {
     sentBtn.addEventListener("click", () => {
       setActiveTab("sent");
       loadSent();
     });
+  }
 
   function setActiveTab(tab) {
     lastView = tab;
+    if (!inboxBtn || !sentBtn) return;
+
     if (tab === "inbox") {
       inboxBtn.classList.add("active");
       inboxBtn.setAttribute("aria-pressed", "true");
@@ -105,13 +112,18 @@
   }
 
   function renderStatus(text) {
-    if (messagesList) messagesList.innerHTML = `<p class="loading">${escapeHtml(text)}</p>`;
+    if (messagesList)
+      messagesList.innerHTML = `<p class="loading">${escapeHtml(text)}</p>`;
   }
+
   function renderError(text) {
-    if (messagesList) messagesList.innerHTML = `<p class="error">${escapeHtml(text)}</p>`;
+    if (messagesList)
+      messagesList.innerHTML = `<p class="error">${escapeHtml(text)}</p>`;
   }
+
   function renderEmpty(text = "No messages") {
-    if (messagesList) messagesList.innerHTML = `<p class="empty">${escapeHtml(text)}</p>`;
+    if (messagesList)
+      messagesList.innerHTML = `<p class="empty">${escapeHtml(text)}</p>`;
   }
 
   function renderMessageCard(m, kind = "inbox") {
@@ -125,7 +137,13 @@
         <h3>From: ${escapeHtml(fromName)}</h3>
         <p>${escapeHtml(m.content || "")}</p>
         <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
-        <div class="card-actions"><button class="viewConversationBtn" data-userid="${m.sender?.id || m.senderId}" data-username="${escapeHtml(fromName)}">View Conversation</button></div>
+        <div class="card-actions">
+          <button class="viewConversationBtn"
+                  data-userid="${m.sender?.id || m.senderId}"
+                  data-username="${escapeHtml(fromName)}">
+            View Conversation
+          </button>
+        </div>
       `;
     } else {
       const toName = m.receiver?.username || "Unknown";
@@ -133,7 +151,13 @@
         <h3>To: ${escapeHtml(toName)}</h3>
         <p>${escapeHtml(m.content || "")}</p>
         <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
-        <div class="card-actions"><button class="viewConversationBtn" data-userid="${m.receiver?.id || m.receiverId}" data-username="${escapeHtml(toName)}">View Conversation</button></div>
+        <div class="card-actions">
+          <button class="viewConversationBtn"
+                  data-userid="${m.receiver?.id || m.receiverId}"
+                  data-username="${escapeHtml(toName)}">
+            View Conversation
+          </button>
+        </div>
       `;
     }
     return article;
@@ -155,7 +179,6 @@
       Authorization: token ? `Bearer ${token}` : undefined,
     });
 
-    // For GET/HEAD don't add Content-Type; only add for requests with a body
     const fetchOpts = {
       method: opts.method || "GET",
       headers,
@@ -185,7 +208,6 @@
 
       return data;
     } catch (err) {
-      // network / CORS errors typically are TypeError
       if (
         err instanceof TypeError ||
         (err && err.message && err.message.includes("NetworkError"))
@@ -199,8 +221,8 @@
 
   async function loadInbox() {
     setActiveTab("inbox");
-    inboxBtn.disabled = true;
-    sentBtn.disabled = false;
+    if (inboxBtn) inboxBtn.disabled = true;
+    if (sentBtn) sentBtn.disabled = false;
     renderStatus("Loading received messages…");
 
     try {
@@ -210,6 +232,7 @@
         renderEmpty("No messages yet.");
         return;
       }
+      if (!messagesList) return;
       messagesList.innerHTML = "";
       messages.forEach((m) =>
         messagesList.appendChild(renderMessageCard(m, "inbox")),
@@ -237,14 +260,14 @@
         renderError(`Failed to load messages: ${msg}`);
       }
     } finally {
-      inboxBtn.disabled = false;
+      if (inboxBtn) inboxBtn.disabled = false;
     }
   }
 
   async function loadSent() {
     setActiveTab("sent");
-    sentBtn.disabled = true;
-    inboxBtn.disabled = false;
+    if (sentBtn) sentBtn.disabled = true;
+    if (inboxBtn) inboxBtn.disabled = false;
     renderStatus("Loading sent messages…");
 
     try {
@@ -254,6 +277,7 @@
         renderEmpty("No sent messages yet.");
         return;
       }
+      if (!messagesList) return;
       messagesList.innerHTML = "";
       messages.forEach((m) =>
         messagesList.appendChild(renderMessageCard(m, "sent")),
@@ -281,7 +305,7 @@
         renderError(`Failed to load sent messages: ${msg}`);
       }
     } finally {
-      sentBtn.disabled = false;
+      if (sentBtn) sentBtn.disabled = false;
     }
   }
 
@@ -290,7 +314,11 @@
     try {
       const data = await doFetch(`/messages/thread/${otherUserId}`);
       const conversation = extractMessages(data);
-      messagesList.innerHTML = `<h2>Conversation with ${escapeHtml(otherUsername)}</h2>`;
+      if (!messagesList) return;
+
+      messagesList.innerHTML = `<h2>Conversation with ${escapeHtml(
+        otherUsername,
+      )}</h2>`;
 
       if (!conversation.length) {
         messagesList.innerHTML +=
@@ -302,7 +330,11 @@
           article.tabIndex = 0;
           const isMine = Number(m.senderId) === Number(userId);
           const who = isMine ? "You" : m.sender?.username || "Unknown";
-          article.innerHTML = `<h3>${escapeHtml(who)}</h3><p>${escapeHtml(m.content || "")}</p><p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>`;
+          article.innerHTML = `
+            <h3>${escapeHtml(who)}</h3>
+            <p>${escapeHtml(m.content || "")}</p>
+            <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
+          `;
           messagesList.appendChild(article);
         });
       }
@@ -342,47 +374,19 @@
     const auth = await ensureAuthenticated();
     if (!auth) {
       console.warn("Not authenticated — redirecting to login");
-      window.location.href = "index.html";
+      // redirect to your actual login page
+      window.location.href = "login.html";
       return;
     }
 
     // update token & userId variables (ensure they reflect any newly stored values)
     token = localStorage.getItem("token") || token;
-    userId = localStorage.getItem("userId") || (auth.user && String(auth.user.id)) || userId;
+    userId =
+      localStorage.getItem("userId") ||
+      (auth.user && String(auth.user.id)) ||
+      userId;
 
     console.info("[messages] API_URL=", API_URL, "userIdPresent=", !!userId);
     loadInbox();
   })();
-
-  // small helper previously used above
-  async function ensureAuthenticated() {
-    const localToken = localStorage.getItem("token");
-    const localUserId = localStorage.getItem("userId");
-
-    const headers = {};
-    if (localToken) headers["Authorization"] = `Bearer ${localToken}`;
-
-    try {
-      const resp = await fetch(`${API_URL}/users/me`, {
-        method: "GET",
-        headers,
-        credentials: "include", // send cookies
-      });
-
-      if (!resp.ok) {
-        return null;
-      }
-
-      const data = await resp.json().catch(() => null);
-      const user = (data && (data.user || data)) || null;
-      if (user && user.id) {
-        if (!localUserId) localStorage.setItem("userId", String(user.id));
-        return { user, tokenPresent: !!localToken };
-      }
-      return null;
-    } catch (e) {
-      console.warn("[ensureAuthenticated] network error:", e);
-      return null;
-    }
-  }
 })();
