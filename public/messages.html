@@ -3,31 +3,318 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Messages - CodeCrowds</title>
+    <title>Messages – CodeCrowds</title>
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="messages.css" />
+
+    <style>
+      :root {
+        --bg: #020617;
+        --bg-card: #020617;
+        --border-subtle: #1f2937;
+        --accent: #3b82f6;
+        --accent-soft: rgba(59, 130, 246, 0.12);
+        --text-main: #e5e7eb;
+        --text-muted: #9ca3af;
+        --radius-xl: 1.25rem;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
+        color: var(--text-main);
+      }
+
+      .dash-wrapper {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 24px 16px 40px;
+      }
+
+      .dash-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .dash-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        color: var(--text-main);
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+
+      .brand-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #22c55e, #3b82f6);
+      }
+
+      .user-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.6);
+        background: rgba(15, 23, 42, 0.96);
+        font-size: 0.85rem;
+      }
+
+      .user-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #3b82f6, #22c55e);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: #020617;
+      }
+
+      .user-email {
+        color: var(--text-main);
+      }
+
+      .dash-layout {
+        display: grid;
+        grid-template-columns: 230px minmax(0, 1fr);
+        gap: 20px;
+      }
+
+      @media (max-width: 820px) {
+        .dash-layout {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+
+      .sidebar {
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border-subtle);
+        background: rgba(15, 23, 42, 0.96);
+        padding: 14px 12px 16px;
+      }
+
+      .sidebar-title {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        margin: 0 0 10px;
+      }
+
+      .nav-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .nav-link {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 999px;
+        font-size: 0.9rem;
+        text-decoration: none;
+        color: var(--text-main);
+        border: 1px solid transparent;
+        background: transparent;
+        transition: background 0.15s ease, border-color 0.15s ease;
+      }
+
+      .nav-link:hover {
+        background: rgba(15, 23, 42, 0.9);
+        border-color: rgba(55, 65, 81, 0.9);
+      }
+
+      .nav-link--active {
+        background: var(--accent-soft);
+        border-color: rgba(59, 130, 246, 0.8);
+        color: #bfdbfe;
+      }
+
+      .nav-link--danger {
+        color: #fecaca;
+      }
+
+      .content-column {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .card {
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border-subtle);
+        background: rgba(15, 23, 42, 0.96);
+        padding: 18px 16px 20px;
+      }
+
+      .card h2 {
+        margin: 0 0 8px;
+        font-size: 1.25rem;
+      }
+
+      .tabbar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+
+      .tab {
+        border-radius: 999px;
+        padding: 0.5rem 0.9rem;
+        border: 1px solid rgba(55, 65, 81, 0.9);
+        background: rgba(15, 23, 42, 0.9);
+        color: var(--text-main);
+        font-size: 0.88rem;
+        font-weight: 500;
+        cursor: pointer;
+      }
+
+      .tab.active {
+        background: linear-gradient(135deg, #3b82f6, #22c55e);
+        color: #020617;
+        border-color: transparent;
+      }
+
+      .messages-list {
+        margin-top: 6px;
+      }
+
+      .messages-list .card {
+        margin-top: 8px;
+      }
+
+      .loading,
+      .empty,
+      .error {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+      }
+
+      .error {
+        color: #fecaca;
+      }
+
+      .timestamp {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      .conversation-footer {
+        margin-top: 10px;
+      }
+
+      .conversation-footer button {
+        border-radius: 999px;
+        padding: 0.45rem 0.9rem;
+        border: 1px solid rgba(55, 65, 81, 0.9);
+        background: rgba(15, 23, 42, 0.9);
+        color: var(--text-main);
+        cursor: pointer;
+      }
+
+      .site-footer {
+        text-align: center;
+        margin-top: 18px;
+        font-size: 0.8rem;
+        color: #6b7280;
+      }
+    </style>
   </head>
+
   <body>
-    <main class="container" role="main" aria-labelledby="messages-title">
-      <h1 id="messages-title">Your Messages</h1>
+    <div class="dash-wrapper">
+      <header class="dash-header">
+        <a href="/" class="dash-brand">
+          <span class="brand-dot"></span>
+          <span>CodeCrowds</span>
+        </a>
 
-      <nav class="tabbar" role="navigation" aria-label="Messages view">
-        <button id="inboxBtn" class="tab active" aria-pressed="true">
-          Received
-        </button>
-        <button id="sentBtn" class="tab" aria-pressed="false">
-          Sent
-        </button>
-        <button id="goBackBtn" class="tab">
-          Back to Profile
-        </button>
-      </nav>
+        <div class="user-pill">
+          <div class="user-avatar" id="profileAvatar">U</div>
+          <span class="user-email" id="profileEmail">you@example.com</span>
+        </div>
+      </header>
 
-      <section id="messages-list" class="messages-list" aria-live="polite">
-        <p class="loading">Loading messages…</p>
-      </section>
-    </main>
+      <div class="dash-layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+          <p class="sidebar-title">Dashboard</p>
+          <ul class="nav-list">
+            <li><a href="index.html" class="nav-link">Home</a></li>
+            <li><a href="profile.html" class="nav-link">Profile</a></li>
+            <li><a href="services.html" class="nav-link">Services</a></li>
+            <li>
+              <a href="messages.html" class="nav-link nav-link--active">
+                Messages
+              </a>
+            </li>
+            <li><a href="settings.html" class="nav-link">Settings</a></li>
+            <li><a href="login.html" class="nav-link nav-link--danger">Logout</a></li>
+          </ul>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="content-column" role="main" aria-labelledby="messages-title">
+          <section class="card">
+            <h2 id="messages-title">Your messages</h2>
+
+            <nav class="tabbar" role="navigation" aria-label="Messages view">
+              <button id="inboxBtn" class="tab active" aria-pressed="true">
+                Received
+              </button>
+              <button id="sentBtn" class="tab" aria-pressed="false">Sent</button>
+              <button id="goBackBtn" class="tab">Back to Profile</button>
+            </nav>
+
+            <section
+              id="messages-list"
+              class="messages-list"
+              aria-live="polite"
+            >
+              <p class="loading">Loading messages…</p>
+            </section>
+          </section>
+        </main>
+      </div>
+
+      <footer class="site-footer">
+        © 2025 CodeCrowds. All rights reserved.
+      </footer>
+    </div>
 
     <script src="messages.js" defer></script>
+    <script>
+      // simple avatar/email fill (same as services)
+      const params = new URLSearchParams(window.location.search);
+      const username = params.get("username") || "";
+      const email = params.get("email") || "";
+
+      const avatarEl = document.getElementById("profileAvatar");
+      const emailBadge = document.getElementById("profileEmail");
+
+      if (email) emailBadge.textContent = email;
+
+      const sourceName = username || (email ? email.split("@")[0] : "User");
+      avatarEl.textContent = sourceName.trim()[0].toUpperCase();
+    </script>
   </body>
 </html>
