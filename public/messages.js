@@ -374,7 +374,7 @@
     const auth = await ensureAuthenticated();
     if (!auth) {
       console.warn("Not authenticated — redirecting to login");
-      // redirect to your actual login page
+      // go to your login page, not old index
       window.location.href = "login.html";
       return;
     }
