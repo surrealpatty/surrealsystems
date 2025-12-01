@@ -1,189 +1,455 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Create your account — CodeCrowds</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create your account · CodeCrowds</title>
 
-  <!-- Fonts are loaded by the CSS, but it's fine to include fallback -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Optional: nicer font -->
+    <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
 
-  <!-- Main stylesheet -->
-  <link rel="stylesheet" href="public/style.css">
+    <style>
+        :root {
+            --bg: #020617;
+            --bg-card: #020617;
+            --border-subtle: #1f2937;
+            --accent: #3b82f6;
+            --accent-soft: rgba(59, 130, 246, 0.12);
+            --text-main: #e5e7eb;
+            --text-muted: #9ca3af;
+            --danger: #ef4444;
+            --radius-xl: 1.25rem;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                sans-serif;
+            background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
+            color: var(--text-main);
+        }
+
+        .page {
+            width: 100%;
+            max-width: 1040px;
+            padding: 32px 16px 40px;
+        }
+
+        .logo-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 1.1rem;
+            margin-bottom: 24px;
+        }
+
+        .logo-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #22c55e, #3b82f6);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+            gap: 28px;
+        }
+
+        @media (max-width: 840px) {
+            .layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        /* LEFT – marketing copy */
+        .pitch {
+            padding: 24px 24px 28px;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-subtle);
+            background:
+                radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 55%),
+                radial-gradient(circle at bottom right, rgba(34, 197, 94, 0.08), transparent 55%),
+                var(--bg-card);
+        }
+
+        .pitch-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0 0 8px;
+        }
+
+        .pitch-subtitle {
+            margin: 0 0 20px;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .pitch-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 16px;
+        }
+
+        .pitch-item {
+            padding: 12px 12px 12px 12px;
+            border-radius: 0.9rem;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(51, 65, 85, 0.8);
+        }
+
+        .pitch-item h3 {
+            margin: 0 0 4px;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .pitch-item p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            line-height: 1.4;
+        }
+
+        .badge-premium {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            padding: 4px 9px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: #bfdbfe;
+            margin-top: 6px;
+        }
+
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: var(--accent);
+        }
+
+        /* RIGHT – form */
+        .card {
+            padding: 24px 22px 26px;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-subtle);
+            background: rgba(15, 23, 42, 0.96);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .card h2 {
+            margin: 0 0 4px;
+            font-size: 1.4rem;
+        }
+
+        .card p {
+            margin: 0 0 18px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 0.86rem;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .hint {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        input,
+        textarea {
+            border-radius: 0.7rem;
+            border: 1px solid #374151;
+            background: #020617;
+            padding: 9px 11px;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+            resize: vertical;
+            min-height: 38px;
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: #6b7280;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4);
+            background: #020617;
+        }
+
+        .password-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .password-row input {
+            flex: 1;
+        }
+
+        .toggle-password {
+            padding: 7px 10px;
+            border-radius: 999px;
+            border: 1px solid #4b5563;
+            background: #020617;
+            color: #e5e7eb;
+            font-size: 0.78rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .toggle-password:hover {
+            border-color: var(--accent);
+        }
+
+        .counter {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            text-align: right;
+        }
+
+        .actions {
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .primary-btn {
+            border: none;
+            border-radius: 999px;
+            padding: 10px 14px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #3b82f6, #22c55e);
+            color: #0b1120;
+            cursor: pointer;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .primary-btn:hover {
+            filter: brightness(1.05);
+        }
+
+        .subtext {
+            font-size: 0.83rem;
+            color: var(--text-muted);
+        }
+
+        .subtext a {
+            color: #93c5fd;
+            text-decoration: none;
+        }
+
+        .subtext a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            margin-top: 18px;
+            font-size: 0.8rem;
+            color: #4b5563;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-
-  <div class="container container--transparent" role="document">
-    <!-- header / wordmark -->
-    <header class="site-header" role="banner">
-      <div class="header-inner">
-        <a class="site-logo" href="/index.html" aria-label="CodeCrowds home">
-          <span class="brand-wordmark" aria-hidden="true">
-            <span class="brand-code">Code</span>
-            <span class="brand-crowds">Crowds</span>
-          </span>
+    <div class="page">
+        <a href="/" class="logo-link">
+            <span class="logo-dot"></span>
+            <span>CodeCrowds</span>
         </a>
-      </div>
-    </header>
 
-    <!-- main content: left features + right register -->
-    <main role="main" aria-labelledby="register-title">
-      <!-- Left: features / hero -->
-      <section class="features" aria-label="Platform benefits">
-        <article class="feature-card">
-          <h3>Offer Your Services</h3>
-          <p>Create posts to sell your coding skills and get noticed by clients worldwide.</p>
-        </article>
+        <div class="layout">
+            <!-- LEFT: marketing copy -->
+            <section class="pitch">
+                <h1 class="pitch-title">Offer your coding skills to the world.</h1>
+                <p class="pitch-subtitle">
+                    Create posts, connect with developers, and get noticed by clients worldwide.
+                </p>
 
-        <article class="feature-card">
-          <h3>Connect &amp; Collaborate</h3>
-          <p>Rate and interact with other developers, build credibility, and grow your network.</p>
-        </article>
+                <div class="pitch-grid">
+                    <article class="pitch-item">
+                        <h3>Offer Your Services</h3>
+                        <p>
+                            Create posts to sell your skills and showcase your best work. Attract clients
+                            looking for exactly what you do.
+                        </p>
+                    </article>
 
-        <article class="feature-card">
-          <h3>Ad-Free &amp; Premium</h3>
-          <p>Upgrade to premium for extra features like ad-free experience, lower fees, and more visibility.</p>
-        </article>
-      </section>
+                    <article class="pitch-item">
+                        <h3>Connect &amp; Collaborate</h3>
+                        <p>
+                            Rate and interact with other developers, build credibility, and grow your
+                            professional network.
+                        </p>
+                    </article>
 
-      <!-- Right: register card -->
-      <aside class="login-container card register-card" role="region" aria-labelledby="register-title">
-        <h2 id="register-title">Create your account</h2>
-        <p class="lead">Join CodeCrowds and start offering your services.</p>
+                    <article class="pitch-item">
+                        <h3>Ad-Free &amp; Premium</h3>
+                        <p>
+                            Upgrade to premium for ad-free experience, lower fees, and more visibility on
+                            the marketplace.
+                        </p>
+                        <div class="badge-premium">
+                            <span class="badge-dot"></span>
+                            <span>Premium perks for power users</span>
+                        </div>
+                    </article>
+                </div>
+            </section>
 
-        <form id="registerForm" class="register-form" autocomplete="off" novalidate>
-          <div class="form-group">
-            <label for="username">Username</label>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              placeholder="e.g. dev_ally"
-              minlength="3"
-              maxlength="32"
-              required
-              aria-describedby="username-help"
-              pattern="^[A-Za-z0-9_]{3,32}$"
-              class="input"
-            >
-            <div class="muted" id="username-help">3-32 characters. Letters, numbers, underscores.</div>
-          </div>
+            <!-- RIGHT: registration card -->
+            <section class="card">
+                <h2>Create your account</h2>
+                <p>Join CodeCrowds and start offering your services in minutes.</p>
 
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input id="email" name="email" type="email" placeholder="you@example.com" required class="input">
-          </div>
+                <form action="/register" method="post">
+                    <!-- Username -->
+                    <div class="field">
+                        <label for="username">
+                            <span>Username</span>
+                            <span class="hint">3–32 characters</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="username"
+                            name="username"
+                            placeholder="e.g. dev_ally"
+                            minlength="3"
+                            maxlength="32"
+                            required
+                        />
+                    </div>
 
-          <div class="form-group">
-            <label for="password">Password</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="Create a strong password"
-              minlength="8"
-              required
-              aria-describedby="password-help"
-              class="input"
-            >
-            <div class="password-row" role="group" aria-label="password helper">
-              <button
-                type="button"
-                id="togglePassword"
-                class="toggle-btn"
-                aria-controls="password"
-                aria-pressed="false"
-              >Show</button>
-              <div class="muted" id="password-help">Use at least 8 characters with a mix of letters, numbers, and symbols.</div>
-            </div>
-          </div>
+                    <!-- Email -->
+                    <div class="field">
+                        <label for="email">
+                            <span>Email</span>
+                        </label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            placeholder="you@example.com"
+                            required
+                        />
+                    </div>
 
-          <div class="form-group">
-            <label for="about">Tell us about yourself <span class="optional">(optional)</span></label>
-            <textarea
-              id="about"
-              name="about"
-              placeholder="What do you offer? What are your skills?"
-              maxlength="400"
-              aria-describedby="about-count"
-            ></textarea>
-            <div class="muted right" id="about-count">
-              <span id="charCount" aria-live="polite">0</span> / 400
-            </div>
-          </div>
+                    <!-- Password -->
+                    <div class="field">
+                        <label for="password">
+                            <span>Password</span>
+                            <span class="hint">At least 8 characters</span>
+                        </label>
+                        <div class="password-row">
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="Create a strong password"
+                                minlength="8"
+                                required
+                            />
+                            <button
+                                type="button"
+                                class="toggle-password"
+                                id="togglePassword"
+                                aria-label="Show password"
+                            >
+                                Show
+                            </button>
+                        </div>
+                    </div>
 
-          <div class="form-group">
-            <button type="submit" class="btn-gradient" aria-label="Create account">Create account</button>
-          </div>
-        </form>
+                    <!-- About -->
+                    <div class="field">
+                        <label for="about">
+                            <span>Tell us about yourself <span class="hint">(optional)</span></span>
+                        </label>
+                        <textarea
+                            id="about"
+                            name="about"
+                            rows="3"
+                            maxlength="400"
+                            placeholder="What do you offer? What are your skills?"
+                        ></textarea>
+                        <div class="counter" id="aboutCounter">0 / 400</div>
+                    </div>
 
-        <div class="foot-note" aria-hidden="false">
-          Already have an account? <a href="/login.html">Sign in</a>
+                    <div class="actions">
+                        <button type="submit" class="primary-btn">Create account</button>
+                        <div class="subtext">
+                            Already have an account?
+                            <a href="/login.html">Sign in</a>
+                        </div>
+                    </div>
+                </form>
+
+                <footer>© 2025 CodeCrowds. All rights reserved.</footer>
+            </section>
         </div>
-      </aside>
-    </main>
+    </div>
 
-    <footer class="site-footer" role="contentinfo">
-      © 2025 Code Crowds. All rights reserved.
-    </footer>
-  </div>
-
-  <script>
-    // Register page JS: password toggle, char counter, client validation
-    document.addEventListener('DOMContentLoaded', () => {
-      const toggle = document.getElementById('togglePassword');
-      const pwd = document.getElementById('password');
-      const about = document.getElementById('about');
-      const charCount = document.getElementById('charCount');
-      const form = document.getElementById('registerForm');
-
-      // Safe guards if elements are missing
-      if (toggle && pwd) {
-        toggle.addEventListener('click', () => {
-          const isHidden = pwd.type === 'password';
-          pwd.type = isHidden ? 'text' : 'password';
-          toggle.textContent = isHidden ? 'Hide' : 'Show';
-          toggle.setAttribute('aria-pressed', String(isHidden));
+    <script>
+        // Password show/hide
+        const passwordInput = document.getElementById('password');
+        const togglePassword = document.getElementById('togglePassword');
+        togglePassword.addEventListener('click', () => {
+            const isHidden = passwordInput.type === 'password';
+            passwordInput.type = isHidden ? 'text' : 'password';
+            togglePassword.textContent = isHidden ? 'Hide' : 'Show';
         });
-      }
 
-      if (about && charCount) {
-        // initialize
-        charCount.textContent = about.value ? about.value.length : 0;
-        about.addEventListener('input', () => {
-          charCount.textContent = about.value.length;
-        });
-      }
-
-      if (form) {
-        form.addEventListener('submit', (e) => {
-          e.preventDefault();
-
-          // Username pattern check
-          const usernameEl = document.getElementById('username');
-          const username = usernameEl ? usernameEl.value.trim() : '';
-          const usernamePattern = /^[A-Za-z0-9_]{3,32}$/;
-          if (!usernamePattern.test(username)) {
-            alert('Username must be 3-32 characters and contain only letters, numbers or underscores.');
-            usernameEl && usernameEl.focus();
-            return;
-          }
-
-          // Browser-level validation for email and password will run if elements use required/type/minlength.
-          // If you want to force the browser's validation report:
-          if (!form.checkValidity()) {
-            // Let the browser display the native validation UI:
-            form.reportValidity();
-            return;
-          }
-
-          // TODO: Replace with your real AJAX / fetch submission to the server.
-          // Example:
-          // fetch('/api/register', { method: 'POST', body: new FormData(form) }).then(...)
-          alert('Form validated locally — replace with real submission logic.');
-        });
-      }
-    });
-  </script>
+        // About text counter
+        const about = document.getElementById('about');
+        const counter = document.getElementById('aboutCounter');
+        if (about && counter) {
+            const updateCounter = () => {
+                counter.textContent = `${about.value.length} / 400`;
+            };
+            about.addEventListener('input', updateCounter);
+            updateCounter();
+        }
+    </script>
 </body>
 </html>
