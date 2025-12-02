@@ -78,9 +78,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!editEmailInput) return;
 
-      const newName = editDisplayNameInput
-        ? editDisplayNameInput.value.trim()
-        : "";
+      const newName =
+        editDisplayNameInput ? editDisplayNameInput.value.trim() : "";
       const newEmail = editEmailInput.value.trim();
 
       if (!newEmail) {

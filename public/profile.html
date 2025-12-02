@@ -14,9 +14,10 @@
       rel="stylesheet"
     >
 
-    <!-- Optional: your global styles if you have them -->
+    <!-- Global styles (your main site CSS) -->
     <link rel="stylesheet" href="style.css" />
 
+    <!-- Page-specific styles (the dark profile layout) -->
     <style>
       :root {
         --bg: #020617;
@@ -455,103 +456,7 @@
       </footer>
     </div>
 
-    <script>
-      // ---- Load profile from storage / URL ----
-      const storedUsername = localStorage.getItem("username") || "";
-      const storedEmail = localStorage.getItem("email") || "";
-
-      const params = new URLSearchParams(window.location.search);
-      const paramUsername = params.get("username") || "";
-      const paramEmail = params.get("email") || "";
-
-      const username = storedUsername || paramUsername || "";
-      const email = storedEmail || paramEmail || "";
-
-      const avatarEl = document.getElementById("profileAvatar");
-      const emailBadge = document.getElementById("profileEmail");
-      const emailMain = document.getElementById("profileEmailMain");
-      const nameEl = document.getElementById("profileName");
-
-      if (email) {
-        emailBadge.textContent = email;
-        emailMain.textContent = email;
-      }
-
-      let displayName = username;
-      if (!displayName && email) {
-        displayName = email.split("@")[0];
-      }
-      if (displayName) {
-        nameEl.textContent = displayName;
-      }
-
-      const initialSource = displayName || email || "U";
-      avatarEl.textContent = initialSource.trim()[0].toUpperCase();
-
-      // ---- Edit Profile wiring ----
-      const profileView = document.getElementById("profileView");
-      const profileEditForm = document.getElementById("profileEditForm");
-      const editBtn = document.getElementById("editProfileBtn");
-      const cancelEditBtn = document.getElementById("cancelEditBtn");
-      const editDisplayNameInput = document.getElementById("editDisplayName");
-      const editEmailInput = document.getElementById("editEmail");
-
-      function enterEditMode() {
-        // fill inputs with current values
-        editDisplayNameInput.value = nameEl.textContent.trim();
-        editEmailInput.value = emailMain.textContent.trim();
-
-        profileView.classList.add("is-hidden");
-        profileEditForm.classList.remove("is-hidden");
-      }
-
-      function exitEditMode() {
-        profileEditForm.classList.add("is-hidden");
-        profileView.classList.remove("is-hidden");
-      }
-
-      if (editBtn) {
-        editBtn.addEventListener("click", enterEditMode);
-      }
-
-      if (cancelEditBtn) {
-        cancelEditBtn.addEventListener("click", exitEditMode);
-      }
-
-      if (profileEditForm) {
-        profileEditForm.addEventListener("submit", function (e) {
-          e.preventDefault();
-
-          const newName = editDisplayNameInput.value.trim();
-          const newEmail = editEmailInput.value.trim();
-
-          if (!newEmail) {
-            alert("Email is required.");
-            editEmailInput.focus();
-            return;
-          }
-
-          // Update text in the card
-          nameEl.textContent = newName || "New developer";
-          emailBadge.textContent = newEmail;
-          emailMain.textContent = newEmail;
-
-          // Update avatar initial
-          const source = (newName || newEmail || "U").trim();
-          avatarEl.textContent = source[0].toUpperCase();
-
-          // Persist to localStorage
-          try {
-            localStorage.setItem("email", newEmail);
-            const usernameToStore = newName || newEmail.split("@")[0];
-            localStorage.setItem("username", usernameToStore);
-          } catch (err) {
-            console.warn("Could not save updated profile to localStorage", err);
-          }
-
-          exitEditMode();
-        });
-      }
-    </script>
+    <!-- IMPORTANT: external script only; no inline JS -->
+    <script src="profile.js" defer></script>
   </body>
 </html>
