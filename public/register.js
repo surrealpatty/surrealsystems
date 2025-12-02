@@ -165,11 +165,7 @@
       const details = resp.error.details || resp.errors || resp.details;
       if (!Array.isArray(details) || !details.length) return null;
       const items = details
-        .map((d) =>
-          typeof d === "string"
-            ? escapeHtml(d)
-            : escapeHtml(d.message || JSON.stringify(d))
-        )
+        .map((d) => (typeof d === "string" ? escapeHtml(d) : escapeHtml(d.message || JSON.stringify(d))))
         .map((t) => `<li>${t}</li>`)
         .join("");
       return `<div class="validation-details"><strong>Problems:</strong><ul>${items}</ul></div>`;
@@ -182,7 +178,7 @@
       });
     }
 
-    // Password show/hide button
+    // SHOW / HIDE PASSWORD for register page
     if (togglePasswordBtn && passwordEl) {
       togglePasswordBtn.addEventListener("click", function () {
         const isPwd = passwordEl.type === "password";
@@ -193,7 +189,6 @@
       });
     }
 
-    // Password strength meter
     if (passwordEl) {
       passwordEl.addEventListener("input", function (e) {
         renderStrength(e.target.value);
@@ -203,10 +198,7 @@
     // Client-side validation: require >=8 chars, but warn (don't block) on weak passwords
     function validate() {
       if (!usernameEl || !/^[A-Za-z0-9_]{3,32}$/.test(usernameEl.value.trim())) {
-        setMsg(
-          "Username must be 3–32 characters and only letters, numbers, or underscores.",
-          "error"
-        );
+        setMsg("Username must be 3–32 characters and only letters, numbers, or underscores.", "error");
         usernameEl && usernameEl.focus();
         return false;
       }
@@ -221,17 +213,13 @@
         return false;
       }
 
-      // Compute strength score so we can warn but not block
       const score = passwordScore(passwordEl.value);
       if (score < 3) {
-        // Show a non-blocking warning so users know they should improve it
         setMsg(
           "Password meets the minimum length but is weak — consider adding numbers, uppercase letters, or symbols to make it stronger.",
           "info"
         );
-        // Do NOT return false: allow submission
       } else {
-        // Clear any previous warnings
         setMsg("", "info");
       }
 
@@ -260,14 +248,10 @@
         .then(async function (r) {
           console.log("[register] response:", r);
 
-          // NEW: treat server success containing `user` as success even if no token returned
           if (r.ok && r.data && r.data.user) {
-            // store userId locally if present
             try {
-              if (r.data.user.id != null)
-                localStorage.setItem("userId", String(r.data.user.id));
-              if (r.data.user.username)
-                localStorage.setItem("username", r.data.user.username);
+              if (r.data.user.id != null) localStorage.setItem("userId", String(r.data.user.id));
+              if (r.data.user.username) localStorage.setItem("username", r.data.user.username);
             } catch (e) {
               console.warn("Could not save user info locally", e);
             }
@@ -276,7 +260,6 @@
             return;
           }
 
-          // previous behavior: save token if returned
           const gotToken = r.ok && saveAuth(r.data);
           if (gotToken) {
             setMsg("Registration successful! Redirecting…", "success");
@@ -285,7 +268,6 @@
           }
 
           if (r.ok) {
-            // try login fallback (rare)
             try {
               const tryEmail = payload.email
                 ? await postJSON(USERS + "/login", {
@@ -312,20 +294,16 @@
             }
           }
 
-          // Show validation details if available
           const validationHtml = renderValidationDetails(r.data);
           const extracted = extractErrorText(r.data);
           if (validationHtml) {
             setMsg(
-              `<div class="register-error"><p>${escapeHtml(
-                extracted || "Validation failed"
-              )}</p>${validationHtml}</div>`,
+              `<div class="register-error"><p>${escapeHtml(extracted || "Validation failed")}</p>${validationHtml}</div>`,
               "error",
               true
             );
           } else {
-            const errText =
-              extracted || "Registration failed (HTTP " + r.status + ")";
+            const errText = extracted || "Registration failed (HTTP " + r.status + ")";
             setMsg(errText, "error");
           }
         })
