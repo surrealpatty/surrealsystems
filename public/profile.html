@@ -259,6 +259,66 @@
         font-size: 0.8rem;
         color: #6b7280;
       }
+
+      /* --------- Edit mode styles --------- */
+      .is-hidden {
+        display: none !important;
+      }
+
+      .profile-edit {
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(148, 163, 184, 0.4);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .profile-edit-row {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .profile-edit-label {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+      }
+
+      .profile-edit-input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid #374151;
+        background: #020617;
+        color: var(--text-main);
+      }
+
+      .profile-edit-input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+      }
+
+      .profile-edit-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .btn-muted {
+        background: transparent;
+        color: var(--text-muted);
+        border: 1px solid rgba(148, 163, 184, 0.7);
+      }
+
+      .btn-muted:hover {
+        background: rgba(15, 23, 42, 0.9);
+      }
     </style>
   </head>
 
@@ -309,29 +369,64 @@
             <h2>Your profile</h2>
             <p>Here’s how clients will see you on CodeCrowds.</p>
 
-            <div class="profile-row">
-              <div class="profile-label">Display name</div>
-              <div class="profile-value" id="profileName">New developer</div>
+            <!-- VIEW MODE -->
+            <div id="profileView">
+              <div class="profile-row">
+                <div class="profile-label">Display name</div>
+                <div class="profile-value" id="profileName">New developer</div>
+              </div>
+
+              <div class="profile-row">
+                <div class="profile-label">Email</div>
+                <div class="profile-value" id="profileEmailMain">you@example.com</div>
+              </div>
+
+              <div class="profile-row">
+                <div class="profile-label">Account type</div>
+                <div class="profile-value">Free user</div>
+              </div>
+
+              <div class="btn-row">
+                <button type="button" class="btn btn-primary" id="editProfileBtn">
+                  Edit Profile
+                </button>
+                <a href="services.html" class="btn btn-secondary">
+                  My Services
+                </a>
+              </div>
             </div>
 
-            <div class="profile-row">
-              <div class="profile-label">Email</div>
-              <div class="profile-value" id="profileEmailMain">you@example.com</div>
-            </div>
+            <!-- EDIT MODE (hidden initially) -->
+            <form id="profileEditForm" class="profile-edit is-hidden">
+              <div class="profile-edit-row">
+                <label for="editDisplayName" class="profile-edit-label">Display name</label>
+                <input
+                  type="text"
+                  id="editDisplayName"
+                  class="profile-edit-input"
+                  placeholder="Your display name"
+                  maxlength="64"
+                />
+              </div>
 
-            <div class="profile-row">
-              <div class="profile-label">Account type</div>
-              <div class="profile-value">Free user</div>
-            </div>
+              <div class="profile-edit-row">
+                <label for="editEmail" class="profile-edit-label">Email</label>
+                <input
+                  type="email"
+                  id="editEmail"
+                  class="profile-edit-input"
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
 
-            <div class="btn-row">
-              <button type="button" class="btn btn-primary">
-                Edit Profile
-              </button>
-              <a href="services.html" class="btn btn-secondary">
-                My Services
-              </a>
-            </div>
+              <div class="profile-edit-actions">
+                <button type="submit" class="btn btn-primary">Save changes</button>
+                <button type="button" class="btn btn-muted" id="cancelEditBtn">
+                  Cancel
+                </button>
+              </div>
+            </form>
           </section>
 
           <!-- Services card -->
@@ -361,11 +456,10 @@
     </div>
 
     <script>
-      // 1. Prefer data from localStorage (set by login / register)
+      // ---- Load profile from storage / URL ----
       const storedUsername = localStorage.getItem("username") || "";
       const storedEmail = localStorage.getItem("email") || "";
 
-      // 2. Optional backwards-compat: fall back to ?username=&email= if present
       const params = new URLSearchParams(window.location.search);
       const paramUsername = params.get("username") || "";
       const paramEmail = params.get("email") || "";
@@ -392,8 +486,71 @@
       }
 
       const initialSource = displayName || email || "U";
-      if (initialSource) {
-        avatarEl.textContent = initialSource.trim()[0].toUpperCase();
+      avatarEl.textContent = initialSource.trim()[0].toUpperCase();
+
+      // ---- Edit Profile wiring ----
+      const profileView = document.getElementById("profileView");
+      const profileEditForm = document.getElementById("profileEditForm");
+      const editBtn = document.getElementById("editProfileBtn");
+      const cancelEditBtn = document.getElementById("cancelEditBtn");
+      const editDisplayNameInput = document.getElementById("editDisplayName");
+      const editEmailInput = document.getElementById("editEmail");
+
+      function enterEditMode() {
+        // fill inputs with current values
+        editDisplayNameInput.value = nameEl.textContent.trim();
+        editEmailInput.value = emailMain.textContent.trim();
+
+        profileView.classList.add("is-hidden");
+        profileEditForm.classList.remove("is-hidden");
+      }
+
+      function exitEditMode() {
+        profileEditForm.classList.add("is-hidden");
+        profileView.classList.remove("is-hidden");
+      }
+
+      if (editBtn) {
+        editBtn.addEventListener("click", enterEditMode);
+      }
+
+      if (cancelEditBtn) {
+        cancelEditBtn.addEventListener("click", exitEditMode);
+      }
+
+      if (profileEditForm) {
+        profileEditForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const newName = editDisplayNameInput.value.trim();
+          const newEmail = editEmailInput.value.trim();
+
+          if (!newEmail) {
+            alert("Email is required.");
+            editEmailInput.focus();
+            return;
+          }
+
+          // Update text in the card
+          nameEl.textContent = newName || "New developer";
+          emailBadge.textContent = newEmail;
+          emailMain.textContent = newEmail;
+
+          // Update avatar initial
+          const source = (newName || newEmail || "U").trim();
+          avatarEl.textContent = source[0].toUpperCase();
+
+          // Persist to localStorage
+          try {
+            localStorage.setItem("email", newEmail);
+            const usernameToStore = newName || newEmail.split("@")[0];
+            localStorage.setItem("username", usernameToStore);
+          } catch (err) {
+            console.warn("Could not save updated profile to localStorage", err);
+          }
+
+          exitEditMode();
+        });
       }
     </script>
   </body>
