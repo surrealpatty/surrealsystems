@@ -297,7 +297,7 @@
               <a href="settings.html" class="nav-link">Settings</a>
             </li>
             <li>
-              <a href="login.html" class="nav-link nav-link--danger">Logout</a>
+              <a href="index.html" class="nav-link nav-link--danger">Logout</a>
             </li>
           </ul>
         </aside>
@@ -361,10 +361,17 @@
     </div>
 
     <script>
-      // Read query parameters from URL, e.g. ?username=dev_ally&email=you@example.com
+      // 1. Prefer data from localStorage (set by login / register)
+      const storedUsername = localStorage.getItem("username") || "";
+      const storedEmail = localStorage.getItem("email") || "";
+
+      // 2. Optional backwards-compat: fall back to ?username=&email= if present
       const params = new URLSearchParams(window.location.search);
-      const username = params.get("username") || "";
-      const email = params.get("email") || "";
+      const paramUsername = params.get("username") || "";
+      const paramEmail = params.get("email") || "";
+
+      const username = storedUsername || paramUsername || "";
+      const email = storedEmail || paramEmail || "";
 
       const avatarEl = document.getElementById("profileAvatar");
       const emailBadge = document.getElementById("profileEmail");
@@ -384,7 +391,7 @@
         nameEl.textContent = displayName;
       }
 
-      const initialSource = displayName || email;
+      const initialSource = displayName || email || "U";
       if (initialSource) {
         avatarEl.textContent = initialSource.trim()[0].toUpperCase();
       }
