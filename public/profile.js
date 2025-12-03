@@ -242,19 +242,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const emptyEl = document.getElementById("profileServicesEmpty");
 
     if (!listEl || !emptyEl) return;
-    if (
-      typeof window.apiFetch !== "function" ||
-      typeof window.getUserId !== "function"
-    ) {
-      console.warn("apiFetch or getUserId is not available on profile page.");
+
+    if (typeof window.apiFetch !== "function") {
+      console.warn("apiFetch is not available on profile page.");
       return;
     }
 
-    const myUserId = window.getUserId();
-    if (!myUserId) {
-      // Not logged in (or no stored user id) – keep empty state.
-      return;
-    }
+    const myUserId = typeof window.getUserId === "function"
+      ? window.getUserId()
+      : null;
+    const myUserIdStr = myUserId != null ? String(myUserId) : "";
+    const myUsername = localStorage.getItem("username") || "";
+
+    console.log("[profile] loadMyServices userId, username:", myUserIdStr, myUsername);
 
     // Clear current list
     listEl.innerHTML = "";
@@ -263,12 +263,51 @@ document.addEventListener("DOMContentLoaded", () => {
       const allServices = await window.apiFetch("services");
       const servicesArray = Array.isArray(allServices) ? allServices : [];
 
-      // Filter by userId
-      const mine = servicesArray.filter(
-        (svc) => String(svc.userId) === String(myUserId)
-      );
+      console.log("[profile] services from API:", servicesArray);
+
+      const mine = servicesArray.filter((svc) => {
+        if (!svc || typeof svc !== "object") return false;
+
+        // Possible id fields
+        const idCandidatesRaw = [
+          svc.userId,
+          svc.UserId,
+          svc.user_id,
+          svc.ownerId,
+          svc.owner_id,
+          svc.user && (svc.user.id || svc.user.userId || svc.user.user_id),
+          svc.User && (svc.User.id || svc.User.userId || svc.User.user_id),
+        ];
+
+        const idCandidates = idCandidatesRaw
+          .filter((v) => v !== undefined && v !== null)
+          .map((v) => String(v));
+
+        // Possible username fields
+        const usernameCandidates = [
+          svc.username,
+          svc.user && svc.user.username,
+          svc.User && svc.User.username,
+          svc.owner && svc.owner.username,
+        ].filter(Boolean);
+
+        const matchId =
+          myUserIdStr &&
+          idCandidates.length > 0 &&
+          idCandidates.includes(myUserIdStr);
+
+        const matchName =
+          myUsername &&
+          usernameCandidates.length > 0 &&
+          usernameCandidates.some((u) => u === myUsername);
+
+        return matchId || matchName;
+      });
+
+      console.log("[profile] mine after filtering:", mine);
 
       if (!mine.length) {
+        // No services for this user – show empty message
         emptyEl.classList.remove("is-hidden");
         return;
       }
