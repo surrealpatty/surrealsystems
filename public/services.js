@@ -20,6 +20,15 @@
   const searchInput = document.getElementById("search");
   const sortSelect = document.getElementById("sort");
 
+  // NEW: create-service form elements
+  const createServiceForm = document.getElementById("createServiceForm");
+  const createTitleInput = document.getElementById("createServiceTitle");
+  const createCategoryInput = document.getElementById("createServiceCategory");
+  const createPriceInput = document.getElementById("createServicePrice");
+  const createDescInput = document.getElementById("createServiceDescription");
+  const createServiceError = document.getElementById("createServiceError");
+  const createServiceBtn = document.getElementById("createServiceBtn");
+
   const messageModal = document.getElementById("messageModal");
   const messageRecipient = document.getElementById("messageRecipient");
   const messageContent = document.getElementById("messageContent");
@@ -57,6 +66,12 @@
     if (sendError) {
       sendError.textContent = msg || "";
       sendError.hidden = !msg;
+    }
+  }
+  function showCreateError(msg) {
+    if (createServiceError) {
+      createServiceError.textContent = msg || "";
+      createServiceError.hidden = !msg;
     }
   }
   function stringifyAny(v) {
@@ -116,7 +131,9 @@
       div.className = "service-card";
       const usernameHtml =
         s.user && s.user.id
-          ? `<a href="profile.html?userId=${encodeURIComponent(s.user.id)}">${esc(s.user.username)}</a>`
+          ? `<a href="profile.html?userId=${encodeURIComponent(
+              s.user.id,
+            )}">${esc(s.user.username)}</a>`
           : "Unknown";
       div.innerHTML = `
         <h3>${esc(s.title)}</h3>
@@ -133,7 +150,9 @@
             data-service-id="${s.id ?? ""}"
             ${s.user ? "" : "disabled"}
             aria-label="Message ${esc(s.user?.username ?? "seller")}"
-            title="${s.user ? "Send a message to the seller" : "No seller attached"}">
+            title="${
+              s.user ? "Send a message to the seller" : "No seller attached"
+            }">
             Message
           </button>
         </div>`;
@@ -145,7 +164,9 @@
     const q = (searchInput?.value || "").toLowerCase().trim();
     const filtered = allServices.filter((s) => {
       const hay =
-        `${s.title || ""} ${s.description || ""} ${s.user?.username || ""}`.toLowerCase();
+        `${s.title || ""} ${s.description || ""} ${
+          s.user?.username || ""
+        }`.toLowerCase();
       return hay.includes(q);
     });
     switch (sortSelect?.value) {
@@ -182,18 +203,104 @@
       const list = Array.isArray(payload)
         ? payload
         : payload && payload.services
-          ? payload.services
-          : [];
+        ? payload.services
+        : [];
 
       allServices = list;
       applyFilters();
     } catch (e) {
       console.error("[services] load failed:", e);
       const friendly = makeFriendlyError(e);
-      servicesList.innerHTML = `<p class="error">Failed to load services: ${esc(friendly)}</p>`;
+      servicesList.innerHTML = `<p class="error">Failed to load services: ${esc(
+        friendly,
+      )}</p>`;
       showDiag(
         "Failed to load services. If you see CORS errors in the console, update CORS_ALLOWED_ORIGINS to include your frontend origin (e.g. https://codecrowds.onrender.com).",
       );
+    }
+  }
+
+  // -------- NEW: create service --------
+  async function createService(e) {
+    if (e) e.preventDefault();
+    if (!createTitleInput || !createPriceInput || !createDescInput) return;
+
+    const title = createTitleInput.value.trim();
+    const description = createDescInput.value.trim();
+    const price = Number(createPriceInput.value);
+    const category = (createCategoryInput?.value || "").trim();
+
+    if (!title || !description || !price) {
+      showCreateError("Please fill in a title, price, and description.");
+      return;
+    }
+
+    const token = typeof getToken === "function" ? getToken() : null;
+    if (!token) {
+      showCreateError("Please log in to create a service.");
+      return;
+    }
+
+    showCreateError("");
+    try {
+      if (createServiceBtn) {
+        createServiceBtn.disabled = true;
+        createServiceBtn.textContent = "Saving…";
+      }
+
+      const body = {
+        title,
+        description,
+        price,
+      };
+      if (category) body.category = category;
+
+      await apiFetch("services", {
+        method: "POST",
+        body,
+        timeoutMs: 10000,
+      });
+
+      // clear form
+      createTitleInput.value = "";
+      if (createCategoryInput) createCategoryInput.value = "";
+      createPriceInput.value = "";
+      createDescInput.value = "";
+
+      toast("Service created!");
+      // reload list so the new service appears
+      loadServices();
+    } catch (err) {
+      console.error("[services] create failed:", err);
+      const friendly = makeFriendlyError(err);
+      const lower = String(err?.message || "").toLowerCase();
+      const possibleCors =
+        lower.includes("cors") ||
+        lower.includes("blocked") ||
+        lower.includes("network") ||
+        lower.includes("failed to fetch");
+
+      if (err?.status === 401 || err?.status === 403) {
+        try {
+          clearToken && clearToken();
+          clearUserId && clearUserId();
+        } catch {}
+        showCreateError(`${friendly}. Please log in again.`);
+      } else if (possibleCors) {
+        showCreateError(
+          `Failed to create service: ${friendly}. Possible CORS or network issue — ensure CORS_ALLOWED_ORIGINS includes your frontend origin and API_URL is correct.`,
+        );
+        showDiag(
+          "Network/CORS issue creating services. Check server logs and update CORS_ALLOWED_ORIGINS to include your frontend origin.",
+        );
+      } else {
+        showCreateError(`Failed to create service: ${friendly}`);
+      }
+    } finally {
+      if (createServiceBtn) {
+        createServiceBtn.disabled = false;
+        createServiceBtn.textContent = "Save service";
+      }
     }
   }
 
@@ -255,7 +362,7 @@
 
   // Send message
   async function sendMessage() {
-    const token = getToken(); // from script.js
+    const token = typeof getToken === "function" ? getToken() : null;
     if (!token) {
       showInlineError("Please log in to send messages.");
       return;
@@ -299,8 +406,8 @@
       const friendly = makeFriendlyError(err);
       if (err?.status === 401 || err?.status === 403) {
         try {
-          clearToken();
-          clearUserId();
+          clearToken && clearToken();
+          clearUserId && clearUserId();
         } catch {}
         showInlineError(`${friendly}. Please log in again.`);
       } else {
@@ -337,6 +444,11 @@
     });
   if (refreshBtn) refreshBtn.addEventListener("click", loadServices);
 
+  // NEW: hook up create-service form
+  if (createServiceForm) {
+    createServiceForm.addEventListener("submit", createService);
+  }
+
   let filterTimer = null;
   if (searchInput) {
     searchInput.addEventListener("input", () => {
@@ -369,7 +481,9 @@
         toast("Please log in to message sellers.");
         setTimeout(() => {
           location.replace(
-            `/?from=${encodeURIComponent(location.pathname + location.search)}`,
+            `/?from=${encodeURIComponent(
+              location.pathname + location.search,
+            )}`,
           );
         }, 600);
         return;

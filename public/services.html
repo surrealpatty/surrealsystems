@@ -254,18 +254,34 @@
         color: #6b7280;
       }
 
-      /* reuse your existing input/spinner styles from style.css;
-         this just ensures dark background works nicely */
       #services-list {
         margin-top: 8px;
       }
 
       #diagBanner {
-        display: none; /* your script can unhide if needed */
+        display: none;
       }
 
       #messageModal {
-        display: none; /* script will toggle this */
+        display: none;
+      }
+
+      .field-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 10px;
+      }
+
+      .field-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      .error {
+        color: #fecaca;
+        font-size: 0.85rem;
+        margin: 4px 0 0;
       }
     </style>
   </head>
@@ -306,6 +322,78 @@
 
         <!-- MAIN CONTENT -->
         <main class="content-column">
+          <!-- CREATE SERVICE CARD -->
+          <section class="card">
+            <h2>Create a new service</h2>
+            <p>Describe what you offer so clients can hire you.</p>
+
+            <form id="createServiceForm" novalidate>
+              <div class="field-wrap">
+                <label for="createServiceTitle" class="field-label">Service title</label>
+                <input
+                  id="createServiceTitle"
+                  class="input"
+                  type="text"
+                  placeholder="I will build your website"
+                  maxlength="100"
+                  required
+                />
+              </div>
+
+              <div class="field-wrap">
+                <label for="createServiceCategory" class="field-label">Category (optional)</label>
+                <input
+                  id="createServiceCategory"
+                  class="input"
+                  type="text"
+                  placeholder="Web development, Design, Writing…"
+                  maxlength="64"
+                />
+              </div>
+
+              <div class="field-wrap">
+                <label for="createServicePrice" class="field-label">Price (USD)</label>
+                <input
+                  id="createServicePrice"
+                  class="input"
+                  type="number"
+                  min="5"
+                  step="1"
+                  placeholder="50"
+                  required
+                />
+              </div>
+
+              <div class="field-wrap">
+                <label for="createServiceDescription" class="field-label">Description</label>
+                <textarea
+                  id="createServiceDescription"
+                  class="input"
+                  rows="4"
+                  maxlength="2000"
+                  placeholder="Explain what is included, delivery time, and any requirements from the client."
+                  required
+                ></textarea>
+              </div>
+
+              <p id="createServiceError" class="error" aria-live="polite" hidden></p>
+
+              <div class="services-actions">
+                <button type="submit" id="createServiceBtn" class="btn btn-primary">
+                  Save service
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-ghost"
+                  onclick="window.location.href='profile.html'"
+                >
+                  Back to Profile
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <!-- ALL SERVICES CARD -->
           <section class="card">
             <h2>All services</h2>
             <p>Browse everything users are offering across CodeCrowds.</p>
