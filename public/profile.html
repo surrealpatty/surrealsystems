@@ -250,7 +250,7 @@
         color: #6b7280;
       }
 
-      /* --------- Edit mode styles --------- */
+      /* --------- Shared edit styles --------- */
       .is-hidden {
         display: none !important;
       }
@@ -319,6 +319,16 @@
       .btn-muted:hover {
         background: rgba(15, 23, 42, 0.9);
       }
+
+      /* --------- Create service panel (dropdown) --------- */
+      .service-panel {
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(148, 163, 184, 0.4);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
     </style>
   </head>
 
@@ -378,7 +388,7 @@
                 <div class="profile-value">Free user</div>
               </div>
 
-              <!-- ✅ Correct top buttons -->
+              <!-- ✅ TOP BUTTONS: Edit + My Services -->
               <div class="btn-row">
                 <button type="button" class="btn btn-primary" id="editProfileBtn">
                   Edit Profile
@@ -444,15 +454,79 @@
               You don’t have any services yet. Create one to start attracting clients.
             </div>
 
-            <!-- ✅ Bottom buttons: Create Service works, View My Services unchanged -->
+            <!-- ✅ BOTTOM BUTTONS: Create dropdown + View services -->
             <div class="btn-row">
-              <a href="create-service.html" class="btn btn-primary">
+              <button
+                type="button"
+                class="btn btn-primary"
+                onclick="document.getElementById('createServicePanel').classList.toggle('is-hidden')"
+              >
                 Create Service
-              </a>
+              </button>
+
               <a href="services.html" class="btn btn-secondary">
                 View My Services
               </a>
             </div>
+
+            <!-- ✅ DROPDOWN / SLIDE-DOWN CREATE-SERVICE PANEL -->
+            <form
+              id="createServicePanel"
+              class="service-panel is-hidden"
+              onsubmit="event.preventDefault(); alert('Service form submitted – wire this up to your backend when ready.'); this.reset(); this.classList.add('is-hidden');"
+            >
+              <div class="profile-edit-row">
+                <label for="serviceTitle" class="profile-edit-label">Service title</label>
+                <input
+                  type="text"
+                  id="serviceTitle"
+                  class="profile-edit-input"
+                  placeholder="I will build your website"
+                  maxlength="100"
+                  required
+                />
+              </div>
+
+              <div class="profile-edit-row">
+                <label for="servicePrice" class="profile-edit-label">Price (USD)</label>
+                <input
+                  type="number"
+                  id="servicePrice"
+                  class="profile-edit-input"
+                  placeholder="50"
+                  min="5"
+                  step="1"
+                  required
+                />
+                <p class="profile-edit-hint">
+                  You can adjust this later from the Services page.
+                </p>
+              </div>
+
+              <div class="profile-edit-row">
+                <label for="serviceDescription" class="profile-edit-label">Description</label>
+                <textarea
+                  id="serviceDescription"
+                  class="profile-edit-textarea"
+                  rows="4"
+                  placeholder="Describe what you will deliver, how long it takes, and what you need from the client."
+                  required
+                ></textarea>
+              </div>
+
+              <div class="profile-edit-actions">
+                <button type="submit" class="btn btn-primary">
+                  Save service
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-muted"
+                  onclick="document.getElementById('createServicePanel').classList.add('is-hidden')"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </section>
         </main>
       </div>
@@ -462,7 +536,7 @@
       </footer>
     </div>
 
-    <!-- External script only (CSP-safe) -->
+    <!-- External profile script if you already use one -->
     <script src="profile.js" defer></script>
   </body>
 </html>
