@@ -7,14 +7,14 @@
     <meta name="description" content="Your CodeCrowds profile." />
 
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@300;400;600&display=swap"
       rel="stylesheet"
-    >
+    />
 
-    <!-- Global styles (your main site CSS) -->
+    <!-- Global styles (main site CSS) -->
     <link rel="stylesheet" href="style.css" />
 
     <!-- Page-specific styles (dark profile layout) -->
@@ -37,7 +37,8 @@
       body {
         margin: 0;
         min-height: 100vh;
-        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
         background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
         color: var(--text-main);
       }
@@ -109,6 +110,10 @@
         .profile-layout {
           grid-template-columns: minmax(0, 1fr);
         }
+
+        .profile-user-pill {
+          display: none;
+        }
       }
 
       /* Sidebar */
@@ -145,7 +150,8 @@
         color: var(--text-main);
         border: 1px solid transparent;
         background: transparent;
-        transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+        transition: background 0.15s ease, border-color 0.15s ease,
+          transform 0.1s ease;
       }
 
       .nav-link:hover {
@@ -223,6 +229,16 @@
         filter: brightness(1.06);
       }
 
+      .btn-secondary {
+        background: rgba(15, 23, 42, 0.9);
+        color: var(--text-main);
+        border: 1px solid rgba(55, 65, 81, 0.9);
+      }
+
+      .btn-secondary:hover {
+        background: rgba(15, 23, 42, 1);
+      }
+
       .services-empty {
         margin-top: 6px;
         padding: 0.65rem 0.75rem;
@@ -280,6 +296,19 @@
         font-size: 0.95rem;
       }
 
+      .profile-edit-input:focus,
+      .profile-edit-textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+      }
+
+      .profile-edit-hint {
+        margin: 0;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
       .profile-edit-actions {
         display: flex;
         flex-wrap: wrap;
@@ -307,30 +336,46 @@
         gap: 12px;
       }
 
-      /* Where services will render */
-      #profileServicesList {
+      /* ----- Services list shown on profile ----- */
+      .profile-services-list {
         margin-top: 12px;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
       }
 
-      .service-card {
-        padding: 10px 12px;
+      .profile-service-pill {
+        padding: 0.65rem 0.8rem;
         border-radius: 0.9rem;
         border: 1px solid rgba(55, 65, 81, 0.9);
         background: #020617;
-        font-size: 0.9rem;
+        font-size: 0.86rem;
+        color: var(--text-main);
+        display: flex;
+        flex-direction: column;
       }
 
-      .service-card-title {
+      .profile-service-pill-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 0.75rem;
+      }
+
+      .profile-service-pill-title {
+        font-weight: 500;
+      }
+
+      .profile-service-pill-price {
+        color: var(--accent);
         font-weight: 600;
-        margin-bottom: 4px;
+        font-size: 0.85rem;
       }
 
-      .service-card-price {
-        font-size: 0.85rem;
-        color: #a5b4fc;
+      .profile-service-pill-meta {
+        margin-top: 2px;
+        font-size: 0.8rem;
+        color: var(--text-muted);
       }
     </style>
   </head>
@@ -391,7 +436,7 @@
                 <div class="profile-value">Free user</div>
               </div>
 
-              <!-- TOP BUTTON: Edit only -->
+              <!-- TOP BUTTON: Edit -->
               <div class="btn-row">
                 <button type="button" class="btn btn-primary" id="editProfileBtn">
                   Edit Profile
@@ -450,7 +495,8 @@
             <h2>Your services</h2>
             <p>Once you start posting, your services will appear here.</p>
 
-            <div class="services-empty" id="servicesEmpty">
+            <!-- Empty-state note; we hide this in JS when you have services -->
+            <div id="profileServicesEmpty" class="services-empty">
               You don’t have any services yet. Create one to start attracting clients.
             </div>
 
@@ -512,8 +558,8 @@
               </div>
             </form>
 
-            <!-- Where services will show on the profile page -->
-            <div id="profileServicesList"></div>
+            <!-- LIST OF YOUR SERVICES (filled in by profile.js) -->
+            <div id="profileServicesList" class="profile-services-list"></div>
           </section>
         </main>
       </div>
@@ -523,11 +569,11 @@
       </footer>
     </div>
 
-    <!-- Sets window.API_URL -->
+    <!-- Sets window.API_URL if you use it on other pages -->
     <script src="init.js" defer></script>
-    <!-- Shared helpers: apiFetch, token helpers, etc. -->
+    <!-- Shared helpers: apiFetch, getUserId, etc. -->
     <script src="script.js" defer></script>
-    <!-- Profile logic (edit profile + create service dropdown) -->
+    <!-- Profile logic (edit profile + create service + list services) -->
     <script src="profile.js" defer></script>
   </body>
 </html>

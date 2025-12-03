@@ -1,6 +1,6 @@
 // public/profile.js
 // Profile page logic: load name/email/description + edit & save using localStorage.
-// Also handles the "Create Service" dropdown form and creating services via apiFetch.
+// Also handles the "Create Service" dropdown form and listing your services.
 
 document.addEventListener("DOMContentLoaded", () => {
   const DEFAULT_DESCRIPTION =
@@ -144,14 +144,96 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---- Create Service dropdown + submit ----
+  // -----------------------------------------------------------------------
+  //   "Your services" section on profile
+  // -----------------------------------------------------------------------
+  const servicesEmptyEl = document.getElementById("profileServicesEmpty");
+  const servicesListEl = document.getElementById("profileServicesList");
+
+  function formatPrice(value) {
+    if (value === null || value === undefined || value === "") return "N/A";
+    const n = Number(value);
+    if (Number.isNaN(n)) return String(value);
+    return n.toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    });
+  }
+
+  async function loadMyServices() {
+    if (!servicesListEl || typeof apiFetch !== "function") return;
+
+    servicesListEl.innerHTML = "";
+
+    const userId =
+      typeof getUserId === "function" ? getUserId() : localStorage.getItem("userId");
+
+    if (!userId) {
+      // not logged in – keep the empty message
+      return;
+    }
+
+    try {
+      const all = await apiFetch("services");
+      const list = Array.isArray(all) ? all : [];
+
+      const myServices = list.filter((svc) => {
+        const ownerId =
+          svc.userId ??
+          svc.UserId ??
+          (svc.user && (svc.user.id ?? svc.user.userId));
+        return String(ownerId) === String(userId);
+      });
+
+      if (!myServices.length) {
+        if (servicesEmptyEl) servicesEmptyEl.classList.remove("is-hidden");
+        return;
+      }
+
+      if (servicesEmptyEl) servicesEmptyEl.classList.add("is-hidden");
+
+      myServices.forEach((svc) => {
+        const pill = document.createElement("div");
+        pill.className = "profile-service-pill";
+
+        const header = document.createElement("div");
+        header.className = "profile-service-pill-header";
+
+        const titleEl = document.createElement("div");
+        titleEl.className = "profile-service-pill-title";
+        titleEl.textContent = svc.title || "Untitled service";
+
+        const priceEl = document.createElement("div");
+        priceEl.className = "profile-service-pill-price";
+        priceEl.textContent = `Price: $${formatPrice(svc.price)}`;
+
+        header.appendChild(titleEl);
+        header.appendChild(priceEl);
+
+        const meta = document.createElement("div");
+        meta.className = "profile-service-pill-meta";
+        meta.textContent =
+          (svc.description || "").trim() || "No description provided.";
+
+        pill.appendChild(header);
+        pill.appendChild(meta);
+
+        servicesListEl.appendChild(pill);
+      });
+    } catch (err) {
+      console.error("Failed to load services for profile:", err);
+      // if something goes wrong, keep the empty message visible
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  //   Create Service dropdown + submit
+  // -----------------------------------------------------------------------
   const createServiceBtn = document.getElementById("createServiceBtn");
   const createServiceForm = document.getElementById("createServiceForm");
   const cancelCreateServiceBtn = document.getElementById(
     "cancelCreateServiceBtn"
   );
-  const servicesEmpty = document.getElementById("servicesEmpty");
-  const servicesList = document.getElementById("profileServicesList");
 
   // Toggle dropdown
   if (createServiceBtn && createServiceForm) {
@@ -167,36 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Helper to render one service on the profile page
-  function addServiceCard(service) {
-    if (!servicesList) return;
-    if (servicesEmpty) servicesEmpty.classList.add("is-hidden");
-
-    const card = document.createElement("div");
-    card.className = "service-card";
-
-    const titleEl = document.createElement("div");
-    titleEl.className = "service-card-title";
-    titleEl.textContent = service.title || "Untitled service";
-
-    const priceEl = document.createElement("div");
-    priceEl.className = "service-card-price";
-    priceEl.textContent =
-      typeof service.price === "number"
-        ? `$${service.price.toFixed(2)}`
-        : "";
-
-    const descEl = document.createElement("div");
-    descEl.textContent = service.description || "";
-
-    card.appendChild(titleEl);
-    card.appendChild(priceEl);
-    card.appendChild(descEl);
-
-    servicesList.appendChild(card);
-  }
-
-  // Submit service using shared apiFetch helper
+  // Submit service
   if (createServiceForm) {
     createServiceForm.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -222,9 +275,14 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      // Make sure shared helpers exist
+      if (typeof apiFetch !== "function") {
+        alert("Service creation is not available right now (apiFetch missing).");
+        return;
+      }
+
       try {
-        // apiFetch comes from script.js – it automatically sends the token
-        const created = await apiFetch("services", {
+        await apiFetch("services", {
           method: "POST",
           body: {
             title,
@@ -232,32 +290,27 @@ document.addEventListener("DOMContentLoaded", () => {
             description: descriptionService,
           },
           timeoutMs: 10000,
-          withCredentials: true,
         });
 
-        // Success: reset form + hide, and show the new service on the profile
+        alert("Service created successfully!");
+
+        // Reset form + hide
         createServiceForm.reset();
         createServiceForm.classList.add("is-hidden");
-        addServiceCard(created);
-        alert("Service created successfully!");
+
+        // Refresh the "Your services" list
+        loadMyServices();
       } catch (err) {
         console.error(err);
-        const status = err && err.status ? err.status : null;
-
-        if (status === 401 || status === 403) {
-          alert("Your session has expired. Please log in again.");
-          try {
-            clearToken && clearToken();
-            clearUserId && clearUserId();
-          } catch {}
-          location.replace("index.html");
-        } else {
-          alert(
-            (err && err.message) ||
-              "Something went wrong creating the service."
-          );
-        }
+        alert(
+          err && err.message
+            ? err.message
+            : "Something went wrong creating the service."
+        );
       }
     });
   }
+
+  // Initial load of user's services when the page opens
+  loadMyServices();
 });
