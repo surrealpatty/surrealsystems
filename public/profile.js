@@ -151,18 +151,21 @@ document.addEventListener("DOMContentLoaded", () => {
     "cancelCreateServiceBtn"
   );
 
+  // Toggle dropdown
   if (createServiceBtn && createServiceForm) {
     createServiceBtn.addEventListener("click", () => {
       createServiceForm.classList.toggle("is-hidden");
     });
   }
 
+  // Cancel button hides dropdown
   if (cancelCreateServiceBtn && createServiceForm) {
     cancelCreateServiceBtn.addEventListener("click", () => {
       createServiceForm.classList.add("is-hidden");
     });
   }
 
+  // Submit service
   if (createServiceForm) {
     createServiceForm.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -188,21 +191,25 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // You probably store the JWT token already from login
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("You must be logged in to create a service.");
-        return;
+      // Try to grab a token if one exists (but don't block if it doesn't)
+      const token =
+        localStorage.getItem("token") ||
+        localStorage.getItem("authToken") ||
+        localStorage.getItem("jwt") ||
+        localStorage.getItem("accessToken");
+
+      const baseUrl = window.API_URL || ""; // if you use init.js it sets API_URL
+      const headers = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers.Authorization = "Bearer " + token;
       }
 
       try {
-        const baseUrl = window.API_URL || ""; // if you use init.js it sets API_URL
         const res = await fetch(baseUrl + "/services", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token,
-          },
+          headers,
           body: JSON.stringify({
             title,
             price,
@@ -212,11 +219,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!res.ok) {
           const errJson = await res.json().catch(() => ({}));
-          const msg = errJson.message || "Failed to create service.";
+          const msg =
+            errJson.message ||
+            `Failed to create service (status ${res.status}).`;
           throw new Error(msg);
         }
 
-        // Success: redirect to Services page so user sees it
+        // Success: reset form + go to services page
+        createServiceForm.reset();
+        createServiceForm.classList.add("is-hidden");
         window.location.href = "services.html";
       } catch (err) {
         console.error(err);
