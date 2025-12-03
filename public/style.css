@@ -489,21 +489,29 @@ select:focus {
 .register-card h2 { margin:0 0 8px 0; font-size:28px; color:var(--color-text); }
 .register-card p.lead { margin:0 0 18px 0; color:var(--color-muted); font-size:14px; }
 
-.form-group { margin-bottom:16px; }
-.form-group label { display:block; margin-bottom:8px; font-weight:600; color:#1f2937; font-size:13px; }
-.input, input[type="text"], input[type="email"], input[type="password"], textarea {
-  width:100%;
-  padding:12px 14px;
-  border-radius:8px;
-  border:1px solid #e6e9ee;
-  font-size:15px;
-  color:#111827;
-  box-sizing:border-box;
-  outline:none;
-  transition:box-shadow .18s, border-color .12s;
+
+/* LIMIT these styles to the REGISTER card only */
+.register-card .input,
+.register-card input[type="text"],
+.register-card input[type="email"],
+.register-card input[type="password"],
+.register-card textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #e6e9ee;
+  font-size: 15px;
+  box-sizing: border-box;
+  outline: none;
+  transition: box-shadow .18s, border-color .12s;
 }
-.input:focus, input:focus, textarea:focus {
-  box-shadow:0 6px 20px rgba(33,150,255,0.06);
+
+.register-card .input:focus,
+.register-card input[type="text"]:focus,
+.register-card input[type="email"]:focus,
+.register-card input[type="password"]:focus,
+.register-card textarea:focus {
+  box-shadow: 0 6px 20px rgba(33,150,255,0.06);
   border-color: rgba(33,150,255,0.35);
 }
 textarea { min-height:120px; resize:vertical; }
