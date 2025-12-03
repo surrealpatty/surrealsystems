@@ -17,7 +17,7 @@
     <!-- Global styles (your main site CSS) -->
     <link rel="stylesheet" href="style.css" />
 
-    <!-- Page-specific styles (the dark profile layout) -->
+    <!-- Page-specific styles (dark profile layout) -->
     <style>
       :root {
         --bg: #020617;
@@ -108,6 +108,10 @@
       @media (max-width: 820px) {
         .profile-layout {
           grid-template-columns: minmax(0, 1fr);
+        }
+
+        .profile-user-pill {
+          display: none;
         }
       }
 
@@ -250,7 +254,7 @@
         color: #6b7280;
       }
 
-      /* --------- Shared edit styles --------- */
+      /* Shared edit styles */
       .is-hidden {
         display: none !important;
       }
@@ -320,7 +324,7 @@
         background: rgba(15, 23, 42, 0.9);
       }
 
-      /* --------- Create service panel (dropdown) --------- */
+      /* Create service panel (dropdown) */
       .service-panel {
         margin-top: 14px;
         padding-top: 12px;
@@ -328,6 +332,38 @@
         display: flex;
         flex-direction: column;
         gap: 12px;
+      }
+
+      /* List of services shown under the create form */
+      .service-list {
+        margin-top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .service-card {
+        padding: 14px;
+        border-radius: 12px;
+        background: #0f172a;
+        border: 1px solid #1e293b;
+      }
+
+      .service-card-title {
+        font-size: 1rem;
+        font-weight: 600;
+      }
+
+      .service-card-price {
+        margin-top: 4px;
+        font-size: 0.9rem;
+        color: #3b82f6;
+      }
+
+      .service-card-description {
+        margin-top: 6px;
+        font-size: 0.85rem;
+        color: #94a3b8;
       }
     </style>
   </head>
@@ -388,13 +424,13 @@
                 <div class="profile-value">Free user</div>
               </div>
 
-              <!-- TOP BUTTONS: Edit + My Services -->
+              <!-- TOP BUTTON: only Edit Profile -->
               <div class="btn-row">
-  <button type="button" class="btn btn-primary" id="editProfileBtn">
-    Edit Profile
-  </button>
-</div>
->
+                <button type="button" class="btn btn-primary" id="editProfileBtn">
+                  Edit Profile
+                </button>
+              </div>
+            </div>
 
             <!-- EDIT MODE (hidden initially) -->
             <form id="profileEditForm" class="profile-edit is-hidden">
@@ -451,14 +487,11 @@
               You don’t have any services yet. Create one to start attracting clients.
             </div>
 
-            <!-- BOTTOM BUTTONS: Create dropdown + View services -->
+            <!-- BOTTOM BUTTON: Create dropdown -->
             <div class="btn-row">
               <button type="button" class="btn btn-primary" id="createServiceBtn">
                 Create Service
               </button>
-              <a href="services.html" class="btn btn-secondary">
-                View My Services
-              </a>
             </div>
 
             <!-- DROPDOWN CREATE-SERVICE PANEL -->
@@ -511,6 +544,9 @@
                 </button>
               </div>
             </form>
+
+            <!-- SERVICES WILL RENDER HERE -->
+            <div id="serviceList" class="service-list"></div>
           </section>
         </main>
       </div>
@@ -520,11 +556,10 @@
       </footer>
     </div>
 
-        <!-- Sets window.API_URL (same as services.html page) -->
+    <!-- Sets window.API_URL -->
     <script src="init.js" defer></script>
 
-    <!-- Profile logic (edit profile + create service dropdown) -->
+    <!-- Profile logic (edit profile + create service) -->
     <script src="profile.js" defer></script>
   </body>
 </html>
-

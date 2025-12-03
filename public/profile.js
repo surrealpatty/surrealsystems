@@ -1,12 +1,11 @@
 // public/profile.js
-// Profile page logic: load name/email/description + edit & save using localStorage.
-// Also handles the "Create Service" dropdown form.
+// Profile page logic: load user info, edit profile, and create services.
 
 document.addEventListener("DOMContentLoaded", () => {
-  const DEFAULT_DESCRIPTION =
-    "Write a short bio so clients know what you do.";
+  const DEFAULT_DESCRIPTION = "Write a short bio so clients know what you do.";
+  const API_URL = window.API_URL || "";
 
-  // ---- Load profile from localStorage or URL ----
+  // ------------------ LOAD PROFILE DATA ------------------
   const storedUsername = localStorage.getItem("username") || "";
   const storedEmail = localStorage.getItem("email") || "";
   const storedDescription = localStorage.getItem("description") || "";
@@ -25,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const nameEl = document.getElementById("profileName");
   const descEl = document.getElementById("profileDescription");
 
-  // --- Fill view mode ---
+  // Fill view mode
   if (email && emailBadge && emailMain) {
     emailBadge.textContent = email;
     emailMain.textContent = email;
@@ -48,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
     avatarEl.textContent = initialSource.trim()[0].toUpperCase();
   }
 
-  // ---- Edit Profile behaviour ----
+  // ------------------ EDIT PROFILE ------------------
   const profileView = document.getElementById("profileView");
   const profileEditForm = document.getElementById("profileEditForm");
   const editBtn = document.getElementById("editProfileBtn");
@@ -144,95 +143,135 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---- Create Service dropdown + submit ----
+  // ------------------ CREATE SERVICE DROPDOWN ------------------
   const createServiceBtn = document.getElementById("createServiceBtn");
   const createServiceForm = document.getElementById("createServiceForm");
   const cancelCreateServiceBtn = document.getElementById(
     "cancelCreateServiceBtn"
   );
+  const servicesEmpty = document.querySelector(".services-empty");
+  const serviceList = document.getElementById("serviceList");
 
-  // Toggle dropdown
   if (createServiceBtn && createServiceForm) {
     createServiceBtn.addEventListener("click", () => {
       createServiceForm.classList.toggle("is-hidden");
+
+      if (!createServiceForm.classList.contains("is-hidden")) {
+        createServiceForm.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     });
   }
 
-  // Cancel button hides dropdown
   if (cancelCreateServiceBtn && createServiceForm) {
     cancelCreateServiceBtn.addEventListener("click", () => {
       createServiceForm.classList.add("is-hidden");
     });
   }
 
-  // Submit service
+  async function loadServices() {
+    if (!serviceList) return;
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      serviceList.innerHTML = "";
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/services/user`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        console.error("Failed to load services", res.status);
+        return;
+      }
+
+      const services = await res.json();
+
+      if (!Array.isArray(services) || services.length === 0) {
+        serviceList.innerHTML = "";
+        if (servicesEmpty) servicesEmpty.classList.remove("is-hidden");
+        return;
+      }
+
+      if (servicesEmpty) servicesEmpty.classList.add("is-hidden");
+
+      serviceList.innerHTML = services
+        .map(
+          (s) => `
+          <div class="service-card">
+            <div class="service-card-title">${s.title}</div>
+            <div class="service-card-price">$${s.price}</div>
+            <div class="service-card-description">${s.description}</div>
+          </div>
+        `
+        )
+        .join("");
+    } catch (err) {
+      console.error("Error loading services", err);
+    }
+  }
+
   if (createServiceForm) {
     createServiceForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("userId");
+
+      if (!token || !userId) {
+        alert("You must be logged in to create a service.");
+        return;
+      }
+
       const titleEl = document.getElementById("serviceTitle");
       const priceEl = document.getElementById("servicePrice");
-      const descElService = document.getElementById("serviceDescription");
+      const descriptionEl = document.getElementById("serviceDescription");
 
       const title = titleEl ? titleEl.value.trim() : "";
-      const priceValue = priceEl ? priceEl.value.trim() : "";
-      const descriptionService = descElService
-        ? descElService.value.trim()
+      const price = priceEl ? Number(priceEl.value) : 0;
+      const serviceDescription = descriptionEl
+        ? descriptionEl.value.trim()
         : "";
 
-      if (!title || !priceValue || !descriptionService) {
-        alert("Please fill in all service fields.");
+      if (!title || !serviceDescription || !price) {
+        alert("Please fill in all the fields.");
         return;
-      }
-
-      const price = Number(priceValue);
-      if (Number.isNaN(price) || price <= 0) {
-        alert("Please enter a valid price.");
-        return;
-      }
-
-      // Try to grab a token if one exists (but don't block if it doesn't)
-      const token =
-        localStorage.getItem("token") ||
-        localStorage.getItem("authToken") ||
-        localStorage.getItem("jwt") ||
-        localStorage.getItem("accessToken");
-
-      const baseUrl = window.API_URL || ""; // if you use init.js it sets API_URL
-      const headers = {
-        "Content-Type": "application/json",
-      };
-      if (token) {
-        headers.Authorization = "Bearer " + token;
       }
 
       try {
-        const res = await fetch(baseUrl + "/services", {
+        const res = await fetch(`${API_URL}/services`, {
           method: "POST",
-          headers,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({
             title,
+            description: serviceDescription,
             price,
-            description: descriptionService,
           }),
         });
 
         if (!res.ok) {
-          const errJson = await res.json().catch(() => ({}));
-          const msg =
-            errJson.message ||
-            `Failed to create service (status ${res.status}).`;
-          throw new Error(msg);
+          const text = await res.text().catch(() => "");
+          console.error("Failed to create service", res.status, text);
+          alert(`Failed to create service (status ${res.status}).`);
+          return;
         }
 
-        // Success: reset form + go to services page
+        alert("Service created successfully.");
         createServiceForm.reset();
         createServiceForm.classList.add("is-hidden");
-        window.location.href = "services.html";
+        loadServices();
       } catch (err) {
-        console.error(err);
-        alert(err.message || "Something went wrong creating the service.");
+        console.error("Error creating service", err);
+        alert("Network error while creating service.");
       }
     });
   }
+
+  // Initial load of services
+  loadServices();
 });
