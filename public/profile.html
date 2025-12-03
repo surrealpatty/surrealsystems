@@ -352,7 +352,7 @@
 
         <!-- MAIN CONTENT -->
         <main class="content-column">
-          <!-- Profile card (NO heading text at top now) -->
+          <!-- Profile card -->
           <section class="card">
             <!-- VIEW MODE -->
             <div id="profileView">
@@ -378,16 +378,16 @@
                 <div class="profile-value">Free user</div>
               </div>
 
+              <!-- ✅ Correct top buttons -->
               <div class="btn-row">
-  <a href="create-service.html" class="btn btn-primary">
-    Create Service
-  </a>
-
-  <a href="services.html" class="btn btn-secondary">
-    View My Services
-  </a>
-</div>
-
+                <button type="button" class="btn btn-primary" id="editProfileBtn">
+                  Edit Profile
+                </button>
+                <a href="services.html" class="btn btn-secondary">
+                  My Services
+                </a>
+              </div>
+            </div>
 
             <!-- EDIT MODE (hidden initially) -->
             <form id="profileEditForm" class="profile-edit is-hidden">
@@ -444,10 +444,11 @@
               You don’t have any services yet. Create one to start attracting clients.
             </div>
 
+            <!-- ✅ Bottom buttons: Create Service works, View My Services unchanged -->
             <div class="btn-row">
-              <button type="button" class="btn btn-primary">
+              <a href="create-service.html" class="btn btn-primary">
                 Create Service
-              </button>
+              </a>
               <a href="services.html" class="btn btn-secondary">
                 View My Services
               </a>
