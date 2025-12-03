@@ -109,10 +109,6 @@
         .profile-layout {
           grid-template-columns: minmax(0, 1fr);
         }
-
-        .profile-user-pill {
-          display: none;
-        }
       }
 
       /* Sidebar */
@@ -227,16 +223,6 @@
         filter: brightness(1.06);
       }
 
-      .btn-secondary {
-        background: rgba(15, 23, 42, 0.9);
-        color: var(--text-main);
-        border: 1px solid rgba(55, 65, 81, 0.9);
-      }
-
-      .btn-secondary:hover {
-        background: rgba(15, 23, 42, 1);
-      }
-
       .services-empty {
         margin-top: 6px;
         padding: 0.65rem 0.75rem;
@@ -254,7 +240,7 @@
         color: #6b7280;
       }
 
-      /* Shared edit styles */
+      /* --------- Shared edit styles --------- */
       .is-hidden {
         display: none !important;
       }
@@ -294,19 +280,6 @@
         font-size: 0.95rem;
       }
 
-      .profile-edit-input:focus,
-      .profile-edit-textarea:focus {
-        outline: none;
-        border-color: var(--accent);
-        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
-      }
-
-      .profile-edit-hint {
-        margin: 0;
-        font-size: 0.8rem;
-        color: var(--text-muted);
-      }
-
       .profile-edit-actions {
         display: flex;
         flex-wrap: wrap;
@@ -324,7 +297,7 @@
         background: rgba(15, 23, 42, 0.9);
       }
 
-      /* Create service panel (dropdown) */
+      /* --------- Create service panel (dropdown) --------- */
       .service-panel {
         margin-top: 14px;
         padding-top: 12px;
@@ -334,36 +307,30 @@
         gap: 12px;
       }
 
-      /* List of services shown under the create form */
-      .service-list {
-        margin-top: 16px;
-        display: flex;
-        flex-direction: column;
+      /* Where services will render */
+      #profileServicesList {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 12px;
       }
 
       .service-card {
-        padding: 14px;
-        border-radius: 12px;
-        background: #0f172a;
-        border: 1px solid #1e293b;
+        padding: 10px 12px;
+        border-radius: 0.9rem;
+        border: 1px solid rgba(55, 65, 81, 0.9);
+        background: #020617;
+        font-size: 0.9rem;
       }
 
       .service-card-title {
-        font-size: 1rem;
         font-weight: 600;
+        margin-bottom: 4px;
       }
 
       .service-card-price {
-        margin-top: 4px;
-        font-size: 0.9rem;
-        color: #3b82f6;
-      }
-
-      .service-card-description {
-        margin-top: 6px;
         font-size: 0.85rem;
-        color: #94a3b8;
+        color: #a5b4fc;
       }
     </style>
   </head>
@@ -424,7 +391,7 @@
                 <div class="profile-value">Free user</div>
               </div>
 
-              <!-- TOP BUTTON: only Edit Profile -->
+              <!-- TOP BUTTON: Edit only -->
               <div class="btn-row">
                 <button type="button" class="btn btn-primary" id="editProfileBtn">
                   Edit Profile
@@ -483,11 +450,11 @@
             <h2>Your services</h2>
             <p>Once you start posting, your services will appear here.</p>
 
-            <div class="services-empty">
+            <div class="services-empty" id="servicesEmpty">
               You don’t have any services yet. Create one to start attracting clients.
             </div>
 
-            <!-- BOTTOM BUTTON: Create dropdown -->
+            <!-- CREATE SERVICE BUTTON -->
             <div class="btn-row">
               <button type="button" class="btn btn-primary" id="createServiceBtn">
                 Create Service
@@ -545,8 +512,8 @@
               </div>
             </form>
 
-            <!-- SERVICES WILL RENDER HERE -->
-            <div id="serviceList" class="service-list"></div>
+            <!-- Where services will show on the profile page -->
+            <div id="profileServicesList"></div>
           </section>
         </main>
       </div>
@@ -558,8 +525,9 @@
 
     <!-- Sets window.API_URL -->
     <script src="init.js" defer></script>
-
-    <!-- Profile logic (edit profile + create service) -->
+    <!-- Shared helpers: apiFetch, token helpers, etc. -->
+    <script src="script.js" defer></script>
+    <!-- Profile logic (edit profile + create service dropdown) -->
     <script src="profile.js" defer></script>
   </body>
 </html>

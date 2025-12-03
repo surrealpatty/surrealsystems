@@ -1,29 +1,10 @@
 // public/profile.js
 // Profile page logic: load name/email/description + edit & save using localStorage.
-// Also handles the "Create Service" dropdown form.
+// Also handles the "Create Service" dropdown form and creating services via apiFetch.
 
 document.addEventListener("DOMContentLoaded", () => {
   const DEFAULT_DESCRIPTION =
     "Write a short bio so clients know what you do.";
-
-  // Small helper to find an auth token in localStorage
-  function findAuthToken() {
-    const possibleKeys = ["token", "authToken", "jwt", "accessToken", "userToken"];
-
-    for (const key of possibleKeys) {
-      const value = localStorage.getItem(key);
-      if (value) {
-        console.log("Using auth token from localStorage key:", key);
-        return value;
-      }
-    }
-
-    console.warn(
-      "No auth token found in localStorage. Keys present:",
-      Object.keys(localStorage)
-    );
-    return null;
-  }
 
   // ---- Load profile from localStorage or URL ----
   const storedUsername = localStorage.getItem("username") || "";
@@ -169,6 +150,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const cancelCreateServiceBtn = document.getElementById(
     "cancelCreateServiceBtn"
   );
+  const servicesEmpty = document.getElementById("servicesEmpty");
+  const servicesList = document.getElementById("profileServicesList");
 
   // Toggle dropdown
   if (createServiceBtn && createServiceForm) {
@@ -184,18 +167,39 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Submit service
+  // Helper to render one service on the profile page
+  function addServiceCard(service) {
+    if (!servicesList) return;
+    if (servicesEmpty) servicesEmpty.classList.add("is-hidden");
+
+    const card = document.createElement("div");
+    card.className = "service-card";
+
+    const titleEl = document.createElement("div");
+    titleEl.className = "service-card-title";
+    titleEl.textContent = service.title || "Untitled service";
+
+    const priceEl = document.createElement("div");
+    priceEl.className = "service-card-price";
+    priceEl.textContent =
+      typeof service.price === "number"
+        ? `$${service.price.toFixed(2)}`
+        : "";
+
+    const descEl = document.createElement("div");
+    descEl.textContent = service.description || "";
+
+    card.appendChild(titleEl);
+    card.appendChild(priceEl);
+    card.appendChild(descEl);
+
+    servicesList.appendChild(card);
+  }
+
+  // Submit service using shared apiFetch helper
   if (createServiceForm) {
     createServiceForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-
-      // ✅ Look for token under several keys
-      const token = findAuthToken();
-      if (!token) {
-        alert("Please log in again to create a service.");
-        window.location.href = "index.html";
-        return;
-      }
 
       const titleEl = document.getElementById("serviceTitle");
       const priceEl = document.getElementById("servicePrice");
@@ -218,46 +222,41 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      const baseUrl = window.API_URL || "";
-      const headers = {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      };
-
       try {
-        const res = await fetch(baseUrl + "/services", {
+        // apiFetch comes from script.js – it automatically sends the token
+        const created = await apiFetch("services", {
           method: "POST",
-          headers,
-          body: JSON.stringify({
+          body: {
             title,
             price,
             description: descriptionService,
-          }),
+          },
+          timeoutMs: 10000,
+          withCredentials: true,
         });
 
-        // Handle expired/invalid token from backend
-        if (res.status === 401) {
-          alert("Your session has expired. Please log in again.");
-          localStorage.removeItem("token");
-          window.location.href = "index.html";
-          return;
-        }
-
-        if (!res.ok) {
-          const errJson = await res.json().catch(() => ({}));
-          const msg =
-            errJson.message ||
-            `Failed to create service (status ${res.status}).`;
-          throw new Error(msg);
-        }
-
-        // Success: reset form + go to services page
+        // Success: reset form + hide, and show the new service on the profile
         createServiceForm.reset();
         createServiceForm.classList.add("is-hidden");
-        window.location.href = "services.html";
+        addServiceCard(created);
+        alert("Service created successfully!");
       } catch (err) {
         console.error(err);
-        alert(err.message || "Something went wrong creating the service.");
+        const status = err && err.status ? err.status : null;
+
+        if (status === 401 || status === 403) {
+          alert("Your session has expired. Please log in again.");
+          try {
+            clearToken && clearToken();
+            clearUserId && clearUserId();
+          } catch {}
+          location.replace("index.html");
+        } else {
+          alert(
+            (err && err.message) ||
+              "Something went wrong creating the service."
+          );
+        }
       }
     });
   }
