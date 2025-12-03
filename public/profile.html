@@ -7,17 +7,17 @@
     <meta name="description" content="Your CodeCrowds profile." />
 
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@300;400;600&display=swap"
       rel="stylesheet"
-    >
+    />
 
-    <!-- Global styles -->
+    <!-- Global styles (your main site CSS) -->
     <link rel="stylesheet" href="style.css" />
 
-    <!-- Page-specific styles for dark profile layout -->
+    <!-- Page-specific styles (dark profile layout) -->
     <style>
       :root {
         --bg: #020617;
@@ -37,7 +37,8 @@
       body {
         margin: 0;
         min-height: 100vh;
-        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
         background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
         color: var(--text-main);
       }
@@ -109,6 +110,10 @@
         .profile-layout {
           grid-template-columns: minmax(0, 1fr);
         }
+
+        .profile-user-pill {
+          display: none;
+        }
       }
 
       /* Sidebar */
@@ -145,7 +150,8 @@
         color: var(--text-main);
         border: 1px solid transparent;
         background: transparent;
-        transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+        transition: background 0.15s ease, border-color 0.15s ease,
+          transform 0.1s ease;
       }
 
       .nav-link:hover {
@@ -163,7 +169,7 @@
         color: #fecaca;
       }
 
-      /* Main content cards */
+      /* Main content */
       .content-column {
         display: flex;
         flex-direction: column;
@@ -250,7 +256,6 @@
         color: #6b7280;
       }
 
-      /* Shared helpers */
       .is-hidden {
         display: none !important;
       }
@@ -320,7 +325,6 @@
         background: rgba(15, 23, 42, 0.9);
       }
 
-      /* Create service panel (dropdown) */
       .service-panel {
         margin-top: 14px;
         padding-top: 12px;
@@ -330,33 +334,30 @@
         gap: 12px;
       }
 
-      /* === Profile services list === */
-      .profile-services-list {
-        margin-top: 12px;
+      /* Profile services list */
+      #profileServicesList {
+        margin-top: 10px;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 10px;
       }
 
-      .profile-service-item {
-        padding: 0.65rem 0.75rem;
-        border-radius: 0.9rem;
+      .profile-service-card {
+        border-radius: 0.75rem;
         border: 1px solid rgba(55, 65, 81, 0.9);
         background: #020617;
+        padding: 10px 12px;
         font-size: 0.9rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
       }
 
       .profile-service-title {
         font-weight: 600;
+        margin-bottom: 4px;
       }
 
       .profile-service-meta {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-        margin-top: 2px;
+        font-size: 0.83rem;
+        color: #9ca3af;
       }
     </style>
   </head>
@@ -364,7 +365,7 @@
   <body>
     <div class="profile-wrapper">
       <header class="profile-header">
-        <a href="/" class="profile-brand">
+        <a href="index.html" class="profile-brand">
           <span class="profile-dot"></span>
           <span>CodeCrowds</span>
         </a>
@@ -424,7 +425,7 @@
               </div>
             </div>
 
-            <!-- EDIT MODE -->
+            <!-- EDIT MODE (hidden initially) -->
             <form id="profileEditForm" class="profile-edit is-hidden">
               <div class="profile-edit-row">
                 <label for="editDisplayName" class="profile-edit-label">Display name</label>
@@ -475,21 +476,22 @@
             <h2>Your services</h2>
             <p>Once you start posting, your services will appear here.</p>
 
-            <!-- Empty message (hidden when user has services) -->
-            <div class="services-empty" id="servicesEmpty">
+            <!-- Empty state -->
+            <div id="profileServicesEmpty" class="services-empty">
               You don’t have any services yet. Create one to start attracting clients.
             </div>
 
-            <!-- Where we render this user's services -->
-            <div id="profileServicesList" class="profile-services-list"></div>
+            <!-- Filled by profile.js -->
+            <div id="profileServicesList"></div>
 
-            <!-- Create Service button + dropdown form -->
+            <!-- Create Service button -->
             <div class="btn-row">
               <button type="button" class="btn btn-primary" id="createServiceBtn">
                 Create Service
               </button>
             </div>
 
+            <!-- Create Service dropdown form -->
             <form id="createServiceForm" class="service-panel is-hidden">
               <div class="profile-edit-row">
                 <label for="serviceTitle" class="profile-edit-label">Service title</label>
@@ -548,8 +550,10 @@
       </footer>
     </div>
 
-    <!-- Shared helpers (sets window.API_URL, apiFetch, auth helpers, etc.) -->
+    <!-- Sets window.API_URL -->
     <script src="init.js" defer></script>
+
+    <!-- Shared helpers: apiFetch, getUserId, etc. -->
     <script src="script.js" defer></script>
 
     <!-- Profile logic -->

@@ -1,6 +1,6 @@
 // public/profile.js
-// Profile page logic: load name/email/description, edit + save,
-// create services, and show this user's services under "Your services".
+// Profile page logic: load name/email/description + edit & save using localStorage.
+// Also handles the "Create Service" dropdown form and shows THIS user's services.
 
 document.addEventListener("DOMContentLoaded", () => {
   const DEFAULT_DESCRIPTION =
@@ -48,9 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
     avatarEl.textContent = initialSource.trim()[0].toUpperCase();
   }
 
-  // ---------------------------------------------------------------------------
-  // Edit Profile behaviour
-  // ---------------------------------------------------------------------------
+  // ---- Edit Profile behaviour ----
   const profileView = document.getElementById("profileView");
   const profileEditForm = document.getElementById("profileEditForm");
   const editBtn = document.getElementById("editProfileBtn");
@@ -146,118 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---------------------------------------------------------------------------
-  // Load this user's services and show them under "Your services"
-  // ---------------------------------------------------------------------------
-  async function loadMyServices() {
-    const listEl = document.getElementById("profileServicesList");
-    const emptyEl = document.getElementById("servicesEmpty");
-    if (!listEl) return;
-
-    listEl.innerHTML = "";
-
-    const currentUserId =
-      (typeof getUserId === "function" ? getUserId() : localStorage.getItem("userId")) || "";
-    const currentUsername = localStorage.getItem("username") || "";
-    const currentEmail = localStorage.getItem("email") || "";
-
-    try {
-      if (typeof apiFetch !== "function") {
-        console.warn("apiFetch is not available on profile page.");
-        return;
-      }
-
-      const allServices = await apiFetch("services", {
-        method: "GET",
-        timeoutMs: 10000,
-      });
-
-      const servicesArray = Array.isArray(allServices) ? allServices : [];
-
-      const myServices = servicesArray.filter((svc) => {
-        if (!svc) return false;
-
-        // Prefer strict userId match
-        if (currentUserId) {
-          if (String(svc.userId) === String(currentUserId)) return true;
-          if (svc.user && String(svc.user.id) === String(currentUserId)) return true;
-        }
-
-        // Fallback: match by username or email from embedded user object
-        const owner = svc.user || svc.owner || {};
-        const ownerName = owner.username || owner.name || "";
-        const ownerEmail = owner.email || "";
-
-        if (
-          currentUsername &&
-          ownerName &&
-          ownerName.toLowerCase() === currentUsername.toLowerCase()
-        ) {
-          return true;
-        }
-
-        if (
-          currentEmail &&
-          ownerEmail &&
-          ownerEmail.toLowerCase() === currentEmail.toLowerCase()
-        ) {
-          return true;
-        }
-
-        return false;
-      });
-
-      if (!myServices.length) {
-        if (emptyEl) {
-          emptyEl.style.display = "block";
-        }
-        return;
-      }
-
-      if (emptyEl) {
-        emptyEl.style.display = "block";
-        emptyEl.textContent = "Your services:";
-      }
-
-      myServices.forEach((svc) => {
-        const row = document.createElement("div");
-        row.className = "profile-service-item";
-
-        const left = document.createElement("div");
-        const titleEl = document.createElement("div");
-        titleEl.className = "profile-service-title";
-        titleEl.textContent = svc.title || "Untitled service";
-
-        const meta = document.createElement("div");
-        meta.className = "profile-service-meta";
-
-        const price = Number(svc.price || 0);
-        const priceText = price ? `$${price.toLocaleString()}` : "";
-        const descSnippet = (svc.description || "").slice(0, 90);
-
-        meta.textContent = priceText
-          ? `${priceText}${descSnippet ? " • " + descSnippet : ""}`
-          : descSnippet;
-
-        left.appendChild(titleEl);
-        left.appendChild(meta);
-
-        row.appendChild(left);
-        listEl.appendChild(row);
-      });
-    } catch (err) {
-      console.error("Failed to load services for profile:", err);
-      if (emptyEl) {
-        emptyEl.style.display = "block";
-        emptyEl.textContent =
-          "Could not load your services right now. Please try again in a moment.";
-      }
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Create Service dropdown + submit
-  // ---------------------------------------------------------------------------
+  // ---- Create Service dropdown + submit ----
   const createServiceBtn = document.getElementById("createServiceBtn");
   const createServiceForm = document.getElementById("createServiceForm");
   const cancelCreateServiceBtn = document.getElementById(
@@ -304,38 +191,44 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      const currentUserId =
-        (typeof getUserId === "function" ? getUserId() : localStorage.getItem("userId")) || "";
+      const baseUrl = window.API_URL || "";
+      const headers = { "Content-Type": "application/json" };
 
-      if (!currentUserId || (typeof isLoggedIn === "function" && !isLoggedIn())) {
-        alert("Please log in again to create a service.");
-        window.location.href = "index.html";
-        return;
+      // Try to attach token if present
+      const token =
+        localStorage.getItem("token") ||
+        localStorage.getItem("authToken") ||
+        localStorage.getItem("jwt") ||
+        localStorage.getItem("accessToken");
+      if (token) {
+        headers.Authorization = "Bearer " + token;
       }
 
       try {
-        if (typeof apiFetch !== "function") {
-          alert("Service API is not available right now.");
-          return;
-        }
-
-        await apiFetch("services", {
+        const res = await fetch(baseUrl + "/services", {
           method: "POST",
-          body: {
+          headers,
+          body: JSON.stringify({
             title,
             price,
             description: descriptionService,
-          },
-          timeoutMs: 10000,
+          }),
         });
 
-        alert("Service created successfully!");
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          const msg =
+            errJson.message ||
+            `Failed to create service (status ${res.status}).`;
+          throw new Error(msg);
+        }
 
+        alert("Service created successfully!");
         createServiceForm.reset();
         createServiceForm.classList.add("is-hidden");
 
-        // Reload the list so the new service shows up on the profile
-        await loadMyServices();
+        // After creating, reload the list of my services
+        loadMyServices();
       } catch (err) {
         console.error(err);
         alert(err.message || "Something went wrong creating the service.");
@@ -343,6 +236,78 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Initial load of user's services
+  // ---- Load THIS user's services and show them under "Your services" ----
+  async function loadMyServices() {
+    const listEl = document.getElementById("profileServicesList");
+    const emptyEl = document.getElementById("profileServicesEmpty");
+
+    if (!listEl || !emptyEl) return;
+    if (
+      typeof window.apiFetch !== "function" ||
+      typeof window.getUserId !== "function"
+    ) {
+      console.warn("apiFetch or getUserId is not available on profile page.");
+      return;
+    }
+
+    const myUserId = window.getUserId();
+    if (!myUserId) {
+      // Not logged in (or no stored user id) – keep empty state.
+      return;
+    }
+
+    // Clear current list
+    listEl.innerHTML = "";
+
+    try {
+      const allServices = await window.apiFetch("services");
+      const servicesArray = Array.isArray(allServices) ? allServices : [];
+
+      // Filter by userId
+      const mine = servicesArray.filter(
+        (svc) => String(svc.userId) === String(myUserId)
+      );
+
+      if (!mine.length) {
+        emptyEl.classList.remove("is-hidden");
+        return;
+      }
+
+      // Hide empty message and render each service
+      emptyEl.classList.add("is-hidden");
+
+      mine.forEach((svc) => {
+        const card = document.createElement("div");
+        card.className = "profile-service-card";
+
+        const titleDiv = document.createElement("div");
+        titleDiv.className = "profile-service-title";
+        titleDiv.textContent = svc.title || "Untitled service";
+        card.appendChild(titleDiv);
+
+        const metaDiv = document.createElement("div");
+        metaDiv.className = "profile-service-meta";
+
+        const price = Number(svc.price || 0);
+        const priceSpan = document.createElement("span");
+        priceSpan.textContent = `Price: $${price.toLocaleString()}`;
+        metaDiv.appendChild(priceSpan);
+
+        if (svc.description) {
+          const descSpan = document.createElement("span");
+          descSpan.textContent = `  •  ${svc.description}`;
+          metaDiv.appendChild(descSpan);
+        }
+
+        card.appendChild(metaDiv);
+        listEl.appendChild(card);
+      });
+    } catch (err) {
+      console.error("Failed to load services for profile page:", err);
+      emptyEl.classList.remove("is-hidden");
+    }
+  }
+
+  // Initial load of my services when the page opens
   loadMyServices();
 });
