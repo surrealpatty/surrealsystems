@@ -369,10 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const isHidden = createServiceForm.classList.contains("is-hidden");
       console.log("[profile] Create Service clicked, isHidden =", isHidden);
       if (isHidden) {
-        if (typeof window.isLoggedIn === "function" && !window.isLoggedIn()) {
-          alert("Please log in again before creating a service.");
-          return;
-        }
+        // removed isLoggedIn guard – backend will enforce auth
         showCreateForm();
       } else {
         hideCreateForm();
@@ -392,10 +389,7 @@ document.addEventListener("DOMContentLoaded", () => {
     createServiceForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      if (typeof window.isLoggedIn === "function" && !window.isLoggedIn()) {
-        alert("Your session looks expired. Please log in again.");
-        return;
-      }
+      // removed isLoggedIn guard – backend will enforce auth
 
       const titleEl = document.getElementById("serviceTitle");
       const priceEl = document.getElementById("servicePrice");
