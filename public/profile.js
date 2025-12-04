@@ -288,69 +288,50 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // small helper to normalize different API shapes
-  function normalizeServices(response) {
-    if (!response) return [];
-    if (Array.isArray(response)) return response;
-    if (Array.isArray(response.data)) return response.data;
-    if (response.data && Array.isArray(response.data.rows)) return response.data.rows;
-    if (Array.isArray(response.rows)) return response.rows;
-    if (Array.isArray(response.services)) return response.services;
-    return [];
-  }
-
   // ---------------- Load services for profile (current user) ----------------
   async function loadServicesForProfile() {
     const listEl = document.getElementById("profileServicesList");
     const emptyEl = document.getElementById("profileServicesEmpty");
     if (!listEl || !emptyEl) return;
 
-    listEl.innerHTML = "";
-    emptyEl.classList.add("is-hidden");
-
-    // Always try to use the logged-in user's ID from localStorage
-    const userId =
-      safeGet("userId") ||
-      safeGet("currentUserId") ||
-      null;
-
-    if (!userId) {
-      emptyEl.textContent =
-        "Could not determine your account. Please log in again.";
-      emptyEl.classList.remove("is-hidden");
-      return;
-    }
+    listEl.innerHTML = ""; // clear any previous content
 
     let services = [];
-    const baseUrl = window.API_URL || "";
-    const path = `/services?userId=${encodeURIComponent(userId)}&limit=50`;
-
     try {
-      if (typeof window.apiFetch === "function") {
-        // use shared helper (it already handles base URL + auth)
-        const response = await window.apiFetch(path, { auth: true });
-        services = normalizeServices(response);
-      } else {
-        // fallback plain fetch
-        const headers = { "Content-Type": "application/json" };
-        const token =
-          safeGet("token") ||
-          safeGet("authToken") ||
-          safeGet("jwt") ||
-          safeGet("accessToken");
-        if (token) {
-          headers.Authorization = "Bearer " + token;
-        }
+      const hasApiFetch = typeof window.apiFetch === "function";
+      const hasGetUserId = typeof window.getUserId === "function";
 
-        const res = await fetch(
-          baseUrl + (path.startsWith("/") ? path : "/" + path),
-          { headers }
-        );
-        if (!res.ok) {
-          throw new Error(`Failed to load services (status ${res.status})`);
+      let path = "services";
+
+      if (hasGetUserId) {
+        const uid = window.getUserId();
+        if (uid) {
+          path = `services?userId=${encodeURIComponent(uid)}&limit=50`;
         }
+      }
+
+      if (hasApiFetch) {
+        const response = await window.apiFetch(path);
+        if (Array.isArray(response)) {
+          services = response;
+        } else if (response && Array.isArray(response.data)) {
+          services = response.data;
+        } else if (response && Array.isArray(response.services)) {
+          services = response.services;
+        }
+      } else {
+        const baseUrl = window.API_URL || "";
+        const res = await fetch(
+          baseUrl + (path.startsWith("/") ? path : "/" + path)
+        );
         const json = await res.json();
-        services = normalizeServices(json);
+        if (Array.isArray(json)) {
+          services = json;
+        } else if (json && Array.isArray(json.data)) {
+          services = json.data;
+        } else if (json && Array.isArray(json.services)) {
+          services = json.services;
+        }
       }
     } catch (err) {
       console.error("Failed to load services on profile page:", err);
@@ -361,10 +342,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (!services.length) {
-      // No services for this user
+      // No services at all
       emptyEl.classList.remove("is-hidden");
-      emptyEl.textContent =
-        "You haven't created any services yet. Use the button above to create your first one.";
       listEl.innerHTML = "";
       return;
     }
@@ -375,7 +354,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     services.forEach((svc) => {
       const card = document.createElement("div");
-      // this class is what we’ll style as a small square card
       card.className = "profile-service-card";
 
       const titleDiv = document.createElement("div");
