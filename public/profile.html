@@ -334,30 +334,42 @@
         gap: 12px;
       }
 
-      /* Profile services list */
+      /* Profile services list – grid of compact tiles */
       #profileServicesList {
-        margin-top: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 12px;
+        align-items: stretch;
       }
 
       .profile-service-card {
-        border-radius: 0.75rem;
+        border-radius: 0.9rem;
         border: 1px solid rgba(55, 65, 81, 0.9);
         background: #020617;
         padding: 10px 12px;
         font-size: 0.9rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 110px; /* gives a more “square” feel */
       }
 
       .profile-service-title {
         font-weight: 600;
         margin-bottom: 4px;
+        line-height: 1.2;
       }
 
       .profile-service-meta {
         font-size: 0.83rem;
         color: #9ca3af;
+      }
+
+      @media (max-width: 640px) {
+        #profileServicesList {
+          grid-template-columns: minmax(0, 1fr);
+        }
       }
     </style>
   </head>
@@ -370,7 +382,7 @@
           <span>CodeCrowds</span>
         </a>
 
-        <!-- 🔹 top pill now uses the shared IDs -->
+        <!-- Top-right pill: filled by script.js (username) -->
         <div class="profile-user-pill">
           <div class="profile-avatar" id="topUserAvatar">U</div>
           <span class="profile-email" id="topUserEmail">you@example.com</span>
