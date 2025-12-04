@@ -11,7 +11,7 @@
 
     <!-- Init MUST run before script.js so API_URL is set -->
     <script src="init.js" defer></script>
-    <!-- Shared helpers (apiFetch, etc.) -->
+    <!-- Shared helpers (apiFetch, topUser chip, etc.) -->
     <script src="script.js" defer></script>
     <!-- Page-specific JS -->
     <script src="services.js" defer></script>
@@ -254,10 +254,66 @@
         color: #6b7280;
       }
 
+      /* --------------------------------------------------
+         Make services list look like profile services
+         -------------------------------------------------- */
       #services-list {
-        margin-top: 8px;
+        margin-top: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
       }
 
+      .service-card {
+        border-radius: 0.75rem;
+        border: 1px solid rgba(55, 65, 81, 0.9);
+        background: #020617;
+        padding: 10px 12px;
+        font-size: 0.9rem;
+      }
+
+      .service-title {
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: #e5e7eb;
+      }
+
+      .service-meta {
+        font-size: 0.83rem;
+        color: #9ca3af;
+      }
+
+      .service-price {
+        font-size: 0.83rem;
+        color: #9ca3af;
+        margin-top: 4px;
+      }
+
+      .service-footer {
+        margin-top: 8px;
+        display: flex;
+        justify-content: flex-start;
+      }
+
+      .service-message-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.45rem 0.9rem;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(135deg, #3b82f6, #22c55e);
+        color: #020617;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .service-message-btn:hover {
+        filter: brightness(1.06);
+      }
+
+      /* Diagnostic + modal kept as-is (hidden by default) */
       #diagBanner {
         display: none;
       }
@@ -278,7 +334,7 @@
           <span>CodeCrowds</span>
         </a>
 
-        <!-- 🔹 shared IDs for the top pill -->
+        <!-- Top-right chip driven by script.js (username instead of email) -->
         <div class="user-pill">
           <div class="user-avatar" id="topUserAvatar">U</div>
           <span class="user-email" id="topUserEmail">you@example.com</span>
@@ -363,7 +419,7 @@
       </footer>
     </div>
 
-    <!-- Compose Message Modal (kept for services.js) -->
+    <!-- Compose Message Modal (used by services.js) -->
     <div
       id="messageModal"
       role="dialog"
