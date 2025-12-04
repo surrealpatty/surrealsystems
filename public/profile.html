@@ -1,562 +1,428 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>CodeCrowds – Your Profile</title>
-    <meta name="description" content="Your CodeCrowds profile." />
+// public/profile.js
+// Profile page logic: profile info + edit + create service dropdown + show services.
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@300;400;600&display=swap"
-      rel="stylesheet"
-    />
+// Safe localStorage helpers
+function safeGet(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
 
-    <!-- Global styles (your main site CSS) -->
-    <link rel="stylesheet" href="style.css" />
+function safeSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // ignore
+  }
+}
 
-    <!-- Page-specific styles (dark profile layout) -->
-    <style>
-      :root {
-        --bg: #020617;
-        --bg-card: #020617;
-        --border-subtle: #1f2937;
-        --accent: #3b82f6;
-        --accent-soft: rgba(59, 130, 246, 0.12);
-        --text-main: #e5e7eb;
-        --text-muted: #9ca3af;
-        --radius-xl: 1.25rem;
+document.addEventListener("DOMContentLoaded", () => {
+  const DEFAULT_DESCRIPTION =
+    "Write a short bio so clients know what you do.";
+
+  // ---------------- Profile display (top card) ----------------
+  const storedUsername = safeGet("username") || "";
+  const storedEmail = safeGet("email") || "";
+  const storedDescription = safeGet("description") || "";
+
+  const params = new URLSearchParams(window.location.search);
+  const paramUsername = params.get("username") || "";
+  const paramEmail = params.get("email") || "";
+
+  const username = storedUsername || paramUsername || "";
+  const email = storedEmail || paramEmail || "";
+  const description = storedDescription || "";
+
+  const avatarEl = document.getElementById("profileAvatar");
+  const emailBadge = document.getElementById("profileEmail");
+  const emailMain = document.getElementById("profileEmailMain");
+  const nameEl = document.getElementById("profileName");
+  const descEl = document.getElementById("profileDescription");
+
+  // Fill view mode
+  if (email && emailBadge && emailMain) {
+    emailBadge.textContent = email;
+    emailMain.textContent = email;
+  }
+
+  let displayName = username;
+  if (!displayName && email) {
+    displayName = email.split("@")[0];
+  }
+  if (displayName && nameEl) {
+    nameEl.textContent = displayName;
+  }
+
+  if (descEl) {
+    descEl.textContent = description || DEFAULT_DESCRIPTION;
+  }
+
+  const initialSource = displayName || email || "U";
+  if (avatarEl && initialSource) {
+    avatarEl.textContent = initialSource.trim()[0].toUpperCase();
+  }
+
+  // ---------------- Edit profile behaviour ----------------
+  const profileView = document.getElementById("profileView");
+  const profileEditForm = document.getElementById("profileEditForm");
+  const editBtn = document.getElementById("editProfileBtn");
+  const cancelEditBtn = document.getElementById("cancelEditBtn");
+  const editDisplayNameInput = document.getElementById("editDisplayName");
+  const editEmailInput = document.getElementById("editEmail");
+  const editDescriptionInput = document.getElementById("editDescription");
+
+  function enterEditMode() {
+    if (!profileView || !profileEditForm) return;
+
+    if (editDisplayNameInput && nameEl) {
+      editDisplayNameInput.value = nameEl.textContent.trim();
+    }
+    if (editEmailInput && emailMain) {
+      editEmailInput.value = emailMain.textContent.trim();
+    }
+    if (editDescriptionInput && descEl) {
+      const current = descEl.textContent.trim();
+      editDescriptionInput.value =
+        current === DEFAULT_DESCRIPTION ? "" : current;
+    }
+
+    profileView.classList.add("is-hidden");
+    profileEditForm.classList.remove("is-hidden");
+  }
+
+  function exitEditMode() {
+    if (!profileView || !profileEditForm) return;
+    profileEditForm.classList.add("is-hidden");
+    profileView.classList.remove("is-hidden");
+  }
+
+  if (editBtn) {
+    editBtn.addEventListener("click", enterEditMode);
+  }
+
+  if (cancelEditBtn) {
+    cancelEditBtn.addEventListener("click", exitEditMode);
+  }
+
+  if (profileEditForm) {
+    profileEditForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!editEmailInput) return;
+
+      const newName = editDisplayNameInput
+        ? editDisplayNameInput.value.trim()
+        : "";
+      const newEmail = editEmailInput.value.trim();
+      const newDescription = editDescriptionInput
+        ? editDescriptionInput.value.trim()
+        : "";
+
+      if (!newEmail) {
+        alert("Email is required.");
+        editEmailInput.focus();
+        return;
       }
 
-      * {
-        box-sizing: border-box;
+      // Update UI
+      if (nameEl) {
+        nameEl.textContent = newName || "New developer";
+      }
+      if (emailBadge) {
+        emailBadge.textContent = newEmail;
+      }
+      if (emailMain) {
+        emailMain.textContent = newEmail;
+      }
+      if (descEl) {
+        descEl.textContent = newDescription || DEFAULT_DESCRIPTION;
       }
 
-      body {
-        margin: 0;
-        min-height: 100vh;
-        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", sans-serif;
-        background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
-        color: var(--text-main);
+      // Avatar
+      if (avatarEl) {
+        const source = (newName || newEmail || "U").trim();
+        avatarEl.textContent = source[0].toUpperCase();
       }
 
-      .profile-wrapper {
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 24px 16px 40px;
+      // Persist (UI only)
+      safeSet("email", newEmail);
+      const usernameToStore = newName || newEmail.split("@")[0];
+      safeSet("username", usernameToStore);
+      safeSet("description", newDescription);
+
+      exitEditMode();
+    });
+  }
+
+  // ---------------- Create Service dropdown + submit ----------------
+  const createServiceBtn = document.getElementById("createServiceBtn");
+  const createServiceForm = document.getElementById("createServiceForm");
+  const cancelCreateServiceBtn = document.getElementById(
+    "cancelCreateServiceBtn"
+  );
+
+  if (createServiceBtn && createServiceForm) {
+    console.log("[profile] Create Service button & form found");
+
+    const originalBtnText =
+      (createServiceBtn.textContent && createServiceBtn.textContent.trim()) ||
+      "Create Service";
+
+    function showCreateForm() {
+      createServiceForm.classList.remove("is-hidden");
+      createServiceBtn.textContent = "Hide form";
+    }
+
+    function hideCreateForm() {
+      createServiceForm.classList.add("is-hidden");
+      createServiceBtn.textContent = originalBtnText;
+    }
+
+    // Toggle dropdown on main button
+    createServiceBtn.addEventListener("click", () => {
+      const isHidden = createServiceForm.classList.contains("is-hidden");
+      console.log("[profile] Create Service clicked, isHidden =", isHidden);
+      if (isHidden) {
+        // Don’t let someone create a service if we don’t know who they are
+        if (typeof window.isLoggedIn === "function" && !window.isLoggedIn()) {
+          alert("Please log in again before creating a service.");
+          return;
+        }
+        showCreateForm();
+      } else {
+        hideCreateForm();
+      }
+    });
+
+    // Cancel hides + resets the form
+    if (cancelCreateServiceBtn) {
+      cancelCreateServiceBtn.addEventListener("click", () => {
+        console.log("[profile] Cancel Create Service clicked");
+        hideCreateForm();
+        createServiceForm.reset();
+      });
+    }
+
+    // Handle create service submit
+    createServiceForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      if (typeof window.isLoggedIn === "function" && !window.isLoggedIn()) {
+        alert("Your session looks expired. Please log in again.");
+        return;
       }
 
-      .profile-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
+      const titleEl = document.getElementById("serviceTitle");
+      const priceEl = document.getElementById("servicePrice");
+      const descElService = document.getElementById("serviceDescription");
+
+      const title = titleEl ? titleEl.value.trim() : "";
+      const priceValue = priceEl ? priceEl.value.trim() : "";
+      const descriptionService = descElService
+        ? descElService.value.trim()
+        : "";
+
+      if (!title || !priceValue || !descriptionService) {
+        alert("Please fill in all service fields.");
+        return;
       }
 
-      .profile-brand {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        text-decoration: none;
-        color: var(--text-main);
-        font-weight: 600;
-        font-size: 1.1rem;
+      const price = Number(priceValue);
+      if (Number.isNaN(price) || price <= 0) {
+        alert("Please enter a valid price.");
+        return;
       }
 
-      .profile-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 999px;
-        background: linear-gradient(135deg, #22c55e, #3b82f6);
-      }
+      try {
+        if (typeof window.apiFetch === "function") {
+          // apiFetch automatically adds the Authorization header from localStorage
+          await window.apiFetch("services", {
+            method: "POST",
+            body: {
+              title,
+              price,
+              description: descriptionService,
+            },
+          });
+        } else {
+          // Fallback: plain fetch with token
+          const baseUrl = window.API_URL || "";
+          const headers = { "Content-Type": "application/json" };
 
-      .profile-user-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.4rem 0.8rem;
-        border-radius: 999px;
-        border: 1px solid rgba(148, 163, 184, 0.6);
-        background: rgba(15, 23, 42, 0.96);
-        font-size: 0.85rem;
-      }
+          const token =
+            safeGet("token") ||
+            safeGet("authToken") ||
+            safeGet("jwt") ||
+            safeGet("accessToken");
+          if (token) {
+            headers.Authorization = "Bearer " + token;
+          }
 
-      .profile-avatar {
-        width: 30px;
-        height: 30px;
-        border-radius: 999px;
-        background: linear-gradient(135deg, #3b82f6, #22c55e);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        color: #020617;
-      }
+          const res = await fetch(baseUrl + "/services", {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              title,
+              price,
+              description: descriptionService,
+            }),
+          });
 
-      .profile-email {
-        color: var(--text-main);
-      }
-
-      .profile-layout {
-        display: grid;
-        grid-template-columns: 230px minmax(0, 1fr);
-        gap: 20px;
-      }
-
-      @media (max-width: 820px) {
-        .profile-layout {
-          grid-template-columns: minmax(0, 1fr);
+          if (!res.ok) {
+            const errJson = await res.json().catch(() => ({}));
+            const msg =
+              errJson.message ||
+              `Failed to create service (status ${res.status}).`;
+            throw new Error(msg);
+          }
         }
 
-        .profile-user-pill {
-          display: none;
-        }
+        alert("Service created successfully!");
+        createServiceForm.reset();
+        hideCreateForm();
+
+        // Reload list so the new service shows under "Your services"
+        loadServicesForProfile();
+      } catch (err) {
+        console.error(err);
+        alert(err.message || "Something went wrong creating the service.");
+      }
+    });
+  } else {
+    console.warn("[profile] Create Service elements not found", {
+      btn: !!createServiceBtn,
+      form: !!createServiceForm,
+      cancelBtn: !!cancelCreateServiceBtn,
+    });
+  }
+
+  // ---------------- Load services for profile (current user) ----------------
+  async function loadServicesForProfile() {
+    const listEl = document.getElementById("profileServicesList");
+    const emptyEl = document.getElementById("profileServicesEmpty");
+    if (!listEl || !emptyEl) return;
+
+    listEl.innerHTML = "";
+
+    // Determine the current user ID from shared helpers
+    const hasGetUserId = typeof window.getUserId === "function";
+    const userId = hasGetUserId ? window.getUserId() : "";
+
+    if (!userId) {
+      // We can’t tell who this is – don’t hit the API, just show a clear message
+      emptyEl.classList.remove("is-hidden");
+      emptyEl.textContent =
+        "Could not determine your account. Please log in again.";
+      return;
+    }
+
+    // Show a small “loading” message while we fetch
+    emptyEl.classList.remove("is-hidden");
+    emptyEl.textContent = "Loading your services…";
+
+    let services = [];
+    try {
+      let payload;
+
+      if (typeof window.apiFetch === "function") {
+        // Ask the API only for this user’s services
+        payload = await window.apiFetch(
+          `services?userId=${encodeURIComponent(userId)}&limit=50&sort=newest`
+        );
+      } else {
+        const baseUrl = window.API_URL || "";
+        const res = await fetch(
+          baseUrl +
+            `/services?userId=${encodeURIComponent(userId)}&limit=50&sort=newest`
+        );
+        payload = await res.json();
       }
 
-      /* Sidebar */
-      .sidebar {
-        border-radius: var(--radius-xl);
-        border: 1px solid var(--border-subtle);
-        background: rgba(15, 23, 42, 0.96);
-        padding: 14px 12px 16px;
+      // Normalise API shapes: array, {data: [...]}, {services: [...]}, {data: {services: [...]}}
+      if (Array.isArray(payload)) {
+        services = payload;
+      } else if (payload && Array.isArray(payload.data)) {
+        services = payload.data;
+      } else if (payload && Array.isArray(payload.services)) {
+        services = payload.services;
+      } else if (payload && payload.data && Array.isArray(payload.data.services)) {
+        services = payload.data.services;
       }
 
-      .sidebar-title {
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--text-muted);
-        margin: 0 0 10px;
+      // Extra safety: client-side filter so *only* this user’s services show,
+      // even if the backend accidentally sends more.
+      const uidStr = String(userId);
+      services = services.filter((svc) => {
+        const svcUserId =
+          svc.userId ??
+          svc.UserId ??
+          (svc.user && (svc.user.id ?? svc.user.userId));
+        return String(svcUserId) === uidStr;
+      });
+    } catch (err) {
+      console.error("Failed to load services on profile page:", err);
+
+      const status = err && err.status ? err.status : null;
+      if (status === 401 || status === 403) {
+        // Token likely expired – clear it so the next login is clean
+        try {
+          if (typeof window.clearToken === "function") window.clearToken();
+          if (typeof window.clearUserId === "function") window.clearUserId();
+        } catch {}
+
+        emptyEl.classList.remove("is-hidden");
+        emptyEl.textContent =
+          "Your session has expired. Please log in again to see your services.";
+      } else {
+        emptyEl.classList.remove("is-hidden");
+        emptyEl.textContent =
+          "Could not load your services right now. Please try again.";
       }
+      return;
+    }
 
-      .nav-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
+    if (!services.length) {
+      // No services for this account yet
+      emptyEl.classList.remove("is-hidden");
+      emptyEl.textContent =
+        "You don’t have any services yet. Create one to start attracting clients.";
+      listEl.innerHTML = "";
+      return;
+    }
 
-      .nav-link {
-        display: block;
-        padding: 8px 10px;
-        border-radius: 999px;
-        font-size: 0.9rem;
-        text-decoration: none;
-        color: var(--text-main);
-        border: 1px solid transparent;
-        background: transparent;
-        transition: background 0.15s ease, border-color 0.15s ease,
-          transform 0.1s ease;
-      }
+    // We have services – hide the empty text
+    emptyEl.classList.add("is-hidden");
+    listEl.innerHTML = "";
 
-      .nav-link:hover {
-        background: rgba(15, 23, 42, 0.9);
-        border-color: rgba(55, 65, 81, 0.9);
-      }
+    services.forEach((svc) => {
+      const card = document.createElement("div");
+      card.className = "profile-service-card";
 
-      .nav-link--active {
-        background: var(--accent-soft);
-        border-color: rgba(59, 130, 246, 0.8);
-        color: #bfdbfe;
-      }
+      const titleDiv = document.createElement("div");
+      titleDiv.className = "profile-service-title";
+      titleDiv.textContent = svc.title || "Untitled service";
+      card.appendChild(titleDiv);
 
-      .nav-link--danger {
-        color: #fecaca;
-      }
+      const metaDesc = document.createElement("div");
+      metaDesc.className = "profile-service-meta";
+      metaDesc.textContent = svc.description || "";
+      card.appendChild(metaDesc);
 
-      /* Main content */
-      .content-column {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-      }
+      const metaPrice = document.createElement("div");
+      metaPrice.className = "profile-service-meta";
+      const rawPrice = svc.price ?? 0;
+      const priceNum = Number(rawPrice);
+      const priceText = Number.isFinite(priceNum)
+        ? priceNum.toLocaleString()
+        : String(rawPrice);
+      metaPrice.textContent = `Price: $${priceText}`;
+      card.appendChild(metaPrice);
 
-      .card {
-        border-radius: var(--radius-xl);
-        border: 1px solid var(--border-subtle);
-        background: rgba(15, 23, 42, 0.96);
-        padding: 18px 16px 20px;
-      }
+      listEl.appendChild(card);
+    });
+  }
 
-      .profile-row {
-        margin-top: 8px;
-        margin-bottom: 6px;
-      }
-
-      .profile-label {
-        font-size: 0.78rem;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: var(--text-muted);
-      }
-
-      .profile-value {
-        font-size: 0.95rem;
-        font-weight: 500;
-      }
-
-      .btn-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 10px;
-      }
-
-      .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0.55rem 0.95rem;
-        border-radius: 999px;
-        font-size: 0.88rem;
-        font-weight: 600;
-        cursor: pointer;
-        border: none;
-        text-decoration: none;
-      }
-
-      .btn-primary {
-        background: linear-gradient(135deg, #3b82f6, #22c55e);
-        color: #020617;
-      }
-
-      .btn-primary:hover {
-        filter: brightness(1.06);
-      }
-
-      .btn-secondary {
-        background: rgba(15, 23, 42, 0.9);
-        color: var(--text-main);
-        border: 1px solid rgba(55, 65, 81, 0.9);
-      }
-
-      .btn-secondary:hover {
-        background: rgba(15, 23, 42, 1);
-      }
-
-      .services-empty {
-        margin-top: 6px;
-        padding: 0.65rem 0.75rem;
-        border-radius: 0.9rem;
-        border: 1px solid rgba(55, 65, 81, 0.9);
-        background: #020617;
-        font-size: 0.85rem;
-        color: var(--text-muted);
-      }
-
-      .profile-footer {
-        text-align: center;
-        margin-top: 18px;
-        font-size: 0.8rem;
-        color: #6b7280;
-      }
-
-      .is-hidden {
-        display: none !important;
-      }
-
-      .profile-edit {
-        margin-top: 14px;
-        padding-top: 12px;
-        border-top: 1px solid rgba(148, 163, 184, 0.4);
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-
-      .profile-edit-row {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-
-      .profile-edit-label {
-        font-size: 0.78rem;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: var(--text-muted);
-      }
-
-      .profile-edit-input,
-      .profile-edit-textarea {
-        width: 100%;
-        box-sizing: border-box;
-        padding: 8px 10px;
-        border-radius: 8px;
-        border: 1px solid #374151;
-        background: #020617;
-        color: var(--text-main);
-        font-family: inherit;
-        font-size: 0.95rem;
-      }
-
-      .profile-edit-input:focus,
-      .profile-edit-textarea:focus {
-        outline: none;
-        border-color: var(--accent);
-        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
-      }
-
-      .profile-edit-hint {
-        margin: 0;
-        font-size: 0.8rem;
-        color: var(--text-muted);
-      }
-
-      .profile-edit-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 4px;
-      }
-
-      .btn-muted {
-        background: transparent;
-        color: var(--text-muted);
-        border: 1px solid rgba(148, 163, 184, 0.7);
-      }
-
-      .btn-muted:hover {
-        background: rgba(15, 23, 42, 0.9);
-      }
-
-      .service-panel {
-        margin-top: 14px;
-        padding-top: 12px;
-        border-top: 1px solid rgba(148, 163, 184, 0.4);
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-
-      /* Profile services list */
-      #profileServicesList {
-        margin-top: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      .profile-service-card {
-        border-radius: 0.75rem;
-        border: 1px solid rgba(55, 65, 81, 0.9);
-        background: #020617;
-        padding: 10px 12px;
-        font-size: 0.9rem;
-      }
-
-      .profile-service-title {
-        font-weight: 600;
-        margin-bottom: 4px;
-      }
-
-      .profile-service-meta {
-        font-size: 0.83rem;
-        color: #9ca3af;
-      }
-    </style>
-  </head>
-
-  <body>
-    <div class="profile-wrapper">
-      <header class="profile-header">
-        <a href="index.html" class="profile-brand">
-          <span class="profile-dot"></span>
-          <span>CodeCrowds</span>
-        </a>
-
-        <div class="profile-user-pill">
-          <div class="profile-avatar" id="profileAvatar">U</div>
-          <span class="profile-email" id="profileEmail">you@example.com</span>
-        </div>
-      </header>
-
-      <div class="profile-layout">
-        <!-- SIDEBAR NAV -->
-        <aside class="sidebar">
-          <p class="sidebar-title">Dashboard</p>
-          <ul class="nav-list">
-            <li><a href="index.html" class="nav-link">Home</a></li>
-            <li><a href="profile.html" class="nav-link nav-link--active">Profile</a></li>
-            <li><a href="services.html" class="nav-link">Services</a></li>
-            <li><a href="messages.html" class="nav-link">Messages</a></li>
-            <li><a href="settings.html" class="nav-link">Settings</a></li>
-            <li><a href="index.html" class="nav-link nav-link--danger">Logout</a></li>
-          </ul>
-        </aside>
-
-        <!-- MAIN CONTENT -->
-        <main class="content-column">
-          <!-- Profile card -->
-          <section class="card">
-            <!-- VIEW MODE -->
-            <div id="profileView">
-              <div class="profile-row">
-                <div class="profile-label">Display name</div>
-                <div class="profile-value" id="profileName">New developer</div>
-              </div>
-
-              <div class="profile-row">
-                <div class="profile-label">Email</div>
-                <div class="profile-value" id="profileEmailMain">you@example.com</div>
-              </div>
-
-              <div class="profile-row">
-                <div class="profile-label">Description</div>
-                <div class="profile-value" id="profileDescription">
-                  Write a short bio so clients know what you do.
-                </div>
-              </div>
-
-              <div class="profile-row">
-                <div class="profile-label">Account type</div>
-                <div class="profile-value">Free user</div>
-              </div>
-
-              <div class="btn-row">
-                <button type="button" class="btn btn-primary" id="editProfileBtn">
-                  Edit Profile
-                </button>
-              </div>
-            </div>
-
-            <!-- EDIT MODE (hidden initially) -->
-            <form id="profileEditForm" class="profile-edit is-hidden">
-              <div class="profile-edit-row">
-                <label for="editDisplayName" class="profile-edit-label">Display name</label>
-                <input
-                  type="text"
-                  id="editDisplayName"
-                  class="profile-edit-input"
-                  placeholder="Your display name"
-                  maxlength="64"
-                />
-              </div>
-
-              <div class="profile-edit-row">
-                <label for="editEmail" class="profile-edit-label">Email</label>
-                <input
-                  type="email"
-                  id="editEmail"
-                  class="profile-edit-input"
-                  placeholder="you@example.com"
-                  required
-                />
-              </div>
-
-              <div class="profile-edit-row">
-                <label for="editDescription" class="profile-edit-label">Description</label>
-                <textarea
-                  id="editDescription"
-                  class="profile-edit-textarea"
-                  rows="4"
-                  placeholder="Tell clients what you do, your skills, and what makes you great to work with."
-                ></textarea>
-                <p class="profile-edit-hint">
-                  This appears on your public profile. Keep it short and clear.
-                </p>
-              </div>
-
-              <div class="profile-edit-actions">
-                <button type="submit" class="btn btn-primary">Save changes</button>
-                <button type="button" class="btn btn-muted" id="cancelEditBtn">
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </section>
-
-          <!-- Services card -->
-          <section class="card">
-            <h2>Your services</h2>
-            <p>Once you start posting, your services will appear here.</p>
-
-            <!-- Empty state -->
-            <div id="profileServicesEmpty" class="services-empty">
-              You don’t have any services yet. Create one to start attracting clients.
-            </div>
-
-            <!-- Filled by profile.js -->
-            <div id="profileServicesList"></div>
-
-            <!-- Create Service button -->
-            <div class="btn-row">
-              <button type="button" class="btn btn-primary" id="createServiceBtn">
-                Create Service
-              </button>
-            </div>
-
-            <!-- Create Service dropdown form -->
-            <form id="createServiceForm" class="service-panel is-hidden">
-              <div class="profile-edit-row">
-                <label for="serviceTitle" class="profile-edit-label">Service title</label>
-                <input
-                  type="text"
-                  id="serviceTitle"
-                  class="profile-edit-input"
-                  placeholder="I will build your website"
-                  maxlength="100"
-                  required
-                />
-              </div>
-
-              <div class="profile-edit-row">
-                <label for="servicePrice" class="profile-edit-label">Price (USD)</label>
-                <input
-                  type="number"
-                  id="servicePrice"
-                  class="profile-edit-input"
-                  placeholder="50"
-                  min="5"
-                  step="1"
-                  required
-                />
-                <p class="profile-edit-hint">
-                  You can adjust this later from the Services page.
-                </p>
-              </div>
-
-              <div class="profile-edit-row">
-                <label for="serviceDescription" class="profile-edit-label">Description</label>
-                <textarea
-                  id="serviceDescription"
-                  class="profile-edit-textarea"
-                  rows="4"
-                  placeholder="Describe what you will deliver, how long it takes, and what you need from the client."
-                  required
-                ></textarea>
-              </div>
-
-              <div class="profile-edit-actions">
-                <button type="submit" class="btn btn-primary">
-                  Save service
-                </button>
-                <button type="button" class="btn btn-muted" id="cancelCreateServiceBtn">
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </section>
-        </main>
-      </div>
-
-      <footer class="profile-footer">
-        © 2025 CodeCrowds. All rights reserved.
-      </footer>
-    </div>
-
-    <!-- Sets window.API_URL -->
-    <script src="init.js" defer></script>
-
-    <!-- Shared helpers: apiFetch, getUserId, etc. -->
-    <script src="script.js" defer></script>
-
-    <!-- Profile page logic -->
-    <script src="profile.js" defer></script>
-  </body>
-</html>
+  // Initial load
+  loadServicesForProfile();
+});
