@@ -550,7 +550,7 @@
       </footer>
     </div>
 
-           <!-- Sets window.API_URL -->
+    <!-- Sets window.API_URL -->
     <script src="init.js" defer></script>
 
     <!-- Shared helpers: apiFetch, getUserId, etc. -->
@@ -559,19 +559,18 @@
     <!-- Existing profile logic (name/email/etc.) -->
     <script src="profile.js" defer></script>
 
-    <!-- NEW: only responsible for showing user's services -->
+    <!-- Only responsible for showing user's services -->
     <script src="profile-services.js" defer></script>
 
-    <!-- NEW: toggle Create Service dropdown -->
+    <!-- Local inline script JUST for the Create Service dropdown -->
     <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        const createServiceBtn = document.getElementById("createServiceBtn");
-        const createServiceForm = document.getElementById("createServiceForm");
-        const cancelCreateServiceBtn = document.getElementById("cancelCreateServiceBtn");
+      // This runs immediately after the page HTML is parsed
+      const createServiceBtn = document.getElementById("createServiceBtn");
+      const createServiceForm = document.getElementById("createServiceForm");
+      const cancelCreateServiceBtn = document.getElementById("cancelCreateServiceBtn");
 
-        if (!createServiceBtn || !createServiceForm) return;
-
-        // Show/hide the dropdown panel
+      if (createServiceBtn && createServiceForm) {
+        // Toggle show/hide when clicking the main button
         createServiceBtn.addEventListener("click", function () {
           const isHidden = createServiceForm.classList.contains("is-hidden");
 
@@ -583,16 +582,16 @@
             createServiceBtn.textContent = "Create Service";
           }
         });
+      }
 
-        // Cancel button hides the dropdown and resets the form
-        if (cancelCreateServiceBtn) {
-          cancelCreateServiceBtn.addEventListener("click", function () {
-            createServiceForm.classList.add("is-hidden");
-            createServiceBtn.textContent = "Create Service";
-            createServiceForm.reset();
-          });
-        }
-      });
+      if (cancelCreateServiceBtn && createServiceForm && createServiceBtn) {
+        // Hide + reset when clicking "Cancel"
+        cancelCreateServiceBtn.addEventListener("click", function () {
+          createServiceForm.classList.add("is-hidden");
+          createServiceBtn.textContent = "Create Service";
+          createServiceForm.reset();
+        });
+      }
     </script>
   </body>
 </html>
