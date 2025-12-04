@@ -18,7 +18,94 @@ function err(res, message = 'Something went wrong', status = 500, details) {
   return res.status(status).json(out);
 }
 
-/* ------------------------------ LIST ------------------------------- */
+/* ------------------------------------------------------------------ */
+/* Helper to build services list (+ rating summary)                    */
+/* ------------------------------------------------------------------ */
+async function fetchServicesWithRatings(where, limit, offset) {
+  // fetch services with owner
+  const rows = await Service.findAll({
+    where: Object.keys(where || {}).length ? where : undefined,
+    attributes: ['id', 'userId', 'title', 'description', 'price', 'createdAt', 'updatedAt'],
+    include: [{ model: User, as: 'owner', attributes: ['id', 'username'] }],
+    order: [['createdAt', 'DESC']],
+    limit,
+    offset,
+  });
+
+  if (!rows || !rows.length) {
+    return {
+      services: [],
+      hasMore: false,
+      nextOffset: offset,
+    };
+  }
+
+  const serviceIds = rows.map((r) => r.id);
+  console.info(
+    '[services] fetched rows count=%d, serviceIds=%o',
+    rows.length,
+    serviceIds.slice(0, 5),
+  );
+
+  const summaryMap = {};
+
+  try {
+    // ratings table uses camelCase "serviceId"
+    const rowsRaw = await sequelize.query(
+      `SELECT "serviceId",
+              AVG(COALESCE(stars, score))::numeric(10,2) AS "avgRating",
+              COUNT(*)::int AS "ratingsCount"
+       FROM ratings
+       WHERE "serviceId" IS NOT NULL AND "serviceId" IN (:ids)
+       GROUP BY "serviceId"`,
+      { replacements: { ids: serviceIds }, type: QueryTypes.SELECT },
+    );
+
+    console.info('[services] aggregation rowsRaw sample:', (rowsRaw || []).slice(0, 5));
+
+    (rowsRaw || []).forEach((r) => {
+      summaryMap[r.serviceId] = {
+        avgRating:
+          r.avgRating !== null && r.avgRating !== undefined
+            ? Number(Number(r.avgRating).toFixed(2))
+            : null,
+        ratingsCount: Number(r.ratingsCount || 0),
+      };
+    });
+  } catch (e) {
+    console.info(
+      'Ratings aggregation skipped or failed:',
+      e && e.message ? e.message : e,
+    );
+  }
+
+  const services = rows.map((s) => {
+    const sum = summaryMap[s.id] || { avgRating: null, ratingsCount: 0 };
+    return {
+      id: s.id,
+      title: s.title,
+      description: s.description,
+      price: s.price,
+      owner: s.owner || null,
+      user: s.owner || null,
+      userId: s.userId,
+      avgRating: sum.avgRating,
+      ratingsCount: sum.ratingsCount,
+      createdAt: s.createdAt,
+      updatedAt: s.updatedAt,
+    };
+  });
+
+  const hasMore = rows.length >= limit;
+
+  return {
+    services,
+    hasMore,
+    nextOffset: offset + rows.length,
+  };
+}
+
+/* ------------------------------ LIST (all) ------------------------------- */
 router.get(
   '/',
   [
@@ -38,80 +125,8 @@ router.get(
       const where = {};
       if (req.query.userId) where.userId = Number(req.query.userId);
 
-      // fetch services with owner
-      const rows = await Service.findAll({
-        where: Object.keys(where).length ? where : undefined,
-        attributes: ['id', 'userId', 'title', 'description', 'price', 'createdAt', 'updatedAt'],
-        include: [{ model: User, as: 'owner', attributes: ['id', 'username'] }],
-        order: [['createdAt', 'DESC']],
-        limit,
-        offset,
-      });
-
-      if (!rows || !rows.length)
-        return ok(res, { services: [], hasMore: false, nextOffset: offset });
-
-      // Try raw aggregation using COALESCE(stars, score).
-      // Use DB column names (camelCase) and alias to serviceId for JS code.
-      const serviceIds = rows.map((r) => r.id);
-      console.info(
-        '[services] fetched rows count=%d, serviceIds=%o',
-        rows.length,
-        serviceIds.slice(0, 5),
-      );
-      const summaryMap = {};
-
-      try {
-        // NOTE: ratings table columns use camelCase ("serviceId"). Alias to "serviceId"
-        const rowsRaw = await sequelize.query(
-          `SELECT "serviceId",
-                  AVG(COALESCE(stars, score))::numeric(10,2) AS "avgRating",
-                  COUNT(*)::int AS "ratingsCount"
-           FROM ratings
-           WHERE "serviceId" IS NOT NULL AND "serviceId" IN (:ids)
-           GROUP BY "serviceId"`,
-          { replacements: { ids: serviceIds }, type: QueryTypes.SELECT },
-        );
-
-        console.info('[services] aggregation rowsRaw sample:', (rowsRaw || []).slice(0, 5));
-
-        (rowsRaw || []).forEach((r) => {
-          summaryMap[r.serviceId] = {
-            avgRating:
-              r.avgRating !== null && r.avgRating !== undefined
-                ? Number(Number(r.avgRating).toFixed(2))
-                : null,
-            ratingsCount: Number(r.ratingsCount || 0),
-          };
-        });
-      } catch (e) {
-        // If raw aggregation fails because column doesn't exist (or other DB issue),
-        // we continue without summaries (avgRating=null) and log the error for debugging.
-        console.info(
-          'Ratings aggregation skipped or failed (no service-level ratings or DB schema mismatch):',
-          e && e.message ? e.message : e,
-        );
-      }
-
-      const services = rows.map((s) => {
-        const sum = summaryMap[s.id] || { avgRating: null, ratingsCount: 0 };
-        return {
-          id: s.id,
-          title: s.title,
-          description: s.description,
-          price: s.price,
-          owner: s.owner || null,
-          user: s.owner || null,
-          userId: s.userId,
-          avgRating: sum.avgRating,
-          ratingsCount: sum.ratingsCount,
-          createdAt: s.createdAt,
-          updatedAt: s.updatedAt,
-        };
-      });
-
-      const hasMore = rows.length >= limit;
-      return ok(res, { services, hasMore, nextOffset: offset + rows.length });
+      const result = await fetchServicesWithRatings(where, limit, offset);
+      return ok(res, result);
     } catch (e) {
       console.error('GET /api/services error:', e && e.stack ? e.stack : e);
       return err(res, 'Failed to load services', 500);
@@ -119,8 +134,37 @@ router.get(
   },
 );
 
-/* ----------------------------- other routes unmodified ------------------------------ */
-// CREATE / GET by ID / UPDATE / DELETE remain unchanged - keep original code below
+/* ------------------------- LIST (current user's) ------------------------- */
+// GET /api/services/mine  -> services for the logged-in user only
+router.get(
+  '/mine',
+  authenticateToken,
+  [
+    query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
+    query('offset').optional().isInt({ min: 0 }).toInt(),
+    query('page').optional().isInt({ min: 1 }).toInt(),
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const limit = req.query.limit ?? 20;
+      const page = req.query.page;
+      const offset =
+        typeof page === 'number' ? (Math.max(1, page) - 1) * limit : (req.query.offset ?? 0);
+
+      const userId = Number(req.user.id);
+      const where = { userId };
+
+      const result = await fetchServicesWithRatings(where, limit, offset);
+      return ok(res, result);
+    } catch (e) {
+      console.error('GET /api/services/mine error:', e && e.stack ? e.stack : e);
+      return err(res, 'Failed to load your services', 500);
+    }
+  },
+);
+
+/* --------------------------- CREATE / READ etc. -------------------------- */
 
 router.post(
   '/',
