@@ -50,7 +50,6 @@
           #0a2450 35%,
           #1370ff 100%
         );
-        /* removed background-attachment: fixed so it stretches with content */
         color: var(--text-main);
       }
 
@@ -185,11 +184,13 @@
         background: transparent;
       }
 
+      /* MAIN CARD – glassy so gradient shows behind */
       .card {
         border-radius: var(--radius-xl);
         border: 1px solid var(--border-subtle);
-        /* slightly transparent so gradient still glows through a bit */
-        background: rgba(15, 23, 42, 0.94);
+        background: rgba(2, 6, 23, 0.6); /* more transparent */
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
         padding: 18px 16px 20px;
       }
 
@@ -283,10 +284,13 @@
         gap: 16px;
       }
 
+      /* SERVICE CARDS – also semi-transparent */
       .service-card {
         border-radius: 0.9rem;
         border: 1px solid rgba(55, 65, 81, 0.9);
-        background: #020617;
+        background: rgba(2, 6, 23, 0.75);
+        -webkit-backdrop-filter: blur(6px);
+        backdrop-filter: blur(6px);
         padding: 12px 14px;
         font-size: 0.9rem;
         display: flex;
