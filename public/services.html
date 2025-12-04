@@ -32,30 +32,23 @@
         box-sizing: border-box;
       }
 
-      /* Smooth full-page gradient background */
-      html,
       body {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-      }
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
 
-      body {
-        min-height: 100vh;
-        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", sans-serif;
-        /* smooth diagonal gradient using your main brand colors */
-        background: linear-gradient(135deg, #4e54c8, #00aaff);
-        background-attachment: fixed;
-        color: var(--text-main);
-      }
+    /* Smooth gradient dark → blue */
+    background: linear-gradient(180deg, #020617 0%, #0a2450 35%, #1370ff 100%);
+    background-attachment: fixed;
+    color: var(--text-main);
+}
+
 
       .dash-wrapper {
         max-width: 1100px;
         margin: 0 auto;
         padding: 24px 16px 40px;
-        /* let the page gradient show through around the cards */
-        background: transparent;
       }
 
       .dash-header {
@@ -262,46 +255,70 @@
         text-align: center;
         margin-top: 18px;
         font-size: 0.8rem;
-        color: #e5e7eb;
+        color: #6b7280;
       }
 
       /* --------------------------------------------------
-         Services list (matches profile-style cards)
+         NEW: services grid + card styling (small squares)
          -------------------------------------------------- */
+
+      /* Grid instead of one long column */
       #services-list {
         margin-top: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 16px;
       }
 
       .service-card {
-        border-radius: 0.75rem;
+        border-radius: 0.9rem;
         border: 1px solid rgba(55, 65, 81, 0.9);
         background: #020617;
-        padding: 10px 12px;
+        padding: 12px 14px;
         font-size: 0.9rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 150px; /* keeps cards visually similar size */
+        cursor: pointer;
       }
 
       .service-title {
         font-weight: 600;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
         color: #e5e7eb;
       }
 
-      .service-meta {
+      /* First meta block (the description) – truncate to 3 lines */
+      .service-card .service-meta:first-of-type {
         font-size: 0.83rem;
         color: #9ca3af;
+        margin-top: 2px;
+
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        box-orient: vertical;
+        -webkit-line-clamp: 3; /* vendor-prefixed */
+        line-clamp: 3;          /* standard property for compatibility */
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Any additional meta rows (e.g. "Posted by") */
+      .service-card .service-meta:not(:first-of-type) {
+        font-size: 0.8rem;
+        color: #9ca3af;
+        margin-top: 6px;
       }
 
       .service-price {
         font-size: 0.83rem;
         color: #9ca3af;
-        margin-top: 4px;
+        margin-top: 6px;
       }
 
       .service-footer {
-        margin-top: 8px;
+        margin-top: 10px;
         display: flex;
         justify-content: flex-start;
       }
@@ -324,7 +341,7 @@
         filter: brightness(1.06);
       }
 
-      /* Diagnostic + modal kept as-is (hidden by default) */
+      /* Diagnostic banner + modal kept hidden by default */
       #diagBanner {
         display: none;
       }
