@@ -2,14 +2,80 @@
 // Profile page logic: load name/email/description + edit & save using localStorage.
 // Also handles the "Create Service" dropdown form and shows THIS user's services.
 
+/** Small helper: safely read from localStorage */
+function safeGet(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+/** Small helper: safely set localStorage */
+function safeSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * Ensure we know who the current user is.
+ * We read:
+ *   - userId from window.getUserId() (set by script.js at login)
+ *   - canonical username from localStorage.cc_me (the raw user from login)
+ *
+ * We return:
+ *   { myUserId: "3", matchUsername: "qaz" }
+ */
+function ensureUserIdentity() {
+  let myUserId = "";
+  let matchUsername = "";
+
+  try {
+    if (typeof window.getUserId === "function") {
+      myUserId = window.getUserId() || "";
+    }
+  } catch {
+    /* ignore */
+  }
+
+  // This is the raw user JSON we saved at login in script.js
+  const rawMe = safeGet("cc_me");
+  if (rawMe) {
+    try {
+      const me = JSON.parse(rawMe);
+      if (!myUserId && me && me.id != null) {
+        myUserId = String(me.id);
+        if (typeof window.setUserId === "function") {
+          window.setUserId(myUserId);
+        }
+      }
+      // canonical username for matching (does NOT overwrite the display name)
+      if (me && me.username) {
+        matchUsername = String(me.username);
+      }
+      // if email wasn't stored, store it for the profile view
+      if (!safeGet("email") && me && me.email) {
+        safeSet("email", me.email);
+      }
+    } catch (e) {
+      console.warn("[profile] could not parse cc_me:", e);
+    }
+  }
+
+  return { myUserId, matchUsername };
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const DEFAULT_DESCRIPTION =
     "Write a short bio so clients know what you do.";
 
-  // ---- Load profile from localStorage or URL ----
-  const storedUsername = localStorage.getItem("username") || "";
-  const storedEmail = localStorage.getItem("email") || "";
-  const storedDescription = localStorage.getItem("description") || "";
+  // ---- Load profile from localStorage or URL for display ----
+  const storedUsername = safeGet("username") || "";
+  const storedEmail = safeGet("email") || "";
+  const storedDescription = safeGet("description") || "";
 
   const params = new URLSearchParams(window.location.search);
   const paramUsername = params.get("username") || "";
@@ -130,15 +196,11 @@ document.addEventListener("DOMContentLoaded", () => {
         avatarEl.textContent = source[0].toUpperCase();
       }
 
-      // Persist to localStorage
-      try {
-        localStorage.setItem("email", newEmail);
-        const usernameToStore = newName || newEmail.split("@")[0];
-        localStorage.setItem("username", usernameToStore);
-        localStorage.setItem("description", newDescription);
-      } catch (err) {
-        console.warn("Could not save updated profile to localStorage", err);
-      }
+      // Persist to localStorage (for UI only)
+      safeSet("email", newEmail);
+      const usernameToStore = newName || newEmail.split("@")[0];
+      safeSet("username", usernameToStore);
+      safeSet("description", newDescription);
 
       exitEditMode();
     });
@@ -194,12 +256,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const baseUrl = window.API_URL || "";
       const headers = { "Content-Type": "application/json" };
 
-      // Try to attach token if present
+      // Try to attach token if present (cookie also works server-side)
       const token =
-        localStorage.getItem("token") ||
-        localStorage.getItem("authToken") ||
-        localStorage.getItem("jwt") ||
-        localStorage.getItem("accessToken");
+        safeGet("token") ||
+        safeGet("authToken") ||
+        safeGet("jwt") ||
+        safeGet("accessToken");
       if (token) {
         headers.Authorization = "Bearer " + token;
       }
@@ -248,13 +310,14 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const myUserId = typeof window.getUserId === "function"
-      ? window.getUserId()
-      : null;
-    const myUserIdStr = myUserId != null ? String(myUserId) : "";
-    const myUsername = localStorage.getItem("username") || "";
+    const { myUserId, matchUsername } = ensureUserIdentity();
+    const myUserIdStr = myUserId ? String(myUserId) : "";
+    const myMatchUsername = matchUsername || "";
 
-    console.log("[profile] loadMyServices userId, username:", myUserIdStr, myUsername);
+    console.log("[profile] identity for services:", {
+      myUserIdStr,
+      myMatchUsername,
+    });
 
     // Clear current list
     listEl.innerHTML = "";
@@ -297,9 +360,9 @@ document.addEventListener("DOMContentLoaded", () => {
           idCandidates.includes(myUserIdStr);
 
         const matchName =
-          myUsername &&
+          myMatchUsername &&
           usernameCandidates.length > 0 &&
-          usernameCandidates.some((u) => u === myUsername);
+          usernameCandidates.some((u) => u === myMatchUsername);
 
         return matchId || matchName;
       });
