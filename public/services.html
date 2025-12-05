@@ -373,7 +373,7 @@
     </style>
   </head>
 
-  <!-- NOTE: added class="services-page" -->
+  <!-- NOTE: class="services-page" -->
   <body class="services-page">
     <div id="diagBanner"><span id="diagMsg"></span></div>
 
@@ -384,7 +384,7 @@
           <span>CodeCrowds</span>
         </a>
 
-        <!-- Top-right chip driven by script.js (username instead of email) -->
+        <!-- Top-right chip driven by script.js -->
         <div class="user-pill">
           <div class="user-avatar" id="topUserAvatar">U</div>
           <span class="user-email" id="topUserEmail">you@example.com</span>
@@ -397,11 +397,7 @@
           <p class="sidebar-title">Dashboard</p>
           <ul class="nav-list">
             <li><a href="index.html" class="nav-link">Home</a></li>
-            <li>
-              <a href="profile.html" class="nav-link" id="sidebarProfileLink">
-                Profile
-              </a>
-            </li>
+            <li><a href="profile.html" class="nav-link">Profile</a></li>
             <li>
               <a href="services.html" class="nav-link nav-link--active">
                 Services
@@ -458,13 +454,11 @@
               >
                 Refresh
               </button>
-              <button
-                type="button"
-                id="backToProfileBtn"
-                class="btn btn-ghost"
-              >
+
+              <!-- 🔹 This is now a plain link, no JS needed -->
+              <a href="profile.html" class="btn btn-ghost">
                 Back to Profile
-              </button>
+              </a>
             </div>
           </section>
         </main>
@@ -516,38 +510,5 @@
 
     <!-- Toast -->
     <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
-
-    <!-- Back to Profile wiring: use current username from localStorage -->
-    <script>
-      (function () {
-        function safeGet(key) {
-          try {
-            return localStorage.getItem(key);
-          } catch {
-            return null;
-          }
-        }
-
-        const username = (safeGet("username") || "").trim();
-
-        // If we have a username, use ?username=... so it goes to that user's profile
-        const profileUrl = username
-          ? `profile.html?username=${encodeURIComponent(username)}`
-          : "profile.html";
-
-        const backBtn = document.getElementById("backToProfileBtn");
-        const sidebarProfileLink = document.getElementById("sidebarProfileLink");
-
-        if (backBtn) {
-          backBtn.addEventListener("click", () => {
-            window.location.href = profileUrl;
-          });
-        }
-
-        if (sidebarProfileLink) {
-          sidebarProfileLink.href = profileUrl;
-        }
-      })();
-    </script>
   </body>
 </html>
