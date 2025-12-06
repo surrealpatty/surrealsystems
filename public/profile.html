@@ -43,13 +43,13 @@
         color: var(--text-main);
       }
 
-      /* ===== DARK MODE (current look) ===== */
+      /* ===== DARK MODE ===== */
       body.profile-dark {
         background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
         color: var(--text-main);
       }
 
-      /* ===== LIGHT MODE (bright, clean) ===== */
+      /* ===== LIGHT MODE ===== */
       body.profile-light {
         background: radial-gradient(
           circle at top,
@@ -465,7 +465,7 @@
         color: #fecaca;
       }
 
-      /* simple toggle switch */
+      /* simple toggle switch (shared with other pages) */
       .switch {
         position: relative;
         display: inline-block;
@@ -835,7 +835,7 @@
     <!-- Profile page logic -->
     <script src="profile.js" defer></script>
 
-    <!-- Light / dark toggle script (profile-only) -->
+    <!-- Light / dark toggle script (shared storage key) -->
     <script>
       (function () {
         const STORAGE_KEY = "codecrowds-profile-theme";
@@ -861,8 +861,8 @@
           }
         }
 
-        // Initial theme: saved or dark by default
-        const saved = localStorage.getItem(STORAGE_KEY) || "dark";
+        // Initial theme: saved or LIGHT by default
+        const saved = localStorage.getItem(STORAGE_KEY) || "light";
         applyTheme(saved);
 
         if (toggle) {
