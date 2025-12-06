@@ -5,21 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Services – CodeCrowds</title>
 
-    <!-- Global styles -->
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="services.css" />
 
-    <!-- Init MUST run before script.js so API_URL is set -->
     <script src="init.js" defer></script>
-    <!-- Shared helpers (apiFetch, topUser chip, etc.) -->
     <script src="script.js" defer></script>
-    <!-- Page-specific JS -->
     <script src="services.js" defer></script>
 
     <style>
       :root {
-        --bg: #020617;
-        --bg-card: #020617;
         --border-subtle: #1f2937;
         --accent: #3b82f6;
         --accent-soft: rgba(59, 130, 246, 0.12);
@@ -32,64 +26,27 @@
         box-sizing: border-box;
       }
 
-      html,
-      body {
-        height: 100%;
+      body.dashboard {
         margin: 0;
-        padding: 0;
-      }
-
-      /* BODY: base (font + positioning only) */
-      body.services-page {
+        min-height: 100vh;
         font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
           "Segoe UI", sans-serif;
-        background: transparent !important;
-        position: relative;
       }
 
-      /* DARK MODE text color */
-      body.services-page.profile-dark {
-        color: #e5e7eb;
+      body.dashboard.profile-dark {
+        background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
+        color: var(--text-main);
       }
 
-      /* LIGHT MODE text color */
-      body.services-page.profile-light {
+      body.dashboard.profile-light {
+        background: radial-gradient(circle at top, #eef2ff 0, #e0f2fe 45%, #f9fafb 100%);
         color: #020617;
-      }
-
-      /* FULL-PAGE GRADIENT LAYER (dark mode) */
-      body.services-page.profile-dark::before {
-        content: "";
-        position: fixed;
-        inset: 0;
-        z-index: -1;
-        background: linear-gradient(
-          180deg,
-          #020617 0%,
-          #07152e 40%,
-          #0b2644 100%
-        );
-      }
-
-      /* FULL-PAGE GRADIENT LAYER (light mode) */
-      body.services-page.profile-light::before {
-        content: "";
-        position: fixed;
-        inset: 0;
-        z-index: -1;
-        background: linear-gradient(
-          180deg,
-          #eef2ff 0%,
-          #e0f2fe 40%,
-          #f9fafb 100%
-        );
       }
 
       .dash-wrapper {
         max-width: 1100px;
         margin: 0 auto;
         padding: 24px 16px 40px;
-        background: transparent;
       }
 
       .dash-header {
@@ -104,7 +61,6 @@
         align-items: center;
         gap: 0.5rem;
         text-decoration: none;
-        color: var(--text-main);
         font-weight: 600;
         font-size: 1.1rem;
       }
@@ -123,7 +79,6 @@
         padding: 0.4rem 0.8rem;
         border-radius: 999px;
         border: 1px solid rgba(148, 163, 184, 0.6);
-        background: rgba(15, 23, 42, 0.96);
         font-size: 0.85rem;
       }
 
@@ -139,15 +94,10 @@
         color: #020617;
       }
 
-      .user-email {
-        color: var(--text-main);
-      }
-
       .dash-layout {
         display: grid;
         grid-template-columns: 230px minmax(0, 1fr);
         gap: 20px;
-        background: transparent;
       }
 
       @media (max-width: 820px) {
@@ -156,19 +106,36 @@
         }
       }
 
-      /* Sidebar */
+      /* Sidebar / card shells */
       .sidebar {
         border-radius: var(--radius-xl);
-        border: 1px solid var(--border-subtle);
-        background: rgba(15, 23, 42, 0.96);
         padding: 14px 12px 16px;
+        border: 1px solid var(--border-subtle);
+      }
+
+      .card {
+        border-radius: var(--radius-xl);
+        padding: 18px 16px 20px;
+        border: 1px solid var(--border-subtle);
+      }
+
+      body.profile-dark .sidebar,
+      body.profile-dark .card {
+        background: rgba(15, 23, 42, 0.96);
+        color: var(--text-main);
+      }
+
+      body.profile-light .sidebar,
+      body.profile-light .card {
+        background: #ffffff;
+        color: #111827;
+        border-color: #e2e8f0;
       }
 
       .sidebar-title {
         font-size: 0.85rem;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        color: var(--text-muted);
         margin: 0 0 10px;
       }
 
@@ -187,42 +154,55 @@
         border-radius: 999px;
         font-size: 0.9rem;
         text-decoration: none;
-        color: var(--text-main);
         border: 1px solid transparent;
-        background: transparent;
         transition: background 0.15s ease, border-color 0.15s ease;
       }
 
-      .nav-link:hover {
+      body.profile-dark .dash-brand,
+      body.profile-dark .nav-link,
+      body.profile-dark .user-email {
+        color: var(--text-main);
+      }
+
+      body.profile-light .dash-brand,
+      body.profile-light .nav-link,
+      body.profile-light .user-email {
+        color: #111827;
+      }
+
+      body.profile-dark .nav-link:hover {
         background: rgba(15, 23, 42, 0.9);
         border-color: rgba(55, 65, 81, 0.9);
+      }
+
+      body.profile-light .nav-link:hover {
+        background: #e5edff;
+        border-color: #c7d2fe;
       }
 
       .nav-link--active {
         background: var(--accent-soft);
         border-color: rgba(59, 130, 246, 0.8);
-        color: #bfdbfe;
+      }
+
+      body.profile-light .nav-link--active {
+        background: #e0ecff;
+        border-color: #60a5fa;
+        color: #1d4ed8;
       }
 
       .nav-link--danger {
         color: #fecaca;
       }
 
+      body.profile-light .nav-link--danger {
+        color: #b91c1c;
+      }
+
       .content-column {
         display: flex;
         flex-direction: column;
         gap: 16px;
-        background: transparent;
-      }
-
-      /* MAIN CARD – glassy so gradient shows behind */
-      .card {
-        border-radius: var(--radius-xl);
-        border: 1px solid var(--border-subtle);
-        background: rgba(2, 6, 23, 0.6);
-        -webkit-backdrop-filter: blur(10px);
-        backdrop-filter: blur(10px);
-        padding: 18px 16px 20px;
       }
 
       .card h2 {
@@ -233,7 +213,14 @@
       .card p {
         margin: 0 0 10px;
         font-size: 0.9rem;
+      }
+
+      body.profile-dark .card p {
         color: var(--text-muted);
+      }
+
+      body.profile-light .card p {
+        color: #4b5563;
       }
 
       .controls-row {
@@ -246,16 +233,6 @@
 
       .controls-row .input {
         min-width: 220px;
-      }
-
-      .services-empty {
-        margin-top: 6px;
-        padding: 0.65rem 0.75rem;
-        border-radius: 0.9rem;
-        border: 1px solid rgba(55, 65, 81, 0.9);
-        background: #020617;
-        font-size: 0.85rem;
-        color: var(--text-muted);
       }
 
       .services-actions {
@@ -288,25 +265,25 @@
       }
 
       .btn-ghost {
-        background: rgba(15, 23, 42, 0.9);
-        color: var(--text-main);
         border: 1px solid rgba(55, 65, 81, 0.9);
       }
 
-      .btn-ghost:hover {
-        background: rgba(15, 23, 42, 1);
+      body.profile-dark .btn-ghost {
+        background: rgba(15, 23, 42, 0.9);
+        color: var(--text-main);
+      }
+
+      body.profile-light .btn-ghost {
+        background: #ffffff;
+        color: #374151;
+        border-color: #d1d5db;
       }
 
       .site-footer {
         text-align: center;
         margin-top: 18px;
         font-size: 0.8rem;
-        color: #6b7280;
       }
-
-      /* --------------------------------------------------
-         services grid + card styling
-         -------------------------------------------------- */
 
       #services-list {
         margin-top: 10px;
@@ -317,30 +294,30 @@
 
       .service-card {
         border-radius: 0.9rem;
-        border: 1px solid rgba(55, 65, 81, 0.9);
-        background: rgba(2, 6, 23, 0.75);
-        -webkit-backdrop-filter: blur(6px);
-        backdrop-filter: blur(6px);
         padding: 12px 14px;
         font-size: 0.9rem;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        min-height: 150px;
-        cursor: pointer;
+        border: 1px solid rgba(55, 65, 81, 0.9);
+      }
+
+      body.profile-dark .service-card {
+        background: rgba(2, 6, 23, 0.9);
+        color: #e5e7eb;
+      }
+
+      body.profile-light .service-card {
+        background: #ffffff;
+        border-color: #e2e8f0;
+        color: #111827;
       }
 
       .service-title {
         font-weight: 600;
         margin-bottom: 6px;
-        color: #e5e7eb;
       }
 
       .service-card .service-meta:first-of-type {
         font-size: 0.83rem;
-        color: #9ca3af;
         margin-top: 2px;
-
         display: -webkit-box;
         -webkit-box-orient: vertical;
         box-orient: vertical;
@@ -350,16 +327,20 @@
         text-overflow: ellipsis;
       }
 
-      .service-card .service-meta:not(:first-of-type) {
+      .service-card .service-meta:not(:first-of-type),
+      .service-price {
         font-size: 0.8rem;
-        color: #9ca3af;
         margin-top: 6px;
       }
 
-      .service-price {
-        font-size: 0.83rem;
+      body.profile-dark .service-card .service-meta,
+      body.profile-dark .service-price {
         color: #9ca3af;
-        margin-top: 6px;
+      }
+
+      body.profile-light .service-card .service-meta,
+      body.profile-light .service-price {
+        color: #4b5563;
       }
 
       .service-footer {
@@ -386,15 +367,6 @@
         filter: brightness(1.06);
       }
 
-      #diagBanner {
-        display: none;
-      }
-
-      #messageModal {
-        display: none;
-      }
-
-      /* simple toggle switch (same as profile) */
       .switch {
         position: relative;
         display: inline-block;
@@ -436,101 +408,22 @@
       .switch input:checked + .slider:before {
         transform: translateX(16px);
       }
-
-      /* ================================================
-         LIGHT MODE OVERRIDES (services page)
-         ================================================ */
-
-      /* Make sidebar + cards white in light mode */
-      body.profile-light .sidebar,
-      body.profile-light .card,
-      body.profile-light .services-empty,
-      body.profile-light .service-card {
-        background-color: #ffffff;
-        border-color: #e2e8f0;
-        color: #111827;
-      }
-
-      body.profile-light .services-empty {
-        background-color: #f9fafb;
-        color: #4b5563;
-      }
-
-      body.profile-light .service-title {
-        color: #111827;
-      }
-
-      body.profile-light .service-card .service-meta,
-      body.profile-light .service-price {
-        color: #4b5563;
-      }
-
-      /* Header + user pill text on light */
-      body.profile-light .dash-brand,
-      body.profile-light .user-email {
-        color: #111827;
-      }
-
-      body.profile-light .user-pill {
-        background: #ffffff;
-        border-color: #e2e8f0;
-        color: #111827;
-      }
-
-      /* Sidebar links on light */
-      body.profile-light .sidebar-title {
-        color: #6b7280;
-      }
-
-      body.profile-light .nav-link {
-        color: #111827;
-      }
-
-      body.profile-light .nav-link:hover {
-        background-color: #e5edff;
-        border-color: #c7d2fe;
-      }
-
-      body.profile-light .nav-link.nav-link--active {
-        background-color: #e0ecff;
-        border-color: #60a5fa;
-        color: #1d4ed8;
-      }
-
-      body.profile-light .nav-link.nav-link--danger {
-        color: #b91c1c;
-      }
-
-      /* Ghost button on light */
-      body.profile-light .btn-ghost {
-        background: #ffffff;
-        color: #374151;
-        border-color: #d1d5db;
-      }
     </style>
   </head>
 
-  <body class="services-page">
-    <div id="diagBanner"><span id="diagMsg"></span></div>
-
+  <body class="dashboard services-page">
     <div class="dash-wrapper">
       <header class="dash-header">
-        <a href="/" class="dash-brand">
+        <a href="index.html" class="dash-brand">
           <span class="brand-dot"></span>
           <span>CodeCrowds</span>
         </a>
 
-        <!-- Top-right chip driven by script.js -->
         <div class="user-pill">
           <div class="user-avatar" id="topUserAvatar">U</div>
           <span class="user-email" id="topUserEmail">you@example.com</span>
 
-          <!-- Theme toggle -->
-          <label
-            class="switch"
-            aria-label="Toggle dark / light theme"
-            title="Toggle dark / light theme"
-          >
+          <label class="switch" aria-label="Toggle dark / light theme">
             <input type="checkbox" id="themeToggle" />
             <span class="slider"></span>
           </label>
@@ -538,25 +431,19 @@
       </header>
 
       <div class="dash-layout">
-        <!-- SIDEBAR -->
         <aside class="sidebar">
           <p class="sidebar-title">Dashboard</p>
           <ul class="nav-list">
             <li><a href="index.html" class="nav-link">Home</a></li>
             <li><a href="profile.html" class="nav-link">Profile</a></li>
             <li>
-              <a href="services.html" class="nav-link nav-link--active">
-                Services
-              </a>
+              <a href="services.html" class="nav-link nav-link--active">Services</a>
             </li>
             <li><a href="messages.html" class="nav-link">Messages</a></li>
-            <li>
-              <a href="login.html" class="nav-link nav-link--danger">Logout</a>
-            </li>
+            <li><a href="login.html" class="nav-link nav-link--danger">Logout</a></li>
           </ul>
         </aside>
 
-        <!-- MAIN CONTENT -->
         <main class="content-column">
           <section class="card">
             <h2>All services</h2>
@@ -567,18 +454,13 @@
               role="group"
               aria-label="Service search and sorting"
             >
-              <label class="sr-only" for="search">Search services</label>
               <input
                 id="search"
                 class="input"
                 placeholder="Search services…"
-                aria-describedby="searchHelp"
+                aria-label="Search services"
               />
-              <span id="searchHelp" class="sr-only">
-                Type to filter services by title, description, or username
-              </span>
 
-              <label class="sr-only" for="sort">Sort services</label>
               <select id="sort" class="input" title="Sort services">
                 <option value="newest">Newest</option>
                 <option value="priceLow">Price: Low → High</option>
@@ -600,9 +482,7 @@
                 Refresh
               </button>
 
-              <a href="profile.html" class="btn btn-ghost">
-                Back to Profile
-              </a>
+              <a href="profile.html" class="btn btn-ghost">Back to Profile</a>
             </div>
           </section>
         </main>
@@ -613,7 +493,7 @@
       </footer>
     </div>
 
-    <!-- Compose Message Modal (used by services.js) -->
+    <!-- Message modal + toast stay as you had them -->
     <div
       id="messageModal"
       role="dialog"
@@ -652,13 +532,12 @@
       </div>
     </div>
 
-    <!-- Toast -->
     <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
-    <!-- Theme sync script (same key as profile) -->
+    <!-- Shared theme script -->
     <script>
       (function () {
-        const STORAGE_KEY = "codecrowds-profile-theme";
+        const STORAGE_KEY = "codecrowds-theme";
         const body = document.body;
         const toggle = document.getElementById("themeToggle");
         const DARK_CLASS = "profile-dark";
@@ -675,13 +554,10 @@
           }
 
           localStorage.setItem(STORAGE_KEY, mode);
-
-          if (toggle) {
-            toggle.checked = mode === "light";
-          }
+          if (toggle) toggle.checked = mode === "light";
         }
 
-        const saved = localStorage.getItem(STORAGE_KEY) || "light";
+        const saved = localStorage.getItem(STORAGE_KEY) || "dark";
         applyTheme(saved);
 
         if (toggle) {
@@ -691,5 +567,5 @@
         }
       })();
     </script>
-  <body class="services-page profile-light">
+  </body>
 </html>

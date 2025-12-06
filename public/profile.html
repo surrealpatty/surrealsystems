@@ -14,14 +14,12 @@
       rel="stylesheet"
     />
 
-    <!-- Global styles (your main site CSS) -->
+    <!-- Global styles -->
     <link rel="stylesheet" href="style.css" />
 
-    <!-- Page-specific styles (dark + light profile layout) -->
     <style>
       :root {
         --bg: #020617;
-        --bg-card: #020617;
         --border-subtle: #1f2937;
         --accent: #3b82f6;
         --accent-soft: rgba(59, 130, 246, 0.12);
@@ -34,29 +32,21 @@
         box-sizing: border-box;
       }
 
-      /* base body – no background here, we set it with .profile-dark / .profile-light */
-      body {
+      body.dashboard {
         margin: 0;
         min-height: 100vh;
         font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
           "Segoe UI", sans-serif;
-        color: var(--text-main);
       }
 
-      /* ===== DARK MODE ===== */
-      body.profile-dark {
+      /* BACKGROUND + BASE TEXT COLOR */
+      body.dashboard.profile-dark {
         background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
         color: var(--text-main);
       }
 
-      /* ===== LIGHT MODE ===== */
-      body.profile-light {
-        background: radial-gradient(
-          circle at top,
-          #eef2ff 0,
-          #e0f2fe 45%,
-          #f9fafb 100%
-        );
+      body.dashboard.profile-light {
+        background: radial-gradient(circle at top, #eef2ff 0, #e0f2fe 45%, #f9fafb 100%);
         color: #020617;
       }
 
@@ -78,13 +68,8 @@
         align-items: center;
         gap: 0.5rem;
         text-decoration: none;
-        color: var(--text-main);
         font-weight: 600;
         font-size: 1.1rem;
-      }
-
-      body.profile-light .profile-brand {
-        color: #020617;
       }
 
       .profile-dot {
@@ -101,7 +86,6 @@
         padding: 0.4rem 0.8rem;
         border-radius: 999px;
         border: 1px solid rgba(148, 163, 184, 0.6);
-        background: rgba(15, 23, 42, 0.96);
         font-size: 0.85rem;
       }
 
@@ -115,19 +99,6 @@
         justify-content: center;
         font-weight: 600;
         color: #020617;
-      }
-
-      .profile-email {
-        color: var(--text-main);
-      }
-
-      body.profile-light .profile-user-pill {
-        background: #f9fafb;
-        border-color: #e5e7eb;
-      }
-
-      body.profile-light .profile-email {
-        color: #111827;
       }
 
       .profile-layout {
@@ -146,19 +117,56 @@
         }
       }
 
-      /* Sidebar */
+      /* SIDEBAR + CARD – BASE SHAPE ONLY */
       .sidebar {
         border-radius: var(--radius-xl);
-        border: 1px solid var(--border-subtle);
-        background: rgba(15, 23, 42, 0.96);
         padding: 14px 12px 16px;
+        border: 1px solid var(--border-subtle);
+      }
+
+      .card {
+        border-radius: var(--radius-xl);
+        padding: 18px 16px 20px;
+        border: 1px solid var(--border-subtle);
+      }
+
+      /* DARK MODE FILL */
+      body.profile-dark .sidebar,
+      body.profile-dark .card,
+      body.profile-dark .services-empty,
+      body.profile-dark .profile-service-card,
+      body.profile-dark .settings-item {
+        background: rgba(15, 23, 42, 0.96);
+        color: var(--text-main);
+        border-color: var(--border-subtle);
+      }
+
+      body.profile-dark .services-empty,
+      body.profile-dark .profile-service-card,
+      body.profile-dark .settings-item {
+        background: #020617;
+      }
+
+      /* LIGHT MODE FILL */
+      body.profile-light .sidebar,
+      body.profile-light .card,
+      body.profile-light .services-empty,
+      body.profile-light .profile-service-card,
+      body.profile-light .settings-item {
+        background: #ffffff;
+        color: #020617;
+        border-color: #e2e8f0;
+      }
+
+      body.profile-light .services-empty {
+        background: #f9fafb;
+        color: #4b5563;
       }
 
       .sidebar-title {
         font-size: 0.85rem;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        color: var(--text-muted);
         margin: 0 0 10px;
       }
 
@@ -177,35 +185,35 @@
         border-radius: 999px;
         font-size: 0.9rem;
         text-decoration: none;
-        color: var(--text-main);
         border: 1px solid transparent;
-        background: transparent;
-        transition: background 0.15s ease, border-color 0.15s ease,
-          transform 0.1s ease;
+        transition: background 0.15s ease, border-color 0.15s ease;
       }
 
-      .nav-link:hover {
+      body.profile-dark .profile-brand,
+      body.profile-dark .nav-link,
+      body.profile-dark .profile-email {
+        color: var(--text-main);
+      }
+
+      body.profile-light .profile-brand,
+      body.profile-light .nav-link,
+      body.profile-light .profile-email {
+        color: #111827;
+      }
+
+      body.profile-dark .nav-link:hover {
         background: rgba(15, 23, 42, 0.9);
         border-color: rgba(55, 65, 81, 0.9);
-      }
-
-      .nav-link--active {
-        background: var(--accent-soft);
-        border-color: rgba(59, 130, 246, 0.8);
-        color: #bfdbfe;
-      }
-
-      .nav-link--danger {
-        color: #fecaca;
-      }
-
-      body.profile-light .nav-link {
-        color: #111827;
       }
 
       body.profile-light .nav-link:hover {
         background: #e5edff;
         border-color: #c7d2fe;
+      }
+
+      .nav-link--active {
+        background: var(--accent-soft);
+        border-color: rgba(59, 130, 246, 0.8);
       }
 
       body.profile-light .nav-link--active {
@@ -214,22 +222,18 @@
         color: #1d4ed8;
       }
 
+      .nav-link--danger {
+        color: #fecaca;
+      }
+
       body.profile-light .nav-link--danger {
         color: #b91c1c;
       }
 
-      /* Main content */
       .content-column {
         display: flex;
         flex-direction: column;
         gap: 16px;
-      }
-
-      .card {
-        border-radius: var(--radius-xl);
-        border: 1px solid var(--border-subtle);
-        background: rgba(15, 23, 42, 0.96);
-        padding: 18px 16px 20px;
       }
 
       .profile-row {
@@ -241,12 +245,25 @@
         font-size: 0.78rem;
         text-transform: uppercase;
         letter-spacing: 0.06em;
-        color: var(--text-muted);
       }
 
       .profile-value {
         font-size: 0.95rem;
         font-weight: 500;
+      }
+
+      body.profile-dark .profile-label,
+      body.profile-dark .profile-edit-label,
+      body.profile-dark .settings-subtitle,
+      body.profile-dark .profile-edit-hint {
+        color: var(--text-muted);
+      }
+
+      body.profile-light .profile-label,
+      body.profile-light .profile-edit-label,
+      body.profile-light .settings-subtitle,
+      body.profile-light .profile-edit-hint {
+        color: #4b5563;
       }
 
       .btn-row {
@@ -279,41 +296,36 @@
         filter: brightness(1.06);
       }
 
-      .btn-secondary {
-        background: rgba(15, 23, 42, 0.9);
-        color: var(--text-main);
-        border: 1px solid rgba(55, 65, 81, 0.9);
-      }
-
-      .btn-secondary:hover {
-        background: rgba(15, 23, 42, 1);
-      }
-
       .btn-muted {
         background: transparent;
-        color: var(--text-muted);
         border: 1px solid rgba(148, 163, 184, 0.7);
       }
 
-      .btn-muted:hover {
-        background: rgba(15, 23, 42, 0.9);
+      body.profile-dark .btn-muted {
+        color: var(--text-muted);
+      }
+
+      body.profile-light .btn-muted {
+        color: #374151;
+        background: #f9fafb;
+        border-color: #d1d5db;
+      }
+
+      body.profile-light .btn-muted:hover {
+        background: #e5e7eb;
       }
 
       .services-empty {
         margin-top: 6px;
         padding: 0.65rem 0.75rem;
         border-radius: 0.9rem;
-        border: 1px solid rgba(55, 65, 81, 0.9);
-        background: #020617;
         font-size: 0.85rem;
-        color: var(--text-muted);
       }
 
       .profile-footer {
         text-align: center;
         margin-top: 18px;
         font-size: 0.8rem;
-        color: #6b7280;
       }
 
       .is-hidden {
@@ -335,37 +347,34 @@
         gap: 6px;
       }
 
-      .profile-edit-label {
-        font-size: 0.78rem;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: var(--text-muted);
-      }
-
       .profile-edit-input,
       .profile-edit-textarea {
         width: 100%;
-        box-sizing: border-box;
         padding: 8px 10px;
         border-radius: 8px;
         border: 1px solid #374151;
-        background: #020617;
-        color: var(--text-main);
         font-family: inherit;
         font-size: 0.95rem;
+      }
+
+      body.profile-dark .profile-edit-input,
+      body.profile-dark .profile-edit-textarea {
+        background: #020617;
+        color: var(--text-main);
+      }
+
+      body.profile-light .profile-edit-input,
+      body.profile-light .profile-edit-textarea {
+        background: #ffffff;
+        color: #111827;
+        border-color: #d1d5db;
       }
 
       .profile-edit-input:focus,
       .profile-edit-textarea:focus {
         outline: none;
-        border-color: var(--accent);
+        border-color: #3b82f6;
         box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
-      }
-
-      .profile-edit-hint {
-        margin: 0;
-        font-size: 0.8rem;
-        color: var(--text-muted);
       }
 
       .profile-edit-actions {
@@ -384,45 +393,36 @@
         gap: 12px;
       }
 
-      /* Profile services list – grid of compact tiles */
       #profileServicesList {
         margin-top: 12px;
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         gap: 12px;
-        align-items: stretch;
       }
 
       .profile-service-card {
         border-radius: 0.9rem;
-        border: 1px solid rgba(55, 65, 81, 0.9);
-        background: #020617;
         padding: 10px 12px;
         font-size: 0.9rem;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        min-height: 110px;
       }
 
       .profile-service-title {
         font-weight: 600;
         margin-bottom: 4px;
-        line-height: 1.2;
       }
 
       .profile-service-meta {
         font-size: 0.83rem;
+      }
+
+      body.profile-dark .profile-service-meta {
         color: #9ca3af;
       }
 
-      @media (max-width: 640px) {
-        #profileServicesList {
-          grid-template-columns: minmax(0, 1fr);
-        }
+      body.profile-light .profile-service-meta {
+        color: #6b7280;
       }
 
-      /* --------------- Account settings section --------------- */
       .card-settings h2 {
         margin-top: 0;
         margin-bottom: 4px;
@@ -432,7 +432,6 @@
       .settings-subtitle {
         margin: 0 0 12px;
         font-size: 0.9rem;
-        color: var(--text-muted);
       }
 
       .settings-grid {
@@ -444,8 +443,6 @@
 
       .settings-item {
         border-radius: 0.9rem;
-        border: 1px solid rgba(55, 65, 81, 0.9);
-        background: #020617;
         padding: 10px 12px;
         font-size: 0.9rem;
       }
@@ -458,14 +455,17 @@
       .settings-item p {
         margin: 0 0 8px;
         font-size: 0.85rem;
-        color: var(--text-muted);
       }
 
       .settings-item.danger h3 {
         color: #fecaca;
       }
 
-      /* simple toggle switch (shared with other pages) */
+      body.profile-light .settings-item.danger h3 {
+        color: #b91c1c;
+      }
+
+      /* Toggle switch (shared) */
       .switch {
         position: relative;
         display: inline-block;
@@ -507,80 +507,10 @@
       .switch input:checked + .slider:before {
         transform: translateX(16px);
       }
-
-      /* ======= STRONG LIGHT-MODE OVERRIDES (make it truly light) ======= */
-
-      /* White cards & sidebar with dark text */
-      body.profile-light .sidebar,
-      body.profile-light .card,
-      body.profile-light .services-empty,
-      body.profile-light .profile-service-card,
-      body.profile-light .settings-item {
-        background: #ffffff !important;
-        border-color: #e2e8f0 !important;
-        color: #020617 !important;
-      }
-
-      /* Slightly tinted empty state */
-      body.profile-light .services-empty {
-        background: #f9fafb !important;
-        color: #4b5563 !important;
-      }
-
-      /* Labels / muted text darker on light */
-      body.profile-light .profile-label,
-      body.profile-light .profile-edit-label,
-      body.profile-light .settings-subtitle,
-      body.profile-light .profile-edit-hint {
-        color: #4b5563 !important;
-      }
-
-      body.profile-light .profile-service-meta,
-      body.profile-light .settings-item p {
-        color: #6b7280 !important;
-      }
-
-      /* inputs on light mode: white fields, dark text */
-      body.profile-light .profile-edit-input,
-      body.profile-light .profile-edit-textarea,
-      body.profile-light #serviceTitle,
-      body.profile-light #servicePrice,
-      body.profile-light #serviceDescription {
-        background: #ffffff !important;
-        color: #111827 !important;
-        border-color: #d1d5db !important;
-      }
-
-      body.profile-light .profile-edit-input:focus,
-      body.profile-light .profile-edit-textarea:focus {
-        border-color: #3b82f6 !important;
-        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4) !important;
-      }
-
-      /* buttons */
-      body.profile-light .btn-primary {
-        background: linear-gradient(135deg, #3b82f6, #22c55e);
-        color: #f9fafb;
-      }
-
-      body.profile-light .btn-secondary,
-      body.profile-light .btn-muted {
-        background: #f9fafb;
-        color: #374151;
-        border-color: #d1d5db;
-      }
-
-      body.profile-light .btn-muted:hover {
-        background: #e5e7eb;
-      }
-
-      body.profile-light .settings-item.danger h3 {
-        color: #b91c1c;
-      }
     </style>
   </head>
 
-  <body>
+  <body class="dashboard profile-page">
     <div class="profile-wrapper">
       <header class="profile-header">
         <a href="index.html" class="profile-brand">
@@ -588,17 +518,12 @@
           <span>CodeCrowds</span>
         </a>
 
-        <!-- Top-right pill: filled by script.js (username) -->
         <div class="profile-user-pill">
           <div class="profile-avatar" id="topUserAvatar">U</div>
           <span class="profile-email" id="topUserEmail">you@example.com</span>
 
-          <!-- Theme toggle switch (dark / light) -->
-          <label
-            class="switch"
-            aria-label="Toggle dark / light theme"
-            title="Toggle dark / light theme"
-          >
+          <!-- Theme toggle -->
+          <label class="switch" aria-label="Toggle dark / light theme">
             <input type="checkbox" id="themeToggle" />
             <span class="slider"></span>
           </label>
@@ -620,9 +545,7 @@
 
         <!-- MAIN CONTENT -->
         <main class="content-column">
-          <!-- Profile card -->
           <section class="card">
-            <!-- VIEW MODE -->
             <div id="profileView">
               <div class="profile-row">
                 <div class="profile-label">Display name</div>
@@ -653,7 +576,6 @@
               </div>
             </div>
 
-            <!-- EDIT MODE (hidden initially) -->
             <form id="profileEditForm" class="profile-edit is-hidden">
               <div class="profile-edit-row">
                 <label for="editDisplayName" class="profile-edit-label">Display name</label>
@@ -661,7 +583,6 @@
                   type="text"
                   id="editDisplayName"
                   class="profile-edit-input"
-                  placeholder="Your display name"
                   maxlength="64"
                 />
               </div>
@@ -672,7 +593,6 @@
                   type="email"
                   id="editEmail"
                   class="profile-edit-input"
-                  placeholder="you@example.com"
                   required
                 />
               </div>
@@ -683,7 +603,6 @@
                   id="editDescription"
                   class="profile-edit-textarea"
                   rows="4"
-                  placeholder="Tell clients what you do, your skills, and what makes you great to work with."
                 ></textarea>
                 <p class="profile-edit-hint">
                   This appears on your public profile. Keep it short and clear.
@@ -699,28 +618,19 @@
             </form>
           </section>
 
-          <!-- Account settings card (hidden until Edit Profile is active) -->
           <section class="card card-settings is-hidden" id="accountSettingsCard">
             <h2>Account settings</h2>
-            <p class="settings-subtitle">
-              Manage your account preferences and security.
-            </p>
+            <p class="settings-subtitle">Manage your account preferences and security.</p>
 
             <div class="settings-grid">
-              <!-- Change password -->
               <div class="settings-item">
                 <h3>Change password</h3>
                 <p>Update your password to keep your account secure.</p>
-                <button
-                  type="button"
-                  class="btn btn-secondary"
-                  id="changePasswordBtn"
-                >
+                <button type="button" class="btn btn-muted" id="changePasswordBtn">
                   Change password
                 </button>
               </div>
 
-              <!-- Email notifications -->
               <div class="settings-item">
                 <h3>Email notifications</h3>
                 <p>Allow CodeCrowds to email you about new messages and updates.</p>
@@ -730,42 +640,32 @@
                 </label>
               </div>
 
-              <!-- Delete account -->
               <div class="settings-item danger">
                 <h3>Delete account</h3>
                 <p>This will permanently delete your account and all data.</p>
-                <button
-                  type="button"
-                  class="btn btn-muted"
-                  id="deleteAccountBtn"
-                >
+                <button type="button" class="btn btn-muted" id="deleteAccountBtn">
                   Delete account
                 </button>
               </div>
             </div>
           </section>
 
-          <!-- Services card -->
           <section class="card">
             <h2>Your services</h2>
             <p>Once you start posting, your services will appear here.</p>
 
-            <!-- Empty state -->
             <div id="profileServicesEmpty" class="services-empty">
               You don’t have any services yet. Create one to start attracting clients.
             </div>
 
-            <!-- Filled by profile.js -->
             <div id="profileServicesList"></div>
 
-            <!-- Create Service button -->
             <div class="btn-row">
               <button type="button" class="btn btn-primary" id="createServiceBtn">
                 Create Service
               </button>
             </div>
 
-            <!-- Create Service dropdown form -->
             <form id="createServiceForm" class="service-panel is-hidden">
               <div class="profile-edit-row">
                 <label for="serviceTitle" class="profile-edit-label">Service title</label>
@@ -773,7 +673,6 @@
                   type="text"
                   id="serviceTitle"
                   class="profile-edit-input"
-                  placeholder="I will build your website"
                   maxlength="100"
                   required
                 />
@@ -785,14 +684,10 @@
                   type="number"
                   id="servicePrice"
                   class="profile-edit-input"
-                  placeholder="50"
                   min="5"
                   step="1"
                   required
                 />
-                <p class="profile-edit-hint">
-                  You can adjust this later from the Services page.
-                </p>
               </div>
 
               <div class="profile-edit-row">
@@ -803,15 +698,12 @@
                   id="serviceDescription"
                   class="profile-edit-textarea"
                   rows="4"
-                  placeholder="Describe what you will deliver, how long it takes, and what you need from the client."
                   required
                 ></textarea>
               </div>
 
               <div class="profile-edit-actions">
-                <button type="submit" class="btn btn-primary">
-                  Save service
-                </button>
+                <button type="submit" class="btn btn-primary">Save service</button>
                 <button type="button" class="btn btn-muted" id="cancelCreateServiceBtn">
                   Cancel
                 </button>
@@ -826,19 +718,14 @@
       </footer>
     </div>
 
-    <!-- Sets window.API_URL -->
     <script src="init.js" defer></script>
-
-    <!-- Shared helpers: apiFetch, getUserId, etc. -->
     <script src="script.js" defer></script>
-
-    <!-- Profile page logic -->
     <script src="profile.js" defer></script>
 
-    <!-- Light / dark toggle script (shared storage key) -->
+    <!-- Shared theme script -->
     <script>
       (function () {
-        const STORAGE_KEY = "codecrowds-profile-theme";
+        const STORAGE_KEY = "codecrowds-theme"; // new key
         const body = document.body;
         const toggle = document.getElementById("themeToggle");
         const DARK_CLASS = "profile-dark";
@@ -855,14 +742,10 @@
           }
 
           localStorage.setItem(STORAGE_KEY, mode);
-
-          if (toggle) {
-            toggle.checked = mode === "light";
-          }
+          if (toggle) toggle.checked = mode === "light";
         }
 
-        // Initial theme: saved or LIGHT by default
-        const saved = localStorage.getItem(STORAGE_KEY) || "light";
+        const saved = localStorage.getItem(STORAGE_KEY) || "dark";
         applyTheme(saved);
 
         if (toggle) {
@@ -872,5 +755,5 @@
         }
       })();
     </script>
-  <body class="profile-light">
+  </body>
 </html>
