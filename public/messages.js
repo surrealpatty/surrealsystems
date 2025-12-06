@@ -133,8 +133,15 @@
 
     if (kind === "inbox") {
       const fromName = m.sender?.username || "Unknown";
+      // Subject = ad title / subject line if present, otherwise fallback
+      const subject =
+        m.subject && m.subject.trim().length
+          ? m.subject
+          : `New message from ${fromName}`;
+
       article.innerHTML = `
-        <h3>From: ${escapeHtml(fromName)}</h3>
+        <h3 class="message-title">RE: "${escapeHtml(subject)}"</h3>
+        <p class="message-meta">From: ${escapeHtml(fromName)}</p>
         <p>${escapeHtml(m.content || "")}</p>
         <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
         <div class="card-actions">
@@ -147,8 +154,14 @@
       `;
     } else {
       const toName = m.receiver?.username || "Unknown";
+      const subject =
+        m.subject && m.subject.trim().length
+          ? m.subject
+          : `Message to ${toName}`;
+
       article.innerHTML = `
-        <h3>To: ${escapeHtml(toName)}</h3>
+        <h3 class="message-title">RE: "${escapeHtml(subject)}"</h3>
+        <p class="message-meta">To: ${escapeHtml(toName)}</p>
         <p>${escapeHtml(m.content || "")}</p>
         <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
         <div class="card-actions">
@@ -316,7 +329,7 @@
       const conversation = extractMessages(data);
       if (!messagesList) return;
 
-      messagesList.innerHTML = `<h2>Conversation with ${escapeHtml(
+      messagesList.innerHTML = `<h2 class="message-title">Conversation with ${escapeHtml(
         otherUsername,
       )}</h2>`;
 
@@ -331,7 +344,7 @@
           const isMine = Number(m.senderId) === Number(userId);
           const who = isMine ? "You" : m.sender?.username || "Unknown";
           article.innerHTML = `
-            <h3>${escapeHtml(who)}</h3>
+            <h3 class="message-title">${escapeHtml(who)}</h3>
             <p>${escapeHtml(m.content || "")}</p>
             <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
           `;

@@ -161,7 +161,7 @@
       .card {
         border-radius: var(--radius-xl);
         border: 1px solid var(--border-subtle);
-        background: rgba(15, 23, 42, 0.96);
+        background: radial-gradient(circle at top left, #111827, #020617 60%);
         padding: 18px 16px 20px;
       }
 
@@ -206,6 +206,10 @@
       .empty,
       .error {
         font-size: 0.9rem;
+      }
+
+      .loading,
+      .empty {
         color: var(--text-muted);
       }
 
@@ -215,7 +219,7 @@
 
       .timestamp {
         font-size: 0.8rem;
-        color: var(--text-muted);
+        color: #9ca3af;
       }
 
       .conversation-footer {
@@ -236,6 +240,24 @@
         margin-top: 18px;
         font-size: 0.8rem;
         color: #6b7280;
+      }
+
+      /* ---------- Brighter text / subject line ---------- */
+      .message-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #f9fafb;
+        margin: 0 0 4px;
+      }
+
+      .message-meta {
+        font-size: 0.85rem;
+        color: #c4d3ff;
+        margin: 0 0 6px;
+      }
+
+      .card p {
+        color: #d1d5db;
       }
     </style>
   </head>

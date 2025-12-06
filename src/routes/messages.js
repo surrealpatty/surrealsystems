@@ -28,7 +28,15 @@ router.get(
       const offset = req.query.offset ?? 0;
       const rows = await Message.findAll({
         where: { receiverId: req.user.id },
-        attributes: ['id', 'senderId', 'receiverId', 'content', 'createdAt', 'updatedAt'],
+        attributes: [
+          'id',
+          'senderId',
+          'receiverId',
+          'subject',
+          'content',
+          'createdAt',
+          'updatedAt',
+        ],
         include: [{ model: User, as: 'sender', attributes: ['id', 'username'] }],
         order: [['createdAt', 'DESC']],
         limit,
@@ -58,7 +66,15 @@ router.get(
       const offset = req.query.offset ?? 0;
       const rows = await Message.findAll({
         where: { senderId: req.user.id },
-        attributes: ['id', 'senderId', 'receiverId', 'content', 'createdAt', 'updatedAt'],
+        attributes: [
+          'id',
+          'senderId',
+          'receiverId',
+          'subject',
+          'content',
+          'createdAt',
+          'updatedAt',
+        ],
         include: [{ model: User, as: 'receiver', attributes: ['id', 'username'] }],
         order: [['createdAt', 'DESC']],
         limit,
@@ -97,7 +113,15 @@ router.get(
             { senderId: otherId, receiverId: req.user.id },
           ],
         },
-        attributes: ['id', 'senderId', 'receiverId', 'content', 'createdAt', 'updatedAt'],
+        attributes: [
+          'id',
+          'senderId',
+          'receiverId',
+          'subject',
+          'content',
+          'createdAt',
+          'updatedAt',
+        ],
         include: [{ model: User, as: 'sender', attributes: ['id', 'username'] }],
         order: [['createdAt', 'DESC']],
         limit,
@@ -128,7 +152,15 @@ router.get(
       const limit = req.query.limit ?? 20;
       const rows = await Message.findAll({
         where: { receiverId: req.user.id },
-        attributes: ['id', 'senderId', 'receiverId', 'content', 'createdAt', 'updatedAt'],
+        attributes: [
+          'id',
+          'senderId',
+          'receiverId',
+          'subject',
+          'content',
+          'createdAt',
+          'updatedAt',
+        ],
         include: [{ model: User, as: 'sender', attributes: ['id', 'username'] }],
         order: [['createdAt', 'DESC']],
         limit,
@@ -147,7 +179,7 @@ router.post(
   '/',
   authenticateToken,
   [
-    // Frontend sends { recipientId, content }
+    // Frontend sends { recipientId, content, subject? }
     body('recipientId')
       .isInt({ min: 1 })
       .withMessage('Recipient id required'),
@@ -155,13 +187,18 @@ router.post(
       .isString()
       .isLength({ min: 1, max: 5000 })
       .trim(),
+    body('subject')
+      .optional()
+      .isString()
+      .isLength({ max: 255 })
+      .trim(),
   ],
   validate,
   async (req, res) => {
     try {
       // Support both recipientId (current frontend) and "to" if ever needed
       const to = Number(req.body.recipientId ?? req.body.to);
-      const { content } = req.body;
+      const { content, subject } = req.body;
 
       if (!to) {
         return err(res, 'Recipient id required', 400);
@@ -177,11 +214,20 @@ router.post(
       const msg = await Message.create({
         senderId: req.user.id,
         receiverId: to,
+        subject: subject || null, // e.g. "Logo Design for Streamers"
         content,
       });
 
       const msgWithSender = await Message.findByPk(msg.id, {
-        attributes: ['id', 'senderId', 'receiverId', 'content', 'createdAt', 'updatedAt'],
+        attributes: [
+          'id',
+          'senderId',
+          'receiverId',
+          'subject',
+          'content',
+          'createdAt',
+          'updatedAt',
+        ],
         include: [{ model: User, as: 'sender', attributes: ['id', 'username'] }],
       });
 
