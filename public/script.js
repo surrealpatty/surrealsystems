@@ -39,15 +39,13 @@ function setTheme(theme) {
   applyTheme(theme);
 }
 
+/* 👉 DARK IS THE DEFAULT NOW */
 function initThemeFromPreference() {
   let theme = getTheme();
 
+  // If no saved theme, default to dark
   if (theme !== "light" && theme !== "dark") {
-    const prefersDark =
-      typeof window !== "undefined" &&
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
-    theme = prefersDark ? "dark" : "light";
+    theme = "dark";
   }
 
   applyTheme(theme);
