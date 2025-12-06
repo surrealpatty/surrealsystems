@@ -6,6 +6,77 @@
 const TOKEN_KEY = "token";
 const USER_ID_KEY = "userId";
 
+/* =============================== Theme keys ============================== */
+const THEME_KEY = "cc_theme";
+
+/* ---------- Theme helpers ---------- */
+function getTheme() {
+  try {
+    return localStorage.getItem(THEME_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+function applyTheme(theme) {
+  if (theme === "light" || theme === "dark") {
+    document.documentElement.setAttribute("data-theme", theme);
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+  }
+}
+
+function setTheme(theme) {
+  try {
+    if (theme === "light" || theme === "dark") {
+      localStorage.setItem(THEME_KEY, theme);
+    } else {
+      localStorage.removeItem(THEME_KEY);
+    }
+  } catch {
+    // ignore
+  }
+  applyTheme(theme);
+}
+
+function initThemeFromPreference() {
+  let theme = getTheme();
+
+  if (theme !== "light" && theme !== "dark") {
+    const prefersDark =
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    theme = prefersDark ? "dark" : "light";
+  }
+
+  applyTheme(theme);
+}
+
+function initThemeToggle() {
+  const toggle = document.getElementById("themeToggle");
+  if (!toggle) return;
+
+  const saved = getTheme();
+  const currentAttr = document.documentElement.getAttribute("data-theme") || "";
+
+  let isDark =
+    saved === "dark" ||
+    (!saved &&
+      (currentAttr === "dark" ||
+        (!currentAttr &&
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches)));
+
+  toggle.checked = isDark;
+
+  toggle.addEventListener("change", () => {
+    const theme = toggle.checked ? "dark" : "light";
+    setTheme(theme);
+  });
+}
+
+/* ---------- Auth helpers ---------- */
 function getToken() {
   return localStorage.getItem(TOKEN_KEY) || "";
 }
@@ -303,46 +374,6 @@ function initLoginPage() {
   });
 }
 
-/* ================================ Boot ================================== */
-document.addEventListener("DOMContentLoaded", () => {
-  // Hide action rail by default if user not logged in (extra safety for public pages)
-  try {
-    if (!isLoggedIn()) {
-      document
-        .querySelectorAll(".action-rail, .mobile-button-row")
-        .forEach((el) => el && el.classList.add("hidden"));
-    } else {
-      document.body.classList.add("logged-in");
-    }
-  } catch (e) {
-    /* ignore */
-  }
-
-  initLoginPage();
-});
-
-/* ============================== Expose API ============================== */
-try {
-  window.getToken = getToken;
-  window.setToken = setToken;
-  window.clearToken = clearToken;
-  window.getUserId = getUserId;
-  window.setUserId = setUserId;
-  window.clearUserId = clearUserId;
-  window.isLoggedIn = isLoggedIn;
-
-  window.API_BASE = API_BASE;
-  window.apiUrl = apiUrl;
-  window.apiFetch = apiFetch;
-
-  window.setText = setText;
-  window.show = show;
-  window.hide = hide;
-
-  window.getDisplayName = getDisplayName;
-  window.getDescription = getDescription;
-} catch {}
-
 /* =======================================================================
    Top-right user chip: show username instead of email (all pages)
 ======================================================================= */
@@ -437,7 +468,50 @@ async function ccInitTopUserChip() {
   }
 }
 
-// Run this on every page that includes script.js
+/* ================================ Boot ================================== */
 document.addEventListener("DOMContentLoaded", () => {
+  // Theme first so everything paints correctly
+  initThemeFromPreference();
+  initThemeToggle();
+
+  // Hide action rail by default if user not logged in (extra safety for public pages)
+  try {
+    if (!isLoggedIn()) {
+      document
+        .querySelectorAll(".action-rail, .mobile-button-row")
+        .forEach((el) => el && el.classList.add("hidden"));
+    } else {
+      document.body.classList.add("logged-in");
+    }
+  } catch (e) {
+    /* ignore */
+  }
+
+  initLoginPage();
   ccInitTopUserChip();
 });
+
+/* ============================== Expose API ============================== */
+try {
+  window.getToken = getToken;
+  window.setToken = setToken;
+  window.clearToken = clearToken;
+  window.getUserId = getUserId;
+  window.setUserId = setUserId;
+  window.clearUserId = clearUserId;
+  window.isLoggedIn = isLoggedIn;
+
+  window.API_BASE = API_BASE;
+  window.apiUrl = apiUrl;
+  window.apiFetch = apiFetch;
+
+  window.setText = setText;
+  window.show = show;
+  window.hide = hide;
+
+  window.getDisplayName = getDisplayName;
+  window.getDescription = getDescription;
+
+  window.getTheme = getTheme;
+  window.setTheme = setTheme;
+} catch {}

@@ -1,7 +1,7 @@
 // public/profile.js
 // Profile page logic: profile info + edit + create service dropdown + show services.
 
-console.log("[profile] loaded profile.js v5");
+console.log("[profile] loaded profile.js v6");
 
 // Safe localStorage helpers
 function safeGet(key) {
@@ -20,8 +20,7 @@ function safeSet(key, value) {
   }
 }
 
-// Simple JWT decoder (no verification, just reading payload)
-// (kept for compatibility, but backend auth is cookie-based now)
+// Simple JWT decoder (kept for backward-compatibility; backend is cookie-based now)
 function decodeJwt(token) {
   if (!token || typeof token !== "string") return null;
   const parts = token.split(".");
@@ -150,15 +149,20 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   currentUsername = username || currentUsername;
 
-  const avatarEl = document.getElementById("profileAvatar");
-  const emailBadge = document.getElementById("profileEmail");
+  // Grab DOM elements
+  const avatarEl =
+    document.getElementById("profileAvatar") ||
+    document.getElementById("topUserAvatar");
+  const emailBadge =
+    document.getElementById("profileEmail") ||
+    document.getElementById("topUserEmail");
   const emailMain = document.getElementById("profileEmailMain");
   const nameEl = document.getElementById("profileName");
   const descEl = document.getElementById("profileDescription");
 
   // Initial fill from storage (will be overwritten by /users/me)
-  if (email && emailBadge && emailMain) {
-    emailBadge.textContent = email;
+  if (email && emailMain) {
+    if (emailBadge) emailBadge.textContent = email;
     emailMain.textContent = email;
   }
 
@@ -378,7 +382,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const isHidden = createServiceForm.classList.contains("is-hidden");
       console.log("[profile] Create Service clicked, isHidden =", isHidden);
       if (isHidden) {
-        // removed isLoggedIn guard – backend will enforce auth
+        // backend enforces auth; no client-side guard
         showCreateForm();
       } else {
         hideCreateForm();
@@ -397,8 +401,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Handle create service submit
     createServiceForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-
-      // removed isLoggedIn guard – backend will enforce auth
 
       const titleEl = document.getElementById("serviceTitle");
       const priceEl = document.getElementById("servicePrice");
@@ -560,6 +562,16 @@ document.addEventListener("DOMContentLoaded", () => {
         Array.isArray(payload.data.services)
       ) {
         services = payload.data.services;
+      } else if (payload && Array.isArray(payload.rows)) {
+        // ✅ important for /services list route
+        services = payload.rows;
+      } else if (
+        payload &&
+        payload.data &&
+        Array.isArray(payload.data.rows)
+      ) {
+        // ✅ important for ok(res, { rows, count }) pattern
+        services = payload.data.rows;
       }
 
       // --- STRICT client-side filter so ONLY my stuff is kept ---
@@ -568,8 +580,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       services = services.filter((svc) => {
         const svcUserId =
-          svc.userId ?? 
-          svc.UserId ?? 
+          svc.userId ??
+          svc.UserId ??
           (svc.user && (svc.user.id ?? svc.user.userId));
         const svcUsername =
           (svc.user &&
