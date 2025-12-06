@@ -39,17 +39,26 @@
         padding: 0;
       }
 
-      /* BODY: no background here, gradient lives on ::before */
+      /* BODY: base (font + positioning only) */
       body.services-page {
         font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
           "Segoe UI", sans-serif;
         background: transparent !important;
-        color: var(--text-main);
         position: relative;
       }
 
-      /* FULL-PAGE GRADIENT LAYER */
-      body.services-page::before {
+      /* DARK MODE text color */
+      body.services-page.profile-dark {
+        color: #e5e7eb;
+      }
+
+      /* LIGHT MODE text color */
+      body.services-page.profile-light {
+        color: #020617;
+      }
+
+      /* FULL-PAGE GRADIENT LAYER (dark mode) */
+      body.services-page.profile-dark::before {
         content: "";
         position: fixed;
         inset: 0;
@@ -59,6 +68,20 @@
           #020617 0%,
           #07152e 40%,
           #0b2644 100%
+        );
+      }
+
+      /* FULL-PAGE GRADIENT LAYER (light mode) */
+      body.services-page.profile-light::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background: linear-gradient(
+          180deg,
+          #eef2ff 0%,
+          #e0f2fe 40%,
+          #f9fafb 100%
         );
       }
 
@@ -369,6 +392,70 @@
 
       #messageModal {
         display: none;
+      }
+
+      /* ================================================
+         LIGHT MODE OVERRIDES (services page)
+         ================================================ */
+
+      /* Make sidebar + cards white in light mode */
+      body.profile-light .sidebar,
+      body.profile-light .card,
+      body.profile-light .services-empty,
+      body.profile-light .service-card {
+        background-color: #ffffff;
+        border-color: #e2e8f0;
+        color: #111827;
+      }
+
+      body.profile-light .services-empty {
+        background-color: #f9fafb;
+        color: #4b5563;
+      }
+
+      body.profile-light .service-title {
+        color: #111827;
+      }
+
+      body.profile-light .service-card .service-meta,
+      body.profile-light .service-price {
+        color: #4b5563;
+      }
+
+      /* Header + user pill text on light */
+      body.profile-light .dash-brand,
+      body.profile-light .user-email {
+        color: #111827;
+      }
+
+      body.profile-light .user-pill {
+        background: #ffffff;
+        border-color: #e2e8f0;
+        color: #111827;
+      }
+
+      /* Sidebar links on light */
+      body.profile-light .sidebar-title {
+        color: #6b7280;
+      }
+
+      body.profile-light .nav-link {
+        color: #111827;
+      }
+
+      body.profile-light .nav-link:hover {
+        background-color: #e5edff;
+        border-color: #c7d2fe;
+      }
+
+      body.profile-light .nav-link.nav-link--active {
+        background-color: #e0ecff;
+        border-color: #60a5fa;
+        color: #1d4ed8;
+      }
+
+      body.profile-light .nav-link.nav-link--danger {
+        color: #b91c1c;
       }
     </style>
   </head>
