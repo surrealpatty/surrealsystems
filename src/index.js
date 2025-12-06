@@ -64,7 +64,7 @@ const { sequelize, testConnection } = require('./config/database');
 const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/service');
 const ratingRoutes = require('./routes/rating'); // ratings API
-const messagesRoutes = require('./routes/messages'); // messages API (if present)
+const messagesRoutes = require('./routes/messages'); // messages API
 const paymentsRoutes = require('./routes/payments'); // payments + webhook
 
 const app = express();
@@ -122,7 +122,6 @@ if (allowedOrigins.length === 0 && process.env.FRONTEND_URL) {
 }
 
 // In non-production, make local dev easier by allowing common localhost origins.
-// This is only a convenience for development/testing.
 if (process.env.NODE_ENV !== 'production') {
   const locals = [
     'http://localhost:3000',
@@ -182,7 +181,6 @@ app.options(
 );
 
 // set Access-Control-Allow-* headers according to computed allowedOrigins.
-// we normalize the incoming origin before checking to ensure exact-match problems don't occur.
 app.use((req, res, next) => {
   const rawOrigin = req.headers.origin;
   const origin = normalizeOriginString(rawOrigin);
@@ -191,16 +189,13 @@ app.use((req, res, next) => {
   let originAllowed = false;
 
   if (!rawOrigin) {
-    // no Origin header — allow generic request (server-to-server or curl)
     res.setHeader('Access-Control-Allow-Origin', '*');
     originAllowed = true;
   } else if (allowedOrigins.length === 0 && process.env.NODE_ENV !== 'production') {
-    // dev convenience
     res.setHeader('Access-Control-Allow-Origin', rawOrigin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     originAllowed = true;
   } else if (allowedOrigins.includes(origin)) {
-    // allowed: set the header to the *original* raw origin string (preserve case and any port)
     res.setHeader('Access-Control-Allow-Origin', rawOrigin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     originAllowed = true;
@@ -218,8 +213,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// TEMP DEBUG: log incoming origin & path so you can verify the browser-sent origin string.
-// Remove this in production once debugging is done.
+// TEMP DEBUG: log incoming origin & path.
 app.use((req, res, next) => {
   if (req.headers && req.headers.origin) {
     console.info('DEBUG incoming origin:', req.headers.origin, 'path:', req.path);
@@ -238,10 +232,6 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 /* --------------------------- Webhook (raw body) -------------------------- */
-/**
- * Stripe requires the raw request body for signature verification.
- * Register the webhook BEFORE express.json() is used for other routes.
- */
 app.post(
   '/api/payments/webhook',
   express.raw({ type: 'application/json' }),
@@ -262,8 +252,6 @@ app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/messages', messagesRoutes);
-
-// mount payments for non-webhook routes
 app.use('/api/payments', paymentsRoutes);
 
 /* --------------------------- Static Files -------------------------- */
@@ -278,34 +266,24 @@ app.get('*', (req, res, next) => {
 const PORT = process.env.PORT || 10000;
 
 /* ------------------------- App startup (exportable) ----------------------------- */
-/**
- * startServer()
- *  - authenticates DB
- *  - optionally runs sequelize.sync in non-production if DB_ALTER=true (keeps prior behavior)
- *  - when run directly (node src/index.js) it starts listening
- *  - when imported, it performs DB init and returns the app (without starting listener)
- */
 async function startServer() {
-  // Use the testConnection helper which does retries and provides better logs.
+  // DB connection with retries
   await testConnection();
   console.log('✅ Database connected');
 
-  // Keep schema in sync during development only when explicitly enabled.
-  if (process.env.NODE_ENV !== 'production') {
-    const useAlter = process.env.DB_ALTER === 'true' || process.env.DB_SYNC_ALTER === 'true';
-    if (useAlter) {
-      console.log('⚠️ Running sequelize.sync({ alter: true }) - development only');
-    } else {
-      console.log('ℹ️ Skipping sequelize.sync (DB_ALTER not enabled)');
-    }
-    await sequelize.sync({ alter: useAlter });
+  // Decide whether to ALTER or just SYNC, based on env.
+  const useAlter =
+    process.env.NODE_ENV !== 'production' &&
+    (process.env.DB_ALTER === 'true' || process.env.DB_SYNC_ALTER === 'true');
+
+  if (useAlter) {
+    console.log('⚠️ Running sequelize.sync({ alter: true }) - development only');
+    await sequelize.sync({ alter: true });
   } else {
-    console.log(
-      '⚠️ Production mode: skipping sequelize.sync. Apply migrations before starting the app.',
-    );
+    console.log('ℹ️ Running sequelize.sync() to ensure tables exist');
+    await sequelize.sync();
   }
 
-  // If the file was run directly, start listening.
   if (require.main === module) {
     const server = app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
@@ -313,7 +291,6 @@ async function startServer() {
     return server;
   }
 
-  // When imported, return the app for tests or external run.
   return app;
 }
 
@@ -325,10 +302,8 @@ process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
 });
 
-// Export app & startServer for tests / external run
 module.exports = { app, startServer };
 
-// If run directly, call startServer and handle failures by exiting.
 if (require.main === module) {
   startServer().catch((err) => {
     console.error('❌ DB init error:', err && err.message ? err.message : err);
