@@ -3,14 +3,13 @@ const express = require('express');
 const router = express.Router();
 const { Message, User } = require('../models');
 const authenticateToken = require('../middlewares/authenticateToken');
-const { body, query, param } = require('express-validator');
+const { query, param } = require('express-validator');
 const validate = require('../middlewares/validate');
 
 /**
  * Utility helpers
  */
 function ok(res, payload = {}, status = 200) {
-  // Success responses always look like { success: true, ...payload }
   return res.status(status).json({ success: true, ...payload });
 }
 
@@ -42,7 +41,6 @@ router.get(
         include: [
           {
             model: User,
-            // do NOT use aliases to avoid mismatch issues
             attributes: ['id', 'username', 'email'],
           },
         ],
@@ -122,16 +120,14 @@ router.get(
 
       const message = await Message.findOne({
         where: { id },
-        include: [
-          { model: User, attributes: ['id', 'username', 'email'] },
-        ],
+        include: [{ model: User, attributes: ['id', 'username', 'email'] }],
       });
 
       if (!message) {
         return err(res, 'Message not found', 404);
       }
 
-      // (Optional) access control: make sure this user is part of the message
+      // make sure this user is part of the message
       if (
         message.senderId !== req.user.id &&
         message.receiverId !== req.user.id
@@ -147,27 +143,33 @@ router.get(
   }
 );
 
-// POST /api/messages
-// Send a message. We do **manual** validation here instead of express-validator
-// so it plays nicely with the frontend.
+/**
+ * POST /api/messages
+ * Send a message.
+ *
+ * We are flexible with request body field names so the frontend
+ * can send { body }, { content }, { message }, or { text }.
+ */
 router.post('/', authenticateToken, async (req, res) => {
   try {
     const {
       receiverId,
-      subject,
-      body: content,
-      serviceId,
+      body: bodyField,
+      content,
       message,
       text,
+      serviceId,
     } = req.body || {};
 
-    // Be flexible with the body field name
+    // 1) Figure out the message text from any of the possible fields
     const messageBody =
+      (typeof bodyField === 'string' && bodyField.trim()) ||
       (typeof content === 'string' && content.trim()) ||
       (typeof message === 'string' && message.trim()) ||
       (typeof text === 'string' && text.trim()) ||
       '';
 
+    // 2) Validate receiver + text
     if (!receiverId) {
       return err(res, 'receiverId is required', 400);
     }
@@ -180,30 +182,34 @@ router.post('/', authenticateToken, async (req, res) => {
       return err(res, 'You cannot send a message to yourself', 400);
     }
 
+    // 3) Make sure receiver exists
     const receiver = await User.findByPk(receiverId);
     if (!receiver) {
       return err(res, 'Receiver not found', 404);
     }
 
-    const finalSubject =
-      typeof subject === 'string' && subject.trim().length > 0
-        ? subject.trim()
-        : 'New message from CodeCrowds';
-
-    const msg = await Message.create({
+    // 4) Build payload that matches the Message model
+    // Most likely the DB column is called "content".
+    const payload = {
       senderId: req.user.id,
       receiverId,
-      subject: finalSubject,
-      body: messageBody,
-      serviceId: serviceId || null,
-    });
+      content: messageBody, // <– map to `content` column
+    };
+
+    // If your Message model has serviceId, this will be used,
+    // otherwise Sequelize simply ignores it.
+    if (serviceId) {
+      payload.serviceId = serviceId;
+    }
+
+    const msg = await Message.create(payload);
 
     return ok(res, { message: msg }, 201);
   } catch (e) {
     console.error('POST /api/messages error:', e);
-    return err(res, 'Failed to send message');
+    // Send real error message to the client so we can see it in the UI
+    return err(res, e.message || 'Failed to send message');
   }
 });
-
 
 module.exports = router;
