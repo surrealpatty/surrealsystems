@@ -147,14 +147,29 @@ router.post(
   '/',
   authenticateToken,
   [
-    body('to').isInt({ min: 1 }).withMessage('Recipient id required'),
-    body('content').isString().isLength({ min: 1, max: 5000 }).trim(),
+    // Frontend sends { recipientId, content }
+    body('recipientId')
+      .isInt({ min: 1 })
+      .withMessage('Recipient id required'),
+    body('content')
+      .isString()
+      .isLength({ min: 1, max: 5000 })
+      .trim(),
   ],
   validate,
   async (req, res) => {
     try {
-      const { to, content } = req.body;
-      if (Number(to) === Number(req.user.id)) return err(res, 'Cannot message yourself', 400);
+      // Support both recipientId (current frontend) and "to" if ever needed
+      const to = Number(req.body.recipientId ?? req.body.to);
+      const { content } = req.body;
+
+      if (!to) {
+        return err(res, 'Recipient id required', 400);
+      }
+
+      if (to === Number(req.user.id)) {
+        return err(res, 'Cannot message yourself', 400);
+      }
 
       const recipient = await User.findByPk(to, { attributes: ['id'] });
       if (!recipient) return err(res, 'Recipient not found', 404);
@@ -164,7 +179,7 @@ router.post(
         receiverId: to,
         content,
       });
-      // optionally include sender
+
       const msgWithSender = await Message.findByPk(msg.id, {
         attributes: ['id', 'senderId', 'receiverId', 'content', 'createdAt', 'updatedAt'],
         include: [{ model: User, as: 'sender', attributes: ['id', 'username'] }],
