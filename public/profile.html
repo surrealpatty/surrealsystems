@@ -461,6 +461,7 @@
 
       /* ---------------- LIGHT MODE OVERRIDES ---------------- */
 
+      html.light-mode,
       body.light-mode {
         background: radial-gradient(
           circle at top,
@@ -637,13 +638,6 @@
                 <button type="button" class="btn btn-primary" id="editProfileBtn">
                   Edit Profile
                 </button>
-
-                <!-- Second copy of the toggle inside the card if you want it here instead:
-                <label class="switch" aria-label="Toggle dark / light theme" title="Toggle dark / light theme">
-                  <input type="checkbox" id="themeToggleCard" />
-                  <span class="slider"></span>
-                </label>
-                -->
               </div>
             </div>
 
@@ -834,13 +828,16 @@
       (function () {
         const STORAGE_KEY = "codecrowds-profile-theme";
         const body = document.body;
+        const root = document.documentElement;
         const toggle = document.getElementById("themeToggle");
 
         function applyTheme(mode) {
           if (mode === "light") {
             body.classList.add("light-mode");
+            root.classList.add("light-mode");
           } else {
             body.classList.remove("light-mode");
+            root.classList.remove("light-mode");
             mode = "dark";
           }
           localStorage.setItem(STORAGE_KEY, mode);
