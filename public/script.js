@@ -534,3 +534,22 @@ try {
   body.classList.remove("profile-dark", "profile-light");
   body.classList.add(mode === "light" ? "profile-light" : "profile-dark");
 })();
+// ---------------- GLOBAL THEME SYNC (dark / light) ----------------
+(function syncThemeAcrossPages() {
+  const STORAGE_KEY = "codecrowds-profile-theme";
+  const body = document.body;
+  if (!body) return;
+
+  let mode = "dark";
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved === "light" || saved === "dark") {
+      mode = saved;
+    }
+  } catch (e) {
+    // ignore if localStorage not available
+  }
+
+  body.classList.remove("profile-dark", "profile-light");
+  body.classList.add(mode === "light" ? "profile-light" : "profile-dark");
+})();
