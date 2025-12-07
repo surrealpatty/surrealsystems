@@ -468,11 +468,14 @@ async function ccInitTopUserChip() {
   // If there is no top-right chip on this page, do nothing
   if (!avatarEl && !labelEl) return;
 
-  // 1) Prefer the DISPLAY NAME that is already on the profile card
+  // 1) Prefer the DISPLAY NAME that is already on the profile card (if filled)
   let domDisplayName = "";
   const profileNameEl = document.getElementById("profileName");
   if (profileNameEl && profileNameEl.textContent) {
-    domDisplayName = profileNameEl.textContent.trim();
+    const txt = profileNameEl.textContent.trim();
+    if (txt && txt !== "New developer") {
+      domDisplayName = txt;
+    }
   }
 
   // 2) Get the freshest user object (tries /users/me)
@@ -521,7 +524,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   initLoginPage();
+
+  // 🔹 Run once immediately…
   ccInitTopUserChip();
+  // …and again shortly after, so it can see the updated #profileName
+  setTimeout(ccInitTopUserChip, 800);
 });
 
 /* ============================== Expose API ============================== */
