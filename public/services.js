@@ -1,296 +1,327 @@
 // public/services.js
-// All-services page logic: load services, filter/sort, open message modal, send message.
+// Services page logic: load services, filter/sort, and send messages.
 
-console.log("[services] loaded services.js v7");
+(function () {
+  "use strict";
 
-document.addEventListener("DOMContentLoaded", () => {
-  // ---- DOM refs ----
-  const grid = document.getElementById("servicesGrid");
-  const searchInput = document.getElementById("serviceSearch");
-  const categoryFilter = document.getElementById("categoryFilter");
-  const sortSelect = document.getElementById("sortSelect");
-
-  // Message modal elements (from services.html)
-  const msgModal = document.getElementById("msgModal");
-  const msgTitle = document.getElementById("msgTitle");
-  const msgServiceRef = document.getElementById("msgServiceRef");
-  const msgInput = document.getElementById("msgInput");
-  const msgCount = document.getElementById("msgCount");
-  const sendMsgBtn = document.getElementById("sendMsgBtn");
-  const closeMsgBtn = document.getElementById("closeMsgBtn");
-
-  let allServices = [];
-  let currentServiceForMessage = null;
-  let currentSellerForMessage = null;
-
-  // ---------- Small helpers ----------
-
-  function escapeHtml(str) {
-    if (str == null) return "";
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-
-  function formatPrice(price) {
-    if (price == null || Number.isNaN(Number(price))) return "";
-    const num = Number(price);
-    return `$${num.toFixed(2)}`;
-  }
-
-  function showToast(message, type = "info") {
-    if (window.showToast) {
-      window.showToast(message, type);
-    } else {
-      // Fallback if toast helper isn’t available
-      alert(message);
+  // ---------- Safe localStorage helpers ----------
+  function safeGet(key) {
+    try {
+      return window.localStorage.getItem(key);
+    } catch {
+      return null;
     }
   }
 
-  // ---------- Load + render services ----------
+  function getToken() {
+    return safeGet("token"); // may be unused; backend decides auth
+  }
 
+  function getUserId() {
+    return safeGet("userId");
+  }
+
+  // ---------- DOM references ----------
+  let servicesList;
+  let searchInput;
+  let sortSelect;
+  let refreshBtn;
+
+  let messageModal;
+  let messageRecipientSpan;
+  let messageContent;
+  let sendMessageBtn;
+  let cancelMessageBtn;
+  let sendError;
+  let charCount;
+  let toastEl;
+
+  // in-memory services
+  let allServices = [];
+  let currentRecipientId = null;
+  let currentRecipientName = "";
+
+  // ---------- Toast helper ----------
+  function showToast(message) {
+    if (!toastEl) return;
+    toastEl.textContent = message;
+    toastEl.classList.add("show");
+    setTimeout(() => {
+      toastEl.classList.remove("show");
+    }, 2600);
+  }
+
+  // ---------- Services loading / rendering ----------
   async function loadServices() {
-    if (!grid) return;
+    if (!servicesList) return;
 
-    grid.innerHTML =
-      '<div class="services-loading">Loading services…</div>';
+    servicesList.innerHTML =
+      '<p><span class="spinner"></span> Loading services…</p>';
 
     try {
-      // apiFetch is defined in public/script.js
+      // apiFetch is defined in script.js and automatically sends auth (if any)
       const json = await apiFetch("/services");
 
-      // Our backend list route returns { success, rows, count, data: { rows, count } }
-      const rows = Array.isArray(json?.rows)
-        ? json.rows
-        : Array.isArray(json)
-        ? json
-        : [];
+      // Accept either { services: [...] } or { data: [...] }
+      const raw =
+        (Array.isArray(json.services) && json.services) ||
+        (Array.isArray(json.data) && json.data) ||
+        [];
 
-      allServices = rows;
+      allServices = raw;
       renderServices();
     } catch (err) {
-      console.error("[services] failed to load services", err);
-      grid.innerHTML =
-        '<div class="services-error">Could not load services. Please try again.</div>';
+      console.error("Failed to load services:", err);
+      servicesList.innerHTML =
+        "<p>Failed to load services. Please try again.</p>";
     }
   }
 
-  function applyFilters(services) {
-    let out = [...services];
+  function getFilteredAndSortedServices() {
+    const term = (searchInput?.value || "").trim().toLowerCase();
+    const sortBy = sortSelect?.value || "newest";
 
-    const q = (searchInput?.value || "").trim().toLowerCase();
-    if (q) {
-      out = out.filter((svc) => {
+    let list = allServices.slice();
+
+    if (term) {
+      list = list.filter((svc) => {
         const title = (svc.title || "").toLowerCase();
         const desc = (svc.description || "").toLowerCase();
-        return title.includes(q) || desc.includes(q);
+        const userObj = svc.User || svc.user || {};
+        const username = (userObj.username || "").toLowerCase();
+        return (
+          title.includes(term) || desc.includes(term) || username.includes(term)
+        );
       });
     }
 
-    const cat = categoryFilter?.value;
-    if (cat && cat !== "all") {
-      out = out.filter((svc) => (svc.category || "") === cat);
-    }
+    list.sort((a, b) => {
+      if (sortBy === "priceLow") {
+        return (a.price || 0) - (b.price || 0);
+      }
+      if (sortBy === "priceHigh") {
+        return (b.price || 0) - (a.price || 0);
+      }
+      // newest (by createdAt / id as fallback)
+      const aTime = new Date(a.createdAt || 0).getTime() || 0;
+      const bTime = new Date(b.createdAt || 0).getTime() || 0;
+      return bTime - aTime;
+    });
 
-    const sort = sortSelect?.value;
-    if (sort === "price-asc") {
-      out.sort((a, b) => (a.price || 0) - (b.price || 0));
-    } else if (sort === "price-desc") {
-      out.sort((a, b) => (b.price || 0) - (a.price || 0));
-    } else if (sort === "newest") {
-      out.sort((a, b) => {
-        const da = new Date(a.createdAt || 0).getTime();
-        const db = new Date(b.createdAt || 0).getTime();
-        return db - da;
-      });
-    }
-
-    return out;
+    return list;
   }
 
   function renderServices() {
-    if (!grid) return;
+    if (!servicesList) return;
 
-    const list = applyFilters(allServices);
+    const list = getFilteredAndSortedServices();
 
     if (!list.length) {
-      grid.innerHTML =
-        '<div class="services-empty">No services found. Try adjusting your filters.</div>';
+      servicesList.innerHTML =
+        '<div class="services-empty">No services found yet.</div>';
       return;
     }
 
-    const fragments = document.createDocumentFragment();
+    servicesList.innerHTML = "";
 
     list.forEach((svc) => {
+      const userObj = svc.User || svc.user || {};
+      const username = userObj.username || "Unknown user";
+      const ownerId = userObj.id || userObj.userId || svc.userId || null;
+
       const card = document.createElement("article");
       card.className = "service-card";
 
-      const sellerUser =
-        svc.user ||
-        svc.User || // just in case
-        null;
+      const titleEl = document.createElement("h3");
+      titleEl.className = "service-title";
+      titleEl.textContent = svc.title || "Untitled service";
 
-      const sellerName =
-        (sellerUser && (sellerUser.displayName || sellerUser.username)) ||
-        "Unknown user";
+      const descEl = document.createElement("p");
+      descEl.className = "service-meta";
+      descEl.textContent =
+        svc.description || "No description provided for this service.";
 
-      card.innerHTML = `
-        <h3 class="service-title">${escapeHtml(
-          svc.title || "Untitled service"
-        )}</h3>
-        <p class="service-description">${escapeHtml(
-          svc.description || ""
-        )}</p>
+      const postedByEl = document.createElement("p");
+      postedByEl.className = "service-meta";
+      postedByEl.textContent = `Posted by: ${username}`;
 
-        <div class="service-meta">
-          <span class="service-seller">Posted by: ${escapeHtml(
-            sellerName
-          )}</span>
-          ${
-            svc.price != null
-              ? `<span class="service-price">${formatPrice(
-                  svc.price
-                )}</span>`
-              : ""
-          }
-        </div>
-
-        <div class="service-actions">
-          <button type="button" class="btn-outline service-message-btn">
-            Message
-          </button>
-        </div>
-      `;
-
-      const messageBtn = card.querySelector(".service-message-btn");
-      if (messageBtn) {
-        messageBtn.addEventListener("click", () => {
-          openMessageModal(svc, sellerUser, sellerName);
-        });
+      const priceEl = document.createElement("p");
+      priceEl.className = "service-price";
+      if (svc.price != null && svc.price !== "") {
+        priceEl.textContent = `Price: $${svc.price}`;
+      } else {
+        priceEl.textContent = "Price: Not specified";
       }
 
-      fragments.appendChild(card);
-    });
+      const footer = document.createElement("div");
+      footer.className = "service-footer";
 
-    grid.innerHTML = "";
-    grid.appendChild(fragments);
+      const msgBtn = document.createElement("button");
+      msgBtn.type = "button";
+      msgBtn.className = "service-message-btn";
+      msgBtn.textContent = "Message";
+
+      msgBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (!ownerId) {
+          showToast("Cannot determine service owner.");
+          return;
+        }
+        openMessageModal(ownerId, username);
+      });
+
+      footer.appendChild(msgBtn);
+
+      card.appendChild(titleEl);
+      card.appendChild(descEl);
+      card.appendChild(postedByEl);
+      card.appendChild(priceEl);
+      card.appendChild(footer);
+
+      servicesList.appendChild(card);
+    });
   }
 
-  // ---------- Message modal logic ----------
+  // ---------- Message modal ----------
+  function openMessageModal(recipientId, recipientName) {
+    currentRecipientId = recipientId;
+    currentRecipientName = recipientName || "";
 
-  function openMessageModal(service, sellerUser, sellerName) {
-    if (!msgModal || !msgInput || !msgTitle || !msgServiceRef) return;
+    if (messageRecipientSpan) {
+      messageRecipientSpan.textContent = currentRecipientName;
+    }
+    if (messageContent) {
+      messageContent.value = "";
+    }
+    if (charCount) {
+      charCount.textContent = "0 / 2000";
+    }
+    if (sendError) {
+      sendError.hidden = true;
+      sendError.textContent = "";
+    }
 
-    currentServiceForMessage = service || null;
-    currentSellerForMessage = sellerUser || null;
-
-    const displayName =
-      (sellerUser && (sellerUser.displayName || sellerUser.username)) ||
-      sellerName ||
-      "seller";
-
-    msgTitle.textContent = `Message ${displayName}`;
-    msgServiceRef.textContent = `Regarding: "${service?.title || "this service"}"`;
-
-    msgInput.value = "";
-    if (msgCount) msgCount.textContent = "0";
-
-    msgModal.classList.remove("hidden");
-    msgInput.focus();
+    if (messageModal) {
+      messageModal.style.display = "flex";
+      messageModal.setAttribute("aria-hidden", "false");
+    }
   }
 
   function closeMessageModal() {
-    if (!msgModal) return;
-    msgModal.classList.add("hidden");
-    currentServiceForMessage = null;
-    currentSellerForMessage = null;
+    currentRecipientId = null;
+    currentRecipientName = "";
+    if (messageModal) {
+      messageModal.style.display = "none";
+      messageModal.setAttribute("aria-hidden", "true");
+    }
   }
 
   async function handleSendMessage() {
-    if (!currentServiceForMessage || !currentSellerForMessage) {
-      // Nothing selected, just close.
-      closeMessageModal();
+    if (!sendError) return;
+
+    if (!currentRecipientId) {
+      sendError.textContent = "No recipient selected.";
+      sendError.hidden = false;
       return;
     }
 
-    const content = (msgInput?.value || "").trim();
-    if (!content) {
-      showToast("Please write a message before sending.", "error");
+    const bodyText = (messageContent?.value || "").trim();
+    if (!bodyText) {
+      sendError.textContent = "Message cannot be empty.";
+      sendError.hidden = false;
       return;
     }
 
-    if (sendMsgBtn) sendMsgBtn.disabled = true;
+    sendError.hidden = true;
+
+    if (sendMessageBtn) {
+      sendMessageBtn.disabled = true;
+    }
 
     try {
-      await apiFetch("/api/messages", {
+      // IMPORTANT: match backend field names
+      await apiFetch("/messages", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
-          receiverId: currentSellerForMessage.id,
-          serviceId: currentServiceForMessage.id,
-          content,
+          receiverId: currentRecipientId, // backend expects receiverId
+          body: bodyText,                 // backend expects body/message/text
+          subject: "Message about your service",
         }),
       });
 
-      showToast("Message sent!", "success");
+      showToast("Message sent.");
       closeMessageModal();
     } catch (err) {
-      console.error("[services] failed to send message", err);
-      showToast("Sorry, we couldn’t send your message.", "error");
+      console.error("Failed to send message:", err);
+
+      const status = err?.status || err?.responseStatus;
+      const serverMsg =
+        err?.userMessage ||
+        err?.message ||
+        "Something went wrong sending your message.";
+
+      if (status === 401) {
+        // backend says you are not logged in
+        sendError.textContent = "Please log in to send messages.";
+      } else {
+        sendError.textContent = serverMsg;
+      }
+      sendError.hidden = false;
     } finally {
-      if (sendMsgBtn) sendMsgBtn.disabled = false;
+      if (sendMessageBtn) {
+        sendMessageBtn.disabled = false;
+      }
     }
   }
 
-  // ---------- Event wiring ----------
-
-  if (searchInput) {
-    searchInput.addEventListener("input", () => {
-      renderServices();
-    });
-  }
-
-  if (categoryFilter) {
-    categoryFilter.addEventListener("change", () => {
-      renderServices();
-    });
-  }
-
-  if (sortSelect) {
-    sortSelect.addEventListener("change", () => {
-      renderServices();
-    });
-  }
-
-  if (msgInput && msgCount) {
-    msgInput.addEventListener("input", () => {
-      msgCount.textContent = String(msgInput.value.length);
-    });
-  }
-
-  if (closeMsgBtn) {
-    closeMsgBtn.addEventListener("click", closeMessageModal);
-  }
-
-  if (msgModal) {
-    msgModal.addEventListener("click", (evt) => {
-      if (evt.target === msgModal) {
-        // click on dark backdrop closes modal
-        closeMessageModal();
-      }
-    });
-  }
-
-  if (sendMsgBtn) {
-    sendMsgBtn.addEventListener("click", handleSendMessage);
+  function handleCharCount() {
+    if (!messageContent || !charCount) return;
+    const len = messageContent.value.length;
+    charCount.textContent = `${len} / 2000`;
   }
 
   // ---------- Init ----------
+  document.addEventListener("DOMContentLoaded", () => {
+    servicesList = document.getElementById("services-list");
+    searchInput = document.getElementById("search");
+    sortSelect = document.getElementById("sort");
+    refreshBtn = document.getElementById("refreshBtn");
 
-  loadServices();
-});
+    messageModal = document.getElementById("messageModal");
+    messageRecipientSpan = document.getElementById("messageRecipient");
+    messageContent = document.getElementById("messageContent");
+    sendMessageBtn = document.getElementById("sendMessageBtn");
+    cancelMessageBtn = document.getElementById("cancelMessageBtn");
+    sendError = document.getElementById("sendError");
+    charCount = document.getElementById("charCount");
+    toastEl = document.getElementById("toast");
+
+    if (searchInput) {
+      searchInput.addEventListener("input", renderServices);
+    }
+    if (sortSelect) {
+      sortSelect.addEventListener("change", renderServices);
+    }
+    if (refreshBtn) {
+      refreshBtn.addEventListener("click", loadServices);
+    }
+
+    if (messageContent) {
+      messageContent.addEventListener("input", handleCharCount);
+    }
+    if (sendMessageBtn) {
+      sendMessageBtn.addEventListener("click", handleSendMessage);
+    }
+    if (cancelMessageBtn) {
+      cancelMessageBtn.addEventListener("click", closeMessageModal);
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && messageModal?.style.display === "flex") {
+        closeMessageModal();
+      }
+    });
+
+    loadServices();
+  });
+})();
