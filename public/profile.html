@@ -17,7 +17,6 @@
     <!-- Global styles -->
     <link rel="stylesheet" href="style.css" />
 
-    <!-- Page-specific layout styles -->
     <style>
       :root {
         --bg: #020617;
@@ -40,7 +39,7 @@
           "Segoe UI", sans-serif;
       }
 
-      /* BACKGROUND + BASE TEXT COLOR (body classes are set from script.js) */
+      /* BACKGROUND + BASE TEXT COLOR */
       body.dashboard.profile-dark {
         background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
         color: var(--text-main);
@@ -118,7 +117,7 @@
         }
       }
 
-      /* SIDEBAR + CARD – BASE SHAPE ONLY (colors handled by global CSS + theme) */
+      /* SIDEBAR + CARD – BASE SHAPE ONLY */
       .sidebar {
         border-radius: var(--radius-xl);
         padding: 14px 12px 16px;
@@ -129,6 +128,39 @@
         border-radius: var(--radius-xl);
         padding: 18px 16px 20px;
         border: 1px solid var(--border-subtle);
+      }
+
+      /* DARK MODE FILL */
+      body.profile-dark .sidebar,
+      body.profile-dark .card,
+      body.profile-dark .services-empty,
+      body.profile-dark .profile-service-card,
+      body.profile-dark .settings-item {
+        background: rgba(15, 23, 42, 0.96);
+        color: var(--text-main);
+        border-color: var(--border-subtle);
+      }
+
+      body.profile-dark .services-empty,
+      body.profile-dark .profile-service-card,
+      body.profile-dark .settings-item {
+        background: #020617;
+      }
+
+      /* LIGHT MODE FILL */
+      body.profile-light .sidebar,
+      body.profile-light .card,
+      body.profile-light .services-empty,
+      body.profile-light .profile-service-card,
+      body.profile-light .settings-item {
+        background: #ffffff;
+        color: #020617;
+        border-color: #e2e8f0;
+      }
+
+      body.profile-light .services-empty {
+        background: #f9fafb;
+        color: #4b5563;
       }
 
       .sidebar-title {
@@ -157,6 +189,47 @@
         transition: background 0.15s ease, border-color 0.15s ease;
       }
 
+      body.profile-dark .profile-brand,
+      body.profile-dark .nav-link,
+      body.profile-dark .profile-email {
+        color: var(--text-main);
+      }
+
+      body.profile-light .profile-brand,
+      body.profile-light .nav-link,
+      body.profile-light .profile-email {
+        color: #111827;
+      }
+
+      body.profile-dark .nav-link:hover {
+        background: rgba(15, 23, 42, 0.9);
+        border-color: rgba(55, 65, 81, 0.9);
+      }
+
+      body.profile-light .nav-link:hover {
+        background: #e5edff;
+        border-color: #c7d2fe;
+      }
+
+      .nav-link--active {
+        background: var(--accent-soft);
+        border-color: rgba(59, 130, 246, 0.8);
+      }
+
+      body.profile-light .nav-link--active {
+        background: #e0ecff;
+        border-color: #60a5fa;
+        color: #1d4ed8;
+      }
+
+      .nav-link--danger {
+        color: #fecaca;
+      }
+
+      body.profile-light .nav-link--danger {
+        color: #b91c1c;
+      }
+
       .content-column {
         display: flex;
         flex-direction: column;
@@ -177,6 +250,36 @@
       .profile-value {
         font-size: 0.95rem;
         font-weight: 500;
+      }
+
+      /* 🔹 SPECIAL STYLE for the DISPLAY NAME row – match services look */
+      .profile-row--name .profile-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+
+      body.profile-dark .profile-row--name .profile-value {
+        color: #f9fafb;
+      }
+
+      body.profile-light .profile-row--name .profile-value {
+        color: #111827;
+      }
+      /* end special display-name styling */
+
+      body.profile-dark .profile-label,
+      body.profile-dark .profile-edit-label,
+      body.profile-dark .settings-subtitle,
+      body.profile-dark .profile-edit-hint {
+        color: var(--text-muted);
+      }
+
+      body.profile-light .profile-label,
+      body.profile-light .profile-edit-label,
+      body.profile-light .settings-subtitle,
+      body.profile-light .profile-edit-hint {
+        color: #4b5563;
       }
 
       .btn-row {
@@ -212,6 +315,20 @@
       .btn-muted {
         background: transparent;
         border: 1px solid rgba(148, 163, 184, 0.7);
+      }
+
+      body.profile-dark .btn-muted {
+        color: var(--text-muted);
+      }
+
+      body.profile-light .btn-muted {
+        color: #374151;
+        background: #f9fafb;
+        border-color: #d1d5db;
+      }
+
+      body.profile-light .btn-muted:hover {
+        background: #e5e7eb;
       }
 
       .services-empty {
@@ -256,6 +373,26 @@
         font-size: 0.95rem;
       }
 
+      body.profile-dark .profile-edit-input,
+      body.profile-dark .profile-edit-textarea {
+        background: #020617;
+        color: var(--text-main);
+      }
+
+      body.profile-light .profile-edit-input,
+      body.profile-light .profile-edit-textarea {
+        background: #ffffff;
+        color: #111827;
+        border-color: #d1d5db;
+      }
+
+      .profile-edit-input:focus,
+      .profile-edit-textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+      }
+
       .profile-edit-actions {
         display: flex;
         flex-wrap: wrap;
@@ -294,10 +431,12 @@
         font-size: 0.83rem;
       }
 
-      @media (max-width: 640px) {
-        #profileServicesList {
-          grid-template-columns: minmax(0, 1fr);
-        }
+      body.profile-dark .profile-service-meta {
+        color: #9ca3af;
+      }
+
+      body.profile-light .profile-service-meta {
+        color: #6b7280;
       }
 
       .card-settings h2 {
@@ -336,6 +475,10 @@
 
       .settings-item.danger h3 {
         color: #fecaca;
+      }
+
+      body.profile-light .settings-item.danger h3 {
+        color: #b91c1c;
       }
 
       /* Toggle switch (shared) */
@@ -391,12 +534,16 @@
 
       .theme-toggle-label {
         font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      body.profile-light .theme-toggle-label {
+        color: #4b5563;
       }
     </style>
   </head>
 
-  <!-- Start in light mode; JS will sync to saved theme -->
-  <body class="dashboard profile-page profile-light">
+  <body class="dashboard profile-page">
     <div class="profile-wrapper">
       <header class="profile-header">
         <a href="index.html" class="profile-brand">
@@ -427,7 +574,8 @@
         <main class="content-column">
           <section class="card">
             <div id="profileView">
-              <div class="profile-row">
+              <!-- 🔹 name row now has profile-row--name for special styling -->
+              <div class="profile-row profile-row--name">
                 <div class="profile-label">Display name</div>
                 <div class="profile-value" id="profileName">New developer</div>
               </div>
@@ -454,7 +602,7 @@
                   Edit Profile
                 </button>
 
-                <!-- Theme toggle lives next to Edit Profile -->
+                <!-- Theme toggle lives “behind” Edit Profile -->
                 <div class="theme-toggle-wrapper">
                   <span class="theme-toggle-label">Light mode</span>
                   <label class="switch" aria-label="Toggle dark / light theme">
@@ -607,10 +755,42 @@
       </footer>
     </div>
 
-    <!-- Shared scripts -->
     <script src="init.js" defer></script>
     <script src="script.js" defer></script>
     <script src="profile.js" defer></script>
-    <!-- NOTE: no extra inline theme script here; theme is handled globally in script.js -->
+
+    <!-- Theme script JUST for profile-dark/profile-light -->
+    <script>
+      (function () {
+        const STORAGE_KEY = "codecrowds-theme"; // new key
+        const body = document.body;
+        const toggle = document.getElementById("themeToggle");
+        const DARK_CLASS = "profile-dark";
+        const LIGHT_CLASS = "profile-light";
+
+        function applyTheme(mode) {
+          if (mode === "light") {
+            body.classList.add(LIGHT_CLASS);
+            body.classList.remove(DARK_CLASS);
+          } else {
+            body.classList.add(DARK_CLASS);
+            body.classList.remove(LIGHT_CLASS);
+            mode = "dark";
+          }
+
+          localStorage.setItem(STORAGE_KEY, mode);
+          if (toggle) toggle.checked = mode === "light";
+        }
+
+        const saved = localStorage.getItem(STORAGE_KEY) || "dark";
+        applyTheme(saved);
+
+        if (toggle) {
+          toggle.addEventListener("change", () => {
+            applyTheme(toggle.checked ? "light" : "dark");
+          });
+        }
+      })();
+    </script>
   </body>
 </html>
