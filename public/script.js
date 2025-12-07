@@ -418,7 +418,7 @@ async function ccGetCurrentUser() {
   }
 
   // Otherwise, try to load from backend /users/me (if logged in)
-  const baseUrl = window.API_URL || API_BASE || "";
+  const baseUrl = (typeof window !== "undefined" && window.API_URL) || API_BASE || "";
   try {
     const res = await fetch(baseUrl.replace(/\/+$/, "") + "/users/me", {
       method: "GET",
@@ -430,7 +430,7 @@ async function ccGetCurrentUser() {
     }
     const data = await res.json();
     const u =
-      (data && data.user) || (data && data.data && data.data.user);
+      (data && data.user) || (data && data.data && data.data.user) || data;
     if (!u) return { id, username, email };
 
     const uname =
@@ -442,7 +442,7 @@ async function ccGetCurrentUser() {
 
     // Persist for next time
     try {
-      localStorage.setItem("userId", String(u.id));
+      if (u.id != null) localStorage.setItem("userId", String(u.id));
       localStorage.setItem("username", uname);
       localStorage.setItem("email", uemail);
       localStorage.setItem("cc_me", JSON.stringify(u));
@@ -477,6 +477,10 @@ async function ccInitTopUserChip() {
 
   if (labelEl) {
     labelEl.textContent = displayName;
+    // optional: keep full email as tooltip
+    if (user.email) {
+      labelEl.title = user.email;
+    }
   }
   if (avatarEl && displayName) {
     avatarEl.textContent = displayName.trim()[0].toUpperCase();
