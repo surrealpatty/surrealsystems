@@ -507,6 +507,23 @@
       .switch input:checked + .slider:before {
         transform: translateX(16px);
       }
+
+      /* Theme toggle next to Edit Profile */
+      .theme-toggle-wrapper {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .theme-toggle-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      body.profile-light .theme-toggle-label {
+        color: #4b5563;
+      }
     </style>
   </head>
 
@@ -521,12 +538,6 @@
         <div class="profile-user-pill">
           <div class="profile-avatar" id="topUserAvatar">U</div>
           <span class="profile-email" id="topUserEmail">you@example.com</span>
-
-          <!-- Theme toggle -->
-          <label class="switch" aria-label="Toggle dark / light theme">
-            <input type="checkbox" id="themeToggle" />
-            <span class="slider"></span>
-          </label>
         </div>
       </header>
 
@@ -573,6 +584,15 @@
                 <button type="button" class="btn btn-primary" id="editProfileBtn">
                   Edit Profile
                 </button>
+
+                <!-- Theme toggle lives “behind” Edit Profile -->
+                <div class="theme-toggle-wrapper">
+                  <span class="theme-toggle-label">Light mode</span>
+                  <label class="switch" aria-label="Toggle dark / light theme">
+                    <input type="checkbox" id="themeToggle" />
+                    <span class="slider"></span>
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -722,7 +742,7 @@
     <script src="script.js" defer></script>
     <script src="profile.js" defer></script>
 
-    <!-- Shared theme script -->
+    <!-- Theme script JUST for profile-dark/profile-light -->
     <script>
       (function () {
         const STORAGE_KEY = "codecrowds-theme"; // new key
