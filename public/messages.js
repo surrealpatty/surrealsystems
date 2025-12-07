@@ -60,22 +60,26 @@
   // Set the pill in the top-right (avatar + DISPLAY NAME)
   function hydrateHeaderUserPill() {
     const storedUsername = localStorage.getItem("username") || "";
-    const storedEmail = localStorage.getItem("email") || "you@example.com";
+    const storedEmail = localStorage.getItem("email") || "";
 
-    // We prefer to show the username as the display name.
-    const displayName = storedUsername || storedEmail;
+    // Prefer username; if missing, use the part of the email before "@"
+    let displayName = storedUsername;
+    if (!displayName && storedEmail) {
+      displayName = storedEmail.split("@")[0]; // e.g. "qaz" from "qaz@qaz.com"
+    }
 
-    // IDs should match your messages.html header
     const avatarEl = document.getElementById("profileAvatar");
-    const nameEl = document.getElementById("profileEmail"); // this element now shows the display name
+    const nameEl = document.getElementById("profileEmail"); // this text becomes the display name
 
     if (avatarEl) {
-      const letter = (displayName || "U").charAt(0).toUpperCase();
+      const letter = (displayName || storedEmail || "U")
+        .charAt(0)
+        .toUpperCase();
       avatarEl.textContent = letter;
     }
+
     if (nameEl) {
-      // <-- THIS is what changes the chip text to `qaz` instead of `qaz@qaz.com`
-      nameEl.textContent = displayName;
+      nameEl.textContent = displayName || storedEmail || "User";
     }
   }
 
