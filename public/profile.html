@@ -551,7 +551,7 @@
           <span>CodeCrowds</span>
         </a>
 
-        <!-- Shared top-right user pill – JS fills with display name -->
+        <!-- Top-right user pill -->
         <div class="profile-user-pill" id="topUserChip">
           <div class="profile-avatar" id="topUserAvatar">Q</div>
           <span class="profile-email" id="topUserEmail">you@example.com</span>
@@ -575,7 +575,6 @@
         <main class="content-column">
           <section class="card">
             <div id="profileView">
-              <!-- name row now has profile-row--name for special styling -->
               <div class="profile-row profile-row--name">
                 <div class="profile-label">Display name</div>
                 <div class="profile-value" id="profileName">New developer</div>
@@ -603,7 +602,6 @@
                   Edit Profile
                 </button>
 
-                <!-- Theme toggle lives “behind” Edit Profile -->
                 <div class="theme-toggle-wrapper">
                   <span class="theme-toggle-label">Light mode</span>
                   <label class="switch" aria-label="Toggle dark / light theme">
@@ -761,21 +759,21 @@
     <script src="script.js" defer></script>
     <script src="profile.js" defer></script>
 
-    <!-- 🔹 Force the top-right pill to match the DISPLAY NAME on the card -->
+    <!-- FINAL OVERRIDE: after everything has run, force pill to match DISPLAY NAME -->
     <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const nameEl = document.getElementById("profileName");
-        const chipLabel = document.getElementById("topUserEmail");
-        const chipAvatar = document.getElementById("topUserAvatar");
+      setTimeout(function () {
+        var nameEl = document.getElementById("profileName");
+        var chipLabel = document.getElementById("topUserEmail");
+        var chipAvatar = document.getElementById("topUserAvatar");
 
         if (!nameEl || !chipLabel || !chipAvatar) return;
 
-        const txt = (nameEl.textContent || "").trim();
+        var txt = (nameEl.textContent || "").trim();
         if (!txt || txt === "New developer") return;
 
         chipLabel.textContent = txt;
         chipAvatar.textContent = txt[0].toUpperCase();
-      });
+      }, 1000);
     </script>
   </body>
 </html>

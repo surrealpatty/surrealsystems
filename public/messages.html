@@ -4,8 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Messages – CodeCrowds</title>
-
-    <!-- Global + page styles -->
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="messages.css" />
 
@@ -30,7 +28,6 @@
           "Segoe UI", sans-serif;
       }
 
-      /* Backgrounds – theme classes are applied by script.js */
       body.dashboard.profile-dark {
         background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
         color: var(--text-main);
@@ -70,7 +67,7 @@
         background: linear-gradient(135deg, #22c55e, #3b82f6);
       }
 
-      /* shared pill look – matches profile page */
+      /* reuse pill style, but ids let script.js fill it */
       .user-pill {
         display: inline-flex;
         align-items: center;
@@ -349,7 +346,7 @@
           <span>CodeCrowds</span>
         </a>
 
-        <!-- ✅ Shared top-right user pill – JS fills with DISPLAY NAME -->
+        <!-- User pill: ids let script.js (ccInitTopUserChip) fill the display name -->
         <div class="user-pill" id="topUserChip">
           <div class="user-avatar" id="topUserAvatar">Q</div>
           <span class="user-email" id="topUserEmail">you@example.com</span>
@@ -400,7 +397,7 @@
       </footer>
     </div>
 
-    <!-- JS: init theme + shared helpers + page logic -->
+    <!-- Shared scripts -->
     <script src="init.js" defer></script>
     <script src="script.js" defer></script>
     <script src="messages.js" defer></script>
