@@ -160,16 +160,22 @@ document.addEventListener("DOMContentLoaded", () => {
   const nameEl = document.getElementById("profileName");
   const descEl = document.getElementById("profileDescription");
 
-  // Initial fill from storage (will be overwritten by /users/me)
-  if (email && emailMain) {
-    if (emailBadge) emailBadge.textContent = email;
-    emailMain.textContent = email;
-  }
-
+  // Compute display name (username or email local-part)
   let displayName = username;
   if (!displayName && email) {
     displayName = email.split("@")[0];
   }
+
+  // Initial fill from storage (will be overwritten by /users/me)
+  // - Big card EMAIL field still shows full email
+  // - Top-right chip (emailBadge) now shows DISPLAY NAME
+  if (emailMain) {
+    emailMain.textContent = email;
+  }
+  if (emailBadge) {
+    emailBadge.textContent = displayName || email || "User";
+  }
+
   if (displayName && nameEl) {
     nameEl.textContent = displayName;
   }
@@ -221,7 +227,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Update UI with real user
       if (nameEl) nameEl.textContent = uname;
-      if (emailBadge) emailBadge.textContent = uemail;
+      // 🔥 chip shows display name, not email
+      if (emailBadge) emailBadge.textContent = uname;
+      // big card EMAIL stays actual email
       if (emailMain) emailMain.textContent = uemail;
       if (descEl) descEl.textContent = udesc || DEFAULT_DESCRIPTION;
 
@@ -311,13 +319,18 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      // Decide what the display name should be
+      const usernameToStore = newName || newEmail.split("@")[0];
+
       // Update UI
       if (nameEl) {
-        nameEl.textContent = newName || "New developer";
+        nameEl.textContent = newName || usernameToStore || "New developer";
       }
+      // 🔥 chip shows display name (usernameToStore)
       if (emailBadge) {
-        emailBadge.textContent = newEmail;
+        emailBadge.textContent = usernameToStore;
       }
+      // big card EMAIL shows full email
       if (emailMain) {
         emailMain.textContent = newEmail;
       }
@@ -327,12 +340,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Avatar
       if (avatarEl) {
-        const source = (newName || newEmail || "U").trim();
+        const source = (usernameToStore || newEmail || "U").trim();
         avatarEl.textContent = source[0].toUpperCase();
       }
 
       // Persist (UI only)
-      const usernameToStore = newName || newEmail.split("@")[0];
       safeSet("email", newEmail);
       safeSet("username", usernameToStore);
       safeSet("description", newDescription);
