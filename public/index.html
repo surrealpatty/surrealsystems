@@ -1,128 +1,183 @@
-﻿<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login · CodeCrowds</title>
+    <title>CodeCrowds – Login</title>
 
-    <!-- Fonts -->
-    <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-    />
-
-    <!-- Global site styles (your existing main stylesheet, if you have one) -->
+    <!-- Global site styles -->
     <link rel="stylesheet" href="style.css" />
 
-    <!-- Page-specific styles for the login/index page -->
-    <link rel="stylesheet" href="login.css" />
-</head>
-<body>
-    <div class="page">
-        <a href="/" class="logo-link">
-            <span class="logo-dot"></span>
-            <span>CodeCrowds</span>
-        </a>
+    <!-- Page-specific overrides: make index page dark again -->
+    <style>
+      /* Force dark palette just for this page */
+      :root {
+        /* cards + text back to dark theme */
+        --card-bg: #020617;
+        --card-text: #e5e7eb;
+        --muted: #9ca3af;
+        --glass-light: rgba(15, 23, 42, 0.96);
+        --glass-translucent: rgba(15, 23, 42, 0.9);
+      }
 
-        <div class="layout">
-            <!-- LEFT: marketing content -->
-            <section class="pitch">
-                <h1 class="pitch-title">Offer your coding skills to the world.</h1>
-                <p class="pitch-subtitle">
-                    Create posts, connect with developers, and get noticed by clients worldwide.
-                </p>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        /* dark navy gradient like your original screenshot */
+        background:
+          radial-gradient(circle at top left, #111827 0, #020617 55%, #020617 75%, #000000 100%);
+        color: #e5e7eb;
+      }
 
-                <div class="pitch-grid">
-                    <article class="pitch-item">
-                        <h3>Offer Your Services</h3>
-                        <p>
-                            Create posts to sell your skills and showcase your best work.
-                        </p>
-                    </article>
+      /* Make sure the right login card isn’t white */
+      .auth-card,
+      .login-card,
+      .form-card {
+        background: rgba(15, 23, 42, 0.96);
+        color: #e5e7eb;
+        box-shadow: 0 28px 80px rgba(0, 0, 0, 0.8);
+      }
 
-                    <article class="pitch-item">
-                        <h3>Connect &amp; Collaborate</h3>
-                        <p>
-                            Rate and interact with other developers, build credibility, and grow your
-                            professional network.
-                        </p>
-                    </article>
+      /* Left marketing panel stays dark */
+      .marketing-card,
+      .hero-panel {
+        background: radial-gradient(circle at top left, #111827 0, #020617 60%, #020617 100%);
+        color: #e5e7eb;
+      }
 
-                    <article class="pitch-item">
-                        <h3>Ad-Free &amp; Premium</h3>
-                        <p>
-                            Upgrade to premium for ad-free experience, lower fees, and more visibility.
-                        </p>
-                        <div class="badge-premium">
-                            <span class="badge-dot"></span>
-                            <span>Premium perks for power users</span>
-                        </div>
-                    </article>
-                </div>
-            </section>
+      /* Links + muted text back to soft blue/gray */
+      .muted,
+      .helper-text {
+        color: #9ca3af;
+      }
 
-            <!-- RIGHT: login card -->
-            <section class="card">
-                <h2>Welcome back</h2>
-                <p>Log in to manage your posts, messages, and projects.</p>
+      a {
+        color: #60a5fa;
+      }
 
-                <!-- handled by JS (script.js) -->
-                <form id="loginForm">
-                    <div class="field">
-                        <label for="email">
-                            <span>Email</span>
-                        </label>
-                        <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            placeholder="you@example.com"
-                            required
-                        />
-                    </div>
+      a:hover {
+        color: #93c5fd;
+      }
+    </style>
+  </head>
 
-                    <div class="field">
-                        <label for="password">
-                            <span>Password</span>
-                        </label>
-                        <div class="password-row">
-                            <input
-                                type="password"
-                                id="password"
-                                name="password"
-                                placeholder="Your password"
-                                required
-                            />
-                            <button
-                                type="button"
-                                class="toggle-password"
-                                id="togglePassword"
-                                aria-label="Show password"
-                            >
-                                Show
-                            </button>
-                        </div>
-                    </div>
+  <body>
+    <main class="auth-layout">
+      <header class="auth-header">
+        <div class="brand-dot"></div>
+        <div class="brand-wordmark">CodeCrowds</div>
+      </header>
 
-                    <div class="actions">
-                        <button type="submit" class="primary-btn">Login</button>
-                        <div class="subtext">
-                            Don’t have an account?
-                            <a href="/register.html">Sign up here</a>
-                        </div>
-                    </div>
+      <section class="auth-shell">
+        <!-- Left: marketing / features card -->
+        <div class="marketing-card">
+          <h1>Offer your coding skills to the world.</h1>
+          <p class="muted">
+            Create posts, connect with developers, and get noticed by clients worldwide.
+          </p>
 
-                    <!-- Message area (no inline style!) -->
-                    <div id="loginMessage" class="subtext"></div>
-                </form>
+          <div class="feature-card">
+            <h2>Offer Your Services</h2>
+            <p>
+              Create posts to sell your skills and showcase your best work. Attract
+              clients looking for exactly what you do.
+            </p>
+          </div>
 
-                <footer>© 2025 CodeCrowds. All rights reserved.</footer>
-            </section>
+          <div class="feature-card">
+            <h2>Connect &amp; Collaborate</h2>
+            <p>
+              Rate and interact with other developers, build credibility, and grow your
+              professional network.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <h2>Ad-Free &amp; Premium</h2>
+            <p>
+              Upgrade to premium for ad-free experience, lower fees, and more visibility
+              on the marketplace.
+            </p>
+            <button class="chip-button" type="button">
+              ● Premium perks for power users
+            </button>
+          </div>
         </div>
-    </div>
 
-    <!-- Scripts (CSP-safe, external only) -->
-    <script src="init.js" defer></script>
-    <script src="script.js" defer></script>
-</body>
+        <!-- Right: login form card -->
+        <div class="auth-card login-card">
+          <h1>Welcome back</h1>
+          <p class="muted">
+            Log in to manage your posts, messages, and projects.
+          </p>
+
+          <form id="loginForm">
+            <label class="field">
+              <span>Email</span>
+              <input
+                id="loginEmail"
+                name="email"
+                type="email"
+                autocomplete="email"
+                placeholder="you@example.com"
+                required
+              />
+            </label>
+
+            <label class="field">
+              <span>Password</span>
+              <div class="password-row">
+                <input
+                  id="loginPassword"
+                  name="password"
+                  type="password"
+                  autocomplete="current-password"
+                  placeholder="Your password"
+                  required
+                />
+                <button
+                  type="button"
+                  class="pw-toggle"
+                  id="togglePassword"
+                  aria-label="Show password"
+                >
+                  Show
+                </button>
+              </div>
+            </label>
+
+            <button type="submit" class="primary-btn full-width">
+              Login
+            </button>
+
+            <p class="helper-text">
+              Don’t have an account?
+              <a href="register.html">Sign up here</a>
+            </p>
+          </form>
+
+          <footer class="auth-footer muted">
+            © 2025 CodeCrowds. All rights reserved.
+          </footer>
+        </div>
+      </section>
+    </main>
+
+    <!-- Your existing scripts -->
+    <script src="init.js"></script>
+    <script src="script.js"></script>
+    <script>
+      // simple show/hide password
+      const pwInput = document.getElementById("loginPassword");
+      const pwToggle = document.getElementById("togglePassword");
+
+      if (pwInput && pwToggle) {
+        pwToggle.addEventListener("click", () => {
+          const isPassword = pwInput.type === "password";
+          pwInput.type = isPassword ? "text" : "password";
+          pwToggle.textContent = isPassword ? "Hide" : "Show";
+        });
+      }
+    </script>
+  </body>
 </html>
