@@ -248,7 +248,7 @@
     }
   </style>
 
-  <!-- Hook your app logic back up -->
+  <!-- Hook your existing login logic back up -->
   <script src="init.js" defer></script>
   <script src="script.js" defer></script>
 </head>
@@ -294,12 +294,12 @@
         <h2>Welcome back</h2>
         <p>Log in to manage your posts, messages, and projects.</p>
 
-        <!-- IMPORTANT: id + name for your login JS -->
+        <!-- IMPORTANT: ids + names match what script.js expects -->
         <form id="loginForm">
           <div class="field">
-            <label for="email">Email</label>
+            <label for="loginEmail">Email</label>
             <input
-              id="email"
+              id="loginEmail"
               name="email"
               type="email"
               placeholder="you@example.com"
@@ -308,10 +308,10 @@
           </div>
 
           <div class="field">
-            <label for="password">Password</label>
+            <label for="loginPassword">Password</label>
             <div class="password-row">
               <input
-                id="password"
+                id="loginPassword"
                 name="password"
                 type="password"
                 placeholder="Your password"
@@ -320,7 +320,7 @@
               <button
                 type="button"
                 class="toggle-password"
-                onclick="togglePassword()"
+                id="togglePassword"
               >
                 Show
               </button>
@@ -337,23 +337,25 @@
     </div>
   </div>
 
-  <!-- Simple Show / Hide function used by onclick -->
+  <!-- Show / Hide password logic -->
   <script>
-    function togglePassword() {
-      const input = document.getElementById("password");
-      const btn = document.querySelector(".toggle-password");
+    document.addEventListener("DOMContentLoaded", () => {
+      const input = document.getElementById("loginPassword");
+      const btn = document.getElementById("togglePassword");
       if (!input || !btn) return;
 
-      const isHidden = input.type === "password";
-      input.type = isHidden ? "text" : "password";
-      btn.textContent = isHidden ? "Hide" : "Show";
+      btn.addEventListener("click", () => {
+        const isHidden = input.type === "password";
+        input.type = isHidden ? "text" : "password";
+        btn.textContent = isHidden ? "Hide" : "Show";
 
-      // tiny visual feedback
-      btn.style.transform = "scale(0.92)";
-      setTimeout(() => {
-        btn.style.transform = "scale(1)";
-      }, 120);
-    }
+        // tiny visual feedback
+        btn.style.transform = "scale(0.92)";
+        setTimeout(() => {
+          btn.style.transform = "scale(1)";
+        }, 120);
+      });
+    });
   </script>
 </body>
 </html>
