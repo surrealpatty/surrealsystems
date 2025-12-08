@@ -246,6 +246,10 @@
       }
     }
   </style>
+
+  <!-- Re-enable your app’s JS logic -->
+  <script src="init.js" defer></script>
+  <script src="script.js" defer></script>
 </head>
 
 <body>
@@ -289,11 +293,13 @@
         <h2>Welcome back</h2>
         <p>Log in to manage your posts, messages, and projects.</p>
 
+        <!-- IMPORTANT: id + name attributes so script.js can read values -->
         <form id="loginForm">
           <div class="field">
             <label for="email">Email</label>
             <input
               id="email"
+              name="email"
               type="email"
               placeholder="you@example.com"
               required
@@ -301,21 +307,21 @@
           </div>
 
           <div class="field">
-            <label for="pw">Password</label>
+            <label for="password">Password</label>
             <div class="password-row">
               <input
-                id="pw"
+                id="password"
+                name="password"
                 type="password"
                 placeholder="Your password"
                 required
               />
               <button
-  type="button"
-  class="toggle-password"
->
-  Show
-</button>
-
+                type="button"
+                class="toggle-password"
+              >
+                Show
+              </button>
             </div>
           </div>
 
@@ -329,19 +335,19 @@
     </div>
   </div>
 
+  <!-- Local script just for Show / Hide password -->
   <script>
-document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", () => {
+      const input = document.getElementById("password");
+      const btn = document.querySelector(".toggle-password");
+      if (!input || !btn) return;
 
-  const input = document.getElementById("pw");
-  const btn = document.querySelector(".toggle-password");
-
-  btn.addEventListener("click", () => {
-      input.type = input.type === "password" ? "text" : "password";
-      btn.textContent = input.type === "password" ? "Show" : "Hide"; // also updates the button label
-  });
-
-});
-</script>
-
+      btn.addEventListener("click", () => {
+        const isPassword = input.type === "password";
+        input.type = isPassword ? "text" : "password";
+        btn.textContent = isPassword ? "Hide" : "Show";
+      });
+    });
+  </script>
 </body>
 </html>
