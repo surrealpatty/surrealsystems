@@ -1,183 +1,265 @@
-﻿<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CodeCrowds – Login</title>
+﻿/* public/login.css */
 
-    <!-- Global site styles -->
-    <link rel="stylesheet" href="style.css" />
+/* Make sure layout behaves on all browsers */
+.login-page *,
+.login-page *::before,
+.login-page *::after {
+  box-sizing: border-box;
+}
 
-    <!-- Page-specific overrides: make index page dark again -->
-    <style>
-      /* Force dark palette just for this page */
-      :root {
-        /* cards + text back to dark theme */
-        --card-bg: #020617;
-        --card-text: #e5e7eb;
-        --muted: #9ca3af;
-        --glass-light: rgba(15, 23, 42, 0.96);
-        --glass-translucent: rgba(15, 23, 42, 0.9);
-      }
+/* Full-page dark gradient background + centering */
+body.login-page {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  color: #e5e7eb;
+  background:
+    radial-gradient(circle at top left, #111827 0, #020617 55%, #020617 75%, #000000 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-      body {
-        margin: 0;
-        min-height: 100vh;
-        /* dark navy gradient like your original screenshot */
-        background:
-          radial-gradient(circle at top left, #111827 0, #020617 55%, #020617 75%, #000000 100%);
-        color: #e5e7eb;
-      }
+/* Main container (keeps content centered, not shoved to the right) */
+.login-page .page {
+  width: 100%;
+  max-width: 1200px;
+  padding: 40px 24px;
+  margin: 0 auto;
+}
 
-      /* Make sure the right login card isn’t white */
-      .auth-card,
-      .login-card,
-      .form-card {
-        background: rgba(15, 23, 42, 0.96);
-        color: #e5e7eb;
-        box-shadow: 0 28px 80px rgba(0, 0, 0, 0.8);
-      }
+/* Top brand link */
+.logo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 32px;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #e5e7eb;
+  text-decoration: none;
+}
 
-      /* Left marketing panel stays dark */
-      .marketing-card,
-      .hero-panel {
-        background: radial-gradient(circle at top left, #111827 0, #020617 60%, #020617 100%);
-        color: #e5e7eb;
-      }
+.logo-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #22c55e;
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.4);
+}
 
-      /* Links + muted text back to soft blue/gray */
-      .muted,
-      .helper-text {
-        color: #9ca3af;
-      }
+/* Two-column layout: marketing left, login right */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 32px;
+  align-items: stretch;
+}
 
-      a {
-        color: #60a5fa;
-      }
+/* LEFT: marketing “hero” */
+.pitch {
+  background: radial-gradient(
+    circle at top left,
+    #111827 0,
+    #020617 60%,
+    #020617 100%
+  );
+  border-radius: 24px;
+  padding: 28px 30px 30px;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
 
-      a:hover {
-        color: #93c5fd;
-      }
-    </style>
-  </head>
+.pitch-title {
+  font-size: 2.25rem;
+  line-height: 1.1;
+  margin: 0 0 16px;
+}
 
-  <body>
-    <main class="auth-layout">
-      <header class="auth-header">
-        <div class="brand-dot"></div>
-        <div class="brand-wordmark">CodeCrowds</div>
-      </header>
+.pitch-subtitle {
+  margin: 0;
+  color: #9ca3af;
+  max-width: 32rem;
+}
 
-      <section class="auth-shell">
-        <!-- Left: marketing / features card -->
-        <div class="marketing-card">
-          <h1>Offer your coding skills to the world.</h1>
-          <p class="muted">
-            Create posts, connect with developers, and get noticed by clients worldwide.
-          </p>
+.pitch-grid {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
-          <div class="feature-card">
-            <h2>Offer Your Services</h2>
-            <p>
-              Create posts to sell your skills and showcase your best work. Attract
-              clients looking for exactly what you do.
-            </p>
-          </div>
+.pitch-item {
+  background: rgba(15, 23, 42, 0.96);
+  border-radius: 20px;
+  padding: 16px 18px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
 
-          <div class="feature-card">
-            <h2>Connect &amp; Collaborate</h2>
-            <p>
-              Rate and interact with other developers, build credibility, and grow your
-              professional network.
-            </p>
-          </div>
+.pitch-item h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
 
-          <div class="feature-card">
-            <h2>Ad-Free &amp; Premium</h2>
-            <p>
-              Upgrade to premium for ad-free experience, lower fees, and more visibility
-              on the marketplace.
-            </p>
-            <button class="chip-button" type="button">
-              ● Premium perks for power users
-            </button>
-          </div>
-        </div>
+.pitch-item p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #9ca3af;
+}
 
-        <!-- Right: login form card -->
-        <div class="auth-card login-card">
-          <h1>Welcome back</h1>
-          <p class="muted">
-            Log in to manage your posts, messages, and projects.
-          </p>
+/* Premium pill */
+.badge-premium {
+  margin-top: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.2);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #bfdbfe;
+}
 
-          <form id="loginForm">
-            <label class="field">
-              <span>Email</span>
-              <input
-                id="loginEmail"
-                name="email"
-                type="email"
-                autocomplete="email"
-                placeholder="you@example.com"
-                required
-              />
-            </label>
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #60a5fa;
+}
 
-            <label class="field">
-              <span>Password</span>
-              <div class="password-row">
-                <input
-                  id="loginPassword"
-                  name="password"
-                  type="password"
-                  autocomplete="current-password"
-                  placeholder="Your password"
-                  required
-                />
-                <button
-                  type="button"
-                  class="pw-toggle"
-                  id="togglePassword"
-                  aria-label="Show password"
-                >
-                  Show
-                </button>
-              </div>
-            </label>
+/* RIGHT: login card */
+.card {
+  background: rgba(15, 23, 42, 0.96);
+  border-radius: 24px;
+  padding: 26px 28px 28px;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
 
-            <button type="submit" class="primary-btn full-width">
-              Login
-            </button>
+.card h2 {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+}
 
-            <p class="helper-text">
-              Don’t have an account?
-              <a href="register.html">Sign up here</a>
-            </p>
-          </form>
+.card > p {
+  margin: 0 0 18px;
+  color: #9ca3af;
+}
 
-          <footer class="auth-footer muted">
-            © 2025 CodeCrowds. All rights reserved.
-          </footer>
-        </div>
-      </section>
-    </main>
+/* Form fields */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+}
 
-    <!-- Your existing scripts -->
-    <script src="init.js"></script>
-    <script src="script.js"></script>
-    <script>
-      // simple show/hide password
-      const pwInput = document.getElementById("loginPassword");
-      const pwToggle = document.getElementById("togglePassword");
+.field label span {
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
 
-      if (pwInput && pwToggle) {
-        pwToggle.addEventListener("click", () => {
-          const isPassword = pwInput.type === "password";
-          pwInput.type = isPassword ? "text" : "password";
-          pwToggle.textContent = isPassword ? "Hide" : "Show";
-        });
-      }
-    </script>
-  </body>
-</html>
+.field input {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: #020617;
+  color: #e5e7eb;
+  padding: 10px 14px;
+  outline: none;
+  font-size: 0.9rem;
+}
+
+.field input::placeholder {
+  color: #6b7280;
+}
+
+.field input:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.6);
+}
+
+/* Password row */
+.password-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.password-row input {
+  flex: 1;
+}
+
+.toggle-password {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  background: #020617;
+  color: #e5e7eb;
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.7);
+}
+
+/* Primary button + footer text */
+.actions {
+  margin-top: 6px;
+}
+
+.primary-btn {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: #ffffff;
+  background-image: linear-gradient(
+    90deg,
+    #22c55e,
+    #10b981,
+    #14b8a6
+  );
+  box-shadow: 0 20px 40px rgba(16, 185, 129, 0.5);
+}
+
+.subtext {
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.subtext a {
+  color: #60a5fa;
+  text-decoration: none;
+}
+
+.subtext a:hover {
+  text-decoration: underline;
+}
+
+.card footer {
+  margin-top: 24px;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* Responsive: stack cards on mobile */
+@media (max-width: 900px) {
+  body.login-page {
+    align-items: flex-start;
+  }
+
+  .login-page .page {
+    padding: 24px 16px 32px;
+  }
+
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pitch {
+    margin-bottom: 24px;
+  }
+}
