@@ -1,211 +1,340 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CodeCrowds – Login</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CodeCrowds – Login</title>
 
-<style>
-/* (all your CSS here, unchanged) */
+  <style>
+    /* =======================
+       PAGE BACKGROUND
+    ========================= */
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      min-height: 100vh;
+      background: radial-gradient(
+        circle at top left,
+        #111827 0,
+        #020617 55%,
+        #020617 75%,
+        #000000 100%
+      );
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      color: #e5e7eb;
+    }
 
-/* =======================
-   PAGE BACKGROUND RESTORE
-=========================*/
-body {
-    margin: 0;
-    font-family: "Inter", sans-serif;
-    min-height: 100vh;
-    background: radial-gradient(circle at top left,#111827 0,#020617 55%,#020617 75%,#000000 100%);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #e5e7eb;
-}
-
-/* ===========================
+    /* =======================
        PAGE LAYOUT
-===========================*/
-.page {
-    width: 100%;
-    max-width: 1200px;
-    padding: 40px 24px;
-}
+    ========================= */
+    .page {
+      width: 100%;
+      max-width: 1100px;
+      padding: 20px 20px 24px;
+    }
 
-.layout {
-    display: grid;
-    grid-template-columns: 1.3fr 1fr;
-    gap: 40px;
-}
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #e5e7eb;
+    }
 
-/* ===========================
-     LEFT MARKETING PANEL
-===========================*/
-.pitch {
-    background: rgba(15,23,42,0.95);
-    border-radius: 24px;
-    padding: 30px;
-    box-shadow: 0 28px 80px rgba(0,0,0,0.8);
-    border: 1px solid rgba(148,163,184,0.25);
-}
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.4);
+    }
 
-.pitch-title {
-    font-size: 2.2rem;
-    margin-bottom: 10px;
-}
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      align-items: start;
+    }
 
-.pitch-subtitle {
-    color: #aeb6c4;
-    margin-bottom: 25px;
-}
+    /* =======================
+       LEFT MARKETING PANEL
+    ========================= */
+    .pitch {
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 35px 100px rgba(0, 0, 0, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
 
-.pitch-item {
-    background: rgba(10,15,32,0.9);
-    padding: 14px 16px;
-    border-radius: 16px;
-    margin-bottom: 12px;
-    border: 1px solid rgba(148,163,184,0.2);
-}
+    .pitch-title {
+      font-size: 1.9rem;
+      margin-bottom: 8px;
+    }
 
-.badge-premium {
-    margin-top: 10px;
-    background: rgba(99,102,241,.25);
-    display: inline-flex;
-    gap: 7px;
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: .82rem;
-}
+    .pitch-subtitle {
+      color: #aeb6c4;
+      margin-bottom: 20px;
+    }
 
-/* ===========================
-        LOGIN CARD RIGHT 
-===========================*/
-.card {
-    background: rgba(15,23,42,0.97);
-    box-shadow: 0 28px 80px rgba(0,0,0,.85);
-    padding: 28px;
-    border-radius: 24px;
-    border: 1px solid rgba(148,163,184,0.25);
-}
+    .pitch-item {
+      background: rgba(10, 15, 32, 0.9);
+      padding: 12px 14px;
+      border-radius: 16px;
+      margin-bottom: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      font-size: 0.95rem;
+    }
 
-.card h2 {
-    margin: 0 0 10px;
-    font-size: 1.5rem;
-    font-weight: 600;
-}
+    .pitch-item h3 {
+      margin: 0 0 4px;
+      font-size: 1rem;
+    }
 
-.card p { color:#9ba3b4; }
+    .badge-premium {
+      margin-top: 8px;
+      background: rgba(99, 102, 241, 0.25);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+    }
 
-.field {
-    margin-top: 14px;
-    display:flex;
-    flex-direction:column;
-    gap:5px;
-}
+    /* =======================
+       LOGIN CARD (RIGHT)
+    ========================= */
+    .card {
+      background: rgba(15, 23, 42, 0.97);
+      box-shadow: 0 35px 100px rgba(0, 0, 0, 0.9);
+      padding: 24px;
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
 
-.field input {
-    padding:10px 14px;
-    border-radius:999px;
-    border:1px solid rgba(148,163,184,.6);
-    background:#020617;
-    color:#ffffff;
-}
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
 
-.password-row { display:flex; gap:10px; }
-.password-row input { flex:1; }
+    .card > p {
+      color: #9ba3b4;
+      margin: 0 0 14px;
+      font-size: 0.95rem;
+    }
 
-.toggle-password {
-    background:#020617;
-    border-radius:999px;
-    padding:8px 12px;
-    border:1px solid rgba(148,163,184,.6);
-    cursor:pointer;
-    color:#fff;
-    font-size:.8rem;
-}
+    .field {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 0.9rem;
+    }
 
-/* ===========================
-         BUTTON
-===========================*/
-.primary-btn {
-    width: 100%;
-    margin-top: 15px;
-    padding: 12px 16px;
-    /* Blue → green gradient like the first screenshot */
-    background-image: linear-gradient(90deg, #3b82f6, #22c55e);
-    border-radius: 999px;
-    border: none;
-    cursor: pointer;
-    color: #ffffff;
-    font-weight: 600;
-    font-size: 1rem;
-    /* Slightly stronger, softer spread shadow */
-    box-shadow: 0 20px 45px rgba(37, 181, 122, 0.6);
-}
+    .field label {
+      color: #cbd5f5;
+    }
 
+    .field input {
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: #050a18;
+      color: #ffffff;
+      font-size: 0.9rem;
+      outline: none;
+    }
 
-.subtext { margin-top:12px; font-size:.9rem; color:#94a3b8; }
-.subtext a { color:#4dabff; }
-.subtext a:hover { text-decoration:underline; }
-</style>
+    .field input::placeholder {
+      color: #6b7280;
+    }
+
+    .field input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.55);
+    }
+
+    .password-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .password-row input {
+      flex: 1;
+    }
+
+    .toggle-password {
+      background: #020617;
+      border-radius: 999px;
+      padding: 8px 12px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      cursor: pointer;
+      color: #fff;
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+
+    /* =======================
+       BUTTON + TEXT
+    ========================= */
+    .primary-btn {
+      width: 100%;
+      margin-top: 12px;
+      padding: 11px 16px;
+      background-image: linear-gradient(90deg, #3b82f6, #22c55e);
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 1rem;
+      box-shadow: 0 20px 45px rgba(37, 181, 122, 0.6);
+    }
+
+    .subtext {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    .subtext a {
+      color: #4dabff;
+      text-decoration: none;
+    }
+
+    .subtext a:hover {
+      text-decoration: underline;
+    }
+
+    /* =======================
+       RESPONSIVE (small screens)
+    ========================= */
+    @media (max-height: 720px) {
+      .page {
+        padding-top: 12px;
+      }
+
+      .pitch,
+      .card {
+        padding: 20px;
+      }
+
+      .pitch-title {
+        font-size: 1.7rem;
+      }
+    }
+
+    @media (max-width: 960px) {
+      body {
+        align-items: flex-start;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        margin-top: 16px;
+      }
+    }
+  </style>
 </head>
 
 <body>
-<div class="page">
+  <div class="page">
+    <!-- Brand row -->
+    <div class="brand-row">
+      <span class="brand-dot"></span>
+      <span>CodeCrowds</span>
+    </div>
 
     <div class="layout">
+      <!-- LEFT COLUMN -->
+      <section class="pitch">
+        <h1 class="pitch-title">Offer your coding skills to the world.</h1>
+        <p class="pitch-subtitle">
+          Create posts, connect with developers, and get noticed by clients worldwide.
+        </p>
 
-        <!-- LEFT COLUMN -->
-        <section class="pitch">
-            <h1 class="pitch-title">Offer your coding skills to the world.</h1>
-            <p class="pitch-subtitle">Create posts, connect with developers, and get noticed by clients worldwide.</p>
+        <div class="pitch-item">
+          <h3>Offer Your Services</h3>
+          <p>Create posts to sell your skills and showcase your best work.</p>
+        </div>
 
-            <div class="pitch-item">
-                <h3>Offer Your Services</h3>
-                <p>Create posts to sell your skills and showcase your best work.</p>
+        <div class="pitch-item">
+          <h3>Connect &amp; Collaborate</h3>
+          <p>
+            Rate and interact with other developers, build credibility, and grow your
+            professional network.
+          </p>
+        </div>
+
+        <div class="pitch-item">
+          <h3>Ad-Free &amp; Premium</h3>
+          <p>Upgrade for ad-free experience, lower fees, and better visibility.</p>
+          <div class="badge-premium">● Premium perks for power users</div>
+        </div>
+      </section>
+
+      <!-- RIGHT COLUMN -->
+      <section class="card">
+        <h2>Welcome back</h2>
+        <p>Log in to manage your posts, messages, and projects.</p>
+
+        <form id="loginForm">
+          <div class="field">
+            <label for="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label for="pw">Password</label>
+            <div class="password-row">
+              <input
+                id="pw"
+                type="password"
+                placeholder="Your password"
+                required
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                onclick="togglePW()"
+              >
+                Show
+              </button>
             </div>
-            <div class="pitch-item">
-                <h3>Connect & Collaborate</h3>
-                <p>Rate and interact with other developers, build credibility, and grow your network.</p>
-            </div>
-            <div class="pitch-item">
-                <h3>Ad-Free & Premium</h3>
-                <p>Upgrade for ad-free experience, lower fees, and better visibility.</p>
-                <div class="badge-premium">● Premium perks for power users</div>
-            </div>
-        </section>
+          </div>
 
-        <!-- RIGHT COLUMN -->
-        <section class="card">
-            <h2>Welcome back</h2>
-            <p>Log in to manage your posts, messages, and projects.</p>
-
-            <form id="loginForm">
-                <div class="field">
-                    <label>Email</label>
-                    <input type="email" placeholder="you@example.com" required />
-                </div>
-
-                <div class="field">
-                    <label>Password</label>
-                    <div class="password-row">
-                        <input id="pw" type="password" placeholder="Your password" required />
-                        <button type="button" class="toggle-password" onclick="togglePW()">Show</button>
-                    </div>
-                </div>
-
-                <button type="submit" class="primary-btn">Login</button>
-                <p class="subtext">Don’t have an account? <a href="register.html">Sign up</a></p>
-            </form>
-        </section>
+          <button type="submit" class="primary-btn">Login</button>
+          <p class="subtext">
+            Don’t have an account?
+            <a href="register.html">Sign up</a>
+          </p>
+        </form>
+      </section>
     </div>
-</div>
+  </div>
 
-<script>
-function togglePW(){
-    const input=document.getElementById("pw");
-    input.type = input.type === "password" ? "text" : "password";
-}
-</script>
-
+  <script>
+    function togglePW() {
+      const input = document.getElementById("pw");
+      if (!input) return;
+      input.type = input.type === "password" ? "text" : "password";
+    }
+  </script>
 </body>
 </html>
