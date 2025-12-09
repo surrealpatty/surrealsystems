@@ -6,7 +6,7 @@
   <title>CodeCrowds – Register</title>
   <meta name="description" content="Create your CodeCrowds account." />
 
-  <!-- Same font family as login -->
+  <!-- Same font as login -->
   <link
     rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
@@ -37,7 +37,7 @@
       align-items: flex-start;
       font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
         sans-serif;
-      /* EXACTLY like login page */
+      /* match login.html background */
       background: radial-gradient(
         circle at top left,
         #111827 0,
@@ -91,7 +91,7 @@
       }
     }
 
-    /* LEFT PANEL – same “bubbles” as login */
+    /* LEFT PANEL – identical to login.html */
     .pitch {
       padding: 24px 24px 28px;
       border-radius: var(--radius-xl);
@@ -121,7 +121,7 @@
     }
 
     .pitch-item {
-      padding: 12px;
+      padding: 18px 18px;
       border-radius: 0.9rem;
       background: rgba(15, 23, 42, 0.9);
       border: 1px solid rgba(51, 65, 85, 0.8);
@@ -164,7 +164,7 @@
       background: linear-gradient(135deg, #22c55e, #3b82f6);
     }
 
-    /* RIGHT CARD – match login card */
+    /* RIGHT CARD – matched to login card */
     .card {
       padding: 24px 22px 26px;
       border-radius: var(--radius-xl);
@@ -176,8 +176,14 @@
     }
 
     .card h2 {
-      margin: 0 0 10px;
+      margin: 0 0 4px;
       font-size: 1.4rem;
+    }
+
+    .card-subtitle {
+      margin: 0 0 14px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
     }
 
     form {
@@ -296,7 +302,7 @@
       border: none;
     }
 
-    /* FULL-WIDTH gradient bar like LOGIN button */
+    /* wide gradient bar like Login button */
     .btn-primary {
       width: 100%;
       height: 44px;
@@ -358,7 +364,7 @@
     </header>
 
     <div class="layout">
-      <!-- LEFT: same “bubbles” as index/login -->
+      <!-- LEFT: copied look from login.html -->
       <section class="pitch">
         <h1 class="pitch-title">Offer your coding skills to the world.</h1>
         <p class="pitch-subtitle">
@@ -375,13 +381,13 @@
             <h3>Connect &amp; Collaborate</h3>
             <p>
               Rate and interact with other developers, build credibility, and grow your
-              network.
+              professional network.
             </p>
           </article>
 
           <article class="pitch-item">
             <h3>Ad-Free &amp; Premium</h3>
-            <p>Upgrade for an ad-free experience, lower fees, and more visibility.</p>
+            <p>Upgrade for ad-free experience, lower fees, and more visibility.</p>
           </article>
         </div>
 
@@ -396,6 +402,9 @@
       <!-- RIGHT: register card -->
       <aside class="card" aria-labelledby="register-heading">
         <h2 id="register-heading">Create your account</h2>
+        <p class="card-subtitle">
+          Join CodeCrowds to create posts, manage your messages, and grow your projects.
+        </p>
 
         <form id="registerForm" novalidate>
           <div class="field">
@@ -452,7 +461,9 @@
                 Show
               </button>
             </div>
-            <div id="passwordStrength" class="strength" aria-live="polite"></div>
+            <div id="passwordStrength" class="strength" aria-live="polite">
+              Use at least 8 characters with a mix of letters, numbers, and symbols.
+            </div>
           </div>
 
           <div class="field">
@@ -477,7 +488,12 @@
             </button>
           </div>
 
-          <p id="registerMessage" class="message" role="status" aria-live="polite"></p>
+          <p
+            id="registerMessage"
+            class="message"
+            role="status"
+            aria-live="polite"
+          ></p>
 
           <p class="signup-switch">
             Already have an account?
@@ -490,6 +506,7 @@
     <footer>© 2025 CodeCrowds. All rights reserved.</footer>
   </div>
 
+  <!-- Shared script handles register logic + show/hide -->
   <script src="/register.js" defer></script>
 </body>
 </html>
