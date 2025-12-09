@@ -6,6 +6,7 @@
   <title>CodeCrowds – Register</title>
   <meta name="description" content="Create your CodeCrowds account." />
 
+  <!-- Same body font as login -->
   <link
     rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
@@ -33,17 +34,32 @@
       min-height: 100vh;
       display: flex;
       justify-content: center;
-      align-items: stretch;
-      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+      align-items: flex-start;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
         sans-serif;
-      background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
+      /* match login page background */
+      background: radial-gradient(
+        circle at top left,
+        #111827 0,
+        #020617 55%,
+        #020617 75%,
+        #000000 100%
+      );
       color: var(--text-main);
     }
 
     .page {
       width: 100%;
-      max-width: 1040px;
-      padding: 32px 16px 40px;
+      max-width: 1100px;
+      padding: 20px 20px 24px;
+    }
+
+    /* brand row (same style as login) */
+    .brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      margin-bottom: 24px;
     }
 
     .logo-link {
@@ -54,7 +70,6 @@
       color: var(--text-main);
       text-decoration: none;
       font-size: 1.1rem;
-      margin-bottom: 24px;
     }
 
     .logo-dot {
@@ -66,7 +81,7 @@
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
       gap: 28px;
     }
 
@@ -76,6 +91,7 @@
       }
     }
 
+    /* left pitch panel – same content as login */
     .pitch {
       padding: 24px 24px 28px;
       border-radius: var(--radius-xl);
@@ -105,7 +121,7 @@
     }
 
     .pitch-item {
-      padding: 12px 12px 12px 12px;
+      padding: 12px;
       border-radius: 0.9rem;
       background: rgba(15, 23, 42, 0.9);
       border: 1px solid rgba(51, 65, 85, 0.8);
@@ -124,12 +140,40 @@
       line-height: 1.4;
     }
 
+    /* little pill like on the login page: “Premium perks for power users” */
+    .pitch-footer {
+      margin-top: 18px;
+    }
+
+    .pitch-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(59, 130, 246, 0.7);
+      font-size: 0.8rem;
+      color: #e5e7eb;
+      white-space: nowrap;
+    }
+
+    .pitch-pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #22c55e, #3b82f6);
+    }
+
+    /* right card – visually matched to login card */
     .card {
       padding: 24px 22px 26px;
       border-radius: var(--radius-xl);
       border: 1px solid var(--border-subtle);
       background: rgba(15, 23, 42, 0.96);
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
     }
 
     .card h2 {
@@ -137,10 +181,17 @@
       font-size: 1.4rem;
     }
 
+    .card-subtitle {
+      margin: 0 0 18px;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
     form {
       display: flex;
       flex-direction: column;
       gap: 14px;
+      margin: 0;
     }
 
     .field {
@@ -250,6 +301,7 @@
       align-items: center;
     }
 
+    /* toned-down button: gradient, but no glow box-shadow */
     .btn-primary {
       border: none;
       background: linear-gradient(135deg, #3b82f6, #22c55e);
@@ -299,12 +351,15 @@
 </head>
 <body>
   <div class="page">
-    <a href="/" class="logo-link">
-      <span class="logo-dot"></span>
-      <span>CodeCrowds</span>
-    </a>
+    <header class="brand-row">
+      <a href="/" class="logo-link">
+        <span class="logo-dot"></span>
+        <span>CodeCrowds</span>
+      </a>
+    </header>
 
     <div class="layout">
+      <!-- Left marketing pitch (same words as index/login) -->
       <section class="pitch">
         <h1 class="pitch-title">Offer your coding skills to the world.</h1>
         <p class="pitch-subtitle">
@@ -314,29 +369,38 @@
         <div class="pitch-grid">
           <article class="pitch-item">
             <h3>Offer Your Services</h3>
-            <p>
-              Create posts to sell your skills and showcase your best work.
-            </p>
+            <p>Create posts to sell your skills and showcase your best work.</p>
           </article>
 
           <article class="pitch-item">
             <h3>Connect &amp; Collaborate</h3>
             <p>
-              Rate and interact with other developers, build credibility, and grow your network.
+              Rate and interact with other developers, build credibility, and grow your
+              network.
             </p>
           </article>
 
           <article class="pitch-item">
             <h3>Ad-Free &amp; Premium</h3>
-            <p>
-              Upgrade to premium for an ad-free experience, lower fees, and more visibility.
-            </p>
+            <p>Upgrade for an ad-free experience, lower fees, and more visibility.</p>
           </article>
+        </div>
+
+        <!-- pill text: Premium perks for power users -->
+        <div class="pitch-footer">
+          <span class="pitch-pill">
+            <span class="pitch-pill-dot"></span>
+            <span>Premium perks for power users</span>
+          </span>
         </div>
       </section>
 
+      <!-- Right register card -->
       <aside class="card" aria-labelledby="register-heading">
         <h2 id="register-heading">Create your account</h2>
+        <p class="card-subtitle">
+          Join CodeCrowds to create posts, manage your messages, and grow your projects.
+        </p>
 
         <form id="registerForm" novalidate>
           <div class="field">
@@ -393,11 +457,7 @@
                 Show
               </button>
             </div>
-            <div
-              id="passwordStrength"
-              class="strength"
-              aria-live="polite"
-            >
+            <div id="passwordStrength" class="strength" aria-live="polite">
               Use at least 8 characters with a mix of letters, numbers, and symbols.
             </div>
           </div>
@@ -424,16 +484,11 @@
             </button>
           </div>
 
-          <p
-            id="registerMessage"
-            class="message"
-            role="status"
-            aria-live="polite"
-          ></p>
+          <p id="registerMessage" class="message" role="status" aria-live="polite"></p>
 
           <p class="signup-switch">
             Already have an account?
-            <a href="index.html">Log in</a>
+            <a href="login.html">Log in</a>
           </p>
         </form>
       </aside>
