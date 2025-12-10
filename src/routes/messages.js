@@ -53,6 +53,11 @@ router.get(
             as: 'receiver',
             attributes: ['id', 'username', 'email'],
           },
+          {
+            model: Service,
+            as: 'service',         // 👈 add service so frontend sees service.title
+            attributes: ['id', 'title'],
+          },
         ],
         order: [['createdAt', 'DESC']],
         limit,
@@ -96,6 +101,11 @@ router.get(
             model: User,
             as: 'receiver',
             attributes: ['id', 'username', 'email'],
+          },
+          {
+            model: Service,
+            as: 'service',         // 👈 same here
+            attributes: ['id', 'title'],
           },
         ],
         order: [['createdAt', 'DESC']],
@@ -242,10 +252,6 @@ router.get(
 /* ------------------------------------------------------------------ */
 /* GET /api/messages/:id/thread  (conversation by message + ad)       */
 /*  NEW route – used by the new messages.js "Reply" panel             */
-/*  - Finds the clicked message                                       */
-/*  - Checks the current user is in it                                */
-/*  - Uses its serviceId + the two users to fetch ONLY that ad's      */
-/*    conversation between them                                       */
 /* ------------------------------------------------------------------ */
 router.get(
   '/:id/thread',
@@ -278,7 +284,6 @@ router.get(
 
       const root = rootRow.toJSON();
 
-      // Make sure logged-in user is part of this message
       if (
         root.senderId !== req.user.id &&
         root.receiverId !== req.user.id
@@ -304,7 +309,6 @@ router.get(
         ],
       };
 
-      // Lock to this specific ad / service if there is one
       if (serviceId !== null) {
         where.serviceId = serviceId;
       }
