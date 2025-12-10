@@ -1,9 +1,8 @@
 // public/messages.js
-// Messages page with "Reply" button.
-// Each card represents a single thread = (ad/service + other user).
-// Subject line is the ad title, and the thread only shows messages
-// for that ad between you and that user (or, if no ad, from that
-// message forward only).
+// Messages page with "Reply" button and per-ad threads.
+// Each card = one thread (ad/service + other user).
+// Subject line = ad title. Reply opens an email-style thread
+// inside that card.
 
 (() => {
   console.log("[messages] loaded messages.js (front-end per-ad threads v2)");
@@ -16,7 +15,7 @@
   const API_URL =
     window.API_URL ||
     (window.location.hostname === AUTO_HOST ||
-      window.location.hostname.endsWith(".onrender.com")
+    window.location.hostname.endsWith(".onrender.com")
       ? `https://${AUTO_HOST}/api`
       : "/api");
 
@@ -267,8 +266,7 @@
         ? `To: ${receiverName}`
         : "Sent message";
 
-    const previewRaw =
-      m.preview || m.snippet || m.content || m.text || "";
+    const previewRaw = m.preview || m.snippet || m.content || m.text || "";
     const preview =
       previewRaw.length > 220
         ? `${previewRaw.slice(0, 217)}…`
@@ -323,7 +321,7 @@
           data-partner-name="${escapeHtml(partnerName)}"
           data-service-id="${escapeHtml(String(serviceId))}"
           data-service-title="${escapeHtml(serviceTitle)}"
-          data-root-created="${escapeHtml(createdIso || '')}"
+          data-root-created="${escapeHtml(createdIso || "")}"
         >
           <div class="thread-header"></div>
           <div class="thread-messages"></div>
@@ -515,7 +513,7 @@
 
     const payload = {
       receiverId: partnerId,
-      content, // backend POST route supports this
+      content,
       subject,
     };
     if (serviceId) payload.serviceId = serviceId;

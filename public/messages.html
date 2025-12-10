@@ -29,12 +29,22 @@
       }
 
       body.dashboard.profile-dark {
-        background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
+        background: radial-gradient(
+          circle at top,
+          #1e293b 0,
+          #020617 45%,
+          #000 100%
+        );
         color: var(--text-main);
       }
 
       body.dashboard.profile-light {
-        background: radial-gradient(circle at top, #eef2ff 0, #e0f2fe 45%, #f9fafb 100%);
+        background: radial-gradient(
+          circle at top,
+          #eef2ff 0,
+          #e0f2fe 45%,
+          #f9fafb 100%
+        );
         color: #020617;
       }
 
@@ -241,94 +251,6 @@
         margin-top: 6px;
       }
 
-      .loading,
-      .empty,
-      .error {
-        font-size: 0.9rem;
-      }
-
-      .loading,
-      .empty {
-        color: var(--text-muted);
-      }
-
-      .error {
-        color: #fecaca;
-      }
-
-      .timestamp {
-        font-size: 0.8rem;
-      }
-
-      body.profile-dark .timestamp {
-        color: #9ca3af;
-      }
-
-      body.profile-light .timestamp {
-        color: #6b7280;
-      }
-
-      .message-title {
-        font-size: 1rem;
-        font-weight: 600;
-        margin: 0 0 4px;
-      }
-
-      body.profile-dark .message-title {
-        color: #f9fafb;
-      }
-
-      body.profile-light .message-title {
-        color: #020617;
-      }
-
-      .message-meta {
-        font-size: 0.85rem;
-        margin: 0 0 6px;
-      }
-
-      body.profile-dark .message-meta {
-        color: #c4d3ff;
-      }
-
-      body.profile-light .message-meta {
-        color: #4b5563;
-      }
-
-      .card p {
-        margin: 0;
-      }
-
-      body.profile-dark .card p {
-        color: #d1d5db;
-      }
-
-      body.profile-light .card p {
-        color: #4b5563;
-      }
-
-      .conversation-footer {
-        margin-top: 10px;
-      }
-
-      .conversation-footer button {
-        border-radius: 999px;
-        padding: 0.45rem 0.9rem;
-        border: 1px solid rgba(55, 65, 81, 0.9);
-        cursor: pointer;
-      }
-
-      body.profile-dark .conversation-footer button {
-        background: rgba(15, 23, 42, 0.9);
-        color: var(--text-main);
-      }
-
-      body.profile-light .conversation-footer button {
-        background: #ffffff;
-        border-color: #d1d5db;
-        color: #111827;
-      }
-
       .site-footer {
         text-align: center;
         margin-top: 18px;
@@ -436,7 +358,9 @@
                 Messages
               </a>
             </li>
-            <li><a href="login.html" class="nav-link nav-link--danger">Logout</a></li>
+            <li>
+              <a href="login.html" class="nav-link nav-link--danger">Logout</a>
+            </li>
           </ul>
         </aside>
 
