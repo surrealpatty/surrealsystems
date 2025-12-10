@@ -1,9 +1,10 @@
 // public/messages.js
-// Email-style messages page with Reply button that opens a thread
-// connecting sender, receiver, and the ad (service) that started it.
+// Messages page with "Reply" button.
+// Each card's subject is the ad title, and the thread shows only
+// messages for that ad between the sender and receiver.
 
 (() => {
-  console.log("[messages] loaded messages.js (email-style thread)");
+  console.log("[messages] loaded messages.js (per-ad email threads)");
 
   // -----------------------------
   // API base URL helper (Render vs local)
@@ -119,7 +120,7 @@
     try {
       data = await res.json();
     } catch {
-      // ignore parse error, rely on status
+      // ignore parse error
     }
 
     if (!res.ok) {
@@ -250,8 +251,10 @@
       m.serviceTitle ||
       "";
 
-    // Subject shown on card (keeps your existing look)
-    const subjectDisplay = `RE 'Message from ${senderName}'`;
+    // 📨 SUBJECT LINE = AD TITLE
+    const subjectDisplay = serviceTitle
+      ? `RE '${serviceTitle}'`
+      : `Message from ${senderName}`;
 
     return `
       <article class="message-card" data-message-id="${escapeHtml(
@@ -264,11 +267,7 @@
           <p class="timestamp">${escapeHtml(when)}</p>
 
           <div class="conversation-footer">
-            <!-- looks like the old "View Conversation" button but says Reply -->
-            <button
-              type="button"
-              class="reply-toggle"
-            >
+            <button type="button" class="reply-toggle">
               Reply
             </button>
           </div>
@@ -298,7 +297,7 @@
   }
 
   // -----------------------------
-  // Build email-style conversation thread
+  // Build per-ad, per-user conversation thread
   // -----------------------------
   function threadMessagesFor(partnerId, serviceId) {
     const partnerIdNum =
@@ -310,6 +309,7 @@
       const sId = m.senderId ?? m.sender_id;
       const rId = m.receiverId ?? m.receiver_id;
 
+      // Must be between current user and partner
       const pairMatch =
         partnerIdNum != null &&
         currentUserId != null &&
@@ -318,10 +318,16 @@
 
       if (!pairMatch) return false;
 
-      const mSvc = m.serviceId ?? m.service_id ?? null;
-      if (!svcIdNum || !mSvc) return true;
+      // If this card is tied to a specific ad, only show messages for that ad
+      if (svcIdNum != null) {
+        const mSvc = m.serviceId ?? m.service_id ?? null;
+        if (mSvc == null) return false;
+        return Number(mSvc) === svcIdNum;
+      }
 
-      return Number(mSvc) === svcIdNum;
+      // If there is NO service on the card, fall back to all messages
+      // between you and that user.
+      return true;
     });
 
     // sort oldest → newest
@@ -331,7 +337,7 @@
       return da - db;
     });
 
-    // de-dup by id just in case
+    // de-dup by id
     const seen = new Set();
     const deduped = [];
     for (const m of filtered) {
@@ -347,14 +353,12 @@
   function buildThreadHeaderHtml(partnerName, serviceTitle) {
     const parts = [];
 
-    // Connect sender + receiver
     parts.push(
       `<div><strong>Between:</strong> You &nbsp;and&nbsp; ${escapeHtml(
         partnerName || "this user",
       )}</div>`,
     );
 
-    // Connect to ad / service
     if (serviceTitle) {
       parts.push(
         `<div><strong>Ad:</strong> ${escapeHtml(serviceTitle)}</div>`,
@@ -459,21 +463,18 @@
     try {
       const res = await apiPost("/messages", payload);
 
-      // Try to grab created message for local thread update
       const created =
         (res && res.data) ||
         (res && res.message) ||
         res;
 
       if (created && created.id != null) {
-        // treat as sent message
         sentMessages.push(created);
         indexAllMessages();
       }
 
       textarea.value = "";
 
-      // Rebuild thread
       const msgs = threadMessagesFor(partnerId, serviceId);
       const messagesEl = panel.querySelector(".thread-messages");
       if (messagesEl) {
@@ -514,11 +515,9 @@
       });
     }
 
-    // Delegate clicks for message cards
     document.addEventListener("click", (e) => {
       const target = e.target;
 
-      // Reply button toggles email-style conversation
       if (target.classList.contains("reply-toggle")) {
         const article = target.closest(".message-card");
         if (!article) return;
@@ -533,7 +532,6 @@
         }
       }
 
-      // Send inside the conversation panel
       if (target.classList.contains("thread-send-btn")) {
         const article = target.closest(".message-card");
         if (!article) return;
