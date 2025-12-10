@@ -115,12 +115,10 @@ body {
   line-height: 1.45;
   color: var(--color-text);
 
-  /* Background stays still; content scrolls over it */
-  background: var(--page-bg);
-  background-attachment: fixed;
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: top center;
+  /* Background stays still; content scrolls over it.
+     !important here forces this to win over any per-page body backgrounds. */
+  background: var(--page-bg) fixed no-repeat center top !important;
+  background-size: cover !important;
 }
 
 
@@ -1182,15 +1180,12 @@ body.profile-light .user-pill {
    GLOBAL LIGHT MODE – applies to profile, services, messages
    ========================================================= */
 
+/* background is handled globally on body; these only change text colours */
 body.profile-dark {
-  /* use the same global gradient – no colour break */
-  background: var(--page-bg);
   color: #e5e7eb;
 }
 
 body.profile-light {
-  /* single soft colour so the top colour extends all the way down */
-  background: #eef2ff;
   color: #020617;
 }
 
