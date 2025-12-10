@@ -459,10 +459,15 @@ async function ccGetCurrentUser() {
 
 // Update the pill in the header on all pages
 async function ccInitTopUserChip() {
-  const avatarEl = document.getElementById("topUserAvatar");
+  const avatarEl =
+    document.getElementById("topUserAvatar") ||
+    document.querySelector(".top-user-avatar");
+
   const labelEl =
     document.getElementById("topUserEmail") ||
-    document.getElementById("topUserLabel");
+    document.getElementById("topUserLabel") ||
+    document.getElementById("topUserName") || // ✅ support this ID too
+    document.querySelector(".top-user-label");
 
   // If there is no top-right chip on this page, do nothing
   if (!avatarEl && !labelEl) return;
@@ -500,6 +505,7 @@ async function ccInitTopUserChip() {
   }
 
   // 4) Make the whole pill act as "Back to profile" button on all pages
+  // First try a specific #topUser id, then fall back to the nearest .top-user-pill
   const chipEl =
     document.getElementById("topUser") ||
     (avatarEl && avatarEl.closest(".top-user-pill")) ||
@@ -511,6 +517,18 @@ async function ccInitTopUserChip() {
     });
     chipEl.dataset.ccProfileNavBound = "1";
   }
+
+  // 5) EXTRA SAFETY:
+  // Also bind click to *all* .top-user-pill elements on the page,
+  // in case the markup is slightly different on some pages.
+  document.querySelectorAll(".top-user-pill").forEach((pill) => {
+    if (!pill.dataset.ccProfileNavBound) {
+      pill.addEventListener("click", () => {
+        window.location.href = "profile.html";
+      });
+      pill.dataset.ccProfileNavBound = "1";
+    }
+  });
 }
 
 /* ================================ Boot ================================== */
