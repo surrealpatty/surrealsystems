@@ -1,9 +1,9 @@
 // public/messages.js
-// Messages page: show inbox/sent, and for each card a Reply button
-// that both shows the conversation thread and lets you send a reply.
+// Email-style messages page with Reply button that opens a thread
+// connecting sender, receiver, and the ad (service) that started it.
 
 (() => {
-  console.log("[messages] loaded messages.js (reply + thread)");
+  console.log("[messages] loaded messages.js (email-style thread)");
 
   // -----------------------------
   // API base URL helper (Render vs local)
@@ -13,7 +13,7 @@
   const API_URL =
     window.API_URL ||
     (window.location.hostname === AUTO_HOST ||
-    window.location.hostname.endsWith(".onrender.com")
+      window.location.hostname.endsWith(".onrender.com")
       ? `https://${AUTO_HOST}/api`
       : "/api");
 
@@ -32,8 +32,6 @@
   let inboxMessages = [];
   let sentMessages = [];
   let allMessages = [];
-  const messagesById = new Map();
-
   const currentUserId = getCurrentUserId();
 
   // -----------------------------
@@ -95,9 +93,7 @@
       credentials: "include",
       headers: { "Content-Type": "application/json" },
     });
-    if (!res.ok) {
-      throw new Error(`GET ${path} failed: ${res.status}`);
-    }
+    if (!res.ok) throw new Error(`GET ${path} failed: ${res.status}`);
     return res.json();
   }
 
@@ -110,9 +106,7 @@
     }
 
     const headers = { "Content-Type": "application/json" };
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
+    if (token) headers.Authorization = `Bearer ${token}`;
 
     const res = await fetch(`${API_URL}${path}`, {
       method: "POST",
@@ -125,7 +119,7 @@
     try {
       data = await res.json();
     } catch {
-      // ignore parse error
+      // ignore parse error, rely on status
     }
 
     if (!res.ok) {
@@ -141,27 +135,29 @@
 
   function normalizeMessages(payload) {
     if (!payload) return [];
-
     if (Array.isArray(payload.messages)) return payload.messages;
     if (Array.isArray(payload.data)) return payload.data;
     if (payload.data && Array.isArray(payload.data.rows)) return payload.data.rows;
     if (Array.isArray(payload)) return payload;
-
     return [];
   }
 
-  function indexMessages() {
-    allMessages = [...inboxMessages, ...sentMessages];
-    messagesById.clear();
-    for (const m of allMessages) {
-      if (m && m.id != null) {
-        messagesById.set(m.id, m);
-      }
+  function indexAllMessages() {
+    const seen = new Set();
+    const combined = [...inboxMessages, ...sentMessages];
+    allMessages = [];
+
+    for (const m of combined) {
+      const id = m && m.id;
+      if (id == null) continue;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      allMessages.push(m);
     }
   }
 
   // -----------------------------
-  // Fetch messages once (inbox + sent)
+  // Fetch both inbox + sent once
   // -----------------------------
   async function fetchAllMessages() {
     try {
@@ -173,7 +169,7 @@
 
       inboxMessages = normalizeMessages(inboxRaw);
       sentMessages = normalizeMessages(sentRaw);
-      indexMessages();
+      indexAllMessages();
 
       renderView("inbox");
     } catch (err) {
@@ -183,11 +179,10 @@
   }
 
   // -----------------------------
-  // Rendering
+  // Rendering main list (cards)
   // -----------------------------
   function renderView(view) {
     setActiveTab(view);
-
     const list = view === "inbox" ? inboxMessages : sentMessages;
 
     if (!list.length) {
@@ -228,15 +223,6 @@
         ? `To: ${receiverName}`
         : "Sent message";
 
-    const otherUserId = (() => {
-      const sId = m.senderId ?? m.sender_id;
-      const rId = m.receiverId ?? m.receiver_id;
-      if (currentUserId != null && sId === currentUserId) return rId;
-      if (currentUserId != null && rId === currentUserId) return sId;
-      // fallback: for inbox view, other is sender; for sent view, other is receiver
-      return view === "inbox" ? sId : rId;
-    })();
-
     const previewRaw =
       m.preview || m.snippet || m.content || m.text || "";
     const preview =
@@ -245,10 +231,26 @@
         : previewRaw;
 
     const when = formatDate(m.createdAt || m.sentAt || m.created_at);
-
     const msgId = m.id || m.messageId || m.messageID || "";
-    const serviceId = m.serviceId || m.service_id || "";
 
+    // Figure out "other user" in the pair (not you)
+    const sId = m.senderId ?? m.sender_id;
+    const rId = m.receiverId ?? m.receiver_id;
+    let partnerId = null;
+    if (currentUserId != null && sId === currentUserId) partnerId = rId;
+    else if (currentUserId != null && rId === currentUserId) partnerId = sId;
+    else partnerId = view === "inbox" ? sId : rId;
+
+    const partnerName = view === "inbox" ? senderName : receiverName || "User";
+
+    // Service / ad info
+    const serviceId = m.serviceId ?? m.service_id ?? "";
+    const serviceTitle =
+      (m.service && (m.service.title || m.service.name)) ||
+      m.serviceTitle ||
+      "";
+
+    // Subject shown on card (keeps your existing look)
     const subjectDisplay = `RE 'Message from ${senderName}'`;
 
     return `
@@ -258,11 +260,11 @@
         <div class="message-main">
           <h3 class="message-title">${escapeHtml(subjectDisplay)}</h3>
           <p class="message-meta">${escapeHtml(whoLine)}</p>
-          <p class="message-snippet">${escapeHtml(preview)}</p>
+          <p>${escapeHtml(preview)}</p>
           <p class="timestamp">${escapeHtml(when)}</p>
 
           <div class="conversation-footer">
-            <!-- This is the ONLY button you see: looks like old "View Conversation" but says Reply -->
+            <!-- looks like the old "View Conversation" button but says Reply -->
             <button
               type="button"
               class="reply-toggle"
@@ -272,13 +274,16 @@
           </div>
         </div>
 
-        <!-- Conversation panel: hidden until you click Reply -->
+        <!-- Email-style conversation panel (hidden until Reply is clicked) -->
         <div
           class="conversation-panel"
           hidden
-          data-partner-id="${escapeHtml(String(otherUserId ?? ""))}"
-          data-service-id="${escapeHtml(String(serviceId ?? ""))}"
+          data-partner-id="${escapeHtml(String(partnerId ?? ""))}"
+          data-partner-name="${escapeHtml(partnerName)}"
+          data-service-id="${escapeHtml(String(serviceId))}"
+          data-service-title="${escapeHtml(serviceTitle)}"
         >
+          <div class="thread-header"></div>
           <div class="thread-messages"></div>
           <div class="thread-reply">
             <textarea
@@ -293,66 +298,96 @@
   }
 
   // -----------------------------
-  // Conversation building
+  // Build email-style conversation thread
   // -----------------------------
-  function inSameConversation(msg, partnerId, serviceId) {
-    const sId = msg.senderId ?? msg.sender_id;
-    const rId = msg.receiverId ?? msg.receiver_id;
-    const svc = msg.serviceId ?? msg.service_id ?? null;
-
-    const samePair =
-      currentUserId != null &&
-      ((sId === currentUserId && rId === partnerId) ||
-        (sId === partnerId && rId === currentUserId));
-
-    const sameService =
-      !serviceId || !svc || Number(svc) === Number(serviceId);
-
-    return samePair && sameService;
-  }
-
-  function buildThreadHtml(partnerId, serviceId) {
+  function threadMessagesFor(partnerId, serviceId) {
     const partnerIdNum =
       partnerId == null || partnerId === "" ? null : Number(partnerId);
+    const svcIdNum =
+      serviceId == null || serviceId === "" ? null : Number(serviceId);
 
-    const thread = allMessages
-      .filter(
-        (m) =>
-          partnerIdNum != null && inSameConversation(m, partnerIdNum, serviceId),
-      )
-      .sort((a, b) => {
-        const da = new Date(a.createdAt || a.created_at);
-        const db = new Date(b.createdAt || b.created_at);
-        return da - db;
-      });
+    const filtered = allMessages.filter((m) => {
+      const sId = m.senderId ?? m.sender_id;
+      const rId = m.receiverId ?? m.receiver_id;
 
-    if (!thread.length) {
+      const pairMatch =
+        partnerIdNum != null &&
+        currentUserId != null &&
+        ((sId === currentUserId && rId === partnerIdNum) ||
+          (sId === partnerIdNum && rId === currentUserId));
+
+      if (!pairMatch) return false;
+
+      const mSvc = m.serviceId ?? m.service_id ?? null;
+      if (!svcIdNum || !mSvc) return true;
+
+      return Number(mSvc) === svcIdNum;
+    });
+
+    // sort oldest → newest
+    filtered.sort((a, b) => {
+      const da = new Date(a.createdAt || a.created_at);
+      const db = new Date(b.createdAt || b.created_at);
+      return da - db;
+    });
+
+    // de-dup by id just in case
+    const seen = new Set();
+    const deduped = [];
+    for (const m of filtered) {
+      if (!m || m.id == null) continue;
+      if (seen.has(m.id)) continue;
+      seen.add(m.id);
+      deduped.push(m);
+    }
+
+    return deduped;
+  }
+
+  function buildThreadHeaderHtml(partnerName, serviceTitle) {
+    const parts = [];
+
+    // Connect sender + receiver
+    parts.push(
+      `<div><strong>Between:</strong> You &nbsp;and&nbsp; ${escapeHtml(
+        partnerName || "this user",
+      )}</div>`,
+    );
+
+    // Connect to ad / service
+    if (serviceTitle) {
+      parts.push(
+        `<div><strong>Ad:</strong> ${escapeHtml(serviceTitle)}</div>`,
+      );
+    }
+
+    return `<div class="thread-header-inner">${parts.join("")}</div>`;
+  }
+
+  function buildThreadMessagesHtml(msgs, partnerName) {
+    if (!msgs.length) {
       return `<p class="thread-empty">No previous messages in this conversation yet.</p>`;
     }
 
-    return thread
+    return msgs
       .map((m) => {
         const sId = m.senderId ?? m.sender_id;
-        const isMe = currentUserId != null && sId === currentUserId;
-
-        const name =
-          isMe
-            ? "You"
-            : m.sender?.displayName ||
-              m.sender?.username ||
-              m.sender?.email ||
-              "Them";
-
-        const when = formatDate(m.createdAt || m.created_at);
-        const text = m.content || m.text || "";
+        const fromMe = currentUserId != null && sId === currentUserId;
+        const fromName = fromMe ? "You" : partnerName || "User";
+        const toName = fromMe ? partnerName || "User" : "You";
+        const dateStr = formatDate(m.createdAt || m.created_at);
+        const body = m.content || m.text || "";
 
         return `
-          <div class="thread-message ${isMe ? "from-you" : "from-them"}">
-            <div class="thread-meta">
-              <span class="thread-author">${escapeHtml(name)}</span>
-              <span class="thread-time">${escapeHtml(when)}</span>
+          <div class="thread-email">
+            <div class="thread-email-header">
+              <div><strong>From:</strong> ${escapeHtml(fromName)}</div>
+              <div><strong>To:</strong> ${escapeHtml(toName)}</div>
+              <div><strong>Date:</strong> ${escapeHtml(dateStr)}</div>
             </div>
-            <p class="thread-text">${escapeHtml(text)}</p>
+            <div class="thread-email-body">
+              <p>${escapeHtml(body)}</p>
+            </div>
           </div>
         `;
       })
@@ -363,14 +398,22 @@
     const panel = articleEl.querySelector(".conversation-panel");
     if (!panel) return;
 
-    // Build thread content
     const partnerId = panel.getAttribute("data-partner-id");
+    const partnerName = panel.getAttribute("data-partner-name") || "User";
     const serviceId = panel.getAttribute("data-service-id") || "";
-    const messagesBox = panel.querySelector(".thread-messages");
+    const serviceTitle = panel.getAttribute("data-service-title") || "";
+
+    const headerEl = panel.querySelector(".thread-header");
+    const messagesEl = panel.querySelector(".thread-messages");
     const textarea = panel.querySelector(".thread-reply-input");
 
-    if (messagesBox) {
-      messagesBox.innerHTML = buildThreadHtml(partnerId, serviceId);
+    const msgs = threadMessagesFor(partnerId, serviceId);
+
+    if (headerEl) {
+      headerEl.innerHTML = buildThreadHeaderHtml(partnerName, serviceTitle);
+    }
+    if (messagesEl) {
+      messagesEl.innerHTML = buildThreadMessagesHtml(msgs, partnerName);
     }
 
     panel.hidden = false;
@@ -389,6 +432,8 @@
 
     const partnerIdRaw = panel.getAttribute("data-partner-id");
     const serviceIdRaw = panel.getAttribute("data-service-id") || "";
+    const partnerName = panel.getAttribute("data-partner-name") || "User";
+
     const partnerId = partnerIdRaw ? Number(partnerIdRaw) : null;
     const serviceId = serviceIdRaw ? Number(serviceIdRaw) : null;
 
@@ -400,7 +445,6 @@
       alert("Your reply cannot be empty.");
       return;
     }
-
     if (!partnerId) {
       alert("Cannot send reply: missing receiver.");
       return;
@@ -410,34 +454,32 @@
       content,
       receiverId: partnerId,
     };
-    if (serviceId) {
-      payload.serviceId = serviceId;
-    }
+    if (serviceId) payload.serviceId = serviceId;
 
     try {
       const res = await apiPost("/messages", payload);
 
-      // Try to grab the created message out of the response
+      // Try to grab created message for local thread update
       const created =
         (res && res.data) ||
         (res && res.message) ||
         res;
 
       if (created && created.id != null) {
-        // Treat this as a new sent message
+        // treat as sent message
         sentMessages.push(created);
-        indexMessages();
+        indexAllMessages();
       }
 
       textarea.value = "";
 
-      // Rebuild thread so the new message appears
-      const messagesBox = panel.querySelector(".thread-messages");
-      if (messagesBox) {
-        messagesBox.innerHTML = buildThreadHtml(partnerId, serviceId);
+      // Rebuild thread
+      const msgs = threadMessagesFor(partnerId, serviceId);
+      const messagesEl = panel.querySelector(".thread-messages");
+      if (messagesEl) {
+        messagesEl.innerHTML = buildThreadMessagesHtml(msgs, partnerName);
       }
 
-      // If you're on Sent tab, re-render list so the card list updates
       if (currentView === "sent") {
         renderView("sent");
       }
@@ -472,11 +514,11 @@
       });
     }
 
-    // Delegate clicks for dynamic message cards
+    // Delegate clicks for message cards
     document.addEventListener("click", (e) => {
       const target = e.target;
 
-      // Click on the blue Reply button
+      // Reply button toggles email-style conversation
       if (target.classList.contains("reply-toggle")) {
         const article = target.closest(".message-card");
         if (!article) return;
@@ -491,7 +533,7 @@
         }
       }
 
-      // Click on "Send" inside conversation panel
+      // Send inside the conversation panel
       if (target.classList.contains("thread-send-btn")) {
         const article = target.closest(".message-card");
         if (!article) return;
