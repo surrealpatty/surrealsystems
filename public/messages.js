@@ -1,10 +1,11 @@
 // public/messages.js
 // Messages page with "Reply" button.
-// Each card's subject is the ad title, and the thread shows only
-// messages for that ad between the sender and receiver.
+// Each card represents a single thread = (ad/service + other user).
+// Subject line is the ad title, and the thread only shows messages
+// for that ad between you and that user.
 
 (() => {
-  console.log("[messages] loaded messages.js (per-ad email threads)");
+  console.log("[messages] loaded messages.js (per-ad threads)");
 
   // -----------------------------
   // API base URL helper (Render vs local)
@@ -180,13 +181,13 @@
   }
 
   // -----------------------------
-  // Rendering main list (cards)
+  // LIST VIEW – build threads per (ad + user)
   // -----------------------------
   function renderView(view) {
     setActiveTab(view);
-    const list = view === "inbox" ? inboxMessages : sentMessages;
+    const rawList = view === "inbox" ? inboxMessages : sentMessages;
 
-    if (!list.length) {
+    if (!rawList.length) {
       showStatus(
         view === "inbox"
           ? "You have no received messages yet."
@@ -196,7 +197,46 @@
       return;
     }
 
-    const html = list.map((m) => renderMessageCard(m, view)).join("");
+    // Group into threads by (serviceId + partnerId)
+    const latestByThread = new Map();
+
+    for (const m of rawList) {
+      if (!m) continue;
+
+      const sId = m.senderId ?? m.sender_id;
+      const rId = m.receiverId ?? m.receiver_id;
+
+      let partnerId = null;
+      if (currentUserId != null && sId === currentUserId) partnerId = rId;
+      else if (currentUserId != null && rId === currentUserId) partnerId = sId;
+
+      const serviceId = m.serviceId ?? m.service_id ?? "no-service";
+
+      const key = `${serviceId}:${partnerId ?? "unknown"}`;
+
+      const created = new Date(m.createdAt || m.created_at || 0).getTime();
+      const existing = latestByThread.get(key);
+      const existingTime = existing
+        ? new Date(existing.createdAt || existing.created_at || 0).getTime()
+        : -Infinity;
+
+      if (!existing || created > existingTime) {
+        latestByThread.set(key, m);
+      }
+    }
+
+    const threads = Array.from(latestByThread.values()).sort((a, b) => {
+      const ta = new Date(a.createdAt || a.created_at || 0).getTime();
+      const tb = new Date(b.createdAt || b.created_at || 0).getTime();
+      return tb - ta; // newest first
+    });
+
+    if (!threads.length) {
+      showStatus("No conversations yet.", "empty");
+      return;
+    }
+
+    const html = threads.map((m) => renderMessageCard(m, view)).join("");
     messagesList.innerHTML = html;
   }
 
@@ -234,14 +274,12 @@
     const when = formatDate(m.createdAt || m.sentAt || m.created_at);
     const msgId = m.id || m.messageId || m.messageID || "";
 
-    // Figure out "other user" in the pair (not you)
+    // Determine partnerId again so we can store it on the card
     const sId = m.senderId ?? m.sender_id;
     const rId = m.receiverId ?? m.receiver_id;
     let partnerId = null;
     if (currentUserId != null && sId === currentUserId) partnerId = rId;
     else if (currentUserId != null && rId === currentUserId) partnerId = sId;
-    else partnerId = view === "inbox" ? sId : rId;
-
     const partnerName = view === "inbox" ? senderName : receiverName || "User";
 
     // Service / ad info
@@ -251,7 +289,7 @@
       m.serviceTitle ||
       "";
 
-    // 📨 SUBJECT LINE = AD TITLE
+    // SUBJECT LINE = AD TITLE (fallback to generic if no title)
     const subjectDisplay = serviceTitle
       ? `RE '${serviceTitle}'`
       : `Message from ${senderName}`;
@@ -297,7 +335,7 @@
   }
 
   // -----------------------------
-  // Build per-ad, per-user conversation thread
+  // THREAD VIEW – per (ad + user)
   // -----------------------------
   function threadMessagesFor(partnerId, serviceId) {
     const partnerIdNum =
@@ -318,15 +356,14 @@
 
       if (!pairMatch) return false;
 
-      // If this card is tied to a specific ad, only show messages for that ad
+      // Must belong to the same ad/service
       if (svcIdNum != null) {
         const mSvc = m.serviceId ?? m.service_id ?? null;
         if (mSvc == null) return false;
         return Number(mSvc) === svcIdNum;
       }
 
-      // If there is NO service on the card, fall back to all messages
-      // between you and that user.
+      // If this thread has no service attached, just keep the pair
       return true;
     });
 
