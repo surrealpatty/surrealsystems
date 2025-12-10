@@ -1,206 +1,227 @@
 // src/routes/messages.js
-const express = require('express');
+// Messaging routes for CodeCrowds
+// - POST /messages        => send a message
+// - GET  /messages/inbox  => messages received by current user
+// - GET  /messages/sent   => messages sent by current user
+// - GET  /messages/:id/thread => full conversation for ONE ad between two users
+
+const express = require("express");
 const router = express.Router();
+const { Op } = require("sequelize");
+const { Message, Service, User } = require("../models");
+const authenticateToken = require("../middlewares/authenticateToken");
 
-const { Message, User } = require('../models');
-const authenticateToken = require('../middlewares/authenticateToken');
-const { body, query, param } = require('express-validator');
-const validate = require('../middlewares/validate');
-
-// Standard success/error wrappers
-function ok(res, payload, status = 200) {
-  // payload is usually { messages } or { message }
-  return res.status(status).json({
-    success: true,
-    ...payload,
-    // keep a "data" field for any frontend that expects it
-    data: payload,
-  });
-}
-
-function err(res, message = 'Something went wrong', status = 500, details) {
-  const out = { success: false, error: { message } };
-  if (details) out.error.details = details;
-  return res.status(status).json(out);
-}
-
-/* ------------------------------------------------------------------ */
-/* GET /api/messages/inbox  (list messages you RECEIVED)              */
-/* ------------------------------------------------------------------ */
-router.get(
-  '/inbox',
-  authenticateToken,
-  [
-    query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
-    query('offset').optional().isInt({ min: 0 }).toInt(),
-  ],
-  validate,
-  async (req, res) => {
-    try {
-      const limit = req.query.limit ?? 20;
-      const offset = req.query.offset ?? 0;
-
-      const rows = await Message.findAll({
-        where: { receiverId: req.user.id },
-        include: [
-          {
-            model: User,
-            as: 'sender',
-            attributes: ['id', 'username', 'email'],
-          },
-          {
-            model: User,
-            as: 'receiver',
-            attributes: ['id', 'username', 'email'],
-          },
-        ],
-        order: [['createdAt', 'DESC']],
-        limit,
-        offset,
-      });
-
-      const messages = rows.map((m) => m.toJSON());
-      return ok(res, { messages });
-    } catch (error) {
-      console.error('ERROR: GET /api/messages/inbox failed:', error);
-      return err(res, 'Failed to load inbox', 500);
-    }
+// Small helper so we don't repeat the include list
+const baseInclude = [
+  {
+    model: User,
+    as: "sender",
+    attributes: ["id", "username", "email", "displayName"],
   },
-);
-
-/* ------------------------------------------------------------------ */
-/* GET /api/messages/sent  (list messages you SENT)                   */
-/* ------------------------------------------------------------------ */
-router.get(
-  '/sent',
-  authenticateToken,
-  [
-    query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
-    query('offset').optional().isInt({ min: 0 }).toInt(),
-  ],
-  validate,
-  async (req, res) => {
-    try {
-      const limit = req.query.limit ?? 20;
-      const offset = req.query.offset ?? 0;
-
-      const rows = await Message.findAll({
-        where: { senderId: req.user.id },
-        include: [
-          {
-            model: User,
-            as: 'sender',
-            attributes: ['id', 'username', 'email'],
-          },
-          {
-            model: User,
-            as: 'receiver',
-            attributes: ['id', 'username', 'email'],
-          },
-        ],
-        order: [['createdAt', 'DESC']],
-        limit,
-        offset,
-      });
-
-      const messages = rows.map((m) => m.toJSON());
-      return ok(res, { messages });
-    } catch (error) {
-      console.error('ERROR: GET /api/messages/sent failed:', error);
-      return err(res, 'Failed to load sent messages', 500);
-    }
+  {
+    model: User,
+    as: "receiver",
+    attributes: ["id", "username", "email", "displayName"],
   },
-);
-
-/* ------------------------------------------------------------------ */
-/* POST /api/messages  (send a new message)                           */
-/* ------------------------------------------------------------------ */
-router.post(
-  '/',
-  authenticateToken,
-  [
-    body('receiverId')
-      .isInt()
-      .withMessage('receiverId is required'),
-    // Frontend sends `body` text; we store it in the `content` column.
-    body('body')
-      .isString()
-      .notEmpty()
-      .withMessage('Message body is required'),
-    // Subject is optional and *not* stored in DB for now (no subject column)
-    body('subject')
-      .optional()
-      .isString()
-      .isLength({ max: 255 }),
-    body('serviceId')
-      .optional()
-      .isInt()
-      .withMessage('serviceId must be an integer'),
-  ],
-  validate,
-  async (req, res) => {
-    try {
-      const { receiverId, body: bodyText, serviceId } = req.body;
-
-      // Map bodyText -> `content` column in Message model
-      const created = await Message.create({
-        senderId: req.user.id,
-        receiverId,
-        content: bodyText,
-        serviceId: serviceId || null,
-      });
-
-      const message = created.toJSON();
-      return ok(res, { message }, 201);
-    } catch (error) {
-      console.error('ERROR: POST /api/messages failed:', error);
-      return err(res, 'Failed to send message', 500);
-    }
+  {
+    model: Service,
+    as: "service",
+    attributes: ["id", "title", "name"],
   },
-);
+];
 
-/* ------------------------------------------------------------------ */
-/* GET /api/messages/thread/:userId  (conversation)                   */
-/* ------------------------------------------------------------------ */
-router.get(
-  '/thread/:userId',
-  authenticateToken,
-  [param('userId').isInt()],
-  validate,
-  async (req, res) => {
-    try {
-      const otherUserId = parseInt(req.params.userId, 10);
+// ---------------------------------------------------------
+// POST /messages  – send a message
+// ---------------------------------------------------------
+router.post("/", authenticateToken, async (req, res) => {
+  try {
+    const senderId = req.user && req.user.id;
+    let { receiverId, content, serviceId, subject } = req.body;
 
-      const rows = await Message.findAll({
-        where: {
-          // either I sent to them or they sent to me
-          [Message.sequelize.Op.or]: [
-            { senderId: req.user.id, receiverId: otherUserId },
-            { senderId: otherUserId, receiverId: req.user.id },
-          ],
-        },
-        include: [
-          {
-            model: User,
-            as: 'sender',
-            attributes: ['id', 'username', 'email'],
-          },
-          {
-            model: User,
-            as: 'receiver',
-            attributes: ['id', 'username', 'email'],
-          },
-        ],
-        order: [['createdAt', 'ASC']],
-      });
-
-      const messages = rows.map((m) => m.toJSON());
-      return ok(res, { messages });
-    } catch (error) {
-      console.error('ERROR: GET /api/messages/thread/:userId failed:', error);
-      return err(res, 'Failed to load conversation', 500);
+    if (!senderId) {
+      return res.status(401).json({ message: "Not authenticated." });
     }
-  },
-);
+
+    if (!receiverId) {
+      return res.status(400).json({ message: "receiverId is required." });
+    }
+
+    if (!content || !String(content).trim()) {
+      return res
+        .status(400)
+        .json({ message: "Message content cannot be empty." });
+    }
+
+    // Normalise types
+    receiverId = Number(receiverId);
+    if (Number.isNaN(receiverId)) {
+      return res
+        .status(400)
+        .json({ message: "receiverId must be a number." });
+    }
+
+    if (serviceId !== undefined && serviceId !== null && serviceId !== "") {
+      const n = Number(serviceId);
+      serviceId = Number.isNaN(n) ? null : n;
+    } else {
+      serviceId = null;
+    }
+
+    if (!subject || !String(subject).trim()) {
+      subject = "Message from CodeCrowds";
+    }
+
+    const created = await Message.create({
+      content: String(content).trim(),
+      senderId,
+      receiverId,
+      serviceId,
+      // `subject` is safe to send even if the column doesn't exist;
+      // Sequelize simply ignores attributes not in the model definition.
+      subject,
+    });
+
+    // Optionally re-load with includes so front-end gets sender/service info
+    const fullMessage = await Message.findByPk(created.id, {
+      include: baseInclude,
+    });
+
+    return res.status(201).json(fullMessage || created);
+  } catch (err) {
+    console.error("Error creating message:", err);
+
+    if (
+      err.name === "SequelizeValidationError" ||
+      err.name === "SequelizeUniqueConstraintError"
+    ) {
+      return res.status(400).json({
+        message: "Validation failed",
+        details: err.errors?.map((e) => e.message) || [],
+      });
+    }
+
+    return res.status(500).json({ message: "Failed to send message." });
+  }
+});
+
+// ---------------------------------------------------------
+// GET /messages/inbox  – all messages received by this user
+// ---------------------------------------------------------
+router.get("/inbox", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user && req.user.id;
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated." });
+    }
+
+    const messages = await Message.findAll({
+      where: { receiverId: userId },
+      include: baseInclude,
+      order: [["createdAt", "DESC"]],
+    });
+
+    return res.json(messages);
+  } catch (err) {
+    console.error("Error loading inbox:", err);
+    return res
+      .status(500)
+      .json({ message: "Failed to load inbox messages." });
+  }
+});
+
+// ---------------------------------------------------------
+// GET /messages/sent – all messages sent by this user
+// ---------------------------------------------------------
+router.get("/sent", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user && req.user.id;
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated." });
+    }
+
+    const messages = await Message.findAll({
+      where: { senderId: userId },
+      include: baseInclude,
+      order: [["createdAt", "DESC"]],
+    });
+
+    return res.json(messages);
+  } catch (err) {
+    console.error("Error loading sent messages:", err);
+    return res
+      .status(500)
+      .json({ message: "Failed to load sent messages." });
+  }
+});
+
+// ---------------------------------------------------------
+// GET /messages/:id/thread – ONE conversation (per ad)
+// Uses the clicked message to find:
+//   - the other user
+//   - the serviceId (ad)
+// and then returns ONLY messages between those two users
+// for that one ad.
+// ---------------------------------------------------------
+router.get("/:id/thread", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user && req.user.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated." });
+    }
+
+    // 1) Load the message that was clicked
+    const root = await Message.findByPk(id, {
+      include: baseInclude,
+    });
+
+    if (!root) {
+      return res.status(404).json({ message: "Message not found." });
+    }
+
+    // Make sure current user is part of this conversation
+    if (root.senderId !== userId && root.receiverId !== userId) {
+      return res
+        .status(403)
+        .json({ message: "You are not part of this conversation." });
+    }
+
+    // 2) Work out the other participant
+    const otherUserId =
+      root.senderId === userId ? root.receiverId : root.senderId;
+
+    // 3) Lock to this ad / service
+    const serviceId = root.serviceId || null;
+
+    const where = {
+      [Op.or]: [
+        { senderId: userId, receiverId: otherUserId },
+        { senderId: otherUserId, receiverId: userId },
+      ],
+    };
+
+    if (serviceId !== null) {
+      where.serviceId = serviceId;
+    }
+
+    // 4) Fetch thread messages
+    const messages = await Message.findAll({
+      where,
+      include: baseInclude,
+      order: [["createdAt", "ASC"]],
+    });
+
+    return res.json({
+      root,
+      messages,
+    });
+  } catch (err) {
+    console.error("Error loading message thread:", err);
+    return res
+      .status(500)
+      .json({ message: "Failed to load conversation thread." });
+  }
+});
 
 module.exports = router;
