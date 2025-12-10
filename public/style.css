@@ -100,19 +100,24 @@
 *::before,
 *::after{box-sizing:border-box;}
 html,body,.container,.card,.row,.meta-row{min-width:0;}
-html,body{
-  height:100%;
-  min-height:100vh;
-  margin:0;
-  padding:0;
-  font-family:var(--font-sans);
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-  line-height:1.45;
-  color:var(--color-text);
-  /* use the global gradient – now full-height and consistent */
-  background:var(--page-bg);
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
+
+/* put all background + text styling on body only */
+body {
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.45;
+  color: var(--color-text);
+  background: var(--page-bg); /* SINGLE source of page background */
+}
+
 
 /* -------------------- Container (default = white card) -------------------- */
 .container{
