@@ -1,16 +1,15 @@
 // public/messages.js
-// Messages page: inbox/sent toggle + reply button + reply modal sending.
+// Messages page: load inbox/sent + inline Reply for each message.
 
 (() => {
-  console.log("[messages] loaded messages.js v2 with Reply button");
+  console.log("[messages] loaded messages.js (inline reply, old layout)");
 
   // -----------------------------
-  // API base URL helper
+  // API base URL helper (works on Render + localhost)
   // -----------------------------
   const AUTO_HOST = "codecrowds.onrender.com";
 
   const API_URL =
-    // if init.js already set API_URL, reuse it
     window.API_URL ||
     (window.location.hostname === AUTO_HOST ||
     window.location.hostname.endsWith(".onrender.com")
@@ -25,20 +24,10 @@
   const sentBtn = document.getElementById("sentBtn");
   const backBtn = document.getElementById("goBackBtn");
 
-  const replyModal = document.getElementById("replyModal");
-  const replyText = document.getElementById("replyText");
-  const sendReplyBtn = document.getElementById("sendReply");
-  const cancelReplyBtn = document.getElementById("cancelReply");
-
-  if (!messagesList) {
-    console.warn("[messages] #messages-list not found in DOM.");
-  }
-
   let currentView = "inbox"; // "inbox" | "sent"
-  let replyTarget = null; // { receiverId, serviceId, subject }
 
   // -----------------------------
-  // Small helpers
+  // Helpers
   // -----------------------------
   function escapeHtml(str) {
     if (str == null) return "";
@@ -63,52 +52,43 @@
     });
   }
 
-  function showStatus(message) {
+  function showStatus(text, className = "loading") {
     if (!messagesList) return;
-    messagesList.innerHTML = `<div class="messages-empty">${escapeHtml(
-      message,
-    )}</div>`;
+    messagesList.innerHTML = `<p class="${className}">${escapeHtml(text)}</p>`;
   }
 
   function setActiveTab(view) {
     currentView = view;
+
     if (inboxBtn && sentBtn) {
-      inboxBtn.classList.toggle("pill-selected", view === "inbox");
-      sentBtn.classList.toggle("pill-selected", view === "sent");
+      inboxBtn.classList.toggle("active", view === "inbox");
+      sentBtn.classList.toggle("active", view === "sent");
+      inboxBtn.setAttribute("aria-pressed", view === "inbox" ? "true" : "false");
+      sentBtn.setAttribute("aria-pressed", view === "sent" ? "true" : "false");
     }
   }
 
   async function apiGet(path) {
-    try {
-      const res = await fetch(`${API_URL}${path}`, {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (!res.ok) {
-        throw new Error(`GET ${path} failed: ${res.status}`);
-      }
-      return await res.json();
-    } catch (err) {
-      console.error("[messages] GET error", err);
-      throw err;
+    const res = await fetch(`${API_URL}${path}`, {
+      method: "GET",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) {
+      throw new Error(`GET ${path} failed: ${res.status}`);
     }
+    return res.json();
   }
 
   async function apiPost(path, body) {
-    const token = (() => {
-      try {
-        return localStorage.getItem("token");
-      } catch {
-        return null;
-      }
-    })();
+    let token = null;
+    try {
+      token = localStorage.getItem("token");
+    } catch {
+      token = null;
+    }
 
-    const headers = {
-      "Content-Type": "application/json",
-    };
+    const headers = { "Content-Type": "application/json" };
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
@@ -124,7 +104,7 @@
     try {
       data = await res.json();
     } catch {
-      // ignore parse error – will handle by status below
+      // ignore parse error
     }
 
     if (!res.ok) {
@@ -138,22 +118,19 @@
     return data;
   }
 
-  // Normalise different backend shapes into a simple list
   function normalizeMessages(payload) {
     if (!payload) return [];
 
-    // common shapes we used elsewhere: { data: [...] }, { data: { rows: [...] } }, { messages: [...] }
     if (Array.isArray(payload.messages)) return payload.messages;
     if (Array.isArray(payload.data)) return payload.data;
     if (payload.data && Array.isArray(payload.data.rows)) return payload.data.rows;
-
-    // fallback
     if (Array.isArray(payload)) return payload;
+
     return [];
   }
 
   // -----------------------------
-  // Rendering
+  // Rendering – keep the OLD look using your existing classes
   // -----------------------------
   function renderMessages(payload) {
     const msgs = normalizeMessages(payload);
@@ -163,11 +140,12 @@
         currentView === "inbox"
           ? "You have no received messages yet."
           : "You have not sent any messages yet.",
+        "empty",
       );
       return;
     }
 
-    const cardsHtml = msgs
+    const html = msgs
       .map((m) => {
         const senderName =
           m.senderName ||
@@ -190,7 +168,7 @@
           m.title ||
           `Message from ${senderName || "user"}`;
 
-        const subject = `RE '${baseSubject}'`;
+        const subjectDisplay = `RE 'Message from ${senderName || "user"}'`;
 
         const preview =
           m.preview ||
@@ -201,51 +179,57 @@
 
         const when = formatDate(m.createdAt || m.sentAt || m.created_at);
 
-        // who-line differs between inbox and sent
-        const whoLine =
+        const msgId = m.id || m.messageId || m.messageID || "";
+
+        const senderId = m.senderId || m.sender_id || m.sender?.id || "";
+        const receiverId = m.receiverId || m.receiver_id || m.receiver?.id || "";
+        const serviceId = m.serviceId || m.service_id || "";
+
+        // In inbox: replying goes back to sender; in sent: replying goes to receiver.
+        const replyReceiverId =
+          currentView === "inbox" ? senderId : receiverId;
+
+        const metaLine =
           currentView === "inbox"
             ? `From: ${senderName}`
             : receiverName
             ? `To: ${receiverName}`
             : "Sent message";
 
-        const msgId = m.id || m.messageId || m.messageID || "";
-
-        // for replying:
-        const senderId = m.senderId || m.sender_id || m.sender?.id || "";
-        const receiverId = m.receiverId || m.receiver_id || m.receiver?.id || "";
-        const serviceId = m.serviceId || m.service_id || "";
-
-        const replyReceiverId =
-          currentView === "inbox" ? senderId : receiverId;
-
         return `
-          <article class="message-card">
-            <div class="msg-main">
-              <h3 class="msg-title">${escapeHtml(subject)}</h3>
-              <div class="msg-from">${escapeHtml(whoLine)}</div>
-              <p class="msg-body-preview">${escapeHtml(preview)}</p>
+          <article class="message-item" data-message-id="${escapeHtml(msgId)}">
+            <h3 class="message-title">${escapeHtml(subjectDisplay)}</h3>
+            <p class="message-meta">${escapeHtml(metaLine)}</p>
+            <p>${escapeHtml(preview)}</p>
+            <p class="timestamp">${escapeHtml(when)}</p>
+
+            <div class="conversation-footer">
+              <button
+                type="button"
+                class="view-thread-btn"
+                data-message-id="${escapeHtml(msgId)}"
+              >
+                View Conversation
+              </button>
+              <button
+                type="button"
+                class="reply-btn"
+                data-receiver-id="${escapeHtml(replyReceiverId)}"
+                data-service-id="${escapeHtml(serviceId)}"
+                data-subject="${escapeHtml(baseSubject)}"
+              >
+                Reply
+              </button>
             </div>
-            <div class="msg-footer">
-              <span class="msg-time">${escapeHtml(when)}</span>
-              <div class="msg-actions">
-                <button
-                  class="cc-btn cc-btn-ghost view-thread-btn"
-                  data-message-id="${escapeHtml(msgId)}"
-                  type="button"
-                >
-                  View Conversation
-                </button>
-                <button
-                  class="cc-btn cc-btn-primary reply-btn"
-                  data-message-id="${escapeHtml(msgId)}"
-                  data-receiver-id="${escapeHtml(replyReceiverId)}"
-                  data-service-id="${escapeHtml(serviceId)}"
-                  data-subject="${escapeHtml(baseSubject)}"
-                  type="button"
-                >
-                  Reply
-                </button>
+
+            <div class="reply-box" hidden>
+              <textarea
+                class="reply-textarea"
+                placeholder="Type your reply…"
+              ></textarea>
+              <div class="reply-actions">
+                <button type="button" class="send-reply-btn">Send reply</button>
+                <button type="button" class="cancel-reply-btn">Cancel</button>
               </div>
             </div>
           </article>
@@ -253,76 +237,86 @@
       })
       .join("");
 
-    messagesList.innerHTML = cardsHtml;
+    messagesList.innerHTML = html;
   }
 
   async function loadInbox() {
     try {
       setActiveTab("inbox");
-      showStatus("Loading received messages…");
+      showStatus("Loading messages…", "loading");
       const data = await apiGet("/messages/inbox");
       renderMessages(data);
     } catch (err) {
-      console.error("[messages] inbox load failed", err);
-      showStatus("Could not load your inbox. Please try again.");
+      console.error("[messages] loadInbox failed", err);
+      showStatus("Could not load your inbox. Please try again.", "error");
     }
   }
 
   async function loadSent() {
     try {
       setActiveTab("sent");
-      showStatus("Loading sent messages…");
+      showStatus("Loading messages…", "loading");
       const data = await apiGet("/messages/sent");
       renderMessages(data);
     } catch (err) {
-      console.error("[messages] sent load failed", err);
-      showStatus("Could not load your sent messages. Please try again.");
+      console.error("[messages] loadSent failed", err);
+      showStatus("Could not load your sent messages. Please try again.", "error");
     }
   }
 
   // -----------------------------
-  // Reply modal logic
+  // Inline reply logic
   // -----------------------------
-  function openReplyModal(target) {
-    if (!replyModal || !replyText) return;
-    replyTarget = target;
-    replyText.value = "";
-    replyModal.classList.add("open");
-    replyText.focus();
+  function openReplyBox(articleEl) {
+    const box = articleEl.querySelector(".reply-box");
+    if (!box) return;
+    box.hidden = false;
+    const textarea = box.querySelector(".reply-textarea");
+    if (textarea) textarea.focus();
   }
 
-  function closeReplyModal() {
-    if (!replyModal || !replyText) return;
-    replyModal.classList.remove("open");
-    replyText.value = "";
-    replyTarget = null;
+  function closeReplyBox(articleEl) {
+    const box = articleEl.querySelector(".reply-box");
+    if (!box) return;
+    box.hidden = true;
+    const textarea = box.querySelector(".reply-textarea");
+    if (textarea) textarea.value = "";
   }
 
-  async function sendReply() {
-    if (!replyTarget) return;
+  async function sendReplyFrom(articleEl) {
+    const replyBtn = articleEl.querySelector(".reply-btn");
+    const textarea = articleEl.querySelector(".reply-textarea");
+    if (!replyBtn || !textarea) return;
 
-    const content = replyText.value.trim();
+    const receiverId = replyBtn.getAttribute("data-receiver-id");
+    const serviceId = replyBtn.getAttribute("data-service-id") || "";
+    const baseSubject = replyBtn.getAttribute("data-subject") || "";
+
+    const content = textarea.value.trim();
     if (!content) {
       alert("Your reply cannot be empty.");
       return;
     }
 
+    if (!receiverId) {
+      alert("Cannot reply: receiver is missing.");
+      return;
+    }
+
+    const payload = {
+      content,
+      receiverId,
+    };
+
+    if (serviceId) payload.serviceId = serviceId;
+    if (baseSubject) payload.subject = `RE '${baseSubject}'`;
+
     try {
-      const payload = {
-        content,
-        receiverId: replyTarget.receiverId,
-      };
-      if (replyTarget.serviceId) {
-        payload.serviceId = replyTarget.serviceId;
-      }
-
       await apiPost("/messages", payload);
+      closeReplyBox(articleEl);
 
-      closeReplyModal();
-      // Reload current view so the new message appears in "Sent"
-      if (currentView === "inbox") {
-        await loadInbox();
-      } else {
+      // Optionally refresh Sent tab so the new message appears there
+      if (currentView === "sent") {
         await loadSent();
       }
     } catch (err) {
@@ -356,62 +350,45 @@
       });
     }
 
-    // Delegate clicks for dynamic message cards
+    // Delegate clicks for dynamic content
     document.addEventListener("click", (e) => {
       const target = e.target;
 
       // Reply button
       if (target.classList.contains("reply-btn")) {
-        const receiverId = target.getAttribute("data-receiver-id");
-        const serviceId = target.getAttribute("data-service-id") || "";
-        const subject = target.getAttribute("data-subject") || "";
+        const article = target.closest(".message-item");
+        if (!article) return;
 
-        if (!receiverId) {
-          alert("Cannot reply: receiver is missing.");
-          return;
+        const box = article.querySelector(".reply-box");
+        if (!box) return;
+
+        if (box.hidden) {
+          openReplyBox(article);
+        } else {
+          closeReplyBox(article);
         }
-
-        openReplyModal({ receiverId, serviceId, subject });
       }
 
-      // View conversation button – basic placeholder (you can hook this to a thread page)
+      // Cancel reply
+      if (target.classList.contains("cancel-reply-btn")) {
+        const article = target.closest(".message-item");
+        if (!article) return;
+        closeReplyBox(article);
+      }
+
+      // Send reply
+      if (target.classList.contains("send-reply-btn")) {
+        const article = target.closest(".message-item");
+        if (!article) return;
+        sendReplyFrom(article);
+      }
+
+      // View Conversation – placeholder hook
       if (target.classList.contains("view-thread-btn")) {
         const msgId = target.getAttribute("data-message-id");
-        if (!msgId) return;
-        // If you later make a thread page, change this URL:
-        console.log("[messages] view conversation for message", msgId);
-        // Example:
+        console.log("[messages] View Conversation clicked for", msgId);
+        // Later you can route to a thread page, e.g.:
         // window.location.href = `/message-thread.html?messageId=${encodeURIComponent(msgId)}`;
-      }
-    });
-
-    if (cancelReplyBtn) {
-      cancelReplyBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        closeReplyModal();
-      });
-    }
-
-    if (sendReplyBtn) {
-      sendReplyBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        sendReply();
-      });
-    }
-
-    // Close modal when clicking backdrop
-    if (replyModal) {
-      replyModal.addEventListener("click", (e) => {
-        if (e.target === replyModal) {
-          closeReplyModal();
-        }
-      });
-    }
-
-    // Escape key closes modal
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && replyModal && replyModal.classList.contains("open")) {
-        closeReplyModal();
       }
     });
   }
