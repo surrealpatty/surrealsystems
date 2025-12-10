@@ -1,7 +1,7 @@
 // public/profile.js
-// Profile page logic: profile info + edit + create service dropdown + show services.
+// Profile page logic: profile info + edit + create service dropdown + show & edit services.
 
-console.log("[profile] loaded profile.js v6");
+console.log("[profile] loaded profile.js v7");
 
 // Safe localStorage helpers
 function safeGet(key) {
@@ -496,6 +496,149 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ---------------- Helpers for editing & deleting a service ----------------
+
+  async function updateServiceById(serviceId, payload) {
+    // payload: { title, description, price }
+    if (typeof window.apiFetch === "function") {
+      return window.apiFetch(`services/${serviceId}`, {
+        method: "PUT",
+        body: payload,
+      });
+    }
+
+    const baseUrl = window.API_URL || "";
+    const headers = { "Content-Type": "application/json" };
+
+    const tokenInner =
+      safeGet("token") ||
+      safeGet("authToken") ||
+      safeGet("jwt") ||
+      safeGet("accessToken");
+    if (tokenInner) {
+      headers.Authorization = "Bearer " + tokenInner;
+    }
+
+    const res = await fetch(baseUrl + `/services/${serviceId}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      const msg =
+        errJson.message || `Failed to update service (status ${res.status}).`;
+      throw new Error(msg);
+    }
+  }
+
+  async function deleteServiceById(serviceId) {
+    if (typeof window.apiFetch === "function") {
+      return window.apiFetch(`services/${serviceId}`, {
+        method: "DELETE",
+      });
+    }
+
+    const baseUrl = window.API_URL || "";
+    const headers = {};
+
+    const tokenInner =
+      safeGet("token") ||
+      safeGet("authToken") ||
+      safeGet("jwt") ||
+      safeGet("accessToken");
+    if (tokenInner) {
+      headers.Authorization = "Bearer " + tokenInner;
+    }
+
+    const res = await fetch(baseUrl + `/services/${serviceId}`, {
+      method: "DELETE",
+      headers,
+    });
+
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      const msg =
+        errJson.message || `Failed to delete service (status ${res.status}).`;
+      throw new Error(msg);
+    }
+  }
+
+  async function handleEditServiceFromCard(card, serviceId) {
+    const titleEl = card.querySelector(".profile-service-title");
+    const metaEls = card.querySelectorAll(".profile-service-meta");
+
+    const descElMeta = metaEls[0]; // description
+    const priceElMeta = metaEls[1]; // "Price: $123"
+
+    const currentTitle = (titleEl && titleEl.textContent.trim()) || "";
+    const currentDesc = (descElMeta && descElMeta.textContent.trim()) || "";
+    const priceText = (priceElMeta && priceElMeta.textContent.trim()) || "";
+
+    const match = priceText.match(/([\d,.]+)/);
+    const currentPrice = match ? match[1].replace(/,/g, "") : "0";
+
+    const newTitle = prompt("Service title", currentTitle);
+    if (newTitle === null) return;
+
+    const newDesc = prompt("Service description", currentDesc);
+    if (newDesc === null) return;
+
+    const newPriceRaw = prompt("Service price (number only)", currentPrice);
+    if (newPriceRaw === null) return;
+
+    const newPrice = parseFloat(newPriceRaw);
+    if (Number.isNaN(newPrice)) {
+      alert("Price must be a number.");
+      return;
+    }
+
+    try {
+      await updateServiceById(serviceId, {
+        title: newTitle.trim(),
+        description: newDesc.trim(),
+        price: newPrice,
+      });
+
+      // Update the card UI
+      if (titleEl) {
+        titleEl.textContent = newTitle.trim() || "Untitled service";
+      }
+      if (descElMeta) {
+        descElMeta.textContent = newDesc.trim() || "";
+      }
+      if (priceElMeta) {
+        priceElMeta.textContent = `Price: $${newPrice}`;
+      }
+
+      alert("Service updated.");
+    } catch (err) {
+      console.error("Failed to update service", err);
+      alert(err.message || "Could not update service. Please try again.");
+    }
+  }
+
+  async function handleDeleteServiceFromCard(card, serviceId) {
+    if (!confirm("Delete this service? This cannot be undone.")) return;
+
+    try {
+      await deleteServiceById(serviceId);
+      card.remove();
+
+      const listEl = document.getElementById("profileServicesList");
+      const emptyEl = document.getElementById("profileServicesEmpty");
+      if (listEl && emptyEl && listEl.children.length === 0) {
+        emptyEl.classList.remove("is-hidden");
+        emptyEl.textContent =
+          "You don’t have any services yet. Create one to start attracting clients.";
+      }
+    } catch (err) {
+      console.error("Failed to delete service", err);
+      alert(err.message || "Could not delete service. Please try again.");
+    }
+  }
+
   // ---------------- Load services for profile (current user) ----------------
   async function loadServicesForProfile() {
     const listEl = document.getElementById("profileServicesList");
@@ -655,6 +798,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const card = document.createElement("div");
       card.className = "profile-service-card";
 
+      // store the id so edit/delete can use it
+      if (svc.id != null) {
+        card.dataset.serviceId = String(svc.id);
+      }
+
       const titleDiv = document.createElement("div");
       titleDiv.className = "profile-service-title";
       titleDiv.textContent = svc.title || "Untitled service";
@@ -675,8 +823,51 @@ document.addEventListener("DOMContentLoaded", () => {
       metaPrice.textContent = `Price: $${priceText}`;
       card.appendChild(metaPrice);
 
+      // --- actions row: Edit + Delete buttons ---
+      const actionsRow = document.createElement("div");
+      actionsRow.className = "profile-service-meta profile-service-actions";
+
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "btn btn-muted btn-small service-edit-btn";
+      editBtn.textContent = "Edit";
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "btn btn-muted btn-small service-delete-btn";
+      deleteBtn.textContent = "Delete";
+
+      actionsRow.appendChild(editBtn);
+      actionsRow.appendChild(deleteBtn);
+
+      card.appendChild(actionsRow);
+
       listEl.appendChild(card);
     });
+
+    // Attach click handler ONCE for edit/delete (event delegation)
+    if (!listEl.dataset.hasServiceHandlers) {
+      listEl.addEventListener("click", (event) => {
+        const editButton = event.target.closest(".service-edit-btn");
+        const deleteButton = event.target.closest(".service-delete-btn");
+        const card = event.target.closest(".profile-service-card");
+        if (!card) return;
+
+        const serviceId = card.dataset.serviceId;
+        if (!serviceId) {
+          console.warn("[profile] service card missing data-service-id");
+          return;
+        }
+
+        if (editButton) {
+          handleEditServiceFromCard(card, serviceId);
+        } else if (deleteButton) {
+          handleDeleteServiceFromCard(card, serviceId);
+        }
+      });
+
+      listEl.dataset.hasServiceHandlers = "1";
+    }
   }
 
   // --- Final initialisation: load real user THEN services ---
