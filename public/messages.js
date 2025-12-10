@@ -170,7 +170,6 @@
 
   function normalizeMessages(payload) {
     if (!payload) return [];
-    // backend returns { success: true, messages: [...] }
     if (Array.isArray(payload.messages)) return payload.messages;
     if (Array.isArray(payload.data)) return payload.data;
     if (payload.data && Array.isArray(payload.data.rows)) return payload.data.rows;
@@ -308,7 +307,8 @@
         ? `To: ${receiverName}`
         : "Sent message";
 
-    const previewRaw = m.preview || m.snippet || m.content || m.text || "";
+    const previewRaw =
+      m.preview || m.snippet || m.content || m.body || m.text || "";
     const preview =
       previewRaw.length > 220
         ? `${previewRaw.slice(0, 217)}…`
@@ -333,9 +333,11 @@
       m.serviceTitle ||
       "";
 
-    // SUBJECT LINE = AD TITLE (fallback to generic if no title)
+    // SUBJECT LINE = AD TITLE (fallback to subject, then generic)
     const subjectDisplay = serviceTitle
       ? `RE '${serviceTitle}'`
+      : m.subject
+      ? m.subject
       : `Message from ${senderName}`;
 
     return `
@@ -396,7 +398,6 @@
       const sId = m.senderId ?? m.sender_id;
       const rId = m.receiverId ?? m.receiver_id;
 
-      // Must be between current user and partner
       const pairMatch =
         partnerIdNum != null &&
         currentUserId != null &&
@@ -409,30 +410,24 @@
       const mTime = new Date(m.createdAt || m.created_at || 0).getTime();
 
       if (svcIdNum != null) {
-        // If the card has a service, require same serviceId
         if (mSvc == null) return false;
         if (Number(mSvc) !== svcIdNum) return false;
         return true;
       }
 
-      // If the card has NO serviceId, only include messages
-      // from this user starting at this message's time.
       if (rootTime != null) {
         return mTime >= rootTime;
       }
 
-      // Fallback: just pair match
       return true;
     });
 
-    // sort oldest → newest
     filtered.sort((a, b) => {
       const da = new Date(a.createdAt || a.created_at);
       const db = new Date(b.createdAt || b.created_at);
       return da - db;
     });
 
-    // de-dup by id
     const seen = new Set();
     const deduped = [];
     for (const m of filtered) {
@@ -475,7 +470,7 @@
         const fromName = fromMe ? "You" : partnerName || "User";
         const toName = fromMe ? partnerName || "User" : "You";
         const dateStr = formatDate(m.createdAt || m.created_at);
-        const body = m.content || m.text || "";
+        const body = m.content || m.body || m.text || "";
 
         return `
           <div class="thread-email">

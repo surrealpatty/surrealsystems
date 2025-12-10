@@ -85,7 +85,7 @@
         border-radius: 999px;
         border: 1px solid rgba(148, 163, 184, 0.6);
         font-size: 0.85rem;
-        cursor: pointer; /* feels like a button */
+        cursor: pointer;
       }
 
       .user-avatar {
@@ -215,51 +215,13 @@
         font-size: 1.25rem;
       }
 
-      .tabbar {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 12px;
-        flex-wrap: wrap;
-      }
-
-      .tab {
-        border-radius: 999px;
-        padding: 0.5rem 0.9rem;
-        border: 1px solid rgba(55, 65, 81, 0.9);
-        font-size: 0.88rem;
-        font-weight: 500;
-        cursor: pointer;
-      }
-
-      body.profile-dark .tab {
-        background: rgba(15, 23, 42, 0.9);
-        color: var(--text-main);
-      }
-
-      body.profile-light .tab {
-        background: #f3f4ff;
-        border-color: #d4d4ff;
-        color: #111827;
-      }
-
-      .tab.active {
-        background: linear-gradient(135deg, #3b82f6, #22c55e) !important;
-        color: #020617 !important;
-        border-color: transparent !important;
-      }
-
-      .messages-list {
-        margin-top: 6px;
-      }
-
       .site-footer {
         text-align: center;
         margin-top: 18px;
         font-size: 0.8rem;
       }
 
-      /* ========= email-style thread under each card ========= */
-
+      /* Inline thread styles (email-style view under each card) */
       .conversation-panel {
         margin-top: 12px;
         padding-top: 10px;
@@ -340,7 +302,6 @@
           <span>CodeCrowds</span>
         </a>
 
-        <!-- User pill: now also .top-user-pill so script.js can bind click -->
         <div class="user-pill top-user-pill" id="topUserChip">
           <div class="user-avatar top-user-avatar" id="topUserAvatar">Q</div>
           <span class="user-email top-user-label" id="topUserEmail">
@@ -395,7 +356,6 @@
       </footer>
     </div>
 
-    <!-- Shared scripts -->
     <script src="init.js" defer></script>
     <script src="script.js" defer></script>
     <script src="messages.js" defer></script>
