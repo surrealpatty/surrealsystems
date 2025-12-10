@@ -48,11 +48,11 @@
   --btn-bg:var(--brand-a);
   --btn-text:#ffffff;
 
-  /* theme-aware page background – now a full-height dark gradient */
+  /* default page background (dark gradient) */
   --page-bg:radial-gradient(circle at top left, #111827 0, #020617 55%, #020617 75%, #000000 100%);
 }
 
-/* Explicit light theme overrides (same as defaults now) */
+/* Explicit light theme overrides */
 :root[data-theme="light"]{
   --card-bg:#ffffff;
   --card-text:#333333;
@@ -60,8 +60,8 @@
   --color-card:var(--card-bg);
   --color-text:var(--card-text);
   --color-muted:var(--muted);
-  /* keep same global dark background so it doesn’t change by theme */
-  --page-bg:radial-gradient(circle at top left, #111827 0, #020617 55%, #020617 75%, #000000 100%);
+  /* light mode: soft pale blue like your screenshot */
+  --page-bg:linear-gradient(180deg,#f7f9ff 0%, #e6f0ff 40%, #e6f0ff 100%);
 }
 
 /* Dark theme palette (for dark mode) */
@@ -116,9 +116,12 @@ body {
   color: var(--color-text);
 
   /* Background stays still; content scrolls over it.
-     !important here forces this to win over any per-page body backgrounds. */
-  background: var(--page-bg) fixed no-repeat center top !important;
-  background-size: cover !important;
+     Uses --page-bg, which changes between dark and light themes. */
+  background: var(--page-bg);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: top center;
 }
 
 
@@ -1180,7 +1183,7 @@ body.profile-light .user-pill {
    GLOBAL LIGHT MODE – applies to profile, services, messages
    ========================================================= */
 
-/* background is handled globally on body; these only change text colours */
+/* background is handled via --page-bg; these only change text/element colors */
 body.profile-dark {
   color: #e5e7eb;
 }
