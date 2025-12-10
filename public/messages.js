@@ -1,442 +1,426 @@
-/* public/messages.js */
+// public/messages.js
+// Messages page: inbox/sent toggle + reply button + reply modal sending.
+
 (() => {
+  console.log("[messages] loaded messages.js v2 with Reply button");
+
+  // -----------------------------
+  // API base URL helper
+  // -----------------------------
   const AUTO_HOST = "codecrowds.onrender.com";
 
-  // choose API base URL intelligently
   const API_URL =
-    window.location.hostname === AUTO_HOST ||
+    // if init.js already set API_URL, reuse it
+    window.API_URL ||
+    (window.location.hostname === AUTO_HOST ||
     window.location.hostname.endsWith(".onrender.com")
       ? `https://${AUTO_HOST}/api`
-      : "/api";
+      : "/api");
 
-  // allow updating after server auth check
-  let token = localStorage.getItem("token");
-  let userId = localStorage.getItem("userId");
-
+  // -----------------------------
+  // DOM elements
+  // -----------------------------
   const messagesList = document.getElementById("messages-list");
-  const goBackBtn = document.getElementById("goBackBtn");
   const inboxBtn = document.getElementById("inboxBtn");
   const sentBtn = document.getElementById("sentBtn");
+  const backBtn = document.getElementById("goBackBtn");
 
-  let lastView = "inbox";
+  const replyModal = document.getElementById("replyModal");
+  const replyText = document.getElementById("replyText");
+  const sendReplyBtn = document.getElementById("sendReply");
+  const cancelReplyBtn = document.getElementById("cancelReply");
 
-  // --- Attempt server-side auth (cookie) before redirecting ---
-  async function ensureAuthenticated() {
-    const localToken = localStorage.getItem("token");
-    const localUserId = localStorage.getItem("userId");
-
-    const headers = {};
-    if (localToken) headers["Authorization"] = `Bearer ${localToken}`;
-
-    try {
-      const resp = await fetch(`${API_URL}/users/me`, {
-        method: "GET",
-        headers,
-        credentials: "include", // send cookies for cookie-based auth
-      });
-
-      if (!resp.ok) {
-        // server says not authenticated
-        return null;
-      }
-
-      const data = await resp.json().catch(() => null);
-      const user = (data && (data.user || data)) || null;
-      if (user && user.id) {
-        // store user details so all pages (profile, messages, etc.) share them
-        if (!localUserId) localStorage.setItem("userId", String(user.id));
-        if (user.username) localStorage.setItem("username", user.username);
-        if (user.email) localStorage.setItem("email", user.email);
-        return { user, tokenPresent: !!localToken };
-      }
-      return null;
-    } catch (e) {
-      // network/CORS error — we cannot verify; treat as unauthenticated to be safe
-      console.warn("[ensureAuthenticated] network error:", e);
-      return null;
-    }
+  if (!messagesList) {
+    console.warn("[messages] #messages-list not found in DOM.");
   }
 
-  // Set the pill in the top-right (avatar + DISPLAY NAME)
-  function hydrateHeaderUserPill() {
-    const storedUsername = localStorage.getItem("username") || "";
-    const storedEmail = localStorage.getItem("email") || "";
+  let currentView = "inbox"; // "inbox" | "sent"
+  let replyTarget = null; // { receiverId, serviceId, subject }
 
-    // Prefer username; if missing, use the part of the email before "@"
-    let displayName = storedUsername;
-    if (!displayName && storedEmail) {
-      displayName = storedEmail.split("@")[0]; // e.g. "qaz" from "qaz@qaz.com"
-    }
-
-    // IDs from messages.html
-    const avatarEl = document.getElementById("topUserAvatar");
-    const nameEl = document.getElementById("topUserEmail");
-
-    if (avatarEl) {
-      const letter = (displayName || storedEmail || "U")
-        .charAt(0)
-        .toUpperCase();
-      avatarEl.textContent = letter;
-    }
-
-    if (nameEl) {
-      nameEl.textContent = displayName || storedEmail || "User";
-    }
-  }
-
-  // Wire up navigation handlers (safe to do before auth check)
-  if (goBackBtn) {
-    goBackBtn.addEventListener("click", () => {
-      window.location.href = "profile.html";
-    });
-  }
-
-  if (inboxBtn) {
-    inboxBtn.addEventListener("click", () => {
-      setActiveTab("inbox");
-      loadInbox();
-    });
-  }
-
-  if (sentBtn) {
-    sentBtn.addEventListener("click", () => {
-      setActiveTab("sent");
-      loadSent();
-    });
-  }
-
-  function setActiveTab(tab) {
-    lastView = tab;
-    if (!inboxBtn || !sentBtn) return;
-
-    if (tab === "inbox") {
-      inboxBtn.classList.add("active");
-      inboxBtn.setAttribute("aria-pressed", "true");
-      sentBtn.classList.remove("active");
-      sentBtn.setAttribute("aria-pressed", "false");
-    } else {
-      sentBtn.classList.add("active");
-      sentBtn.setAttribute("aria-pressed", "true");
-      inboxBtn.classList.remove("active");
-      inboxBtn.setAttribute("aria-pressed", "false");
-    }
-  }
-
-  function escapeHtml(unsafe) {
-    return String(unsafe || "")
+  // -----------------------------
+  // Small helpers
+  // -----------------------------
+  function escapeHtml(str) {
+    if (str == null) return "";
+    return String(str)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+      .replace(/'/g, "&#39;");
   }
 
-  function extractMessages(payload) {
-    if (!payload) return [];
-    if (Array.isArray(payload)) return payload;
-    if (Array.isArray(payload.messages)) return payload.messages;
-    if (payload.data && Array.isArray(payload.data.messages))
-      return payload.data.messages;
-    return [];
-  }
-
-  function renderStatus(text) {
-    if (messagesList)
-      messagesList.innerHTML = `<p class="loading">${escapeHtml(text)}</p>`;
-  }
-
-  function renderError(text) {
-    if (messagesList)
-      messagesList.innerHTML = `<p class="error">${escapeHtml(text)}</p>`;
-  }
-
-  function renderEmpty(text = "No messages") {
-    if (messagesList)
-      messagesList.innerHTML = `<p class="empty">${escapeHtml(text)}</p>`;
-  }
-
-  /**
-   * Render a single message card.
-   * Layout: RE 'title of ad this message is from'
-   */
-  function renderMessageCard(m, kind = "inbox") {
-    const article = document.createElement("article");
-    article.className = "card";
-    article.tabIndex = 0;
-
-    if (kind === "inbox") {
-      const fromName =
-        m.sender?.username || m.sender?.email || "Unknown";
-      const adTitle =
-        (m.service && m.service.title) ||
-        m.adTitle ||
-        m.subject ||
-        `Message from ${fromName}`;
-      const headingText = `RE '${adTitle}'`;
-
-      article.innerHTML = `
-        <h3 class="message-title">${escapeHtml(headingText)}</h3>
-        <p class="message-meta">From: ${escapeHtml(fromName)}</p>
-        <p>${escapeHtml(m.content || "")}</p>
-        <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
-        <div class="card-actions">
-          <button class="viewConversationBtn"
-                  data-userid="${m.sender?.id || m.senderId}"
-                  data-username="${escapeHtml(fromName)}">
-            View Conversation
-          </button>
-        </div>
-      `;
-    } else {
-      const toName =
-        m.receiver?.username || m.receiver?.email || "Unknown";
-      const adTitle =
-        (m.service && m.service.title) ||
-        m.adTitle ||
-        m.subject ||
-        `Message to ${toName}`;
-      const headingText = `RE '${adTitle}'`;
-
-      article.innerHTML = `
-        <h3 class="message-title">${escapeHtml(headingText)}</h3>
-        <p class="message-meta">To: ${escapeHtml(toName)}</p>
-        <p>${escapeHtml(m.content || "")}</p>
-        <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
-        <div class="card-actions">
-          <button class="viewConversationBtn"
-                  data-userid="${m.receiver?.id || m.receiverId}"
-                  data-username="${escapeHtml(toName)}">
-            View Conversation
-          </button>
-        </div>
-      `;
-    }
-    return article;
-  }
-
-  function attachConversationButtons() {
-    document.querySelectorAll(".viewConversationBtn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const otherUserId = btn.dataset.userid;
-        const otherUsername = btn.dataset.username;
-        loadConversation(otherUserId, otherUsername);
-      });
+  function formatDate(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleString(undefined, {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
     });
   }
 
-  async function doFetch(path, opts = {}) {
-    const url = path.startsWith("http") ? path : `${API_URL}${path}`;
-    const headers = Object.assign({}, opts.headers || {});
-    if (token) headers["Authorization"] = `Bearer ${token}`;
+  function showStatus(message) {
+    if (!messagesList) return;
+    messagesList.innerHTML = `<div class="messages-empty">${escapeHtml(
+      message,
+    )}</div>`;
+  }
 
-    const fetchOpts = {
-      method: opts.method || "GET",
-      headers,
-      body: opts.body !== undefined ? opts.body : undefined,
-      credentials: opts.credentials || "include",
-    };
+  function setActiveTab(view) {
+    currentView = view;
+    if (inboxBtn && sentBtn) {
+      inboxBtn.classList.toggle("pill-selected", view === "inbox");
+      sentBtn.classList.toggle("pill-selected", view === "sent");
+    }
+  }
 
-    console.debug("[doFetch] url=", url, "opts=", fetchOpts);
+  async function apiGet(path) {
     try {
-      const res = await fetch(url, fetchOpts);
-      const ct = res.headers.get("content-type") || "";
-      const text = await res.text();
-      let data = null;
-      if (ct.includes("application/json")) {
-        try {
-          data = JSON.parse(text);
-        } catch (e) {
-          data = text;
-        }
-      } else {
-        data = text;
+      const res = await fetch(`${API_URL}${path}`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!res.ok) {
+        throw new Error(`GET ${path} failed: ${res.status}`);
       }
-      console.debug("[doFetch] status=", res.status, "body=", data);
-
-      if (!res.ok)
-        throw { status: res.status, body: data, statusText: res.statusText };
-
-      return data;
+      return await res.json();
     } catch (err) {
-      if (
-        err instanceof TypeError ||
-        (err && err.message && err.message.includes("NetworkError"))
-      ) {
-        console.error("[doFetch] Network/CORS error", err);
-        throw { type: "network", message: err.message || "Network/CORS error" };
-      }
+      console.error("[messages] GET error", err);
       throw err;
     }
   }
 
-  async function loadInbox() {
-    setActiveTab("inbox");
-    if (inboxBtn) inboxBtn.disabled = true;
-    if (sentBtn) sentBtn.disabled = false;
-    renderStatus("Loading received messages…");
+  async function apiPost(path, body) {
+    const token = (() => {
+      try {
+        return localStorage.getItem("token");
+      } catch {
+        return null;
+      }
+    })();
 
+    const headers = {
+      "Content-Type": "application/json",
+    };
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const res = await fetch(`${API_URL}${path}`, {
+      method: "POST",
+      credentials: "include",
+      headers,
+      body: JSON.stringify(body),
+    });
+
+    let data = null;
     try {
-      const data = await doFetch("/messages/inbox");
-      const messages = extractMessages(data);
-      if (!messages.length) {
-        renderEmpty("No messages yet.");
-        return;
-      }
-      if (!messagesList) return;
-      messagesList.innerHTML = "";
-      messages.forEach((m) =>
-        messagesList.appendChild(renderMessageCard(m, "inbox")),
+      data = await res.json();
+    } catch {
+      // ignore parse error – will handle by status below
+    }
+
+    if (!res.ok) {
+      const msg =
+        (data && data.error && data.error.message) ||
+        data?.message ||
+        `Request failed with status ${res.status}`;
+      throw new Error(msg);
+    }
+
+    return data;
+  }
+
+  // Normalise different backend shapes into a simple list
+  function normalizeMessages(payload) {
+    if (!payload) return [];
+
+    // common shapes we used elsewhere: { data: [...] }, { data: { rows: [...] } }, { messages: [...] }
+    if (Array.isArray(payload.messages)) return payload.messages;
+    if (Array.isArray(payload.data)) return payload.data;
+    if (payload.data && Array.isArray(payload.data.rows)) return payload.data.rows;
+
+    // fallback
+    if (Array.isArray(payload)) return payload;
+    return [];
+  }
+
+  // -----------------------------
+  // Rendering
+  // -----------------------------
+  function renderMessages(payload) {
+    const msgs = normalizeMessages(payload);
+
+    if (!msgs.length) {
+      showStatus(
+        currentView === "inbox"
+          ? "You have no received messages yet."
+          : "You have not sent any messages yet.",
       );
-      attachConversationButtons();
+      return;
+    }
+
+    const cardsHtml = msgs
+      .map((m) => {
+        const senderName =
+          m.senderName ||
+          m.senderUsername ||
+          m.sender?.displayName ||
+          m.sender?.username ||
+          m.sender?.email ||
+          "Unknown user";
+
+        const receiverName =
+          m.receiverName ||
+          m.receiverUsername ||
+          m.receiver?.displayName ||
+          m.receiver?.username ||
+          m.receiver?.email ||
+          "";
+
+        const baseSubject =
+          m.subject ||
+          m.title ||
+          `Message from ${senderName || "user"}`;
+
+        const subject = `RE '${baseSubject}'`;
+
+        const preview =
+          m.preview ||
+          m.snippet ||
+          m.content ||
+          m.text ||
+          "";
+
+        const when = formatDate(m.createdAt || m.sentAt || m.created_at);
+
+        // who-line differs between inbox and sent
+        const whoLine =
+          currentView === "inbox"
+            ? `From: ${senderName}`
+            : receiverName
+            ? `To: ${receiverName}`
+            : "Sent message";
+
+        const msgId = m.id || m.messageId || m.messageID || "";
+
+        // for replying:
+        const senderId = m.senderId || m.sender_id || m.sender?.id || "";
+        const receiverId = m.receiverId || m.receiver_id || m.receiver?.id || "";
+        const serviceId = m.serviceId || m.service_id || "";
+
+        const replyReceiverId =
+          currentView === "inbox" ? senderId : receiverId;
+
+        return `
+          <article class="message-card">
+            <div class="msg-main">
+              <h3 class="msg-title">${escapeHtml(subject)}</h3>
+              <div class="msg-from">${escapeHtml(whoLine)}</div>
+              <p class="msg-body-preview">${escapeHtml(preview)}</p>
+            </div>
+            <div class="msg-footer">
+              <span class="msg-time">${escapeHtml(when)}</span>
+              <div class="msg-actions">
+                <button
+                  class="cc-btn cc-btn-ghost view-thread-btn"
+                  data-message-id="${escapeHtml(msgId)}"
+                  type="button"
+                >
+                  View Conversation
+                </button>
+                <button
+                  class="cc-btn cc-btn-primary reply-btn"
+                  data-message-id="${escapeHtml(msgId)}"
+                  data-receiver-id="${escapeHtml(replyReceiverId)}"
+                  data-service-id="${escapeHtml(serviceId)}"
+                  data-subject="${escapeHtml(baseSubject)}"
+                  type="button"
+                >
+                  Reply
+                </button>
+              </div>
+            </div>
+          </article>
+        `;
+      })
+      .join("");
+
+    messagesList.innerHTML = cardsHtml;
+  }
+
+  async function loadInbox() {
+    try {
+      setActiveTab("inbox");
+      showStatus("Loading received messages…");
+      const data = await apiGet("/messages/inbox");
+      renderMessages(data);
     } catch (err) {
-      console.error("[loadInbox] error:", err);
-      if (err.type === "network") {
-        renderError("Network/CORS error while fetching inbox.");
-      } else if (err.status === 401) {
-        renderError("Unauthorized (401). Please log in again.");
-      } else if (err.status === 403) {
-        renderError("Forbidden (403). CORS or permission issue.");
-      } else {
-        const msg =
-          err.body?.error?.message ||
-          err.body ||
-          err.statusText ||
-          err.message ||
-          "Unknown";
-        renderError(`Failed to load messages: ${msg}`);
-      }
-    } finally {
-      if (inboxBtn) inboxBtn.disabled = false;
+      console.error("[messages] inbox load failed", err);
+      showStatus("Could not load your inbox. Please try again.");
     }
   }
 
   async function loadSent() {
-    setActiveTab("sent");
-    if (sentBtn) sentBtn.disabled = true;
-    if (inboxBtn) inboxBtn.disabled = false;
-    renderStatus("Loading sent messages…");
-
     try {
-      const data = await doFetch("/messages/sent");
-      const messages = extractMessages(data);
-      if (!messages.length) {
-        renderEmpty("No sent messages yet.");
-        return;
-      }
-      if (!messagesList) return;
-      messagesList.innerHTML = "";
-      messages.forEach((m) =>
-        messagesList.appendChild(renderMessageCard(m, "sent")),
-      );
-      attachConversationButtons();
+      setActiveTab("sent");
+      showStatus("Loading sent messages…");
+      const data = await apiGet("/messages/sent");
+      renderMessages(data);
     } catch (err) {
-      console.error("[loadSent] error:", err);
-      if (err.type === "network") {
-        renderError("Network/CORS error while fetching sent messages.");
-      } else if (err.status === 401) {
-        renderError("Unauthorized (401). Please log in again.");
-      } else if (err.status === 403) {
-        renderError("Forbidden (403). CORS or permission issue.");
-      } else {
-        const msg =
-          err.body?.error?.message ||
-          err.body ||
-          err.statusText ||
-          err.message ||
-          "Unknown";
-        renderError(`Failed to load sent messages: ${msg}`);
-      }
-    } finally {
-      if (sentBtn) sentBtn.disabled = false;
+      console.error("[messages] sent load failed", err);
+      showStatus("Could not load your sent messages. Please try again.");
     }
   }
 
-  async function loadConversation(otherUserId, otherUsername) {
-    renderStatus(`Loading conversation with ${otherUsername}…`);
-    try {
-      // matches backend: GET /api/messages/conversation?otherUserId=...
-      const params = new URLSearchParams();
-      params.set("otherUserId", String(otherUserId));
-
-      const data = await doFetch(`/messages/conversation?${params.toString()}`);
-      const conversation = extractMessages(data);
-      if (!messagesList) return;
-
-      messagesList.innerHTML = `<h2 class="message-title">Conversation with ${escapeHtml(
-        otherUsername,
-      )}</h2>`;
-
-      if (!conversation.length) {
-        messagesList.innerHTML +=
-          '<p class="empty">No messages in this conversation yet.</p>';
-      } else {
-        conversation.forEach((m) => {
-          const article = document.createElement("article");
-          article.className = "card";
-          article.tabIndex = 0;
-          const isMine = Number(m.senderId) === Number(userId);
-          const who =
-            isMine
-              ? "You"
-              : m.sender?.username || m.sender?.email || "Unknown";
-          article.innerHTML = `
-            <h3 class="message-title">${escapeHtml(who)}</h3>
-            <p>${escapeHtml(m.content || "")}</p>
-            <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
-          `;
-          messagesList.appendChild(article);
-        });
-      }
-
-      // Back button
-      const footer = document.createElement("div");
-      footer.className = "conversation-footer";
-      const backBtn = document.createElement("button");
-      backBtn.textContent = "Back";
-      backBtn.addEventListener("click", () => {
-        if (lastView === "sent") loadSent();
-        else loadInbox();
-      });
-      footer.appendChild(backBtn);
-      messagesList.appendChild(footer);
-    } catch (err) {
-      console.error("[loadConversation] error:", err);
-      if (err.type === "network") {
-        renderError("Network/CORS error while loading conversation.");
-      } else if (err.status === 401) {
-        renderError("Unauthorized (401). Please log in again.");
-      } else {
-        const msg =
-          err.body?.error?.message ||
-          err.body ||
-          err.statusText ||
-          err.message ||
-          "Unknown";
-        renderError(`Failed to load conversation: ${msg}`);
-      }
-    }
+  // -----------------------------
+  // Reply modal logic
+  // -----------------------------
+  function openReplyModal(target) {
+    if (!replyModal || !replyText) return;
+    replyTarget = target;
+    replyText.value = "";
+    replyModal.classList.add("open");
+    replyText.focus();
   }
 
-  // initialize
-  (async function init() {
-    const auth = await ensureAuthenticated();
-    if (!auth) {
-      console.warn("Not authenticated — redirecting to login");
-      window.location.href = "login.html";
+  function closeReplyModal() {
+    if (!replyModal || !replyText) return;
+    replyModal.classList.remove("open");
+    replyText.value = "";
+    replyTarget = null;
+  }
+
+  async function sendReply() {
+    if (!replyTarget) return;
+
+    const content = replyText.value.trim();
+    if (!content) {
+      alert("Your reply cannot be empty.");
       return;
     }
 
-    // update token & userId variables (ensure they reflect any newly stored values)
-    token = localStorage.getItem("token") || token;
-    userId =
-      localStorage.getItem("userId") ||
-      (auth.user && String(auth.user.id)) ||
-      userId;
+    try {
+      const payload = {
+        content,
+        receiverId: replyTarget.receiverId,
+      };
+      if (replyTarget.serviceId) {
+        payload.serviceId = replyTarget.serviceId;
+      }
 
-    // update avatar + display name at top
-    hydrateHeaderUserPill();
+      await apiPost("/messages", payload);
 
-    console.info("[messages] API_URL=", API_URL, "userIdPresent=", !!userId);
+      closeReplyModal();
+      // Reload current view so the new message appears in "Sent"
+      if (currentView === "inbox") {
+        await loadInbox();
+      } else {
+        await loadSent();
+      }
+    } catch (err) {
+      console.error("[messages] sendReply failed", err);
+      alert(err.message || "Failed to send reply.");
+    }
+  }
+
+  // -----------------------------
+  // Event wiring
+  // -----------------------------
+  function setupEvents() {
+    if (inboxBtn) {
+      inboxBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        loadInbox();
+      });
+    }
+
+    if (sentBtn) {
+      sentBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        loadSent();
+      });
+    }
+
+    if (backBtn) {
+      backBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        window.location.href = "/profile.html";
+      });
+    }
+
+    // Delegate clicks for dynamic message cards
+    document.addEventListener("click", (e) => {
+      const target = e.target;
+
+      // Reply button
+      if (target.classList.contains("reply-btn")) {
+        const receiverId = target.getAttribute("data-receiver-id");
+        const serviceId = target.getAttribute("data-service-id") || "";
+        const subject = target.getAttribute("data-subject") || "";
+
+        if (!receiverId) {
+          alert("Cannot reply: receiver is missing.");
+          return;
+        }
+
+        openReplyModal({ receiverId, serviceId, subject });
+      }
+
+      // View conversation button – basic placeholder (you can hook this to a thread page)
+      if (target.classList.contains("view-thread-btn")) {
+        const msgId = target.getAttribute("data-message-id");
+        if (!msgId) return;
+        // If you later make a thread page, change this URL:
+        console.log("[messages] view conversation for message", msgId);
+        // Example:
+        // window.location.href = `/message-thread.html?messageId=${encodeURIComponent(msgId)}`;
+      }
+    });
+
+    if (cancelReplyBtn) {
+      cancelReplyBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        closeReplyModal();
+      });
+    }
+
+    if (sendReplyBtn) {
+      sendReplyBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        sendReply();
+      });
+    }
+
+    // Close modal when clicking backdrop
+    if (replyModal) {
+      replyModal.addEventListener("click", (e) => {
+        if (e.target === replyModal) {
+          closeReplyModal();
+        }
+      });
+    }
+
+    // Escape key closes modal
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && replyModal && replyModal.classList.contains("open")) {
+        closeReplyModal();
+      }
+    });
+  }
+
+  // -----------------------------
+  // Init
+  // -----------------------------
+  document.addEventListener("DOMContentLoaded", () => {
+    setupEvents();
     loadInbox();
-  })();
+  });
 })();
