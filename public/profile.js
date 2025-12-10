@@ -1,7 +1,7 @@
 // public/profile.js
 // Profile page logic: profile info + edit + create service dropdown + show & edit services.
 
-console.log("[profile] loaded profile.js v7");
+console.log("[profile] loaded profile.js v8");
 
 // Safe localStorage helpers
 function safeGet(key) {
@@ -227,7 +227,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Update UI with real user
       if (nameEl) nameEl.textContent = uname;
-      // 🔥 chip shows display name, not email
+      // chip shows display name, not email
       if (emailBadge) emailBadge.textContent = uname;
       // big card EMAIL stays actual email
       if (emailMain) emailMain.textContent = uemail;
@@ -326,11 +326,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (nameEl) {
         nameEl.textContent = newName || usernameToStore || "New developer";
       }
-      // 🔥 chip shows display name (usernameToStore)
       if (emailBadge) {
         emailBadge.textContent = usernameToStore;
       }
-      // big card EMAIL shows full email
       if (emailMain) {
         emailMain.textContent = newEmail;
       }
@@ -389,19 +387,16 @@ document.addEventListener("DOMContentLoaded", () => {
       createServiceBtn.textContent = originalBtnText;
     }
 
-    // Toggle dropdown on main button
     createServiceBtn.addEventListener("click", () => {
       const isHidden = createServiceForm.classList.contains("is-hidden");
       console.log("[profile] Create Service clicked, isHidden =", isHidden);
       if (isHidden) {
-        // backend enforces auth; no client-side guard
         showCreateForm();
       } else {
         hideCreateForm();
       }
     });
 
-    // Cancel hides + resets the form
     if (cancelCreateServiceBtn) {
       cancelCreateServiceBtn.addEventListener("click", () => {
         console.log("[profile] Cancel Create Service clicked");
@@ -410,7 +405,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // Handle create service submit
     createServiceForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
@@ -499,7 +493,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------- Helpers for editing & deleting a service ----------------
 
   async function updateServiceById(serviceId, payload) {
-    // payload: { title, description, price }
     if (typeof window.apiFetch === "function") {
       return window.apiFetch(`services/${serviceId}`, {
         method: "PUT",
@@ -565,12 +558,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  async function handleEditServiceFromCard(card, serviceId) {
+  // ✨ INLINE EDIT MODE inside the card (no browser prompt)
+  function handleEditServiceFromCard(card, serviceId) {
+    // If already editing, do nothing
+    if (card.querySelector(".service-inline-edit")) return;
+
     const titleEl = card.querySelector(".profile-service-title");
     const metaEls = card.querySelectorAll(".profile-service-meta");
 
     const descElMeta = metaEls[0]; // description
     const priceElMeta = metaEls[1]; // "Price: $123"
+    const actionsRow =
+      card.querySelector(".profile-service-actions") || metaEls[2];
 
     const currentTitle = (titleEl && titleEl.textContent.trim()) || "";
     const currentDesc = (descElMeta && descElMeta.textContent.trim()) || "";
@@ -579,44 +578,138 @@ document.addEventListener("DOMContentLoaded", () => {
     const match = priceText.match(/([\d,.]+)/);
     const currentPrice = match ? match[1].replace(/,/g, "") : "0";
 
-    const newTitle = prompt("Service title", currentTitle);
-    if (newTitle === null) return;
+    // Hide static content while editing
+    [titleEl, descElMeta, priceElMeta, actionsRow]
+      .filter(Boolean)
+      .forEach((el) => el.classList.add("is-hidden"));
 
-    const newDesc = prompt("Service description", currentDesc);
-    if (newDesc === null) return;
+    // Build inline edit UI
+    const wrapper = document.createElement("div");
+    wrapper.className = "service-inline-edit profile-edit";
 
-    const newPriceRaw = prompt("Service price (number only)", currentPrice);
-    if (newPriceRaw === null) return;
+    // Title row
+    const rowTitle = document.createElement("div");
+    rowTitle.className = "profile-edit-row";
+    const labelTitle = document.createElement("label");
+    labelTitle.className = "profile-edit-label";
+    labelTitle.textContent = "Service title";
+    const inputTitle = document.createElement("input");
+    inputTitle.type = "text";
+    inputTitle.className = "profile-edit-input";
+    inputTitle.maxLength = 100;
+    inputTitle.value = currentTitle;
+    rowTitle.appendChild(labelTitle);
+    rowTitle.appendChild(inputTitle);
 
-    const newPrice = parseFloat(newPriceRaw);
-    if (Number.isNaN(newPrice)) {
-      alert("Price must be a number.");
-      return;
+    // Description row
+    const rowDesc = document.createElement("div");
+    rowDesc.className = "profile-edit-row";
+    const labelDesc = document.createElement("label");
+    labelDesc.className = "profile-edit-label";
+    labelDesc.textContent = "Description";
+    const textareaDesc = document.createElement("textarea");
+    textareaDesc.className = "profile-edit-textarea";
+    textareaDesc.rows = 3;
+    textareaDesc.value = currentDesc;
+    rowDesc.appendChild(labelDesc);
+    rowDesc.appendChild(textareaDesc);
+
+    // Price row
+    const rowPrice = document.createElement("div");
+    rowPrice.className = "profile-edit-row";
+    const labelPrice = document.createElement("label");
+    labelPrice.className = "profile-edit-label";
+    labelPrice.textContent = "Price (USD)";
+    const inputPrice = document.createElement("input");
+    inputPrice.type = "number";
+    inputPrice.className = "profile-edit-input";
+    inputPrice.min = "1";
+    inputPrice.step = "1";
+    inputPrice.value = currentPrice;
+    rowPrice.appendChild(labelPrice);
+    rowPrice.appendChild(inputPrice);
+
+    // Actions row
+    const actions = document.createElement("div");
+    actions.className = "profile-edit-actions";
+
+    const saveBtn = document.createElement("button");
+    saveBtn.type = "button";
+    saveBtn.className = "btn btn-primary btn-small";
+    saveBtn.textContent = "Save";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "btn btn-muted btn-small";
+    cancelBtn.textContent = "Cancel";
+
+    actions.appendChild(saveBtn);
+    actions.appendChild(cancelBtn);
+
+    wrapper.appendChild(rowTitle);
+    wrapper.appendChild(rowDesc);
+    wrapper.appendChild(rowPrice);
+    wrapper.appendChild(actions);
+
+    card.appendChild(wrapper);
+
+    async function handleSave() {
+      const newTitle = inputTitle.value.trim();
+      const newDesc = textareaDesc.value.trim();
+      const priceRaw = inputPrice.value.trim();
+
+      if (!newTitle || !priceRaw) {
+        alert("Please fill in at least title and price.");
+        return;
+      }
+
+      const newPrice = parseFloat(priceRaw);
+      if (Number.isNaN(newPrice) || newPrice <= 0) {
+        alert("Price must be a positive number.");
+        return;
+      }
+
+      try {
+        await updateServiceById(serviceId, {
+          title: newTitle,
+          description: newDesc,
+          price: newPrice,
+        });
+
+        // Update static UI
+        if (titleEl) titleEl.textContent = newTitle;
+        if (descElMeta) descElMeta.textContent = newDesc || "";
+        if (priceElMeta) priceElMeta.textContent = `Price: $${newPrice}`;
+
+        // Clean up
+        wrapper.remove();
+        [titleEl, descElMeta, priceElMeta, actionsRow]
+          .filter(Boolean)
+          .forEach((el) => el.classList.remove("is-hidden"));
+      } catch (err) {
+        console.error("Failed to update service", err);
+        alert(err.message || "Could not update service. Please try again.");
+      }
     }
 
-    try {
-      await updateServiceById(serviceId, {
-        title: newTitle.trim(),
-        description: newDesc.trim(),
-        price: newPrice,
-      });
-
-      // Update the card UI
-      if (titleEl) {
-        titleEl.textContent = newTitle.trim() || "Untitled service";
-      }
-      if (descElMeta) {
-        descElMeta.textContent = newDesc.trim() || "";
-      }
-      if (priceElMeta) {
-        priceElMeta.textContent = `Price: $${newPrice}`;
-      }
-
-      alert("Service updated.");
-    } catch (err) {
-      console.error("Failed to update service", err);
-      alert(err.message || "Could not update service. Please try again.");
+    function handleCancel() {
+      wrapper.remove();
+      [titleEl, descElMeta, priceElMeta, actionsRow]
+        .filter(Boolean)
+        .forEach((el) => el.classList.remove("is-hidden"));
     }
+
+    saveBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      handleSave();
+    });
+    cancelBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      handleCancel();
+    });
+
+    // focus title for quick typing
+    inputTitle.focus();
   }
 
   async function handleDeleteServiceFromCard(card, serviceId) {
@@ -676,14 +769,12 @@ document.addEventListener("DOMContentLoaded", () => {
       storedUsernameInner;
 
     if (!userId && !myUsername) {
-      // We don’t know who this is – don’t hit the API
       emptyEl.classList.remove("is-hidden");
       emptyEl.textContent =
         "Could not determine your account. Please log in again.";
       return;
     }
 
-    // Show a small “loading” message while we fetch
     emptyEl.classList.remove("is-hidden");
     emptyEl.textContent = "Loading your services…";
 
@@ -704,7 +795,6 @@ document.addEventListener("DOMContentLoaded", () => {
         payload = await res.json();
       }
 
-      // Normalise API shapes
       if (Array.isArray(payload)) {
         services = payload;
       } else if (payload && Array.isArray(payload.data)) {
@@ -718,18 +808,15 @@ document.addEventListener("DOMContentLoaded", () => {
       ) {
         services = payload.data.services;
       } else if (payload && Array.isArray(payload.rows)) {
-        // ✅ important for /services list route
         services = payload.rows;
       } else if (
         payload &&
         payload.data &&
         Array.isArray(payload.data.rows)
       ) {
-        // ✅ important for ok(res, { rows, count }) pattern
         services = payload.data.rows;
       }
 
-      // --- STRICT client-side filter so ONLY my stuff is kept ---
       const uidStr = userId ? String(userId) : "";
       const myNameLower = myUsername ? myUsername.toLowerCase() : "";
 
@@ -748,12 +835,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let match = false;
 
-        // First try by numeric/string ID
         if (uidStr && svcUserId !== undefined && svcUserId !== null) {
           match = String(svcUserId) === uidStr;
         }
 
-        // If ID didn’t match, fall back to username comparison
         if (!match && myNameLower && svcUsername) {
           match = svcUsername.toLowerCase() === myNameLower;
         }
@@ -782,7 +867,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (!services.length) {
-      // No services for this account yet
       emptyEl.classList.remove("is-hidden");
       emptyEl.textContent =
         "You don’t have any services yet. Create one to start attracting clients.";
@@ -790,7 +874,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // We have services – hide the empty text
     emptyEl.classList.add("is-hidden");
     listEl.innerHTML = "";
 
@@ -798,7 +881,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const card = document.createElement("div");
       card.className = "profile-service-card";
 
-      // store the id so edit/delete can use it
       if (svc.id != null) {
         card.dataset.serviceId = String(svc.id);
       }
@@ -823,7 +905,6 @@ document.addEventListener("DOMContentLoaded", () => {
       metaPrice.textContent = `Price: $${priceText}`;
       card.appendChild(metaPrice);
 
-      // --- actions row: Edit + Delete buttons ---
       const actionsRow = document.createElement("div");
       actionsRow.className = "profile-service-meta profile-service-actions";
 
@@ -839,7 +920,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       actionsRow.appendChild(editBtn);
       actionsRow.appendChild(deleteBtn);
-
       card.appendChild(actionsRow);
 
       listEl.appendChild(card);
