@@ -146,9 +146,11 @@
   color: #9ca3af;
 }
 
-/* Conversation footer (Reply toggle button) */
+/* Conversation footer (Reply + Delete buttons) */
 .conversation-footer {
   margin-top: 10px;
+  display: flex;
+  gap: 8px;
 }
 
 .conversation-footer button {
@@ -158,6 +160,18 @@
   cursor: pointer;
   background: rgba(15, 23, 42, 0.9);
   color: #e5e7eb;
+}
+
+/* Delete button specific styling */
+.conversation-footer .delete-btn {
+  background: #dc2626;
+  border-color: #b91c1c;
+  color: #f9fafb;
+}
+
+.conversation-footer .delete-btn:hover {
+  background: #b91c1c;
+  border-color: #7f1d1d;
 }
 
 /* Status text states */

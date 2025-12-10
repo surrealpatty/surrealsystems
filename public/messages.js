@@ -1,11 +1,9 @@
 // public/messages.js
-// Messages page with "Reply" button and per-ad threads.
+// Messages page with "Reply" button, per-ad threads, and Delete.
 // Each card = one thread (ad/service + other user).
-// Subject line = ad title. Reply opens an email-style thread
-// inside that card.
 
 (() => {
-  console.log("[messages] loaded messages.js (front-end per-ad threads v2)");
+  console.log("[messages] loaded messages.js (front-end per-ad threads v3)");
 
   // -----------------------------
   // API base URL helper (Render vs local)
@@ -135,6 +133,41 @@
     return data;
   }
 
+  async function apiDelete(path) {
+    let token = null;
+    try {
+      token = localStorage.getItem("token");
+    } catch {
+      token = null;
+    }
+
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    const res = await fetch(`${API_URL}${path}`, {
+      method: "DELETE",
+      credentials: "include",
+      headers,
+    });
+
+    let data = null;
+    try {
+      data = await res.json();
+    } catch {
+      // ignore parse error
+    }
+
+    if (!res.ok) {
+      const msg =
+        (data && data.error && data.error.message) ||
+        data?.message ||
+        `Request failed with status ${res.status}`;
+      throw new Error(msg);
+    }
+
+    return data;
+  }
+
   function normalizeMessages(payload) {
     if (!payload) return [];
     // backend returns { success: true, messages: [...] }
@@ -158,6 +191,15 @@
       seen.add(id);
       allMessages.push(m);
     }
+  }
+
+  function removeMessageFromState(messageId) {
+    const idNum = Number(messageId);
+    const filterOut = (arr) => arr.filter((m) => !m || m.id !== idNum);
+
+    inboxMessages = filterOut(inboxMessages);
+    sentMessages = filterOut(sentMessages);
+    indexAllMessages();
   }
 
   // -----------------------------
@@ -309,6 +351,9 @@
           <div class="conversation-footer">
             <button type="button" class="reply-toggle">
               Reply
+            </button>
+            <button type="button" class="delete-btn">
+              Delete
             </button>
           </div>
         </div>
@@ -549,6 +594,26 @@
     }
   }
 
+  async function deleteMessageFromCard(articleEl) {
+    if (!articleEl) return;
+    const idAttr = articleEl.getAttribute("data-message-id");
+    if (!idAttr) {
+      alert("Cannot delete: missing message id.");
+      return;
+    }
+
+    if (!confirm("Delete this message?")) return;
+
+    try {
+      await apiDelete(`/messages/${encodeURIComponent(idAttr)}`);
+      removeMessageFromState(idAttr);
+      renderView(currentView);
+    } catch (err) {
+      console.error("[messages] deleteMessage failed", err);
+      alert(err.message || "Failed to delete message.");
+    }
+  }
+
   // -----------------------------
   // Event wiring
   // -----------------------------
@@ -595,6 +660,12 @@
         const article = target.closest(".message-card");
         if (!article) return;
         sendReplyFromPanel(article);
+      }
+
+      if (target.classList.contains("delete-btn")) {
+        const article = target.closest(".message-card");
+        if (!article) return;
+        deleteMessageFromCard(article);
       }
     });
   }

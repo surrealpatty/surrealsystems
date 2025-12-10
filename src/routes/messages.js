@@ -311,4 +311,39 @@ router.get(
   },
 );
 
+/* ------------------------------------------------------------------ */
+/* DELETE /api/messages/:id  (delete a message you sent or received)  */
+/* ------------------------------------------------------------------ */
+router.delete(
+  '/:id',
+  authenticateToken,
+  [param('id').isInt()],
+  validate,
+  async (req, res) => {
+    try {
+      const msgId = parseInt(req.params.id, 10);
+      const userId = req.user.id;
+
+      const Op = Message.sequelize.Op;
+
+      const message = await Message.findOne({
+        where: {
+          id: msgId,
+          [Op.or]: [{ senderId: userId }, { receiverId: userId }],
+        },
+      });
+
+      if (!message) {
+        return err(res, 'Message not found or unauthorized', 404);
+      }
+
+      await message.destroy();
+      return ok(res, { message: 'Message deleted' });
+    } catch (error) {
+      console.error('ERROR: DELETE /api/messages/:id failed:', error);
+      return err(res, 'Failed to delete message', 500);
+    }
+  },
+);
+
 module.exports = router;
