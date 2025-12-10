@@ -498,6 +498,19 @@ async function ccInitTopUserChip() {
   if (avatarEl && displayName) {
     avatarEl.textContent = displayName.trim()[0].toUpperCase();
   }
+
+  // 4) Make the whole pill act as "Back to profile" button on all pages
+  const chipEl =
+    document.getElementById("topUser") ||
+    (avatarEl && avatarEl.closest(".top-user-pill")) ||
+    (labelEl && labelEl.closest(".top-user-pill"));
+
+  if (chipEl && !chipEl.dataset.ccProfileNavBound) {
+    chipEl.addEventListener("click", () => {
+      window.location.href = "profile.html";
+    });
+    chipEl.dataset.ccProfileNavBound = "1";
+  }
 }
 
 /* ================================ Boot ================================== */
