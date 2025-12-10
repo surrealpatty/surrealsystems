@@ -85,6 +85,7 @@
         border-radius: 999px;
         border: 1px solid rgba(148, 163, 184, 0.6);
         font-size: 0.85rem;
+        cursor: pointer; /* feels like a button */
       }
 
       .user-avatar {
@@ -339,10 +340,12 @@
           <span>CodeCrowds</span>
         </a>
 
-        <!-- User pill: ids let messages.js fill the display name -->
-        <div class="user-pill" id="topUserChip">
-          <div class="user-avatar" id="topUserAvatar">Q</div>
-          <span class="user-email" id="topUserEmail">you@example.com</span>
+        <!-- User pill: now also .top-user-pill so script.js can bind click -->
+        <div class="user-pill top-user-pill" id="topUserChip">
+          <div class="user-avatar top-user-avatar" id="topUserAvatar">Q</div>
+          <span class="user-email top-user-label" id="topUserEmail">
+            you@example.com
+          </span>
         </div>
       </header>
 
