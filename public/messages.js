@@ -5,7 +5,7 @@
 // for that ad between you and that user.
 
 (() => {
-  console.log("[messages] loaded messages.js (per-ad threads)");
+  console.log("[messages] loaded messages.js (per-ad threads, backend thread API)");
 
   // -----------------------------
   // API base URL helper (Render vs local)
@@ -33,7 +33,6 @@
   let currentView = "inbox"; // "inbox" | "sent"
   let inboxMessages = [];
   let sentMessages = [];
-  let allMessages = [];
   const currentUserId = getCurrentUserId();
 
   // -----------------------------
@@ -144,20 +143,6 @@
     return [];
   }
 
-  function indexAllMessages() {
-    const seen = new Set();
-    const combined = [...inboxMessages, ...sentMessages];
-    allMessages = [];
-
-    for (const m of combined) {
-      const id = m && m.id;
-      if (id == null) continue;
-      if (seen.has(id)) continue;
-      seen.add(id);
-      allMessages.push(m);
-    }
-  }
-
   // -----------------------------
   // Fetch both inbox + sent once
   // -----------------------------
@@ -171,7 +156,6 @@
 
       inboxMessages = normalizeMessages(inboxRaw);
       sentMessages = normalizeMessages(sentRaw);
-      indexAllMessages();
 
       renderView("inbox");
     } catch (err) {
@@ -264,8 +248,7 @@
         ? `To: ${receiverName}`
         : "Sent message";
 
-    const previewRaw =
-      m.preview || m.snippet || m.content || m.text || "";
+    const previewRaw = m.preview || m.snippet || m.content || m.text || "";
     const preview =
       previewRaw.length > 220
         ? `${previewRaw.slice(0, 217)}…`
@@ -335,58 +318,8 @@
   }
 
   // -----------------------------
-  // THREAD VIEW – per (ad + user)
+  // THREAD VIEW – load from backend for ONE message/ad
   // -----------------------------
-  function threadMessagesFor(partnerId, serviceId) {
-    const partnerIdNum =
-      partnerId == null || partnerId === "" ? null : Number(partnerId);
-    const svcIdNum =
-      serviceId == null || serviceId === "" ? null : Number(serviceId);
-
-    const filtered = allMessages.filter((m) => {
-      const sId = m.senderId ?? m.sender_id;
-      const rId = m.receiverId ?? m.receiver_id;
-
-      // Must be between current user and partner
-      const pairMatch =
-        partnerIdNum != null &&
-        currentUserId != null &&
-        ((sId === currentUserId && rId === partnerIdNum) ||
-          (sId === partnerIdNum && rId === currentUserId));
-
-      if (!pairMatch) return false;
-
-      // Must belong to the same ad/service
-      if (svcIdNum != null) {
-        const mSvc = m.serviceId ?? m.service_id ?? null;
-        if (mSvc == null) return false;
-        return Number(mSvc) === svcIdNum;
-      }
-
-      // If this thread has no service attached, just keep the pair
-      return true;
-    });
-
-    // sort oldest → newest
-    filtered.sort((a, b) => {
-      const da = new Date(a.createdAt || a.created_at);
-      const db = new Date(b.createdAt || b.created_at);
-      return da - db;
-    });
-
-    // de-dup by id
-    const seen = new Set();
-    const deduped = [];
-    for (const m of filtered) {
-      if (!m || m.id == null) continue;
-      if (seen.has(m.id)) continue;
-      seen.add(m.id);
-      deduped.push(m);
-    }
-
-    return deduped;
-  }
-
   function buildThreadHeaderHtml(partnerName, serviceTitle) {
     const parts = [];
 
@@ -435,30 +368,73 @@
       .join("");
   }
 
+  async function loadThreadForArticle(articleEl) {
+    const panel = articleEl.querySelector(".conversation-panel");
+    if (!panel) return;
+
+    const msgId = articleEl.getAttribute("data-message-id");
+    if (!msgId) return;
+
+    const partnerName = panel.getAttribute("data-partner-name") || "User";
+    const existingServiceTitle = panel.getAttribute("data-service-title") || "";
+
+    const headerEl = panel.querySelector(".thread-header");
+    const messagesEl = panel.querySelector(".thread-messages");
+
+    // Show basic header immediately (will be updated if backend gives better title)
+    if (headerEl) {
+      headerEl.innerHTML = buildThreadHeaderHtml(
+        partnerName,
+        existingServiceTitle,
+      );
+    }
+
+    try {
+      // Avoid duplicate loads
+      if (panel.dataset.loadingThread === "1") return;
+      panel.dataset.loadingThread = "1";
+
+      const data = await apiGet(`/messages/${msgId}/thread`);
+      const root = data.root || data.message || null;
+      const msgs = Array.isArray(data.messages) ? data.messages : [];
+
+      let serviceTitle = existingServiceTitle;
+      if (
+        root &&
+        root.service &&
+        (root.service.title || root.service.name)
+      ) {
+        serviceTitle = root.service.title || root.service.name;
+      }
+
+      if (headerEl) {
+        headerEl.innerHTML = buildThreadHeaderHtml(partnerName, serviceTitle);
+      }
+      if (messagesEl) {
+        messagesEl.innerHTML = buildThreadMessagesHtml(msgs, partnerName);
+      }
+    } catch (err) {
+      console.error("[messages] loadThreadForArticle failed", err);
+      if (messagesEl) {
+        messagesEl.innerHTML =
+          '<p class="thread-error">Could not load this conversation.</p>';
+      }
+    } finally {
+      delete panel.dataset.loadingThread;
+    }
+  }
+
   function openConversationPanel(articleEl) {
     const panel = articleEl.querySelector(".conversation-panel");
     if (!panel) return;
 
-    const partnerId = panel.getAttribute("data-partner-id");
-    const partnerName = panel.getAttribute("data-partner-name") || "User";
-    const serviceId = panel.getAttribute("data-service-id") || "";
-    const serviceTitle = panel.getAttribute("data-service-title") || "";
-
-    const headerEl = panel.querySelector(".thread-header");
-    const messagesEl = panel.querySelector(".thread-messages");
-    const textarea = panel.querySelector(".thread-reply-input");
-
-    const msgs = threadMessagesFor(partnerId, serviceId);
-
-    if (headerEl) {
-      headerEl.innerHTML = buildThreadHeaderHtml(partnerName, serviceTitle);
-    }
-    if (messagesEl) {
-      messagesEl.innerHTML = buildThreadMessagesHtml(msgs, partnerName);
-    }
-
     panel.hidden = false;
+
+    const textarea = panel.querySelector(".thread-reply-input");
     if (textarea) textarea.focus();
+
+    // Load ONLY this conversation (one ad + one user) from backend
+    loadThreadForArticle(articleEl);
   }
 
   function closeConversationPanel(articleEl) {
@@ -505,19 +481,17 @@
         (res && res.message) ||
         res;
 
+      // Put new message into the sent box so list view stays up-to-date
       if (created && created.id != null) {
         sentMessages.push(created);
-        indexAllMessages();
       }
 
       textarea.value = "";
 
-      const msgs = threadMessagesFor(partnerId, serviceId);
-      const messagesEl = panel.querySelector(".thread-messages");
-      if (messagesEl) {
-        messagesEl.innerHTML = buildThreadMessagesHtml(msgs, partnerName);
-      }
+      // Re-load this thread from backend so you only see this conversation
+      await loadThreadForArticle(articleEl);
 
+      // If user is on Sent tab, re-render the list so newest is on top
       if (currentView === "sent") {
         renderView("sent");
       }
