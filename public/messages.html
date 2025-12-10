@@ -1,405 +1,499 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Messages – CodeCrowds</title>
-    <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="messages.css" />
+/* public/messages.js */
+(() => {
+  const AUTO_HOST = "codecrowds.onrender.com";
 
-    <style>
-      :root {
-        --border-subtle: #1f2937;
-        --accent: #3b82f6;
-        --accent-soft: rgba(59, 130, 246, 0.12);
-        --text-main: #e5e7eb;
-        --text-muted: #9ca3af;
-        --radius-xl: 1.25rem;
+  // choose API base URL intelligently
+  const API_URL =
+    window.location.hostname === AUTO_HOST ||
+    window.location.hostname.endsWith(".onrender.com")
+      ? `https://${AUTO_HOST}/api`
+      : "/api";
+
+  // allow updating after server auth check
+  let token = localStorage.getItem("token");
+  let userId = localStorage.getItem("userId");
+
+  const messagesList = document.getElementById("messages-list");
+  const goBackBtn = document.getElementById("goBackBtn");
+  const inboxBtn = document.getElementById("inboxBtn");
+  const sentBtn = document.getElementById("sentBtn");
+
+  let lastView = "inbox";
+
+  // --- Attempt server-side auth (cookie) before redirecting ---
+  async function ensureAuthenticated() {
+    const localToken = localStorage.getItem("token");
+    const localUserId = localStorage.getItem("userId");
+
+    const headers = {};
+    if (localToken) headers["Authorization"] = `Bearer ${localToken}`;
+
+    try {
+      const resp = await fetch(`${API_URL}/users/me`, {
+        method: "GET",
+        headers,
+        credentials: "include", // send cookies for cookie-based auth
+      });
+
+      if (!resp.ok) {
+        // server says not authenticated
+        return null;
       }
 
-      * {
-        box-sizing: border-box;
+      const data = await resp.json().catch(() => null);
+      const user = (data && (data.user || data)) || null;
+      if (user && user.id) {
+        // store user details so all pages (profile, messages, etc.) share them
+        if (!localUserId) localStorage.setItem("userId", String(user.id));
+        if (user.username) localStorage.setItem("username", user.username);
+        if (user.email) localStorage.setItem("email", user.email);
+        return { user, tokenPresent: !!localToken };
       }
+      return null;
+    } catch (e) {
+      // network/CORS error — we cannot verify; treat as unauthenticated to be safe
+      console.warn("[ensureAuthenticated] network error:", e);
+      return null;
+    }
+  }
 
-      body.dashboard {
-        margin: 0;
-        min-height: 100vh;
-        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", sans-serif;
-      }
+  // Set the pill in the top-right (avatar + DISPLAY NAME)
+  function hydrateHeaderUserPill() {
+    const storedUsername = localStorage.getItem("username") || "";
+    const storedEmail = localStorage.getItem("email") || "";
 
-      body.dashboard.profile-dark {
-        background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
-        color: var(--text-main);
-      }
+    // Prefer username; if missing, use the part of the email before "@"
+    let displayName = storedUsername;
+    if (!displayName && storedEmail) {
+      displayName = storedEmail.split("@")[0]; // e.g. "qaz" from "qaz@qaz.com"
+    }
 
-      body.dashboard.profile-light {
-        background: radial-gradient(circle at top, #eef2ff 0, #e0f2fe 45%, #f9fafb 100%);
-        color: #020617;
-      }
+    const avatarEl = document.getElementById("topUserAvatar");
+    const nameEl = document.getElementById("topUserEmail");
 
-      .dash-wrapper {
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 24px 16px 40px;
-      }
+    if (avatarEl) {
+      const letter = (displayName || storedEmail || "U")
+        .charAt(0)
+        .toUpperCase();
+      avatarEl.textContent = letter;
+    }
 
-      .dash-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-      }
+    if (nameEl) {
+      nameEl.textContent = displayName || storedEmail || "User";
+    }
+  }
 
-      .dash-brand {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 1.1rem;
-      }
+  // Wire up navigation handlers (safe to do before auth check)
+  if (goBackBtn) {
+    goBackBtn.addEventListener("click", () => {
+      window.location.href = "profile.html";
+    });
+  }
 
-      .brand-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 999px;
-        background: linear-gradient(135deg, #22c55e, #3b82f6);
-      }
+  if (inboxBtn) {
+    inboxBtn.addEventListener("click", () => {
+      setActiveTab("inbox");
+      loadInbox();
+    });
+  }
 
-      /* reuse pill style, but ids let script.js fill it */
-      .user-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.4rem 0.8rem;
-        border-radius: 999px;
-        border: 1px solid rgba(148, 163, 184, 0.6);
-        font-size: 0.85rem;
-      }
+  if (sentBtn) {
+    sentBtn.addEventListener("click", () => {
+      setActiveTab("sent");
+      loadSent();
+    });
+  }
 
-      .user-avatar {
-        width: 30px;
-        height: 30px;
-        border-radius: 999px;
-        background: linear-gradient(135deg, #3b82f6, #22c55e);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        color: #020617;
-      }
+  function setActiveTab(tab) {
+    lastView = tab;
+    if (!inboxBtn || !sentBtn) return;
 
-      .dash-layout {
-        display: grid;
-        grid-template-columns: 230px minmax(0, 1fr);
-        gap: 20px;
-      }
+    if (tab === "inbox") {
+      inboxBtn.classList.add("active");
+      inboxBtn.setAttribute("aria-pressed", "true");
+      sentBtn.classList.remove("active");
+      sentBtn.setAttribute("aria-pressed", "false");
+    } else {
+      sentBtn.classList.add("active");
+      sentBtn.setAttribute("aria-pressed", "true");
+      inboxBtn.classList.remove("active");
+      inboxBtn.setAttribute("aria-pressed", "false");
+    }
+  }
 
-      @media (max-width: 820px) {
-        .dash-layout {
-          grid-template-columns: minmax(0, 1fr);
-        }
-      }
+  function escapeHtml(unsafe) {
+    return String(unsafe || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
 
-      .sidebar {
-        border-radius: var(--radius-xl);
-        padding: 14px 12px 16px;
-        border: 1px solid var(--border-subtle);
-      }
+  function extractMessages(payload) {
+    if (!payload) return [];
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload.messages)) return payload.messages;
+    if (payload.data && Array.isArray(payload.data.messages))
+      return payload.data.messages;
+    return [];
+  }
 
-      .card {
-        border-radius: var(--radius-xl);
-        padding: 18px 16px 20px;
-        border: 1px solid var(--border-subtle);
-      }
+  function renderStatus(text) {
+    if (messagesList)
+      messagesList.innerHTML = `<p class="loading">${escapeHtml(text)}</p>`;
+  }
 
-      body.profile-dark .sidebar,
-      body.profile-dark .card {
-        background: rgba(15, 23, 42, 0.96);
-        color: var(--text-main);
-      }
+  function renderError(text) {
+    if (messagesList)
+      messagesList.innerHTML = `<p class="error">${escapeHtml(text)}</p>`;
+  }
 
-      body.profile-light .sidebar,
-      body.profile-light .card {
-        background: #ffffff;
-        color: #111827;
-        border-color: #e2e8f0;
-      }
+  function renderEmpty(text = "No messages") {
+    if (messagesList)
+      messagesList.innerHTML = `<p class="empty">${escapeHtml(text)}</p>`;
+  }
 
-      .sidebar-title {
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        margin: 0 0 10px;
-      }
+  /**
+   * Render a single message card.
+   * Layout: RE 'title of ad this message is from'
+   */
+  function renderMessageCard(m, kind = "inbox") {
+    const article = document.createElement("article");
+    article.className = "card";
+    article.tabIndex = 0;
 
-      .nav-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
+    if (kind === "inbox") {
+      const fromName = m.sender?.username || m.sender?.email || "Unknown";
+      const adTitle =
+        (m.service && m.service.title) ||
+        m.adTitle ||
+        m.subject ||
+        `Message from ${fromName}`;
+      const headingText = `RE '${adTitle}'`;
 
-      .nav-link {
-        display: block;
-        padding: 8px 10px;
-        border-radius: 999px;
-        font-size: 0.9rem;
-        text-decoration: none;
-        border: 1px solid transparent;
-        transition: background 0.15s ease, border-color 0.15s ease;
-      }
-
-      body.profile-dark .dash-brand,
-      body.profile-dark .nav-link,
-      body.profile-dark .user-email {
-        color: var(--text-main);
-      }
-
-      body.profile-light .dash-brand,
-      body.profile-light .nav-link,
-      body.profile-light .user-email {
-        color: #111827;
-      }
-
-      body.profile-dark .nav-link:hover {
-        background: rgba(15, 23, 42, 0.9);
-        border-color: rgba(55, 65, 81, 0.9);
-      }
-
-      body.profile-light .nav-link:hover {
-        background: #e5edff;
-        border-color: #c7d2fe;
-      }
-
-      .nav-link--active {
-        background: var(--accent-soft);
-        border-color: rgba(59, 130, 246, 0.8);
-      }
-
-      body.profile-light .nav-link--active {
-        background: #e0ecff;
-        border-color: #60a5fa;
-        color: #1d4ed8;
-      }
-
-      .nav-link--danger {
-        color: #fecaca;
-      }
-
-      body.profile-light .nav-link--danger {
-        color: #b91c1c;
-      }
-
-      .content-column {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-      }
-
-      .card h2 {
-        margin: 0 0 8px;
-        font-size: 1.25rem;
-      }
-
-      .tabbar {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 12px;
-        flex-wrap: wrap;
-      }
-
-      .tab {
-        border-radius: 999px;
-        padding: 0.5rem 0.9rem;
-        border: 1px solid rgba(55, 65, 81, 0.9);
-        font-size: 0.88rem;
-        font-weight: 500;
-        cursor: pointer;
-      }
-
-      body.profile-dark .tab {
-        background: rgba(15, 23, 42, 0.9);
-        color: var(--text-main);
-      }
-
-      body.profile-light .tab {
-        background: #f3f4ff;
-        border-color: #d4d4ff;
-        color: #111827;
-      }
-
-      .tab.active {
-        background: linear-gradient(135deg, #3b82f6, #22c55e) !important;
-        color: #020617 !important;
-        border-color: transparent !important;
-      }
-
-      .messages-list {
-        margin-top: 6px;
-      }
-
-      .loading,
-      .empty,
-      .error {
-        font-size: 0.9rem;
-      }
-
-      .loading,
-      .empty {
-        color: var(--text-muted);
-      }
-
-      .error {
-        color: #fecaca;
-      }
-
-      .timestamp {
-        font-size: 0.8rem;
-      }
-
-      body.profile-dark .timestamp {
-        color: #9ca3af;
-      }
-
-      body.profile-light .timestamp {
-        color: #6b7280;
-      }
-
-      .message-title {
-        font-size: 1rem;
-        font-weight: 600;
-        margin: 0 0 4px;
-      }
-
-      body.profile-dark .message-title {
-        color: #f9fafb;
-      }
-
-      body.profile-light .message-title {
-        color: #020617;
-      }
-
-      .message-meta {
-        font-size: 0.85rem;
-        margin: 0 0 6px;
-      }
-
-      body.profile-dark .message-meta {
-        color: #c4d3ff;
-      }
-
-      body.profile-light .message-meta {
-        color: #4b5563;
-      }
-
-      .card p {
-        margin: 0;
-      }
-
-      body.profile-dark .card p {
-        color: #d1d5db;
-      }
-
-      body.profile-light .card p {
-        color: #4b5563;
-      }
-
-      .conversation-footer {
-        margin-top: 10px;
-      }
-
-      .conversation-footer button {
-        border-radius: 999px;
-        padding: 0.45rem 0.9rem;
-        border: 1px solid rgba(55, 65, 81, 0.9);
-        cursor: pointer;
-      }
-
-      body.profile-dark .conversation-footer button {
-        background: rgba(15, 23, 42, 0.9);
-        color: var(--text-main);
-      }
-
-      body.profile-light .conversation-footer button {
-        background: #ffffff;
-        border-color: #d1d5db;
-        color: #111827;
-      }
-
-      .site-footer {
-        text-align: center;
-        margin-top: 18px;
-        font-size: 0.8rem;
-      }
-    </style>
-  </head>
-
-  <body class="dashboard messages-page">
-    <div class="dash-wrapper">
-      <header class="dash-header">
-        <a href="index.html" class="dash-brand">
-          <span class="brand-dot"></span>
-          <span>CodeCrowds</span>
-        </a>
-
-        <!-- User pill: ids let script.js (ccInitTopUserChip) fill the display name -->
-        <div class="user-pill" id="topUserChip">
-          <div class="user-avatar" id="topUserAvatar">Q</div>
-          <span class="user-email" id="topUserEmail">you@example.com</span>
+      article.innerHTML = `
+        <h3 class="message-title">${escapeHtml(headingText)}</h3>
+        <p class="message-meta">From: ${escapeHtml(fromName)}</p>
+        <p>${escapeHtml(m.content || "")}</p>
+        <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
+        <div class="card-actions">
+          <button class="viewConversationBtn"
+                  data-userid="${m.sender?.id || m.senderId}"
+                  data-username="${fromName}">
+            View Conversation
+          </button>
         </div>
-      </header>
+      `;
+    } else {
+      const toName = m.receiver?.username || m.receiver?.email || "Unknown";
+      const adTitle =
+        (m.service && m.service.title) ||
+        m.adTitle ||
+        m.subject ||
+        `Message to ${toName}`;
+      const headingText = `RE '${adTitle}'`;
 
-      <div class="dash-layout">
-        <aside class="sidebar">
-          <p class="sidebar-title">Dashboard</p>
-          <ul class="nav-list">
-            <li><a href="index.html" class="nav-link">Home</a></li>
-            <li><a href="profile.html" class="nav-link">Profile</a></li>
-            <li><a href="services.html" class="nav-link">Services</a></li>
-            <li>
-              <a href="messages.html" class="nav-link nav-link--active">
-                Messages
-              </a>
-            </li>
-            <li><a href="login.html" class="nav-link nav-link--danger">Logout</a></li>
-          </ul>
-        </aside>
+      article.innerHTML = `
+        <h3 class="message-title">${escapeHtml(headingText)}</h3>
+        <p class="message-meta">To: ${escapeHtml(toName)}</p>
+        <p>${escapeHtml(m.content || "")}</p>
+        <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
+        <div class="card-actions">
+          <button class="viewConversationBtn"
+                  data-userid="${m.receiver?.id || m.receiverId}"
+                  data-username="${toName}">
+            View Conversation
+          </button>
+        </div>
+      `;
+    }
+    return article;
+  }
 
-        <main class="content-column" role="main" aria-labelledby="messages-title">
-          <section class="card">
-            <h2 id="messages-title">Your messages</h2>
+  function attachConversationButtons() {
+    document.querySelectorAll(".viewConversationBtn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const otherUserId = btn.dataset.userid;
+        const otherUsername = btn.dataset.username;
+        loadConversation(otherUserId, otherUsername);
+      });
+    });
+  }
 
-            <nav class="tabbar" role="navigation" aria-label="Messages view">
-              <button id="inboxBtn" class="tab active" aria-pressed="true">
-                Received
-              </button>
-              <button id="sentBtn" class="tab" aria-pressed="false">Sent</button>
-              <button id="goBackBtn" class="tab">Back to Profile</button>
-            </nav>
+  async function doFetch(path, opts = {}) {
+    const url = path.startsWith("http") ? path : `${API_URL}${path}`;
+    const headers = Object.assign({}, opts.headers || {});
+    if (token) headers["Authorization"] = `Bearer ${token}`;
 
-            <section
-              id="messages-list"
-              class="messages-list"
-              aria-live="polite"
-            >
-              <p class="loading">Loading messages…</p>
-            </section>
-          </section>
-        </main>
-      </div>
+    const fetchOpts = {
+      method: opts.method || "GET",
+      headers,
+      body: opts.body !== undefined ? opts.body : undefined,
+      credentials: opts.credentials || "include",
+    };
 
-      <footer class="site-footer">
-        © 2025 CodeCrowds. All rights reserved.
-      </footer>
-    </div>
+    console.debug("[doFetch] url=", url, "opts=", fetchOpts);
+    try {
+      const res = await fetch(url, fetchOpts);
+      const ct = res.headers.get("content-type") || "";
+      const text = await res.text();
+      let data = null;
+      if (ct.includes("application/json")) {
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          data = text;
+        }
+      } else {
+        data = text;
+      }
+      console.debug("[doFetch] status=", res.status, "body=", data);
 
-    <!-- Shared scripts -->
-    <script src="init.js" defer></script>
-    <script src="script.js" defer></script>
-    <script src="messages.js" defer></script>
-  </body>
-</html>
+      if (!res.ok)
+        throw { status: res.status, body: data, statusText: res.statusText };
+
+      return data;
+    } catch (err) {
+      if (
+        err instanceof TypeError ||
+        (err && err.message && err.message.includes("NetworkError"))
+      ) {
+        console.error("[doFetch] Network/CORS error", err);
+        throw { type: "network", message: err.message || "Network/CORS error" };
+      }
+      throw err;
+    }
+  }
+
+  async function loadInbox() {
+    setActiveTab("inbox");
+    if (inboxBtn) inboxBtn.disabled = true;
+    if (sentBtn) sentBtn.disabled = false;
+    renderStatus("Loading received messages…");
+
+    try {
+      const data = await doFetch("/messages/inbox");
+      const messages = extractMessages(data);
+      if (!messages.length) {
+        renderEmpty("No messages yet.");
+        return;
+      }
+      if (!messagesList) return;
+      messagesList.innerHTML = "";
+      messages.forEach((m) =>
+        messagesList.appendChild(renderMessageCard(m, "inbox")),
+      );
+      attachConversationButtons();
+    } catch (err) {
+      console.error("[loadInbox] error:", err);
+      if (err.type === "network") {
+        renderError(
+          "Network/CORS error while fetching inbox. See console for details.",
+        );
+      } else if (err.status === 401) {
+        renderError("Unauthorized (401). Please log in again.");
+      } else if (err.status === 403) {
+        renderError(
+          "Forbidden (403). CORS or permission issue. Check server logs and CORS_ALLOWED_ORIGINS.",
+        );
+      } else {
+        const msg =
+          err.body?.error?.message ||
+          err.body ||
+          err.statusText ||
+          err.message ||
+          "Unknown";
+        renderError(`Failed to load messages: ${msg}`);
+      }
+    } finally {
+      if (inboxBtn) inboxBtn.disabled = false;
+    }
+  }
+
+  async function loadSent() {
+    setActiveTab("sent");
+    if (sentBtn) sentBtn.disabled = true;
+    if (inboxBtn) inboxBtn.disabled = false;
+    renderStatus("Loading sent messages…");
+
+    try {
+      const data = await doFetch("/messages/sent");
+      const messages = extractMessages(data);
+      if (!messages.length) {
+        renderEmpty("No sent messages yet.");
+        return;
+      }
+      if (!messagesList) return;
+      messagesList.innerHTML = "";
+      messages.forEach((m) =>
+        messagesList.appendChild(renderMessageCard(m, "sent")),
+      );
+      attachConversationButtons();
+    } catch (err) {
+      console.error("[loadSent] error:", err);
+      if (err.type === "network") {
+        renderError(
+          "Network/CORS error while fetching sent messages. See console for details.",
+        );
+      } else if (err.status === 401) {
+        renderError("Unauthorized (401). Please log in again.");
+      } else if (err.status === 403) {
+        renderError(
+          "Forbidden (403). CORS or permission issue. Check server logs and CORS_ALLOWED_ORIGINS.",
+        );
+      } else {
+        const msg =
+          err.body?.error?.message ||
+          err.body ||
+          err.statusText ||
+          err.message ||
+          "Unknown";
+        renderError(`Failed to load sent messages: ${msg}`);
+      }
+    } finally {
+      if (sentBtn) sentBtn.disabled = false;
+    }
+  }
+
+  async function loadConversation(otherUserId, otherUsername) {
+    renderStatus(`Loading conversation with ${otherUsername}…`);
+    try {
+      // NEW: use /messages/conversation?otherUserId=...
+      const params = new URLSearchParams();
+      params.set("otherUserId", String(otherUserId));
+      const data = await doFetch(`/messages/conversation?${params.toString()}`);
+
+      const conversation = extractMessages(data);
+      if (!messagesList) return;
+
+      messagesList.innerHTML = `<h2 class="message-title">Conversation with ${escapeHtml(
+        otherUsername,
+      )}</h2>`;
+
+      if (!conversation.length) {
+        messagesList.innerHTML +=
+          '<p class="empty">No messages in this conversation yet.</p>';
+      } else {
+        conversation.forEach((m) => {
+          const article = document.createElement("article");
+          article.className = "card";
+          article.tabIndex = 0;
+          const isMine = Number(m.senderId) === Number(userId);
+          const who = isMine ? "You" : m.sender?.username || m.sender?.email || "Unknown";
+
+          article.innerHTML = `
+            <h3 class="message-title">${escapeHtml(who)}</h3>
+            <p>${escapeHtml(m.content || "")}</p>
+            <p class="timestamp">${new Date(m.createdAt).toLocaleString()}</p>
+          `;
+          messagesList.appendChild(article);
+        });
+      }
+
+      // Back + reply UI
+      const footer = document.createElement("div");
+      footer.className = "conversation-footer";
+
+      const backBtn = document.createElement("button");
+      backBtn.textContent = "Back";
+      backBtn.addEventListener("click", () => {
+        if (lastView === "sent") loadSent();
+        else loadInbox();
+      });
+      footer.appendChild(backBtn);
+
+      messagesList.appendChild(footer);
+
+      // Reply box
+      const replyWrapper = document.createElement("div");
+      replyWrapper.className = "reply-wrapper";
+      replyWrapper.innerHTML = `
+        <h3 class="message-title">Reply to ${escapeHtml(otherUsername)}</h3>
+        <textarea id="replyContent"
+                  rows="4"
+                  maxlength="4000"
+                  placeholder="Write your message…"></textarea>
+        <div class="card-actions">
+          <button id="replySendBtn">Send reply</button>
+        </div>
+      `;
+      messagesList.appendChild(replyWrapper);
+
+      const replyInput = document.getElementById("replyContent");
+      const replyBtn = document.getElementById("replySendBtn");
+
+      if (replyBtn && replyInput) {
+        replyBtn.addEventListener("click", async () => {
+          const text = replyInput.value.trim();
+          if (!text) {
+            alert("Please write a message before sending.");
+            return;
+          }
+          try {
+            await doFetch("/messages", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                receiverId: Number(otherUserId),
+                content: text,
+              }),
+            });
+            replyInput.value = "";
+            // Reload conversation so the new message appears
+            loadConversation(otherUserId, otherUsername);
+          } catch (err) {
+            console.error("[reply] error:", err);
+            const msg =
+              err.body?.error?.message ||
+              err.body ||
+              err.statusText ||
+              err.message ||
+              "Unknown";
+            alert("Failed to send reply: " + msg);
+          }
+        });
+      }
+    } catch (err) {
+      console.error("[loadConversation] error:", err);
+      if (err.type === "network") {
+        renderError(
+          "Network/CORS error while loading conversation. See console for details.",
+        );
+      } else if (err.status === 401) {
+        renderError("Unauthorized (401). Please log in again.");
+      } else {
+        const msg =
+          err.body?.error?.message ||
+          err.body ||
+          err.statusText ||
+          err.message ||
+          "Unknown";
+        renderError(`Failed to load conversation: ${msg}`);
+      }
+    }
+  }
+
+  // initialize
+  (async function init() {
+    const auth = await ensureAuthenticated();
+    if (!auth) {
+      console.warn("Not authenticated — redirecting to login");
+      window.location.href = "login.html";
+      return;
+    }
+
+    // update token & userId variables (ensure they reflect any newly stored values)
+    token = localStorage.getItem("token") || token;
+    userId =
+      localStorage.getItem("userId") ||
+      (auth.user && String(auth.user.id)) ||
+      userId;
+
+    // update avatar + display name at top
+    hydrateHeaderUserPill();
+
+    console.info("[messages] API_URL=", API_URL, "userIdPresent=", !!userId);
+    loadInbox();
+  })();
+})();
