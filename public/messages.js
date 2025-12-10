@@ -3,7 +3,7 @@
 // Each card = one thread (ad/service + other user).
 
 (() => {
-  console.log("[messages] loaded messages.js (front-end per-ad threads v3)");
+  console.log("[messages] loaded messages.js (front-end per-ad threads v4)");
 
   // -----------------------------
   // API base URL helper (Render vs local)
@@ -385,12 +385,13 @@
   // -----------------------------
   // THREAD VIEW – per (ad + user), built from allMessages
   // -----------------------------
-  function threadMessagesFor(partnerId, serviceId, rootCreatedIso) {
+  function threadMessagesFor(partnerId, serviceId, rootCreatedIso, rootMessageId) {
     const partnerIdNum =
       partnerId == null || partnerId === "" ? null : Number(partnerId);
     const svcIdNum =
       serviceId == null || serviceId === "" ? null : Number(serviceId);
-    const rootTime = rootCreatedIso ? new Date(rootCreatedIso).getTime() : null;
+    const rootIdNum =
+      rootMessageId == null || rootMessageId === "" ? null : Number(rootMessageId);
 
     const filtered = allMessages.filter((m) => {
       const sId = m.senderId ?? m.sender_id;
@@ -406,7 +407,6 @@
       if (!pairMatch) return false;
 
       const mSvc = m.serviceId ?? m.service_id ?? null;
-      const mTime = new Date(m.createdAt || m.created_at || 0).getTime();
 
       if (svcIdNum != null) {
         // If the card has a service, require same serviceId
@@ -415,14 +415,14 @@
         return true;
       }
 
-      // If the card has NO serviceId, only include messages
-      // from this user starting at this message's time.
-      if (rootTime != null) {
-        return mTime >= rootTime;
+      // ❗ No serviceId on this card:
+      // treat this card as a single-message thread, not "all messages"
+      if (rootIdNum != null) {
+        return m.id === rootIdNum;
       }
 
-      // Fallback: just pair match
-      return true;
+      // Fallback: just the pair
+      return pairMatch;
     });
 
     // sort oldest → newest
@@ -502,12 +502,18 @@
     const serviceId = panel.getAttribute("data-service-id") || "";
     const serviceTitle = panel.getAttribute("data-service-title") || "";
     const rootCreatedIso = panel.getAttribute("data-root-created") || "";
+    const rootMessageId = articleEl.getAttribute("data-message-id") || "";
 
     const headerEl = panel.querySelector(".thread-header");
     const messagesEl = panel.querySelector(".thread-messages");
     const textarea = panel.querySelector(".thread-reply-input");
 
-    const msgs = threadMessagesFor(partnerId, serviceId, rootCreatedIso);
+    const msgs = threadMessagesFor(
+      partnerId,
+      serviceId,
+      rootCreatedIso,
+      rootMessageId,
+    );
 
     if (headerEl) {
       headerEl.innerHTML = buildThreadHeaderHtml(partnerName, serviceTitle);
@@ -535,6 +541,7 @@
     const partnerName = panel.getAttribute("data-partner-name") || "User";
     const serviceTitleAttr = panel.getAttribute("data-service-title") || "";
     const rootCreatedIso = panel.getAttribute("data-root-created") || "";
+    const rootMessageId = articleEl.getAttribute("data-message-id") || "";
 
     const partnerId = partnerIdRaw ? Number(partnerIdRaw) : null;
     const serviceId = serviceIdRaw ? Number(serviceIdRaw) : null;
@@ -579,7 +586,12 @@
       textarea.value = "";
 
       // Rebuild this thread locally from updated allMessages
-      const msgs = threadMessagesFor(partnerId, serviceId, rootCreatedIso);
+      const msgs = threadMessagesFor(
+        partnerId,
+        serviceId,
+        rootCreatedIso,
+        rootMessageId,
+      );
       const messagesEl = panel.querySelector(".thread-messages");
       if (messagesEl) {
         messagesEl.innerHTML = buildThreadMessagesHtml(msgs, partnerName);
