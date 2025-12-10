@@ -1,232 +1,314 @@
 // src/routes/messages.js
-// Messaging routes for CodeCrowds
-
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const { Op } = require("sequelize");
 
-// Load models defensively so we don't blow up if some are missing
-const models = require("../models");
-const Message = models.Message;
-const User = models.User || null;
-const Service = models.Service || null;
+const { Message, User } = require('../models');
+const authenticateToken = require('../middlewares/authenticateToken');
+const { body, query, param } = require('express-validator');
+const validate = require('../middlewares/validate');
 
-const authenticateToken = require("../middlewares/authenticateToken");
-
-// Build a safe include array (only add models that actually exist)
-const baseInclude = [];
-if (User) {
-  baseInclude.push({
-    model: User,
-    as: "sender",
-    attributes: ["id", "username", "email", "displayName"],
-  });
-  baseInclude.push({
-    model: User,
-    as: "receiver",
-    attributes: ["id", "username", "email", "displayName"],
-  });
-}
-if (Service) {
-  baseInclude.push({
-    model: Service,
-    as: "service",
-    attributes: ["id", "title", "name"],
+// Standard success/error wrappers
+function ok(res, payload, status = 200) {
+  // payload is usually { messages } or { message } or { root, messages }
+  return res.status(status).json({
+    success: true,
+    ...payload,
+    // keep a "data" field for any frontend that expects it
+    data: payload,
   });
 }
 
-// ---------------------------------------------------------------------
-// POST /messages  – send a message
-// ---------------------------------------------------------------------
-router.post("/", authenticateToken, async (req, res) => {
-  try {
-    if (!Message) {
-      return res.status(500).json({ message: "Message model not available." });
-    }
+function err(res, message = 'Something went wrong', status = 500, details) {
+  const out = { success: false, error: { message } };
+  if (details) out.error.details = details;
+  return res.status(status).json(out);
+}
 
-    const senderId = req.user && req.user.id;
-    let { receiverId, content, serviceId, subject } = req.body;
+/* ------------------------------------------------------------------ */
+/* GET /api/messages/inbox  (list messages you RECEIVED)              */
+/* ------------------------------------------------------------------ */
+router.get(
+  '/inbox',
+  authenticateToken,
+  [
+    query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
+    query('offset').optional().isInt({ min: 0 }).toInt(),
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const limit = req.query.limit ?? 20;
+      const offset = req.query.offset ?? 0;
 
-    if (!senderId) {
-      return res.status(401).json({ message: "Not authenticated." });
-    }
-
-    if (!receiverId) {
-      return res.status(400).json({ message: "receiverId is required." });
-    }
-
-    if (!content || !String(content).trim()) {
-      return res
-        .status(400)
-        .json({ message: "Message content cannot be empty." });
-    }
-
-    receiverId = Number(receiverId);
-    if (Number.isNaN(receiverId)) {
-      return res
-        .status(400)
-        .json({ message: "receiverId must be a number." });
-    }
-
-    if (serviceId !== undefined && serviceId !== null && serviceId !== "") {
-      const n = Number(serviceId);
-      serviceId = Number.isNaN(n) ? null : n;
-    } else {
-      serviceId = null;
-    }
-
-    if (!subject || !String(subject).trim()) {
-      subject = "Message from CodeCrowds";
-    }
-
-    const created = await Message.create({
-      content: String(content).trim(),
-      senderId,
-      receiverId,
-      serviceId,
-      subject, // ignored if column doesn't exist
-    });
-
-    // re-load with includes so front-end has sender/receiver info if possible
-    let full = created;
-    if (baseInclude.length > 0) {
-      full = await Message.findByPk(created.id, { include: baseInclude });
-    }
-
-    return res.status(201).json(full);
-  } catch (err) {
-    console.error("Error creating message:", err);
-
-    if (
-      err.name === "SequelizeValidationError" ||
-      err.name === "SequelizeUniqueConstraintError"
-    ) {
-      return res.status(400).json({
-        message: "Validation failed",
-        details: err.errors?.map((e) => e.message) || [],
+      const rows = await Message.findAll({
+        where: { receiverId: req.user.id },
+        include: [
+          {
+            model: User,
+            as: 'sender',
+            attributes: ['id', 'username', 'email'],
+          },
+          {
+            model: User,
+            as: 'receiver',
+            attributes: ['id', 'username', 'email'],
+          },
+        ],
+        order: [['createdAt', 'DESC']],
+        limit,
+        offset,
       });
+
+      const messages = rows.map((m) => m.toJSON());
+      return ok(res, { messages });
+    } catch (error) {
+      console.error('ERROR: GET /api/messages/inbox failed:', error);
+      return err(res, 'Failed to load inbox', 500);
     }
+  },
+);
 
-    return res.status(500).json({ message: "Failed to send message." });
-  }
-});
+/* ------------------------------------------------------------------ */
+/* GET /api/messages/sent  (list messages you SENT)                   */
+/* ------------------------------------------------------------------ */
+router.get(
+  '/sent',
+  authenticateToken,
+  [
+    query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
+    query('offset').optional().isInt({ min: 0 }).toInt(),
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const limit = req.query.limit ?? 20;
+      const offset = req.query.offset ?? 0;
 
-// ---------------------------------------------------------------------
-// GET /messages/inbox – all messages received by current user
-// ---------------------------------------------------------------------
-router.get("/inbox", authenticateToken, async (req, res) => {
-  try {
-    if (!Message) {
-      return res.status(500).json({ message: "Message model not available." });
+      const rows = await Message.findAll({
+        where: { senderId: req.user.id },
+        include: [
+          {
+            model: User,
+            as: 'sender',
+            attributes: ['id', 'username', 'email'],
+          },
+          {
+            model: User,
+            as: 'receiver',
+            attributes: ['id', 'username', 'email'],
+          },
+        ],
+        order: [['createdAt', 'DESC']],
+        limit,
+        offset,
+      });
+
+      const messages = rows.map((m) => m.toJSON());
+      return ok(res, { messages });
+    } catch (error) {
+      console.error('ERROR: GET /api/messages/sent failed:', error);
+      return err(res, 'Failed to load sent messages', 500);
     }
+  },
+);
 
-    const userId = req.user && req.user.id;
-    if (!userId) {
-      return res.status(401).json({ message: "Not authenticated." });
+/* ------------------------------------------------------------------ */
+/* POST /api/messages  (send a new message)                           */
+/*  - accepts either `body` or `content` field for the text           */
+/* ------------------------------------------------------------------ */
+router.post(
+  '/',
+  authenticateToken,
+  [
+    body('receiverId')
+      .isInt()
+      .withMessage('receiverId is required')
+      .toInt(),
+    // Let both `body` and `content` be optional strings;
+    // we'll check that at least one is non-empty in the handler.
+    body('body').optional().isString(),
+    body('content').optional().isString(),
+    body('subject')
+      .optional()
+      .isString()
+      .isLength({ max: 255 }),
+    body('serviceId').optional().isInt().toInt(),
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const { receiverId, serviceId } = req.body;
+
+      const rawBody =
+        typeof req.body.body === 'string'
+          ? req.body.body
+          : typeof req.body.content === 'string'
+          ? req.body.content
+          : '';
+
+      const bodyText = rawBody.trim();
+
+      if (!bodyText) {
+        // manual validation so both old & new front-ends get the same message
+        return err(res, 'Message body is required', 400);
+      }
+
+      const created = await Message.create({
+        senderId: req.user.id,
+        receiverId,
+        content: bodyText,
+        serviceId: serviceId || null,
+      });
+
+      const message = created.toJSON();
+      return ok(res, { message }, 201);
+    } catch (error) {
+      console.error('ERROR: POST /api/messages failed:', error);
+      return err(res, 'Failed to send message', 500);
     }
+  },
+);
 
-    const messages = await Message.findAll({
-      where: { receiverId: userId },
-      include: baseInclude,
-      order: [["createdAt", "DESC"]],
-    });
+/* ------------------------------------------------------------------ */
+/* GET /api/messages/thread/:userId  (conversation by user)           */
+/*  OLD route – kept for compatibility with any old UI                */
+/* ------------------------------------------------------------------ */
+router.get(
+  '/thread/:userId',
+  authenticateToken,
+  [param('userId').isInt()],
+  validate,
+  async (req, res) => {
+    try {
+      const otherUserId = parseInt(req.params.userId, 10);
 
-    // front-end handles either array or {messages}, but keep it simple
-    return res.json(messages);
-  } catch (err) {
-    console.error("Error loading inbox:", err);
-    return res
-      .status(500)
-      .json({ message: "Failed to load inbox messages." });
-  }
-});
+      const rows = await Message.findAll({
+        where: {
+          // either I sent to them or they sent to me
+          [Message.sequelize.Op.or]: [
+            { senderId: req.user.id, receiverId: otherUserId },
+            { senderId: otherUserId, receiverId: req.user.id },
+          ],
+        },
+        include: [
+          {
+            model: User,
+            as: 'sender',
+            attributes: ['id', 'username', 'email'],
+          },
+          {
+            model: User,
+            as: 'receiver',
+            attributes: ['id', 'username', 'email'],
+          },
+        ],
+        order: [['createdAt', 'ASC']],
+      });
 
-// ---------------------------------------------------------------------
-// GET /messages/sent – all messages sent by current user
-// ---------------------------------------------------------------------
-router.get("/sent", authenticateToken, async (req, res) => {
-  try {
-    if (!Message) {
-      return res.status(500).json({ message: "Message model not available." });
+      const messages = rows.map((m) => m.toJSON());
+      return ok(res, { messages });
+    } catch (error) {
+      console.error('ERROR: GET /api/messages/thread/:userId failed:', error);
+      return err(res, 'Failed to load conversation', 500);
     }
+  },
+);
 
-    const userId = req.user && req.user.id;
-    if (!userId) {
-      return res.status(401).json({ message: "Not authenticated." });
+/* ------------------------------------------------------------------ */
+/* GET /api/messages/:id/thread  (conversation by message + ad)       */
+/*  NEW route – used by the new messages.js "Reply" panel             */
+/*  - Finds the clicked message                                       */
+/*  - Checks the current user is in it                                */
+/*  - Uses its serviceId + the two users to fetch ONLY that ad's      */
+/*    conversation between them                                       */
+/* ------------------------------------------------------------------ */
+router.get(
+  '/:id/thread',
+  authenticateToken,
+  [param('id').isInt()],
+  validate,
+  async (req, res) => {
+    try {
+      const messageId = parseInt(req.params.id, 10);
+
+      const rootRow = await Message.findOne({
+        where: { id: messageId },
+        include: [
+          {
+            model: User,
+            as: 'sender',
+            attributes: ['id', 'username', 'email'],
+          },
+          {
+            model: User,
+            as: 'receiver',
+            attributes: ['id', 'username', 'email'],
+          },
+        ],
+      });
+
+      if (!rootRow) {
+        return err(res, 'Message not found', 404);
+      }
+
+      const root = rootRow.toJSON();
+
+      // Make sure logged-in user is part of this message
+      if (
+        root.senderId !== req.user.id &&
+        root.receiverId !== req.user.id
+      ) {
+        return err(
+          res,
+          'You are not part of this conversation',
+          403,
+        );
+      }
+
+      const otherUserId =
+        root.senderId === req.user.id
+          ? root.receiverId
+          : root.senderId;
+
+      const serviceId = root.serviceId || null;
+
+      const where = {
+        [Message.sequelize.Op.or]: [
+          { senderId: req.user.id, receiverId: otherUserId },
+          { senderId: otherUserId, receiverId: req.user.id },
+        ],
+      };
+
+      // Lock to this specific ad / service if there is one
+      if (serviceId !== null) {
+        where.serviceId = serviceId;
+      }
+
+      const rows = await Message.findAll({
+        where,
+        include: [
+          {
+            model: User,
+            as: 'sender',
+            attributes: ['id', 'username', 'email'],
+          },
+          {
+            model: User,
+            as: 'receiver',
+            attributes: ['id', 'username', 'email'],
+          },
+        ],
+        order: [['createdAt', 'ASC']],
+      });
+
+      const messages = rows.map((m) => m.toJSON());
+
+      return ok(res, { root, messages });
+    } catch (error) {
+      console.error('ERROR: GET /api/messages/:id/thread failed:', error);
+      return err(res, 'Failed to load conversation thread', 500);
     }
-
-    const messages = await Message.findAll({
-      where: { senderId: userId },
-      include: baseInclude,
-      order: [["createdAt", "DESC"]],
-    });
-
-    return res.json(messages);
-  } catch (err) {
-    console.error("Error loading sent messages:", err);
-    return res
-      .status(500)
-      .json({ message: "Failed to load sent messages." });
-  }
-});
-
-// ---------------------------------------------------------------------
-// GET /messages/:id/thread – ONE conversation (per ad)
-// ---------------------------------------------------------------------
-router.get("/:id/thread", authenticateToken, async (req, res) => {
-  try {
-    if (!Message) {
-      return res.status(500).json({ message: "Message model not available." });
-    }
-
-    const { id } = req.params;
-    const userId = req.user && req.user.id;
-
-    if (!userId) {
-      return res.status(401).json({ message: "Not authenticated." });
-    }
-
-    const root = await Message.findByPk(id, { include: baseInclude });
-
-    if (!root) {
-      return res.status(404).json({ message: "Message not found." });
-    }
-
-    if (root.senderId !== userId && root.receiverId !== userId) {
-      return res
-        .status(403)
-        .json({ message: "You are not part of this conversation." });
-    }
-
-    const otherUserId =
-      root.senderId === userId ? root.receiverId : root.senderId;
-
-    const serviceId = root.serviceId || null;
-
-    const where = {
-      [Op.or]: [
-        { senderId: userId, receiverId: otherUserId },
-        { senderId: otherUserId, receiverId: userId },
-      ],
-    };
-
-    if (serviceId !== null) {
-      where.serviceId = serviceId;
-    }
-
-    const messages = await Message.findAll({
-      where,
-      include: baseInclude,
-      order: [["createdAt", "ASC"]],
-    });
-
-    return res.json({ root, messages });
-  } catch (err) {
-    console.error("Error loading message thread:", err);
-    return res
-      .status(500)
-      .json({ message: "Failed to load conversation thread." });
-  }
-});
+  },
+);
 
 module.exports = router;
