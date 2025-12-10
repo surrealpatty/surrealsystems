@@ -104,6 +104,20 @@
   gap: 4px;
   text-align: left;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+
+  /* ⭐ NEW — bouncing animation */
+  animation: bounceCard 3.2s ease-in-out infinite;
+}
+
+/* Slightly offset bounce timing so each card bounces uniquely */
+.messages-list .card:nth-child(2) { animation-delay: 0.4s; }
+.messages-list .card:nth-child(3) { animation-delay: 0.8s; }
+.messages-list .card:nth-child(4) { animation-delay: 1.2s; }
+
+@keyframes bounceCard {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(-6px); }
+  100% { transform: translateY(0); }
 }
 
 .messages-list .card:hover {
@@ -112,6 +126,7 @@
   box-shadow: 0 16px 36px rgba(15, 23, 42, 0.85);
 }
 
+/* Title inside each card */
 .messages-list .message-title {
   margin: 0;
   font-size: 0.95rem;
@@ -119,6 +134,7 @@
   color: #e5e7eb;
 }
 
+/* "From xyz" + timestamp line */
 .messages-list .message-meta {
   margin: 2px 0 6px;
   font-size: 0.8rem;
