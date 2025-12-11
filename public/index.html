@@ -36,6 +36,7 @@
       max-width: 1100px;
       padding: 20px 20px 24px;
       flex: 1 0 auto;            /* take remaining height so footer sits at bottom */
+      position: relative;        /* for the corner logo */
     }
 
     .brand-row {
@@ -236,6 +237,31 @@
     }
 
     /* =======================
+       BOTTOM-RIGHT CORNER LOGO
+    ======================== */
+    .corner-logo {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      opacity: 0.22;
+      z-index: 10;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      pointer-events: none; /* so it never blocks clicks */
+    }
+
+    .corner-logo img {
+      width: 130px;           /* adjust size here */
+      height: auto;
+      display: block;
+      filter: drop-shadow(0 0 18px rgba(59, 130, 246, 0.6));
+    }
+
+    .corner-logo:hover {
+      opacity: 0.3;
+      transform: translateY(-2px);
+    }
+
+    /* =======================
        FOOTER
     ======================== */
     .site-footer {
@@ -280,6 +306,11 @@
 
       .card {
         margin-top: 16px;
+      }
+
+      /* hide logo on small screens to keep things clean */
+      .corner-logo {
+        display: none;
       }
     }
   </style>
@@ -368,6 +399,11 @@
           </p>
         </form>
       </section>
+    </div>
+
+    <!-- Bottom-right decorative logo (update src to your actual logo file) -->
+    <div class="corner-logo">
+      <img src="logo-corner.png" alt="CodeCrowds logo" />
     </div>
   </div>
 
