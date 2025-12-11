@@ -85,7 +85,7 @@
         border-radius: 999px;
         border: 1px solid rgba(148, 163, 184, 0.6);
         font-size: 0.85rem;
-        cursor: pointer; /* feels like a button */
+        cursor: pointer;
       }
 
       .user-avatar {
@@ -222,32 +222,6 @@
         flex-wrap: wrap;
       }
 
-      .tab {
-        border-radius: 999px;
-        padding: 0.5rem 0.9rem;
-        border: 1px solid rgba(55, 65, 81, 0.9);
-        font-size: 0.88rem;
-        font-weight: 500;
-        cursor: pointer;
-      }
-
-      body.profile-dark .tab {
-        background: rgba(15, 23, 42, 0.9);
-        color: var(--text-main);
-      }
-
-      body.profile-light .tab {
-        background: #f3f4ff;
-        border-color: #d4d4ff;
-        color: #111827;
-      }
-
-      .tab.active {
-        background: linear-gradient(135deg, #3b82f6, #22c55e) !important;
-        color: #020617 !important;
-        border-color: transparent !important;
-      }
-
       .messages-list {
         margin-top: 6px;
       }
@@ -340,7 +314,7 @@
           <span>CodeCrowds</span>
         </a>
 
-        <!-- User pill: now also .top-user-pill so script.js can bind click -->
+        <!-- User pill -->
         <div class="user-pill top-user-pill" id="topUserChip">
           <div class="user-avatar top-user-avatar" id="topUserAvatar">Q</div>
           <span class="user-email top-user-label" id="topUserEmail">
@@ -368,15 +342,18 @@
         </aside>
 
         <main class="content-column" role="main" aria-labelledby="messages-title">
-          <section class="card">
-            <h2 id="messages-title">Your messages</h2>
+          <section class="card messages-card">
+            <h2 id="messages-title" class="messages-header-title">
+              Your messages
+            </h2>
 
             <nav class="tabbar" role="navigation" aria-label="Messages view">
               <button id="inboxBtn" class="tab active" aria-pressed="true">
                 Received
               </button>
-              <button id="sentBtn" class="tab" aria-pressed="false">Sent</button>
-              <button id="goBackBtn" class="tab">Back to Profile</button>
+              <button id="sentBtn" class="tab" aria-pressed="false">
+                Sent
+              </button>
             </nav>
 
             <section
