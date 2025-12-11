@@ -150,8 +150,7 @@ body.dashboard.profile-light .conversation-footer button:hover {
   border-color: rgba(156, 163, 175, 0.95);
 }
 
-/* --- NEW: REPLY in light mode = soft light-blue pill --- */
-/* Reply is the first button in the footer */
+/* --- REPLY in light mode = soft light-blue pill --- */
 body.dashboard.profile-light .conversation-footer button:first-child {
   background: rgba(59, 130, 246, 0.15);
   border-color: rgba(59, 130, 246, 0.35);
@@ -164,11 +163,11 @@ body.dashboard.profile-light .conversation-footer button:first-child:hover {
   border-color: rgba(59, 130, 246, 0.55);
 }
 
-/* Delete in light mode: white with red text/border (keep as you liked) */
+/* --- DELETE in light mode = SAME BLUE BG, but red text/border --- */
 body.dashboard.profile-light .conversation-footer .delete-btn {
-  background: #ffffff;
-  color: #dc2626;
+  background: rgba(59, 130, 246, 0.15);  /* match Reply background */
   border-color: #dc2626;
+  color: #dc2626;
   font-weight: 600;
 }
 
@@ -279,7 +278,6 @@ body.dashboard.profile-light .conversation-footer .delete-btn:hover {
 
 /* ============================================================
    DELETE ACCOUNT BUTTON (WORKS FOR LIGHT + DARK MODE)
-   Targets the third settings card exactly as in your screenshot
    ============================================================ */
 
 /* Make the DELETE ACCOUNT title red */
