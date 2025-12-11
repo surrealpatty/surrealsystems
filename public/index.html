@@ -22,8 +22,9 @@
         #000000 100%
       );
       display: flex;
-      justify-content: center;
-      align-items: flex-start;
+      flex-direction: column;     /* stack page + footer vertically */
+      justify-content: flex-start;
+      align-items: center;
       color: #e5e7eb;
     }
 
@@ -234,6 +235,88 @@
     }
 
     /* =======================
+       HOW IT WORKS SECTION
+    ========================= */
+    .how-it-works {
+      margin: 40px auto 10px;
+      max-width: 900px;
+      text-align: center;
+      color: #e5e7eb;
+    }
+
+    .how-it-works h2 {
+      font-size: 1.6rem;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+
+    .hiw-steps {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .hiw-step {
+      width: 220px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      border-radius: 16px;
+      padding: 16px 14px;
+      font-size: 0.95rem;
+    }
+
+    .hiw-number {
+      display: inline-block;
+      background: #3b82f6;
+      color: #000;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      line-height: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    /* =======================
+       FOOTER
+    ========================= */
+    .site-footer {
+      width: 100%;
+      padding: 18px 20px 24px;
+      font-size: 0.85rem;
+      color: #9ca3af;
+    }
+
+    .footer-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-align: center;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .footer-links a {
+      color: #9ca3af;
+      text-decoration: none;
+    }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+      color: #e5e7eb;
+    }
+
+    /* =======================
        RESPONSIVE
     ========================= */
     @media (max-height: 720px) {
@@ -252,16 +335,16 @@
     }
 
     @media (max-width: 960px) {
-      body {
-        align-items: flex-start;
-      }
-
       .layout {
         grid-template-columns: 1fr;
       }
 
       .card {
         margin-top: 16px;
+      }
+
+      .how-it-works {
+        margin-top: 28px;
       }
     }
   </style>
@@ -302,7 +385,9 @@
         <div class="pitch-item">
           <h3>Ad-Free &amp; Premium</h3>
           <p>Upgrade for ad-free experience, lower fees, and better visibility.</p>
-          <div class="badge-premium">● Premium perks for power users</div>
+          <div class="badge-premium">
+            ● Premium: lower fees, top placement, and an ad-free experience
+          </div>
         </div>
       </section>
 
@@ -351,7 +436,38 @@
         </form>
       </section>
     </div>
+
+    <!-- HOW IT WORKS -->
+    <section class="how-it-works">
+      <h2>How it works</h2>
+      <div class="hiw-steps">
+        <div class="hiw-step">
+          <span class="hiw-number">1</span>
+          <p>Sign up and create your free CodeCrowds account.</p>
+        </div>
+        <div class="hiw-step">
+          <span class="hiw-number">2</span>
+          <p>Post your coding services and showcase your skills.</p>
+        </div>
+        <div class="hiw-step">
+          <span class="hiw-number">3</span>
+          <p>Get messages from clients and start collaborating.</p>
+        </div>
+      </div>
+    </section>
   </div>
+
+  <!-- Site footer -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p>© 2025 CodeCrowds</p>
+      <nav class="footer-links">
+        <a href="#">Terms</a>
+        <a href="#">Privacy</a>
+        <a href="#">Contact</a>
+      </nav>
+    </div>
+  </footer>
 
   <!-- Show / Hide password -->
   <script>

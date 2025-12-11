@@ -458,8 +458,40 @@ select:focus {
 }
 
 /* Footer spacing */
-.site-footer{padding:28px 0;text-align:center;color:rgba(255,255,255,0.95)}
-.container:not(.container--transparent) .site-footer{color:var(--color-text)}
+.site-footer{
+  padding:28px 0;
+  text-align:center;
+  color:rgba(255,255,255,0.95);
+  font-size:0.9rem;
+}
+.container:not(.container--transparent) .site-footer{
+  color:var(--color-text);
+}
+
+/* Footer inner layout (shared with login/register) */
+.site-footer .footer-inner{
+  max-width:var(--max-width);
+  margin:0 auto;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+.site-footer .footer-links{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+.site-footer .footer-links a{
+  color:inherit;
+  text-decoration:none;
+}
+.site-footer .footer-links a:hover{
+  text-decoration:underline;
+  color:var(--accent);
+}
 
 /* -------------------- Login / Register container tweaks -------------------- */
 .login-container.card {
