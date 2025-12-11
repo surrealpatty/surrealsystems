@@ -58,7 +58,6 @@
 
 /* ============================================================
    BASE PILL STYLE – TABS + REPLY/DELETE BUTTONS (DARK MODE)
-   This makes Reply + Delete share the same background as Sent.
    ============================================================ */
 .tab,
 .conversation-footer button {
@@ -67,7 +66,7 @@
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.7);
   cursor: pointer;
-  background: rgba(15, 23, 42, 0.75); /* dark pill */
+  background: rgba(15, 23, 42, 0.75); /* dark pills */
   color: #e5e7eb;
   transition:
     background 0.16s ease,
@@ -95,7 +94,7 @@
 }
 
 /* ============================================================
-   DELETE BUTTON – DARK MODE: red text/border on dark pill
+   DELETE BUTTON – DARK MODE: red text/border
    ============================================================ */
 .conversation-footer .delete-btn {
   color: #dc2626;
@@ -111,7 +110,6 @@
 
 /* ============================================================
    LIGHT MODE OVERRIDES (profile-light)
-   Tabs stay white; Reply/Delete become soft light-blue pills.
    ============================================================ */
 
 body.dashboard.profile-light .messages-card {
@@ -120,7 +118,7 @@ body.dashboard.profile-light .messages-card {
   color: #111827;
 }
 
-/* Tabs in light mode (white pills, same as you had) */
+/* Tabs in light mode (white pills – keep as-is) */
 body.dashboard.profile-light .tab {
   background: #ffffff;
   color: #4b5563;
@@ -132,31 +130,52 @@ body.dashboard.profile-light .tab:hover {
   border-color: rgba(156, 163, 175, 0.95);
 }
 
-/* keep active tab special in light mode too */
+/* Active tab in light mode */
 body.dashboard.profile-light .tab.active {
   background: #f3f4f6;
   color: #4e54c8;
   border-color: #4e54c8;
 }
 
-/* Reply — soft light-blue pill in LIGHT MODE only */
-body.dashboard.profile-light .reply-btn {
-  background: rgba(59, 130, 246, 0.15) !important;
-  border-color: rgba(59, 130, 246, 0.35) !important;
-  color: #3b82f6 !important;
+/* Default light-mode style for footer buttons (what you had before) */
+body.dashboard.profile-light .conversation-footer button {
+  background: #ffffff;
+  color: #4b5563;
+  border-color: rgba(148, 163, 184, 0.7);
 }
 
-/* Delete — same light-blue background, red text/border in LIGHT MODE */
-body.dashboard.profile-light .delete-btn {
-  background: rgba(59, 130, 246, 0.15) !important;
-  border-color: #dc2626 !important;
-  color: #dc2626 !important;
+/* Hover for footer buttons in light mode */
+body.dashboard.profile-light .conversation-footer button:hover {
+  background: #f3f4f6;
+  border-color: rgba(156, 163, 175, 0.95);
 }
 
-body.dashboard.profile-light .delete-btn:hover {
-  background: #dc2626 !important;
-  color: #ffffff !important;
-  border-color: #dc2626 !important;
+/* --- NEW: REPLY in light mode = soft light-blue pill --- */
+/* Reply is the first button in the footer */
+body.dashboard.profile-light .conversation-footer button:first-child {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.35);
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+body.dashboard.profile-light .conversation-footer button:first-child:hover {
+  background: rgba(59, 130, 246, 0.25);
+  border-color: rgba(59, 130, 246, 0.55);
+}
+
+/* Delete in light mode: white with red text/border (keep as you liked) */
+body.dashboard.profile-light .conversation-footer .delete-btn {
+  background: #ffffff;
+  color: #dc2626;
+  border-color: #dc2626;
+  font-weight: 600;
+}
+
+body.dashboard.profile-light .conversation-footer .delete-btn:hover {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
 }
 
 /* Messages grid/list */
