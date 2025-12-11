@@ -341,6 +341,30 @@
         background: #e5e7eb;
       }
 
+      /* 🔥 FORCE EDIT PROFILE BUTTON TO MATCH DARK-MODE STYLE IN BOTH THEMES */
+      #editProfileBtn {
+        background-image: linear-gradient(135deg, #3b82f6, #22c55e) !important;
+        color: #ffffff !important;
+        border-radius: 999px;
+        padding: 0.6rem 1.7rem;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.35);
+        transition: transform 0.15s ease, box-shadow 0.15s ease,
+          filter 0.15s ease;
+      }
+
+      #editProfileBtn:hover {
+        filter: brightness(1.06);
+        transform: translateY(-1px);
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.45);
+      }
+
+      #editProfileBtn:active {
+        transform: translateY(0);
+        filter: brightness(0.97);
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.3);
+      }
+      /* 🔥 END EDIT PROFILE OVERRIDE */
+
       .services-empty {
         margin-top: 6px;
         padding: 0.65rem 0.75rem;
