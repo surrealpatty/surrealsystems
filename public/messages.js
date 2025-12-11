@@ -315,7 +315,7 @@
         : previewRaw;
 
     const createdIso = m.createdAt || m.created_at || "";
-       const when = formatDate(createdIso);
+    const when = formatDate(createdIso);
     const msgId = m.id || m.messageId || m.messageID || "";
 
     // Determine partnerId again so we can store it on the card
@@ -333,34 +333,33 @@
       m.serviceTitle ||
       "";
 
-    // 🔹 Use subject (RE "Ad title") to show "Message about: Ad title"
+    // 🔹 Use subject (RE "Ad title") to show just the ad title as the heading
     const subjectRaw = m.subject || "";
-    let subjectDisplay = "";
+    let cardTitle = "";
     let headerTitle = "";
 
     if (subjectRaw && subjectRaw.trim().length > 0) {
       const trimmed = subjectRaw.trim();
-
       // Match: RE "My title" or RE 'My title'
       const match = trimmed.match(/^RE\s+["'](.+?)["']$/i);
 
       if (match) {
         const titlePart = match[1];
-        subjectDisplay = `Message about: ${titlePart}`;
+        cardTitle = titlePart;
         headerTitle = titlePart;
       } else {
-        // Some other subject, just show it
-        subjectDisplay = trimmed;
+        // Some other subject text – use it
+        cardTitle = trimmed;
         headerTitle = serviceTitle || trimmed;
       }
     } else if (serviceTitle) {
       // No subject, but we know the service title
-      subjectDisplay = `Message about: ${serviceTitle}`;
+      cardTitle = serviceTitle;
       headerTitle = serviceTitle;
     } else {
       // Old messages without subject/service
-      subjectDisplay = `Message from ${senderName}`;
-      headerTitle = subjectDisplay;
+      cardTitle = `Message from ${senderName}`;
+      headerTitle = cardTitle;
     }
 
     return `
@@ -368,7 +367,7 @@
         String(msgId),
       )}">
         <div class="message-main">
-          <h3 class="message-title">${escapeHtml(subjectDisplay)}</h3>
+          <h3 class="message-title">${escapeHtml(cardTitle)}</h3>
           <p class="message-meta">${escapeHtml(whoLine)}</p>
           <p>${escapeHtml(preview)}</p>
           <p class="timestamp">${escapeHtml(when)}</p>
