@@ -207,6 +207,7 @@
 
   // -----------------------------
   // Load service titles for messages using /api/services/:id
+  // (extra safety; now that backend includes Service, we rarely need this)
   // -----------------------------
   async function hydrateServiceTitles(messages) {
     const ids = new Set();

@@ -53,6 +53,10 @@ router.get(
             as: 'receiver',
             attributes: ['id', 'username', 'email'],
           },
+          {
+            model: Service,
+            attributes: ['id', 'title'],
+          },
         ],
         order: [['createdAt', 'DESC']],
         limit,
@@ -96,6 +100,10 @@ router.get(
             model: User,
             as: 'receiver',
             attributes: ['id', 'username', 'email'],
+          },
+          {
+            model: Service,
+            attributes: ['id', 'title'],
           },
         ],
         order: [['createdAt', 'DESC']],
@@ -226,6 +234,10 @@ router.get(
             as: 'receiver',
             attributes: ['id', 'username', 'email'],
           },
+          {
+            model: Service,
+            attributes: ['id', 'title'],
+          },
         ],
         order: [['createdAt', 'ASC']],
       });
@@ -263,6 +275,10 @@ router.get(
             model: User,
             as: 'receiver',
             attributes: ['id', 'username', 'email'],
+          },
+          {
+            model: Service,
+            attributes: ['id', 'title'],
           },
         ],
       });
@@ -316,6 +332,10 @@ router.get(
             model: User,
             as: 'receiver',
             attributes: ['id', 'username', 'email'],
+          },
+          {
+            model: Service,
+            attributes: ['id', 'title'],
           },
         ],
         order: [['createdAt', 'ASC']],
