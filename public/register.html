@@ -283,6 +283,45 @@
     }
 
     /* =======================
+       FOOTER
+    ========================= */
+    .site-footer {
+      margin-top: 24px;
+      padding: 16px 0 4px;
+      font-size: 0.8rem;
+      color: #9ca3af;
+      text-align: center;
+    }
+
+    .site-footer .footer-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .site-footer .footer-links {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .site-footer .footer-links a {
+      color: #9ca3af;
+      text-decoration: none;
+      font-size: 0.8rem;
+    }
+
+    .site-footer .footer-links a:hover {
+      color: #e5e7eb;
+      text-decoration: underline;
+    }
+
+    /* =======================
        RESPONSIVE
     ========================= */
     @media (max-height: 720px) {
@@ -347,7 +386,9 @@
         <div class="pitch-item">
           <h3>Ad-Free &amp; Premium</h3>
           <p>Upgrade for ad-free experience, lower fees, and better visibility.</p>
-          <div class="badge-premium">● Premium perks for power users</div>
+          <div class="badge-premium">
+            ● Premium: lower fees, top placement, and ad-free experience
+          </div>
         </div>
       </section>
 
@@ -451,6 +492,18 @@
       </section>
     </div>
   </div>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>© 2025 CodeCrowds</span>
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a href="#">Terms</a>
+        <a href="#">Privacy</a>
+        <a href="mailto:contact@codecrowds.com">Contact</a>
+      </nav>
+    </div>
+  </footer>
 
   <!-- Shared register / show-password logic -->
   <script src="/register.js" defer></script>
