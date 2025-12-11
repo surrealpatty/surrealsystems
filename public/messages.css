@@ -229,3 +229,47 @@
     grid-template-columns: 1fr;
   }
 }
+/* ============================================================
+   DELETE ACCOUNT BUTTON (WORKS FOR LIGHT + DARK MODE)
+   Targets the third settings card exactly as in your screenshot
+   ============================================================ */
+
+/* Make the DELETE ACCOUNT title red */
+.settings-card:nth-of-type(3) h3 {
+  color: var(--danger) !important;
+}
+
+/* Style the DELETE ACCOUNT button */
+.settings-card:nth-of-type(3) button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 999px;
+
+  background: transparent !important;
+  color: var(--danger) !important;
+  border: 2px solid var(--danger) !important;
+
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+/* Hover state */
+.settings-card:nth-of-type(3) button:hover {
+  background: rgba(255, 77, 79, 0.15) !important;
+  color: var(--danger) !important;
+  box-shadow: 0 0 8px rgba(255, 77, 79, 0.35) !important;
+}
+
+/* Press / active */
+.settings-card:nth-of-type(3) button:active {
+  background: rgba(255, 77, 79, 0.25) !important;
+  color: #fff !important;
+}
