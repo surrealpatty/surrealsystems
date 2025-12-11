@@ -160,7 +160,7 @@
 }
 
 /* ================================================================
-   REPLY BUTTON — EXACT MATCH OF "Sent" TAB STYLE
+   REPLY BUTTON — SAME STYLE AS "Sent" TAB
 ================================================================= */
 .conversation-footer button:first-child {
   background: #f3f4f6 !important;
@@ -179,7 +179,7 @@
 }
 
 /* ================================================================
-   DELETE BUTTON — Light background + Red border + Red text
+   DELETE BUTTON — light background + RED text/border
 ================================================================= */
 .conversation-footer .delete-btn {
   background: #f3f4f6 !important;
