@@ -57,36 +57,36 @@
 }
 
 /* ============================================================
-   BASE PILL STYLE – TABS (Received / Sent) – DARK MODE
+   TABS — Received + Sent (same style)
    ============================================================ */
 
+/* Default tab style (used for both themes) */
 .tab {
   padding: 8px 18px;
-  font-size: 0.9rem;
   border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
 
-  border: 1px solid #3b82f6;
   background: #3b82f6;
+  border: 1px solid #3b82f6;
   color: #ffffff;
-  font-weight: 600;
 
   transition:
     background 0.16s ease,
     border-color 0.16s ease,
-    color 0.16s ease,
-    transform 0.1s ease,
-    box-shadow 0.16s ease;
+    box-shadow 0.16s ease,
+    transform 0.1s ease;
 }
 
+/* Hover */
 .tab:hover {
   background: #2563eb;
   border-color: #2563eb;
   box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.35);
 }
 
-/* Active tab – keep same blue style so Sent looks
-   exactly like Received when selected */
+/* Active tab */
 .tab.active {
   background: #1d4ed8;
   border-color: #1d4ed8;
@@ -99,8 +99,26 @@
   box-shadow: none;
 }
 
+/* Light mode — tabs stay BLUE as well */
+body.dashboard.profile-light .tab {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+body.dashboard.profile-light .tab:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+body.dashboard.profile-light .tab.active {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #ffffff;
+}
+
 /* ============================================================
-   BASE PILL STYLE – REPLY/DELETE BUTTONS (DARK MODE)
+   REPLY/DELETE BUTTONS (DARK MODE)
    ============================================================ */
 
 .conversation-footer button {
@@ -144,27 +162,6 @@ body.dashboard.profile-light .messages-card {
   background: #f9fbff;
   border-color: rgba(209, 213, 219, 0.9);
   color: #111827;
-}
-
-/* Tabs in light mode – SAME BLUE AS DARK MODE */
-body.dashboard.profile-light .tab {
-  background: #3b82f6;
-  color: #ffffff;
-  border-color: #3b82f6;
-  font-weight: 600;
-}
-
-body.dashboard.profile-light .tab:hover {
-  background: #2563eb;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.35);
-}
-
-/* Active tab in light mode – still blue */
-body.dashboard.profile-light .tab.active {
-  background: #1d4ed8;
-  color: #ffffff;
-  border-color: #1d4ed8;
 }
 
 /* Default light-mode style for footer buttons */
