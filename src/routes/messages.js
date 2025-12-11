@@ -55,6 +55,7 @@ router.get(
           },
           {
             model: Service,
+            as: 'service', // 👈 IMPORTANT: use the alias
             attributes: ['id', 'title'],
           },
         ],
@@ -103,6 +104,7 @@ router.get(
           },
           {
             model: Service,
+            as: 'service', // 👈 alias
             attributes: ['id', 'title'],
           },
         ],
@@ -236,6 +238,7 @@ router.get(
           },
           {
             model: Service,
+            as: 'service', // 👈 alias
             attributes: ['id', 'title'],
           },
         ],
@@ -278,6 +281,7 @@ router.get(
           },
           {
             model: Service,
+            as: 'service', // 👈 alias
             attributes: ['id', 'title'],
           },
         ],
@@ -335,6 +339,7 @@ router.get(
           },
           {
             model: Service,
+            as: 'service', // 👈 alias
             attributes: ['id', 'title'],
           },
         ],
