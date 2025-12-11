@@ -45,7 +45,7 @@
   font-size: 0.85rem;
 }
 
-/* Tab bar (Received / Sent / Back to Profile) */
+/* Tab bar (Received / Sent) */
 .tabbar {
   display: flex;
   flex-wrap: wrap;
@@ -57,16 +57,59 @@
 }
 
 /* ============================================================
-   BASE PILL STYLE – TABS + REPLY/DELETE BUTTONS (DARK MODE)
+   BASE PILL STYLE – TABS (Received / Sent) – DARK MODE
    ============================================================ */
-.tab,
+
+.tab {
+  padding: 8px 18px;
+  font-size: 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+
+  border: 1px solid #3b82f6;
+  background: #3b82f6;
+  color: #ffffff;
+  font-weight: 600;
+
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.1s ease,
+    box-shadow 0.16s ease;
+}
+
+.tab:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.35);
+}
+
+/* Active tab – keep same blue style so Sent looks
+   exactly like Received when selected */
+.tab.active {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #ffffff;
+}
+
+.tab[disabled] {
+  opacity: 0.55;
+  cursor: default;
+  box-shadow: none;
+}
+
+/* ============================================================
+   BASE PILL STYLE – REPLY/DELETE BUTTONS (DARK MODE)
+   ============================================================ */
+
 .conversation-footer button {
   padding: 8px 14px;
   font-size: 0.9rem;
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.7);
   cursor: pointer;
-  background: rgba(15, 23, 42, 0.75); /* dark pills */
+  background: rgba(15, 23, 42, 0.75);
   color: #e5e7eb;
   transition:
     background 0.16s ease,
@@ -75,27 +118,12 @@
     transform 0.1s ease;
 }
 
-.tab:hover,
 .conversation-footer button:hover {
   background: rgba(55, 65, 81, 0.9);
   border-color: rgba(156, 163, 175, 0.95);
 }
 
-/* ACTIVE TAB (Received or Sent when selected) */
-.tab.active {
-  background: #f3f4f6;
-  color: #4e54c8;
-  border: 1px solid #4e54c8;
-}
-
-.tab[disabled] {
-  opacity: 0.55;
-  cursor: default;
-}
-
-/* ============================================================
-   DELETE BUTTON – DARK MODE: red text/border
-   ============================================================ */
+/* DELETE BUTTON – DARK MODE: red text/border */
 .conversation-footer .delete-btn {
   color: #dc2626;
   border-color: #dc2626;
@@ -118,39 +146,40 @@ body.dashboard.profile-light .messages-card {
   color: #111827;
 }
 
-/* Tabs in light mode (white pills – keep as-is) */
+/* Tabs in light mode – SAME BLUE AS DARK MODE */
 body.dashboard.profile-light .tab {
-  background: #ffffff;
-  color: #4b5563;
-  border-color: rgba(148, 163, 184, 0.7);
+  background: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
+  font-weight: 600;
 }
 
 body.dashboard.profile-light .tab:hover {
-  background: #f3f4f6;
-  border-color: rgba(156, 163, 175, 0.95);
+  background: #2563eb;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.35);
 }
 
-/* Active tab in light mode */
+/* Active tab in light mode – still blue */
 body.dashboard.profile-light .tab.active {
-  background: #f3f4f6;
-  color: #4e54c8;
-  border-color: #4e54c8;
+  background: #1d4ed8;
+  color: #ffffff;
+  border-color: #1d4ed8;
 }
 
-/* Default light-mode style for footer buttons (what you had before) */
+/* Default light-mode style for footer buttons */
 body.dashboard.profile-light .conversation-footer button {
   background: #ffffff;
   color: #4b5563;
   border-color: rgba(148, 163, 184, 0.7);
 }
 
-/* Hover for footer buttons in light mode */
 body.dashboard.profile-light .conversation-footer button:hover {
   background: #f3f4f6;
   border-color: rgba(156, 163, 175, 0.95);
 }
 
-/* --- REPLY in light mode = soft light-blue pill --- */
+/* REPLY in light mode = soft light-blue pill */
 body.dashboard.profile-light .conversation-footer button:first-child {
   background: rgba(59, 130, 246, 0.15);
   border-color: rgba(59, 130, 246, 0.35);
@@ -163,9 +192,9 @@ body.dashboard.profile-light .conversation-footer button:first-child:hover {
   border-color: rgba(59, 130, 246, 0.55);
 }
 
-/* --- DELETE in light mode = SAME BLUE BG, but red text/border --- */
+/* DELETE in light mode = SAME BLUE BG, but red text/border */
 body.dashboard.profile-light .conversation-footer .delete-btn {
-  background: rgba(59, 130, 246, 0.15);  /* match Reply background */
+  background: rgba(59, 130, 246, 0.15); /* match Reply background */
   border-color: #dc2626;
   color: #dc2626;
   font-weight: 600;
