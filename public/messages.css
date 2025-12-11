@@ -56,22 +56,33 @@
   margin-bottom: 12px;
 }
 
-.tab {
+/* ============================================================
+   BASE PILL STYLE – TABS + REPLY/DELETE BUTTONS (DARK MODE)
+   This makes Reply + Delete share the same background as Sent.
+   ============================================================ */
+.tab,
+.conversation-footer button {
   padding: 8px 14px;
   font-size: 0.9rem;
-  color: #e5e7eb;
-  background: rgba(15, 23, 42, 0.75);
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.7);
   cursor: pointer;
-  transition: background 0.16s ease, border-color 0.16s ease, transform 0.1s ease;
+  background: rgba(15, 23, 42, 0.75); /* same as Sent tab in dark mode */
+  color: #e5e7eb;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.1s ease;
 }
 
-.tab:hover {
+.tab:hover,
+.conversation-footer button:hover {
   background: rgba(55, 65, 81, 0.9);
   border-color: rgba(156, 163, 175, 0.95);
 }
 
+/* ACTIVE TAB (Received or Sent when selected) */
 .tab.active {
   background: #f3f4f6;
   color: #4e54c8;
@@ -81,6 +92,63 @@
 .tab[disabled] {
   opacity: 0.55;
   cursor: default;
+}
+
+/* ============================================================
+   DELETE BUTTON – SAME BG AS SENT, RED TEXT/BORDER
+   ============================================================ */
+.conversation-footer .delete-btn {
+  color: #dc2626;
+  border-color: #dc2626;
+  font-weight: 600;
+}
+
+.conversation-footer .delete-btn:hover {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+}
+
+/* ============================================================
+   LIGHT MODE OVERRIDES (profile-light)
+   Makes tabs + Reply/Delete match again in light mode.
+   ============================================================ */
+body.dashboard.profile-light .messages-card {
+  background: #f9fbff;
+  border-color: rgba(209, 213, 219, 0.9);
+  color: #111827;
+}
+
+body.dashboard.profile-light .tab,
+body.dashboard.profile-light .conversation-footer button {
+  background: #ffffff;               /* same as Sent tab in light mode */
+  color: #4b5563;
+  border-color: rgba(148, 163, 184, 0.7);
+}
+
+body.dashboard.profile-light .tab:hover,
+body.dashboard.profile-light .conversation-footer button:hover {
+  background: #f3f4f6;
+  border-color: rgba(156, 163, 175, 0.95);
+}
+
+/* keep active tab special in light mode too */
+body.dashboard.profile-light .tab.active {
+  background: #f3f4f6;
+  color: #4e54c8;
+  border-color: #4e54c8;
+}
+
+/* Delete in light mode: same bg as Sent, red text/border */
+body.dashboard.profile-light .conversation-footer .delete-btn {
+  color: #dc2626;
+  border-color: #dc2626;
+}
+
+body.dashboard.profile-light .conversation-footer .delete-btn:hover {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
 }
 
 /* Messages grid/list */
@@ -149,54 +217,6 @@
   gap: 8px;
 }
 
-/* Base footer button style */
-.conversation-footer button {
-  border-radius: 999px;
-  padding: 0.45rem 0.9rem;
-  border: 1px solid rgba(55, 65, 81, 0.9);
-  cursor: pointer;
-  background: rgba(15, 23, 42, 0.9);
-  color: #e5e7eb;
-}
-
-/* ================================================================
-   REPLY BUTTON — SAME STYLE AS "Sent" TAB
-================================================================= */
-.conversation-footer button:first-child {
-  background: #f3f4f6 !important;
-  color: #4e54c8 !important;
-  border: 1px solid #4e54c8 !important;
-  font-weight: 600;
-  border-radius: 999px;
-  padding: 0.45rem 0.9rem;
-  cursor: pointer;
-  transition: 0.18s ease;
-}
-
-.conversation-footer button:first-child:hover {
-  background: #4e54c8 !important;
-  color: #ffffff !important;
-}
-
-/* ================================================================
-   DELETE BUTTON — light background + RED text/border
-================================================================= */
-.conversation-footer .delete-btn {
-  background: #f3f4f6 !important;
-  color: #dc2626 !important;
-  border: 1px solid #dc2626 !important;
-  font-weight: 600;
-  border-radius: 999px;
-  padding: 0.45rem 0.9rem;
-  cursor: pointer;
-  transition: 0.18s ease;
-}
-
-.conversation-footer .delete-btn:hover {
-  background: #dc2626 !important;
-  color: #ffffff !important;
-}
-
 /* Status text states */
 .loading,
 .empty,
@@ -229,6 +249,7 @@
     grid-template-columns: 1fr;
   }
 }
+
 /* ============================================================
    DELETE ACCOUNT BUTTON (WORKS FOR LIGHT + DARK MODE)
    Targets the third settings card exactly as in your screenshot
