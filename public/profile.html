@@ -41,12 +41,22 @@
 
       /* BACKGROUND + BASE TEXT COLOR */
       body.dashboard.profile-dark {
-        background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
+        background: radial-gradient(
+          circle at top,
+          #1e293b 0,
+          #020617 45%,
+          #000 100%
+        );
         color: var(--text-main);
       }
 
       body.dashboard.profile-light {
-        background: radial-gradient(circle at top, #eef2ff 0, #e0f2fe 45%, #f9fafb 100%);
+        background: radial-gradient(
+          circle at top,
+          #eef2ff 0,
+          #e0f2fe 45%,
+          #f9fafb 100%
+        );
         color: #020617;
       }
 
@@ -552,6 +562,26 @@
         gap: 6px;
         margin-top: 8px;
       }
+
+      /* =====================================================
+         FINAL: DELETE ACCOUNT BUTTON (red, light & dark)
+         ===================================================== */
+      #deleteAccountBtn {
+        background: transparent !important;
+        color: #dc2626 !important;
+        border: 2px solid #dc2626 !important;
+        font-weight: 600;
+      }
+
+      #deleteAccountBtn:hover {
+        background: rgba(220, 38, 38, 0.12) !important;
+        box-shadow: 0 0 8px rgba(220, 38, 38, 0.35);
+      }
+
+      #deleteAccountBtn:active {
+        background: rgba(220, 38, 38, 0.25) !important;
+        color: #ffffff !important;
+      }
     </style>
   </head>
 
@@ -577,7 +607,9 @@
           <p class="sidebar-title">Dashboard</p>
           <ul class="nav-list">
             <li><a href="index.html" class="nav-link">Home</a></li>
-            <li><a href="profile.html" class="nav-link nav-link--active">Profile</a></li>
+            <li>
+              <a href="profile.html" class="nav-link nav-link--active">Profile</a>
+            </li>
             <li><a href="services.html" class="nav-link">Services</a></li>
             <li><a href="messages.html" class="nav-link">Messages</a></li>
             <li><a href="login.html" class="nav-link nav-link--danger">Logout</a></li>
@@ -595,7 +627,9 @@
 
               <div class="profile-row">
                 <div class="profile-label">Email</div>
-                <div class="profile-value" id="profileEmailMain">you@example.com</div>
+                <div class="profile-value" id="profileEmailMain">
+                  you@example.com
+                </div>
               </div>
 
               <div class="profile-row">
@@ -627,7 +661,9 @@
 
             <form id="profileEditForm" class="profile-edit is-hidden">
               <div class="profile-edit-row">
-                <label for="editDisplayName" class="profile-edit-label">Display name</label>
+                <label for="editDisplayName" class="profile-edit-label"
+                  >Display name</label
+                >
                 <input
                   type="text"
                   id="editDisplayName"
@@ -647,7 +683,9 @@
               </div>
 
               <div class="profile-edit-row">
-                <label for="editDescription" class="profile-edit-label">Description</label>
+                <label for="editDescription" class="profile-edit-label"
+                  >Description</label
+                >
                 <textarea
                   id="editDescription"
                   class="profile-edit-textarea"
@@ -669,20 +707,28 @@
 
           <section class="card card-settings is-hidden" id="accountSettingsCard">
             <h2>Account settings</h2>
-            <p class="settings-subtitle">Manage your account preferences and security.</p>
+            <p class="settings-subtitle">
+              Manage your account preferences and security.
+            </p>
 
             <div class="settings-grid">
               <div class="settings-item">
                 <h3>Change password</h3>
                 <p>Update your password to keep your account secure.</p>
-                <button type="button" class="btn btn-muted" id="changePasswordBtn">
+                <button
+                  type="button"
+                  class="btn btn-muted"
+                  id="changePasswordBtn"
+                >
                   Change password
                 </button>
               </div>
 
               <div class="settings-item">
                 <h3>Email notifications</h3>
-                <p>Allow CodeCrowds to email you about new messages and updates.</p>
+                <p>
+                  Allow CodeCrowds to email you about new messages and updates.
+                </p>
                 <label class="switch" aria-label="Email notifications">
                   <input type="checkbox" id="emailNotificationsToggle" />
                   <span class="slider"></span>
@@ -692,7 +738,11 @@
               <div class="settings-item danger">
                 <h3>Delete account</h3>
                 <p>This will permanently delete your account and all data.</p>
-                <button type="button" class="btn btn-muted" id="deleteAccountBtn">
+                <button
+                  type="button"
+                  class="btn btn-muted"
+                  id="deleteAccountBtn"
+                >
                   Delete account
                 </button>
               </div>
@@ -704,7 +754,8 @@
             <p>Once you start posting, your services will appear here.</p>
 
             <div id="profileServicesEmpty" class="services-empty">
-              You don’t have any services yet. Create one to start attracting clients.
+              You don’t have any services yet. Create one to start attracting
+              clients.
             </div>
 
             <div id="profileServicesList"></div>
@@ -717,7 +768,9 @@
 
             <form id="createServiceForm" class="service-panel is-hidden">
               <div class="profile-edit-row">
-                <label for="serviceTitle" class="profile-edit-label">Service title</label>
+                <label for="serviceTitle" class="profile-edit-label"
+                  >Service title</label
+                >
                 <input
                   type="text"
                   id="serviceTitle"
@@ -728,7 +781,9 @@
               </div>
 
               <div class="profile-edit-row">
-                <label for="servicePrice" class="profile-edit-label">Price (USD)</label>
+                <label for="servicePrice" class="profile-edit-label"
+                  >Price (USD)</label
+                >
                 <input
                   type="number"
                   id="servicePrice"
@@ -753,7 +808,11 @@
 
               <div class="profile-edit-actions">
                 <button type="submit" class="btn btn-primary">Save service</button>
-                <button type="button" class="btn btn-muted" id="cancelCreateServiceBtn">
+                <button
+                  type="button"
+                  class="btn btn-muted"
+                  id="cancelCreateServiceBtn"
+                >
                   Cancel
                 </button>
               </div>
