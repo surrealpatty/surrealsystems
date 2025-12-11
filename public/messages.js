@@ -3,7 +3,7 @@
 // Each card = one thread (ad/service + other user).
 
 (() => {
-  console.log("[messages] loaded messages.js (front-end v6 – subject as ad title)");
+  console.log("[messages] loaded messages.js (front-end v7 – subject as ad title + auth header)");
 
   // -----------------------------
   // API base URL helper (Render vs local)
@@ -87,14 +87,42 @@
     sentBtn.setAttribute("aria-pressed", view === "sent" ? "true" : "false");
   }
 
+  // -----------------------------
+  // API helpers (now send Authorization on GET too)
+  // -----------------------------
   async function apiGet(path) {
+    let token = null;
+    try {
+      token = localStorage.getItem("token");
+    } catch {
+      token = null;
+    }
+
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
     const res = await fetch(`${API_URL}${path}`, {
       method: "GET",
       credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers,
     });
-    if (!res.ok) throw new Error(`GET ${path} failed: ${res.status}`);
-    return res.json();
+
+    let data = null;
+    try {
+      data = await res.json();
+    } catch {
+      // ignore parse error, but still handle status
+    }
+
+    if (!res.ok) {
+      const msg =
+        (data && data.error && data.error.message) ||
+        data?.message ||
+        `GET ${path} failed: ${res.status}`;
+      throw new Error(msg);
+    }
+
+    return data;
   }
 
   async function apiPost(path, body) {
@@ -291,7 +319,6 @@
     const subject = String(subjectRaw).trim();
     if (!subject) return "";
 
-    // Look for RE "Title" or RE 'Title'
     const match = subject.match(/RE\s+["'](.+?)["']/i);
     if (match && match[1]) {
       return match[1];
