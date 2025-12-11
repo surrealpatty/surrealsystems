@@ -315,7 +315,7 @@
         : previewRaw;
 
     const createdIso = m.createdAt || m.created_at || "";
-    const when = formatDate(createdIso);
+       const when = formatDate(createdIso);
     const msgId = m.id || m.messageId || m.messageID || "";
 
     // Determine partnerId again so we can store it on the card
@@ -333,17 +333,35 @@
       m.serviceTitle ||
       "";
 
-    // 🔹 NEW: pick subject from the message, fall back to ad title or generic
+    // 🔹 Use subject (RE "Ad title") to show "Message about: Ad title"
     const subjectRaw = m.subject || "";
-    const subjectDisplay =
-      subjectRaw && subjectRaw.trim().length > 0
-        ? subjectRaw.trim()
-        : serviceTitle
-        ? `RE '${serviceTitle}'`
-        : `Message from ${senderName}`;
+    let subjectDisplay = "";
+    let headerTitle = "";
 
-    // For the panel header, use either service title or the subject text
-    const headerTitle = serviceTitle || subjectDisplay;
+    if (subjectRaw && subjectRaw.trim().length > 0) {
+      const trimmed = subjectRaw.trim();
+
+      // Match: RE "My title" or RE 'My title'
+      const match = trimmed.match(/^RE\s+["'](.+?)["']$/i);
+
+      if (match) {
+        const titlePart = match[1];
+        subjectDisplay = `Message about: ${titlePart}`;
+        headerTitle = titlePart;
+      } else {
+        // Some other subject, just show it
+        subjectDisplay = trimmed;
+        headerTitle = serviceTitle || trimmed;
+      }
+    } else if (serviceTitle) {
+      // No subject, but we know the service title
+      subjectDisplay = `Message about: ${serviceTitle}`;
+      headerTitle = serviceTitle;
+    } else {
+      // Old messages without subject/service
+      subjectDisplay = `Message from ${senderName}`;
+      headerTitle = subjectDisplay;
+    }
 
     return `
       <article class="message-card" data-message-id="${escapeHtml(
