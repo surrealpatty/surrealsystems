@@ -1327,3 +1327,13 @@ body.profile-dark #profileName {
 body.profile-light #profileName {
   color: #111827 !important;
 }
+
+/* ---- Global footer strip you can reuse on any page ---- */
+.global-footer {
+  padding: 12px 24px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #9ca3af;
+  background: #020617;           /* same dark background */
+  border-top: 1px solid #0b1120; /* subtle top line */
+}
