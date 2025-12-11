@@ -3,7 +3,7 @@
 // Each card = one thread (ad/service + other user).
 
 (() => {
-  console.log("[messages] loaded messages.js (front-end per-ad threads v5)");
+  console.log("[messages] loaded messages.js (front-end per-ad threads v4)");
 
   // -----------------------------
   // API base URL helper (Render vs local)
@@ -333,34 +333,17 @@
       m.serviceTitle ||
       "";
 
-    // 🔹 Prefer the ad title taken from subject:  RE "Ad title"
+    // 🔹 NEW: pick subject from the message, fall back to ad title or generic
     const subjectRaw = m.subject || "";
-    let subjectDisplay = "";
-    let headerTitle = "";
+    const subjectDisplay =
+      subjectRaw && subjectRaw.trim().length > 0
+        ? subjectRaw.trim()
+        : serviceTitle
+        ? `RE '${serviceTitle}'`
+        : `Message from ${senderName}`;
 
-    if (subjectRaw && subjectRaw.trim().length > 0) {
-      const trimmed = subjectRaw.trim();
-      // If subject looks like: RE "My cool ad title" or RE 'My cool ad title'
-      const match = trimmed.match(/^RE\s+["'](.+?)["']$/i);
-
-      if (match) {
-        const titlePart = match[1];
-        subjectDisplay = `Message about: ${titlePart}`;
-        headerTitle = titlePart;
-      } else {
-        // Some other subject string – just show it as-is
-        subjectDisplay = trimmed;
-        headerTitle = trimmed;
-      }
-    } else if (serviceTitle) {
-      // No subject but service title exists
-      subjectDisplay = `Message about: ${serviceTitle}`;
-      headerTitle = serviceTitle;
-    } else {
-      // Old messages without subject/service – fallback
-      subjectDisplay = `Message from ${senderName}`;
-      headerTitle = subjectDisplay;
-    }
+    // For the panel header, use either service title or the subject text
+    const headerTitle = serviceTitle || subjectDisplay;
 
     return `
       <article class="message-card" data-message-id="${escapeHtml(

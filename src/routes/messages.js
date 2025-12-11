@@ -53,11 +53,6 @@ router.get(
             as: 'receiver',
             attributes: ['id', 'username', 'email'],
           },
-          // ⬇️ include the service so frontend can show the ad title
-          {
-            model: Service,
-            attributes: ['id', 'title'],
-          },
         ],
         order: [['createdAt', 'DESC']],
         limit,
@@ -101,11 +96,6 @@ router.get(
             model: User,
             as: 'receiver',
             attributes: ['id', 'username', 'email'],
-          },
-          // ⬇️ include service here too so Sent also has the ad title
-          {
-            model: Service,
-            attributes: ['id', 'title'],
           },
         ],
         order: [['createdAt', 'DESC']],
@@ -236,10 +226,6 @@ router.get(
             as: 'receiver',
             attributes: ['id', 'username', 'email'],
           },
-          {
-            model: Service,
-            attributes: ['id', 'title'],
-          },
         ],
         order: [['createdAt', 'ASC']],
       });
@@ -255,7 +241,6 @@ router.get(
 
 /* ------------------------------------------------------------------ */
 /* GET /api/messages/:id/thread  (conversation by message + ad)       */
-/*  NEW route – used by the new messages.js "Reply" panel             */
 /* ------------------------------------------------------------------ */
 router.get(
   '/:id/thread',
@@ -278,10 +263,6 @@ router.get(
             model: User,
             as: 'receiver',
             attributes: ['id', 'username', 'email'],
-          },
-          {
-            model: Service,
-            attributes: ['id', 'title'],
           },
         ],
       });
@@ -335,10 +316,6 @@ router.get(
             model: User,
             as: 'receiver',
             attributes: ['id', 'username', 'email'],
-          },
-          {
-            model: Service,
-            attributes: ['id', 'title'],
           },
         ],
         order: [['createdAt', 'ASC']],
