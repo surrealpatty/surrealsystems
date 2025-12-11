@@ -53,11 +53,6 @@ router.get(
             as: 'receiver',
             attributes: ['id', 'username', 'email'],
           },
-          {
-            model: Service,
-            as: 'service',         // 👈 add service so frontend sees service.title
-            attributes: ['id', 'title'],
-          },
         ],
         order: [['createdAt', 'DESC']],
         limit,
@@ -68,7 +63,7 @@ router.get(
       return ok(res, { messages });
     } catch (error) {
       console.error('ERROR: GET /api/messages/inbox failed:', error);
-      return err(res, 'Failed to load inbox', 500);
+      return err(res, 'Failed to load inbox', 500, error.message);
     }
   },
 );
@@ -102,11 +97,6 @@ router.get(
             as: 'receiver',
             attributes: ['id', 'username', 'email'],
           },
-          {
-            model: Service,
-            as: 'service',         // 👈 same here
-            attributes: ['id', 'title'],
-          },
         ],
         order: [['createdAt', 'DESC']],
         limit,
@@ -117,7 +107,7 @@ router.get(
       return ok(res, { messages });
     } catch (error) {
       console.error('ERROR: GET /api/messages/sent failed:', error);
-      return err(res, 'Failed to load sent messages', 500);
+      return err(res, 'Failed to load sent messages', 500, error.message);
     }
   },
 );
@@ -199,7 +189,7 @@ router.post(
       return ok(res, { message }, 201);
     } catch (error) {
       console.error('ERROR: POST /api/messages failed:', error);
-      return err(res, 'Failed to send message', 500);
+      return err(res, 'Failed to send message', 500, error.message);
     }
   },
 );
@@ -244,7 +234,7 @@ router.get(
       return ok(res, { messages });
     } catch (error) {
       console.error('ERROR: GET /api/messages/thread/:userId failed:', error);
-      return err(res, 'Failed to load conversation', 500);
+      return err(res, 'Failed to load conversation', 500, error.message);
     }
   },
 );
@@ -284,6 +274,7 @@ router.get(
 
       const root = rootRow.toJSON();
 
+      // Make sure logged-in user is part of this message
       if (
         root.senderId !== req.user.id &&
         root.receiverId !== req.user.id
@@ -309,6 +300,7 @@ router.get(
         ],
       };
 
+      // Lock to this specific ad / service if there is one
       if (serviceId !== null) {
         where.serviceId = serviceId;
       }
@@ -335,7 +327,7 @@ router.get(
       return ok(res, { root, messages });
     } catch (error) {
       console.error('ERROR: GET /api/messages/:id/thread failed:', error);
-      return err(res, 'Failed to load conversation thread', 500);
+      return err(res, 'Failed to load conversation thread', 500, error.message);
     }
   },
 );
@@ -370,7 +362,7 @@ router.delete(
       return ok(res, { message: 'Message deleted' });
     } catch (error) {
       console.error('ERROR: DELETE /api/messages/:id failed:', error);
-      return err(res, 'Failed to delete message', 500);
+      return err(res, 'Failed to delete message', 500, error.message);
     }
   },
 );
