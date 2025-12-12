@@ -235,17 +235,14 @@
       text-decoration: underline;
     }
 
-    /* =======================
-       BOTTOM-RIGHT BRAND LOGO
-    ======================== */
-    /* =======================
+/* =======================
    BOTTOM-RIGHT BRAND LOGO
 ======================== */
 .bottom-brand {
   position: fixed;
-  right: 30px;  /* Adjust to move the logo closer to or farther from the right edge */
-  bottom: 100px; /* Adjust to move the logo up or down from the bottom */
-  transform: translateX(0%); /* Keep the logo centered horizontally */
+  right: 50px;  /* Adjust to move logo closer or farther from the right edge */
+  bottom: 150px; /* Adjust this value to make it higher or lower */
+  transform: translateX(0%) translateY(0%); /* Ensure it's centered in the specified spot */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -256,7 +253,7 @@
   width: 150px;  /* Adjust logo size */
   height: auto;
   display: block;
-  filter: drop-shadow(0 0 24px rgba(59, 130, 246, 0.85)); /* Optional glow effect */
+  filter: drop-shadow(0 0 24px rgba(59, 130, 246, 0.85));  /* Optional glow effect */
 }
 
 .bottom-brand-text {
