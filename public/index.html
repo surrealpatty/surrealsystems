@@ -237,42 +237,28 @@
     }
 
     /* =======================
-       BOTTOM-CENTER BRAND BADGE
+       BOTTOM-RIGHT LOGO IN BLANK SPACE
     ======================== */
     .bottom-brand {
       position: absolute;
-      left: 50%;
-      bottom: 26px;
-      transform: translateX(-50%);
-      text-align: center;
-      opacity: 0.28;
+      right: 16px;
+      bottom: 16px;
+      opacity: 0.26;
       z-index: 10;
       transition: opacity 0.2s ease, transform 0.2s ease;
       pointer-events: none; /* so it never blocks clicks */
     }
 
     .bottom-brand img {
-      width: 160px;
+      width: 120px;
       height: auto;
       display: block;
-      filter: drop-shadow(0 0 24px rgba(59, 130, 246, 0.85));
-    }
-
-    .bottom-brand-text {
-      margin-top: 6px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      background: linear-gradient(90deg, #4e54c8, #00aaff);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      filter: drop-shadow(0 0 24px rgba(59, 130, 246, 0.8));
     }
 
     .bottom-brand:hover {
       opacity: 0.36;
-      transform: translateX(-50%) translateY(-2px);
+      transform: translateY(-2px);
     }
 
     /* =======================
@@ -415,10 +401,9 @@
       </section>
     </div>
 
-    <!-- Bottom-center brand badge with CC logo + CodeCrowds text -->
+    <!-- Bottom-right logo badge -->
     <div class="bottom-brand">
       <img src="/codecrowds-cc-logo.png" alt="CodeCrowds logo" />
-      <div class="bottom-brand-text">CODECROWDS</div>
     </div>
   </div>
 
