@@ -240,10 +240,10 @@
        BOTTOM-RIGHT BRAND LOGO
     ======================== */
     .bottom-brand {
-      position: absolute;
-      left: 0;
-      right: 0;
+      position: fixed;
+      left: 50%;
       bottom: 10px;
+      transform: translateX(-50%); /* center horizontally */
       display: flex;
       justify-content: center;
       align-items: center;
@@ -271,7 +271,7 @@
 
     .bottom-brand:hover {
       opacity: 0.36;
-      transform: translateY(1px);
+      transform: translateX(-50%) translateY(-2px);
     }
 
     /* =======================
