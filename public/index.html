@@ -237,30 +237,24 @@
     }
 
     /* =======================
-       BOTTOM-CENTER BRAND BADGE
+       BOTTOM-RIGHT BRAND LOGO
     ======================== */
     .bottom-brand {
       position: absolute;
-      left: 50%;
-      bottom: 10%; /* Adjusted from the bottom of the page */
-      transform: translateX(-50%);
-      text-align: center;
-      opacity: 0.28;
+      left: 0;
+      right: 0;
+      bottom: 25px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       z-index: 10;
-      transition: opacity 0.2s ease, transform 0.2s ease;
-      pointer-events: none; /* so it never blocks clicks */
     }
 
     .bottom-brand img {
-      width: 160px;
+      width: 200px;
       height: auto;
       display: block;
       filter: drop-shadow(0 0 24px rgba(59, 130, 246, 0.85));
-    }
-
-    .bottom-brand:hover {
-      opacity: 0.36;
-      transform: translateX(-50%) translateY(50%) scale(1.1);
     }
 
     .bottom-brand-text {
@@ -277,7 +271,7 @@
 
     .bottom-brand:hover {
       opacity: 0.36;
-      transform: translateX(-50%) translateY(50%) scale(1.1);
+      transform: translateY(1px);
     }
 
     /* =======================
