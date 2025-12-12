@@ -238,40 +238,43 @@
     /* =======================
        BOTTOM-RIGHT BRAND LOGO
     ======================== */
-    .bottom-brand {
-      position: fixed;
-      left: 50%;
-      bottom: 10px;
-      transform: translateX(-50%); /* center horizontally */
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 10;
-    }
+    /* =======================
+   BOTTOM-RIGHT BRAND LOGO
+======================== */
+.bottom-brand {
+  position: fixed;
+  right: 30px;  /* Adjust to move the logo closer to or farther from the right edge */
+  bottom: 100px; /* Adjust to move the logo up or down from the bottom */
+  transform: translateX(0%); /* Keep the logo centered horizontally */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
 
-    .bottom-brand img {
-      width: 200px;
-      height: auto;
-      display: block;
-      filter: drop-shadow(0 0 24px rgba(59, 130, 246, 0.85));
-    }
+.bottom-brand img {
+  width: 150px;  /* Adjust logo size */
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 0 24px rgba(59, 130, 246, 0.85)); /* Optional glow effect */
+}
 
-    .bottom-brand-text {
-      margin-top: 6px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      background: linear-gradient(90deg, #4e54c8, #00aaff);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-    }
+.bottom-brand-text {
+  margin-top: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #4e54c8, #00aaff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
 
-    .bottom-brand:hover {
-      opacity: 0.36;
-      transform: translateX(-50%) translateY(-2px);
-    }
+.bottom-brand:hover {
+  opacity: 0.36;
+  transform: translateX(0%) translateY(-2px);
+}
 
     /* =======================
        FOOTER
