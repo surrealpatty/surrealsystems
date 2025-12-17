@@ -1,3 +1,0 @@
-﻿C:\Users\Patty\Desktop\Surreal Systems\Surreal Systems\package.json
-C:\Users\Patty\Desktop\Surreal Systems\Surreal Systems\package-lock.json
-C:\Users\Patty\Desktop\Surreal Systems\Surreal Systems\.env
