@@ -1,201 +1,418 @@
-<!doctype html>
-<html lang="en" data-theme="dark">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Surreal Systems – Register</title>
-    <meta name="description" content="Create your Surreal Systems account." />
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Surreal Systems – Register</title>
+  <meta name="description" content="Create your Surreal Systems account." />
 
-    <!-- ✅ Use the ONE global stylesheet (cache-busted) -->
-    <link rel="stylesheet" href="style.css?v=999" />
+  <style>
+    /* =======================
+       PAGE BACKGROUND (purple)
+    ======================== */
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
 
-    <!-- Fonts (optional; your style.css also imports fonts) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      background: radial-gradient(
+        circle at top left,
+        #1a0b2e 0,
+        #0b0313 55%,
+        #07020e 75%,
+        #000000 100%
+      );
 
-    <!-- ✅ Theme + API base (same as login) -->
-    <script src="init.js" defer></script>
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      color: #f1eefb;
+    }
 
-    <!-- ✅ Register logic -->
-    <script src="register.js" defer></script>
+    /* =======================
+       PAGE LAYOUT
+    ======================== */
+    .page {
+      width: 100%;
+      max-width: 1100px;
+      padding: 20px 20px 24px;
+      flex: 1 0 auto;
+    }
 
-    <style>
-      /* ONLY page layout rules here — NO colors */
-      body {
-        margin: 0;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-      }
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #f1eefb;
+    }
 
-      .page {
-        width: 100%;
-        max-width: 1100px;
-        padding: 20px 20px 24px;
-        flex: 1 0 auto;
-      }
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
 
-      .layout {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 28px;
-        align-items: start;
-      }
+      /* ✅ purple dot */
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      box-shadow: 0 0 18px rgba(192, 132, 252, 0.35);
+    }
 
-      @media (max-width: 960px) {
-        body {
-          align-items: flex-start;
-        }
-        .layout {
-          grid-template-columns: 1fr;
-        }
-      }
-    </style>
-  </head>
+    .brand-text { letter-spacing: 0.01em; }
 
-  <body>
-    <div class="page">
-      <!-- Brand row (uses your global styles) -->
-      <div class="brand-row">
-        <span class="brand-dot"></span>
-        <span class="brand-text">Surreal Systems</span>
-      </div>
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      align-items: start;
+    }
 
-      <div class="layout">
-        <!-- LEFT COLUMN -->
-        <section class="pitch card">
-          <h1 class="pitch-title">Offer your coding skills to the world.</h1>
-          <p class="pitch-subtitle">
-            Create posts, connect with developers, and get noticed by clients worldwide.
-          </p>
+    /* =======================
+       LEFT MARKETING PANEL
+    ======================== */
+    .pitch {
+      background: rgba(16, 8, 28, 0.92);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 35px 100px rgba(0, 0, 0, 0.9);
+      border: 1px solid rgba(186, 160, 210, 0.22);
+    }
 
-          <div class="pitch-item">
-            <h3>Offer Your Services</h3>
-            <p>Create posts to sell your skills and showcase your best work.</p>
-          </div>
+    .pitch-title {
+      font-size: 1.9rem;
+      margin: 0 0 8px;
+      color: #f1eefb;
+    }
 
-          <div class="pitch-item">
-            <h3>Connect &amp; Collaborate</h3>
-            <p>
-              Rate and interact with other developers, build credibility, and grow your
-              professional network.
-            </p>
-          </div>
+    .pitch-subtitle {
+      color: rgba(232, 224, 255, 0.72);
+      margin: 0 0 20px;
+    }
 
-          <div class="pitch-item">
-            <h3>Ad-Free &amp; Premium</h3>
-            <p>Upgrade for ad-free experience, lower fees, and better visibility.</p>
-            <div class="badge-premium">● Premium perks for power users</div>
-          </div>
-        </section>
+    .pitch-item {
+      background: rgba(11, 3, 19, 0.85);
+      padding: 12px 14px;
+      border-radius: 16px;
+      margin-bottom: 10px;
+      border: 1px solid rgba(186, 160, 210, 0.16);
+      font-size: 0.95rem;
+    }
 
-        <!-- RIGHT COLUMN -->
-        <section class="register-card card" aria-labelledby="register-heading">
-          <h2 id="register-heading">Create your account</h2>
-          <p class="lead">
-            Join Surreal Systems to create posts, manage your messages, and grow your projects.
-          </p>
+    .pitch-item h3 {
+      margin: 0 0 4px;
+      font-size: 1rem;
+      color: #f1eefb;
+    }
 
-          <form id="registerForm" novalidate>
-            <div class="field">
-              <div class="field-label-row">
-                <label for="registerUsername">Username</label>
-                <span class="hint">3–32 characters</span>
-              </div>
-              <input
-                id="registerUsername"
-                name="username"
-                type="text"
-                placeholder="e.g. dev_ally"
-                autocomplete="username"
-                required
-                minlength="3"
-                maxlength="32"
-              />
-            </div>
+    .pitch-item p {
+      margin: 0;
+      color: rgba(232, 224, 255, 0.78);
+    }
 
-            <div class="field">
-              <label for="registerEmail">Email</label>
-              <input
-                id="registerEmail"
-                name="email"
-                type="email"
-                placeholder="you@example.com"
-                autocomplete="email"
-                required
-              />
-            </div>
+    .badge-premium {
+      margin-top: 8px;
+      background: rgba(124, 58, 237, 0.22);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      color: rgba(241, 238, 251, 0.95);
+    }
 
-            <div class="field">
-              <div class="field-label-row">
-                <label for="registerPassword">Password</label>
-                <span class="hint">At least 8 characters</span>
-              </div>
+    /* =======================
+       REGISTER CARD (RIGHT)
+    ======================== */
+    .card {
+      background: rgba(16, 8, 28, 0.94);
+      box-shadow: 0 35px 100px rgba(0, 0, 0, 0.9);
+      padding: 20px 22px;
+      border-radius: 24px;
+      border: 1px solid rgba(186, 160, 210, 0.22);
+    }
 
-              <div class="password-row">
-                <input
-                  id="registerPassword"
-                  name="password"
-                  type="password"
-                  placeholder="Create a strong password"
-                  autocomplete="new-password"
-                  required
-                  minlength="8"
-                />
-                <button
-                  type="button"
-                  class="toggle-password btn btn--secondary"
-                  id="togglePassword"
-                  aria-pressed="false"
-                  title="Show password"
-                >
-                  Show
-                </button>
-              </div>
+    .card h2 {
+      margin: 0 0 6px;
+      font-size: 1.45rem;
+      font-weight: 600;
+      color: #f1eefb;
+    }
 
-              <div id="passwordStrength" aria-live="polite" class="muted">
-                Use at least 8 characters with a mix of letters, numbers, and symbols.
-              </div>
-            </div>
+    .card > p {
+      color: rgba(232, 224, 255, 0.72);
+      margin: 0 0 12px;
+      font-size: 0.94rem;
+    }
 
-            <div class="field">
-              <label for="registerDescription">
-                Tell us about yourself <span class="hint">(optional)</span>
-              </label>
-              <textarea
-                id="registerDescription"
-                name="description"
-                rows="4"
-                maxlength="400"
-                placeholder="What do you offer? What are your skills?"
-              ></textarea>
-              <div class="meta-row">
-                <span id="descCounter">0 / 400</span>
-              </div>
-            </div>
+    form { margin-top: 6px; }
 
-            <!-- ✅ Uses your global purple gradient button styles -->
-            <button id="submitBtn" class="btn btn--primary w-full" type="submit">
-              Create account
-            </button>
+    .field {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 0.9rem;
+    }
 
-            <p id="registerMessage" class="message" role="status" aria-live="polite"></p>
+    .field-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
 
-            <p class="subtext">
-              Already have an account?
-              <a href="login.html">Log in</a>
-            </p>
-          </form>
-        </section>
-      </div>
+    .field label { color: rgba(232, 224, 255, 0.92); }
+
+    .hint {
+      font-size: 0.78rem;
+      color: rgba(184, 169, 214, 0.85);
+    }
+
+    .field input,
+    .field textarea {
+      padding: 9px 13px;
+      border-radius: 14px;
+      border: 1px solid rgba(186, 160, 210, 0.40);
+      background: #0b0313;
+      color: #ffffff;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .field input::placeholder,
+    .field textarea::placeholder {
+      color: rgba(184, 169, 214, 0.70);
+    }
+
+    .field input:focus,
+    .field textarea:focus {
+      border-color: rgba(168, 85, 247, 0.90);
+      box-shadow: 0 0 12px rgba(192, 132, 252, 0.55);
+    }
+
+    .field textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .password-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .password-row input { flex: 1; }
+
+    .toggle-password {
+      background: #0b0313;
+      border-radius: 999px;
+      padding: 7px 11px;
+      border: 1px solid rgba(186, 160, 210, 0.40);
+      cursor: pointer;
+      color: #fff;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      transition: transform 0.12s ease, background 0.15s ease-in-out;
+    }
+
+    .toggle-password:hover { background: #12041f; }
+
+    .meta-row {
+      margin-top: 2px;
+      display: flex;
+      justify-content: flex-end;
+      font-size: 0.78rem;
+      color: rgba(184, 169, 214, 0.85);
+    }
+
+    #passwordStrength {
+      margin-top: 2px;
+      font-size: 0.8rem;
+      color: rgba(184, 169, 214, 0.85);
+    }
+
+    /* ✅ PURPLE BUTTON */
+    .primary-btn {
+      width: 100%;
+      margin-top: 12px;
+      padding: 10px 16px;
+      background-image: linear-gradient(90deg, #7c3aed, #a855f7);
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 1rem;
+      transition: transform 0.12s ease, filter 0.15s ease;
+    }
+
+    .primary-btn:hover {
+      filter: brightness(1.06);
+      transform: translateY(-1px);
+    }
+
+    .primary-btn:active {
+      transform: translateY(0);
+      filter: brightness(0.98);
+    }
+
+    .subtext {
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: rgba(232, 224, 255, 0.75);
+    }
+
+    .subtext a {
+      color: #c084fc;
+      text-decoration: none;
+    }
+
+    .subtext a:hover { text-decoration: underline; }
+
+    .message {
+      margin-top: 6px;
+      font-size: 0.83rem;
+      min-height: 1em;
+    }
+
+    .message--error { color: #ef4444; }
+    .message--success { color: #22c55e; }
+
+    /* =======================
+       FOOTER
+    ======================== */
+    .site-footer {
+      width: 100%;
+      text-align: center;
+      padding: 10px 0 14px;
+      font-size: 0.85rem;
+      color: rgba(232, 224, 255, 0.62);
+    }
+
+    .footer-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* =======================
+       RESPONSIVE
+    ======================== */
+    @media (max-height: 720px) {
+      .page { padding-top: 12px; }
+      .pitch, .card { padding: 18px 18px; }
+      .pitch-title { font-size: 1.7rem; }
+    }
+
+    @media (max-width: 960px) {
+      body { align-items: flex-start; }
+      .layout { grid-template-columns: 1fr; }
+      .card { margin-top: 16px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="brand-row">
+      <span class="brand-dot"></span>
+      <span class="brand-text">Surreal Systems</span>
     </div>
 
-    <footer class="site-footer">
-      <div class="footer-inner">
-        <span>© 2025 Surreal Systems. All rights reserved.</span>
-      </div>
-    </footer>
-  </body>
+    <div class="layout">
+      <section class="pitch">
+        <h1 class="pitch-title">Offer your coding skills to the world.</h1>
+        <p class="pitch-subtitle">
+          Create posts, connect with developers, and get noticed by clients worldwide.
+        </p>
+
+        <div class="pitch-item">
+          <h3>Offer Your Services</h3>
+          <p>Create posts to sell your skills and showcase your best work.</p>
+        </div>
+
+        <div class="pitch-item">
+          <h3>Connect &amp; Collaborate</h3>
+          <p>Rate and interact with other developers, build credibility, and grow your professional network.</p>
+        </div>
+
+        <div class="pitch-item">
+          <h3>Ad-Free &amp; Premium</h3>
+          <p>Upgrade for ad-free experience, lower fees, and better visibility.</p>
+          <div class="badge-premium">● Premium perks for power users</div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="register-heading">
+        <h2 id="register-heading">Create your account</h2>
+        <p>Join Surreal Systems to create posts, manage your messages, and grow your projects.</p>
+
+        <form id="registerForm" novalidate>
+          <div class="field">
+            <div class="field-label-row">
+              <label for="registerUsername">Username</label>
+              <span class="hint">3–32 characters</span>
+            </div>
+            <input id="registerUsername" name="username" type="text"
+              placeholder="e.g. dev_ally" autocomplete="username"
+              required minlength="3" maxlength="32" />
+          </div>
+
+          <div class="field">
+            <label for="registerEmail">Email</label>
+            <input id="registerEmail" name="email" type="email"
+              placeholder="you@example.com" autocomplete="email" required />
+          </div>
+
+          <div class="field">
+            <div class="field-label-row">
+              <label for="registerPassword">Password</label>
+              <span class="hint">At least 8 characters</span>
+            </div>
+
+            <div class="password-row">
+              <input id="registerPassword" name="password" type="password"
+                placeholder="Create a strong password"
+                autocomplete="new-password" required minlength="8" />
+              <button type="button" class="toggle-password" id="togglePassword"
+                aria-pressed="false" title="Show password">Show</button>
+            </div>
+
+            <div id="passwordStrength" aria-live="polite">
+              Use at least 8 characters with a mix of letters, numbers, and symbols.
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="registerDescription">
+              Tell us about yourself <span class="hint">(optional)</span>
+            </label>
+            <textarea id="registerDescription" name="description" rows="4" maxlength="400"
+              placeholder="What do you offer? What are your skills?"></textarea>
+            <div class="meta-row"><span id="descCounter">0 / 400</span></div>
+          </div>
+
+          <button id="submitBtn" class="primary-btn" type="submit">Create account</button>
+
+          <p id="registerMessage" class="message" role="status" aria-live="polite"></p>
+
+          <p class="subtext">
+            Already have an account? <a href="login.html">Log in</a>
+          </p>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <script src="/register.js" defer></script>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>© 2025 Surreal Systems. All rights reserved.</span>
+    </div>
+  </footer>
+</body>
 </html>
