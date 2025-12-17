@@ -1,4 +1,3 @@
-﻿@import url("style.css");
 /* ---------- Reset / Base ---------- */
 *,
 *::before,
@@ -21,7 +20,7 @@ body {
   padding: 0;
   min-height: 100%;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: var(--btn-gradient);
+  background: linear-gradient(135deg, #4e54c8, #00aaff);
   color: #fff;
 }
 
@@ -49,7 +48,7 @@ video {
 
 h1,
 h2 {
-  color: var(--brand-a);
+  color: #4e54c8;
   margin-bottom: 0.5rem;
 }
 
@@ -63,7 +62,7 @@ h2 {
   width: 20px;
   height: 20px;
   border: 3px solid #ccc;
-  border-top-color: var(--brand-a);
+  border-top-color: #4e54c8;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -93,7 +92,7 @@ h2 {
 }
 
 #profile-description[contenteditable="true"] {
-  border: 1px solid var(--brand-a);
+  border: 1px solid #4e54c8;
   border-radius: 8px;
   padding: 8px;
   background: #f0f0f0;
@@ -110,7 +109,7 @@ button {
   padding: 12px 24px;
   font-size: 1.05rem;
   color: #fff;
-  background-color: var(--brand-a);
+  background-color: #4e54c8;
   border: none;
   border-radius: 10px;
   cursor: pointer;
@@ -134,7 +133,7 @@ button:hover {
 }
 
 .save-btn {
-  background-color: var(--success);
+  background-color: #28a745;
 }
 
 .save-btn:hover {
@@ -150,7 +149,7 @@ button:hover {
 }
 
 .upgrade-btn {
-  background-color: var(--success);
+  background-color: #28a745;
   color: #fff;
   font-weight: bold;
 }
@@ -184,7 +183,7 @@ button:hover {
 
 .card h3 {
   margin-bottom: 10px;
-  color: var(--brand-a);
+  color: #4e54c8;
 }
 
 .card p {
@@ -208,7 +207,7 @@ button:hover {
   border-radius: 12px;
   padding: 14px 16px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
-  height: 190px;                /* controls the â€œsquareâ€ feel */
+  height: 190px;                /* controls the “square” feel */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -329,7 +328,7 @@ textarea {
 
 .badge {
   background: #eef2ff;
-  color: var(--brand-a);
+  color: #4e54c8;
   padding: 3px 8px;
   border-radius: 999px;
   font-weight: 600;
@@ -370,7 +369,7 @@ textarea {
 }
 
 #goToServicesBtn {
-  background-color: var(--success);
+  background-color: #28a745;
   bottom: 200px;
 }
 
@@ -414,7 +413,7 @@ textarea {
   font-weight: bold;
   font-size: 1.05rem;
   padding: 14px;
-  background-color: var(--brand-a);
+  background-color: #4e54c8;
   color: #fff;
 }
 
@@ -458,7 +457,7 @@ textarea {
 
 .card input:focus,
 .card textarea:focus {
-  border-color: var(--brand-b);
+  border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.6);
   outline: none;
 }
@@ -468,4 +467,3 @@ textarea {
   background: #0f172a;
   opacity: 1;
 }
-

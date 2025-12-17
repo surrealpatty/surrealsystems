@@ -1,4 +1,3 @@
-﻿@import url("style.css");
 /* ---------- Reset / Base ---------- */
 *,
 *::before,
@@ -21,7 +20,7 @@ body {
   padding: 0;
   min-height: 100%;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: var(--btn-gradient);
+  background: linear-gradient(135deg, #4e54c8, #00aaff);
   color: #fff;
 }
 
@@ -49,7 +48,7 @@ video {
 
 h1,
 h2 {
-  color: var(--brand-a);
+  color: #4e54c8;
   margin-bottom: 0.5rem;
 }
 
@@ -63,7 +62,7 @@ h2 {
   width: 20px;
   height: 20px;
   border: 3px solid #ccc;
-  border-top-color: var(--brand-a);
+  border-top-color: #4e54c8;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -93,7 +92,7 @@ h2 {
 }
 
 #profile-description[contenteditable="true"] {
-  border: 1px solid var(--brand-a);
+  border: 1px solid #4e54c8;
   border-radius: 8px;
   padding: 8px;
   background: #f0f0f0;
@@ -110,7 +109,7 @@ button {
   padding: 12px 24px;
   font-size: 1.05rem;
   color: #fff;
-  background-color: var(--brand-a);
+  background-color: #4e54c8;
   border: none;
   border-radius: 10px;
   cursor: pointer;
@@ -134,7 +133,7 @@ button:hover {
 }
 
 .save-btn {
-  background-color: var(--success);
+  background-color: #28a745;
 }
 
 .save-btn:hover {
@@ -150,7 +149,7 @@ button:hover {
 }
 
 .upgrade-btn {
-  background-color: var(--success);
+  background-color: #28a745;
   color: #fff;
   font-weight: bold;
 }
@@ -163,7 +162,6 @@ button:hover {
   display: none !important;
 }
 
-/* ---------- Generic cards ---------- */
 .card {
   background: #fff;
   border-radius: 12px;
@@ -184,7 +182,7 @@ button:hover {
 
 .card h3 {
   margin-bottom: 10px;
-  color: var(--brand-a);
+  color: #4e54c8;
 }
 
 .card p {
@@ -192,70 +190,15 @@ button:hover {
   color: #555;
 }
 
-/* ---------- SERVICE GRID + SMALL SQUARE CARDS ---------- */
-/* container that holds all services on the profile page */
-#services-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px;
-  margin-top: 18px;
-}
-
-/* add class="card service-card" to each service for these styles */
-.service-card {
-  background: #0f172a;
-  color: #e5e7eb;
-  border-radius: 12px;
-  padding: 14px 16px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
-  height: 190px;                /* controls the â€œsquareâ€ feel */
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease;
-}
-
-.service-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6);
-  background: #111827;
-}
-
-.service-card h3 {
-  margin: 0 0 4px 0;
-  font-size: 0.98rem;
-  color: #f9fafb;
-  line-height: 1.2;
-}
-
-.service-card p {
-  margin: 2px 0;
-  font-size: 0.9rem;
-  color: #cbd5e1;
-}
-
-/* price line inside card */
-.service-card .price {
-  margin-top: 8px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: #38bdf8;
-}
-
-/* tiny footer text if you use it */
-.service-card .meta {
-  font-size: 0.8rem;
-  color: #94a3b8;
-}
-
-/* ------------------- end service styles ------------------- */
-
 .muted {
   color: #777;
   font-size: 0.95rem;
+}
+
+#services-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
 }
 
 .service-buttons {
@@ -329,7 +272,7 @@ textarea {
 
 .badge {
   background: #eef2ff;
-  color: var(--brand-a);
+  color: #4e54c8;
   padding: 3px 8px;
   border-radius: 999px;
   font-weight: 600;
@@ -370,7 +313,7 @@ textarea {
 }
 
 #goToServicesBtn {
-  background-color: var(--success);
+  background-color: #28a745;
   bottom: 200px;
 }
 
@@ -414,7 +357,7 @@ textarea {
   font-weight: bold;
   font-size: 1.05rem;
   padding: 14px;
-  background-color: var(--brand-a);
+  background-color: #4e54c8;
   color: #fff;
 }
 
@@ -458,7 +401,7 @@ textarea {
 
 .card input:focus,
 .card textarea:focus {
-  border-color: var(--brand-b);
+  border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.6);
   outline: none;
 }
@@ -468,4 +411,3 @@ textarea {
   background: #0f172a;
   opacity: 1;
 }
-

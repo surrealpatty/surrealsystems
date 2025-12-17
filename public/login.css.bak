@@ -1,9 +1,8 @@
-﻿@import url("style.css");
 :root {
   --bg: #020617;
   --bg-card: #020617;
   --border-subtle: #1f2937;
-  --accent: var(--brand-b);
+  --accent: #3b82f6;
   --accent-soft: rgba(59, 130, 246, 0.12);
   --text-main: #e5e7eb;
   --text-muted: #9ca3af;
@@ -47,7 +46,7 @@ body {
   width: 10px;
   height: 10px;
   border-radius: 999px;
-  background: var(--btn-gradient);
+  background: linear-gradient(135deg, #22c55e, #3b82f6);
 }
 
 .layout {
@@ -226,7 +225,7 @@ input:focus {
   padding: 10px 14px;
   font-size: 0.95rem;
   font-weight: 600;
-  background: var(--btn-gradient);
+  background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
   color: #0b1120;
   cursor: pointer;
   display: inline-flex;
@@ -258,4 +257,3 @@ footer {
   color: #4b5563;
   text-align: center;
 }
-

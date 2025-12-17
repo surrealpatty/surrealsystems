@@ -22,7 +22,7 @@
   --border:rgba(186,160,210,0.25);
 
   --danger:#ff4d4f;
-  --success:#22c55e;
+  --success: var(--brand-a);
 
   --radius-lg:16px;
   --radius-md:12px;

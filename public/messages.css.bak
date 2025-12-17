@@ -1,4 +1,3 @@
-﻿@import url("style.css");
 /* public/messages.css
    Dark-friendly layout for the messages page
    (works with the global dashboard styles in public/style.css)
@@ -58,7 +57,7 @@
 }
 
 /* ============================================================
-   TABS â€” Received + Sent (same style as Edit Profile)
+   TABS — Received + Sent (same style as Edit Profile)
    ============================================================ */
 
 /* Default tab style (both themes) */
@@ -69,7 +68,7 @@
   font-weight: 600;
   cursor: pointer;
 
-  background: var(--btn-gradient);
+  background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
   border: none;
   color: #ffffff;
 
@@ -87,7 +86,7 @@
   box-shadow: 0 14px 26px rgba(15, 23, 42, 0.55);
 }
 
-/* Active tab â€“ same gradient, slightly stronger pop */
+/* Active tab – same gradient, slightly stronger pop */
 .tab.active {
   transform: translateY(-1px);
   box-shadow: 0 16px 30px rgba(15, 23, 42, 0.65);
@@ -102,7 +101,7 @@
 
 /* Light mode uses the SAME gradient */
 body.dashboard.profile-light .tab {
-  background: var(--btn-gradient);
+  background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
   color: #ffffff;
   border: none;
 }
@@ -131,7 +130,7 @@ body.dashboard.profile-light .tab {
   border-color: rgba(156, 163, 175, 0.95);
 }
 
-/* DELETE BUTTON â€“ DARK MODE: red text/border */
+/* DELETE BUTTON – DARK MODE: red text/border */
 .conversation-footer .delete-btn {
   color: #dc2626;
   border-color: #dc2626;
@@ -170,7 +169,7 @@ body.dashboard.profile-light .conversation-footer button:hover {
 body.dashboard.profile-light .conversation-footer button:first-child {
   background: rgba(59, 130, 246, 0.15);
   border-color: rgba(59, 130, 246, 0.35);
-  color: var(--brand-b);
+  color: #3b82f6;
   font-weight: 600;
 }
 
@@ -335,4 +334,3 @@ body.dashboard.profile-light .conversation-footer .delete-btn:hover {
   background: rgba(255, 77, 79, 0.25) !important;
   color: #fff !important;
 }
-
