@@ -5,17 +5,362 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Surreal Systems – Login</title>
 
-  <!-- ✅ ONE global stylesheet -->
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* =======================
+       PAGE BACKGROUND
+    ======================== */
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      min-height: 100vh;
 
-  <!-- ✅ Theme + API base -->
+      /* ✅ PURPLE LOGO PALETTE BACKGROUND */
+      background: radial-gradient(
+        circle at top left,
+        #1a0b2e 0,
+        #0b0313 55%,
+        #07020e 75%,
+        #000000 100%
+      );
+
+      display: flex;
+      flex-direction: column; /* Stack page + footer vertically */
+      align-items: center; /* Center page horizontally */
+      justify-content: flex-start;
+      color: #f1eefb;
+    }
+
+    /* =======================
+       PAGE LAYOUT
+    ======================== */
+    .page {
+      width: 100%;
+      max-width: 1100px;
+      padding: 20px 20px 24px;
+      flex: 1 0 auto; /* Take remaining height so footer sits at bottom */
+      position: relative; /* For the bottom logo badge */
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #f1eefb;
+    }
+
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+
+      /* ✅ PURPLE BRAND DOT */
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      box-shadow: 0 0 18px rgba(192, 132, 252, 0.35);
+    }
+
+    .brand-text {
+      letter-spacing: 0.01em;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+
+    /* =======================
+       LEFT MARKETING PANEL
+    ======================== */
+    .pitch {
+      /* ✅ PURPLE-TINTED DARK CARD */
+      background: rgba(16, 8, 28, 0.92);
+
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 35px 100px rgba(0, 0, 0, 0.9);
+
+      /* ✅ PURPLE BORDER */
+      border: 1px solid rgba(186, 160, 210, 0.22);
+    }
+
+    .pitch-title {
+      font-size: 1.9rem;
+      margin-bottom: 8px;
+    }
+
+    .pitch-subtitle {
+      /* ✅ PURPLE MUTED TEXT */
+      color: rgba(232, 224, 255, 0.72);
+      margin-bottom: 20px;
+    }
+
+    .pitch-item {
+      /* ✅ DEEP PURPLE TILE */
+      background: rgba(11, 3, 19, 0.85);
+
+      padding: 12px 14px;
+      border-radius: 16px;
+      margin-bottom: 10px;
+
+      /* ✅ PURPLE BORDER */
+      border: 1px solid rgba(186, 160, 210, 0.16);
+      font-size: 0.95rem;
+    }
+
+    .pitch-item h3 {
+      margin: 0 0 4px;
+      font-size: 1rem;
+      color: #f1eefb;
+    }
+
+    .badge-premium {
+      margin-top: 8px;
+
+      /* ✅ PURPLE PREMIUM BADGE */
+      background: rgba(124, 58, 237, 0.22);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      color: rgba(241, 238, 251, 0.95);
+    }
+
+    /* =======================
+       LOGIN CARD (RIGHT)
+    ======================== */
+    .card {
+      /* ✅ PURPLE-TINTED CARD */
+      background: rgba(16, 8, 28, 0.94);
+
+      box-shadow: 0 35px 100px rgba(0, 0, 0, 0.9);
+      padding: 24px;
+      border-radius: 24px;
+
+      /* ✅ PURPLE BORDER */
+      border: 1px solid rgba(186, 160, 210, 0.22);
+    }
+
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #f1eefb;
+    }
+
+    .card > p {
+      /* ✅ MUTED PURPLE */
+      color: rgba(232, 224, 255, 0.72);
+      margin: 0 0 14px;
+      font-size: 0.95rem;
+    }
+
+    .field {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 0.9rem;
+    }
+
+    .field label {
+      /* ✅ LABELS */
+      color: rgba(232, 224, 255, 0.92);
+    }
+
+    .field input {
+      padding: 10px 14px;
+      border-radius: 999px;
+
+      /* ✅ PURPLE BORDER */
+      border: 1px solid rgba(186, 160, 210, 0.40);
+
+      /* ✅ DEEP PURPLE INPUT BG */
+      background: #0b0313;
+
+      color: #ffffff;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .field input::placeholder {
+      color: rgba(184, 169, 214, 0.70);
+    }
+
+    .field input:focus {
+      /* ✅ PURPLE FOCUS */
+      border-color: rgba(168, 85, 247, 0.90);
+      box-shadow: 0 0 12px rgba(192, 132, 252, 0.55);
+    }
+
+    .password-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .password-row input {
+      flex: 1;
+    }
+
+    .toggle-password {
+      /* ✅ PURPLE BUTTON */
+      background: #0b0313;
+
+      border-radius: 999px;
+      padding: 8px 12px;
+
+      border: 1px solid rgba(186, 160, 210, 0.40);
+      cursor: pointer;
+      color: #fff;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      transition: transform 0.12s ease, background 0.15s ease-in-out;
+    }
+
+    .toggle-password:hover {
+      background: #12041f;
+    }
+
+    /* =======================
+       BUTTON + TEXT
+    ======================== */
+    .primary-btn {
+      width: 100%;
+      margin-top: 12px;
+      padding: 11px 16px;
+
+      /* ✅ PURPLE GRADIENT BUTTON */
+      background-image: linear-gradient(90deg, #7c3aed, #a855f7);
+
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: transform 0.12s ease, filter 0.15s ease;
+    }
+
+    .primary-btn:hover {
+      filter: brightness(1.06);
+      transform: translateY(-1px);
+    }
+
+    .primary-btn:active {
+      transform: translateY(0);
+      filter: brightness(0.98);
+    }
+
+    .subtext {
+      margin-top: 10px;
+      font-size: 0.9rem;
+
+      /* ✅ MUTED PURPLE */
+      color: rgba(232, 224, 255, 0.75);
+    }
+
+    .subtext a {
+      /* ✅ LINK PURPLE */
+      color: #c084fc;
+      text-decoration: none;
+    }
+
+    .subtext a:hover {
+      text-decoration: underline;
+    }
+
+    /* =======================
+       BOTTOM-RIGHT BRAND LOGO
+    ======================== */
+    .bottom-brand {
+      position: fixed;
+      right: 320px;  /* Adjust logo position */
+      bottom: 120px; /* Adjust vertical position */
+      transform: translateX(0%) translateY(0%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .bottom-brand img {
+      width: 150px;
+      height: auto;
+      display: block;
+
+      /* ✅ PURPLE GLOW */
+      filter: drop-shadow(0 0 26px rgba(192, 132, 252, 0.65));
+    }
+
+    .bottom-brand-text {
+      margin-top: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+
+      /* ✅ PURPLE GRADIENT TEXT */
+      background: linear-gradient(90deg, #7c3aed, #a855f7);
+
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .bottom-brand:hover {
+      opacity: 0.36;
+      transform: translateX(0%) translateY(-2px);
+    }
+
+    /* =======================
+       FOOTER
+    ======================== */
+    .site-footer {
+      width: 100%;
+      text-align: center;
+      padding: 10px 0 14px;
+      font-size: 0.85rem;
+
+      /* ✅ MUTED PURPLE FOOTER */
+      color: rgba(232, 224, 255, 0.62);
+    }
+
+    .footer-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* =======================
+       RESPONSIVE
+    ======================== */
+    @media (max-height: 720px) {
+      .page { padding-top: 12px; }
+      .pitch, .card { padding: 20px; }
+      .pitch-title { font-size: 1.7rem; }
+    }
+
+    @media (max-width: 960px) {
+      body { align-items: flex-start; }
+      .layout { grid-template-columns: 1fr; }
+      .card { margin-top: 16px; }
+      .bottom-brand { display: none; }
+    }
+  </style>
+
   <script src="init.js" defer></script>
-
-  <!-- ✅ Your existing login logic -->
   <script src="script.js" defer></script>
 </head>
 
-<body class="auth-page">
+<body>
   <div class="page">
     <div class="brand-row">
       <span class="brand-dot"></span>
@@ -49,7 +394,7 @@
         </div>
       </section>
 
-      <section class="card login-container">
+      <section class="card">
         <h2>Welcome back</h2>
         <p>Log in to manage your posts, messages, and projects.</p>
 
@@ -67,9 +412,7 @@
             </div>
           </div>
 
-          <!-- ✅ PURPLE THEME BUTTON -->
-          <button type="submit" class="btn btn--primary w-full">Login</button>
-
+          <button type="submit" class="primary-btn">Login</button>
           <p class="subtext">
             Don’t have an account?
             <a href="register.html">Sign up</a>
@@ -78,20 +421,12 @@
       </section>
     </div>
 
-    <!-- ✅ Bottom-right logo badge (no inline CSS) -->
     <div class="bottom-brand">
       <img src="/surrealsystems-logo.png" alt="Surreal Systems logo" />
       <div class="bottom-brand-text">Surreal Systems</div>
     </div>
   </div>
 
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <span>© 2025 Surreal Systems. All rights reserved.</span>
-    </div>
-  </footer>
-
-  <!-- ✅ Keep your show/hide password behavior if script.js doesn’t already do it -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const input = document.getElementById("password");
@@ -102,8 +437,19 @@
         const isHidden = input.type === "password";
         input.type = isHidden ? "text" : "password";
         btn.textContent = isHidden ? "Hide" : "Show";
+
+        btn.style.transform = "scale(0.92)";
+        setTimeout(() => {
+          btn.style.transform = "scale(1)";
+        }, 120);
       });
     });
   </script>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>© 2025 Surreal Systems. All rights reserved.</span>
+    </div>
+  </footer>
 </body>
 </html>
