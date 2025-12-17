@@ -6,17 +6,336 @@
   <title>Surreal Systems – Register</title>
   <meta name="description" content="Create your Surreal Systems account." />
 
-  <!-- ✅ ONE global stylesheet -->
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* =======================
+       PAGE BACKGROUND
+    ======================== */
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      min-height: 100vh;
+      background: radial-gradient(
+        circle at top left,
+        #111827 0,
+        #020617 55%,
+        #020617 75%,
+        #000000 100%
+      );
+      display: flex;
+      flex-direction: column;     /* stack page + footer vertically */
+      align-items: center;        /* center page horizontally */
+      justify-content: flex-start;
+      color: #e5e7eb;
+    }
 
-  <!-- ✅ Theme + API base (if you use it) -->
-  <script src="init.js" defer></script>
+    /* =======================
+       PAGE LAYOUT
+    ======================== */
+    .page {
+      width: 100%;
+      max-width: 1100px;
+      padding: 20px 20px 24px;
+      flex: 1 0 auto;            /* take remaining height so footer sits at bottom */
+    }
 
-  <!-- ✅ Your existing register logic -->
-  <script src="/register.js" defer></script>
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #e5e7eb;
+    }
+
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #22c55e, #3b82f6);
+    }
+
+    .brand-text {
+      letter-spacing: 0.01em;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      /* let each column size itself; no stretching */
+      align-items: start;
+    }
+
+    /* =======================
+       LEFT MARKETING PANEL (same as login)
+    ======================== */
+    .pitch {
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 35px 100px rgba(0, 0, 0, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    .pitch-title {
+      font-size: 1.9rem;
+      margin-bottom: 8px;
+    }
+
+    .pitch-subtitle {
+      color: #aeb6c4;
+      margin-bottom: 20px;
+    }
+
+    .pitch-item {
+      background: rgba(10, 15, 32, 0.9);
+      padding: 12px 14px;
+      border-radius: 16px;
+      margin-bottom: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      font-size: 0.95rem;
+    }
+
+    .pitch-item h3 {
+      margin: 0 0 4px;
+      font-size: 1rem;
+    }
+
+    .badge-premium {
+      margin-top: 8px;
+      background: rgba(99, 102, 241, 0.25);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+    }
+
+    /* =======================
+       REGISTER CARD (RIGHT)
+       — tightened so it's shorter
+    ======================== */
+    .card {
+      background: rgba(15, 23, 42, 0.97);
+      box-shadow: 0 35px 100px rgba(0, 0, 0, 0.9);
+      padding: 20px 22px;  /* was 24px – slightly smaller */
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    .card h2 {
+      margin: 0 0 6px;
+      font-size: 1.45rem;
+      font-weight: 600;
+    }
+
+    .card > p {
+      color: #9ba3b4;
+      margin: 0 0 12px;
+      font-size: 0.94rem;
+    }
+
+    form {
+      margin-top: 6px;
+    }
+
+    .field {
+      margin-top: 8px;       /* was 10px */
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 0.9rem;
+    }
+
+    .field-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .field label {
+      color: #cbd5f5;
+    }
+
+    .hint {
+      font-size: 0.78rem;
+      color: #9ca3af;
+    }
+
+    .field input,
+    .field textarea {
+      padding: 9px 13px;     /* slightly smaller */
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: #050a18;
+      color: #ffffff;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .field input::placeholder,
+    .field textarea::placeholder {
+      color: #6b7280;
+    }
+
+    .field input:focus,
+    .field textarea:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.55);
+    }
+
+    .field textarea {
+      resize: vertical;
+      min-height: 80px;      /* was 96px */
+    }
+
+    .password-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .password-row input {
+      flex: 1;
+    }
+
+    .toggle-password {
+      background: #020617;
+      border-radius: 999px;
+      padding: 7px 11px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      cursor: pointer;
+      color: #fff;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      transition: transform 0.12s ease, background 0.15s ease-in-out;
+    }
+
+    .toggle-password:hover {
+      background: #02081f;
+    }
+
+    .meta-row {
+      margin-top: 2px;      /* was 4px */
+      display: flex;
+      justify-content: flex-end;
+      font-size: 0.78rem;
+      color: #9ca3af;
+    }
+
+    #passwordStrength {
+      margin-top: 2px;      /* was 4px */
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+
+    .primary-btn {
+      width: 100%;
+      margin-top: 12px;     /* was 14px */
+      padding: 10px 16px;   /* a touch shorter */
+      background-image: linear-gradient(90deg, #3b82f6, #22c55e);
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: transform 0.12s ease, filter 0.15s ease;
+    }
+
+    .primary-btn:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
+
+    .primary-btn:active {
+      transform: translateY(0);
+      filter: brightness(0.98);
+    }
+
+    .subtext {
+      margin-top: 8px;     /* was 10px */
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    .subtext a {
+      color: #4dabff;
+      text-decoration: none;
+    }
+
+    .subtext a:hover {
+      text-decoration: underline;
+    }
+
+    .message {
+      margin-top: 6px;
+      font-size: 0.83rem;
+      min-height: 1em;
+    }
+
+    .message--error {
+      color: #ef4444;
+    }
+
+    .message--success {
+      color: #22c55e;
+    }
+
+    /* =======================
+       FOOTER
+    ======================== */
+    .site-footer {
+      width: 100%;
+      text-align: center;
+      padding: 10px 0 14px;
+      font-size: 0.85rem;
+      color: #9ca3af;
+    }
+
+    .footer-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* =======================
+       RESPONSIVE
+    ======================== */
+    @media (max-height: 720px) {
+      .page {
+        padding-top: 12px;
+      }
+
+      .pitch,
+      .card {
+        padding: 18px 18px;
+      }
+
+      .pitch-title {
+        font-size: 1.7rem;
+      }
+    }
+
+    @media (max-width: 960px) {
+      body {
+        align-items: flex-start;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        margin-top: 16px;
+      }
+    }
+  </style>
 </head>
-
-<body class="auth-page">
+<body>
   <div class="page">
     <!-- Brand row -->
     <div class="brand-row">
@@ -25,7 +344,7 @@
     </div>
 
     <div class="layout">
-      <!-- LEFT COLUMN -->
+      <!-- LEFT COLUMN – SAME AS LOGIN -->
       <section class="pitch">
         <h1 class="pitch-title">Offer your coding skills to the world.</h1>
         <p class="pitch-subtitle">
@@ -52,8 +371,8 @@
         </div>
       </section>
 
-      <!-- RIGHT COLUMN -->
-      <section class="card register-card" aria-labelledby="register-heading">
+      <!-- RIGHT COLUMN – REGISTER -->
+      <section class="card" aria-labelledby="register-heading">
         <h2 id="register-heading">Create your account</h2>
         <p>Join Surreal Systems to create posts, manage your messages, and grow your projects.</p>
 
@@ -92,7 +411,6 @@
               <label for="registerPassword">Password</label>
               <span class="hint">At least 8 characters</span>
             </div>
-
             <div class="password-row">
               <input
                 id="registerPassword"
@@ -113,7 +431,6 @@
                 Show
               </button>
             </div>
-
             <div id="passwordStrength" aria-live="polite">
               Use at least 8 characters with a mix of letters, numbers, and symbols.
             </div>
@@ -130,18 +447,21 @@
               maxlength="400"
               placeholder="What do you offer? What are your skills?"
             ></textarea>
-
             <div class="meta-row">
               <span id="descCounter">0 / 400</span>
             </div>
           </div>
 
-          <!-- ✅ PURPLE THEME BUTTON (NO BLUE/GREEN) -->
-          <button id="submitBtn" class="btn btn--primary w-full" type="submit">
+          <button id="submitBtn" class="primary-btn" type="submit">
             Create account
           </button>
 
-          <p id="registerMessage" class="message" role="status" aria-live="polite"></p>
+          <p
+            id="registerMessage"
+            class="message"
+            role="status"
+            aria-live="polite"
+          ></p>
 
           <p class="subtext">
             Already have an account?
@@ -151,6 +471,9 @@
       </section>
     </div>
   </div>
+
+  <!-- Shared register / show-password logic -->
+  <script src="/register.js" defer></script>
 
   <footer class="site-footer">
     <div class="footer-inner">
