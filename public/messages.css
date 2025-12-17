@@ -68,7 +68,7 @@
   font-weight: 600;
   cursor: pointer;
 
-  background: linear-gradient(135deg, #3b82f6, #22c55e);
+  background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
   border: none;
   color: #ffffff;
 
@@ -101,7 +101,7 @@
 
 /* Light mode uses the SAME gradient */
 body.dashboard.profile-light .tab {
-  background: linear-gradient(135deg, #3b82f6, #22c55e);
+  background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
   color: #ffffff;
   border: none;
 }

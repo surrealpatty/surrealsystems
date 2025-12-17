@@ -225,7 +225,7 @@ input:focus {
   padding: 10px 14px;
   font-size: 0.95rem;
   font-weight: 600;
-  background: linear-gradient(135deg, #3b82f6, #22c55e);
+  background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
   color: #0b1120;
   cursor: pointer;
   display: inline-flex;
