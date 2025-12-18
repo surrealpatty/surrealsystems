@@ -3,26 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Surreal Systems - Register</title>
+  <title>Surreal Systems – Register</title>
   <meta name="description" content="Create your Surreal Systems account." />
 
-  <!-- âœ… Force correct file + bust cache -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com">
+  <!-- Fonts (match index) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Poppins:wght@300;400;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- ✅ IMPORTANT: Load your global theme + register styles -->
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/register.css" />
 
   <style>
+    /* Keep your layout, but rely on /style.css for colors + background */
     body{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;}
     .page{width:100%;max-width:1100px;padding:20px 20px 24px;flex:1 0 auto;}
-    .brand-row{display:flex;align-items:center;gap:8px;margin-bottom:20px;font-weight:600;font-size:1rem;color:var(--text);}
-    .brand-dot{width:10px;height:10px;border-radius:999px;background:linear-gradient(135deg,var(--brand-a),var(--brand-b));box-shadow:0 0 18px rgba(192,132,252,0.35);}
+    .brand-row{display:flex;align-items:center;gap:8px;margin-bottom:20px;font-weight:600;font-size:1rem;color:var(--text-main, #e5e7eb);}
+    .brand-dot{width:10px;height:10px;border-radius:999px;background:linear-gradient(135deg,var(--brand-a, #7c3aed),var(--brand-b, #a855f7));box-shadow:0 0 18px rgba(192,132,252,0.35);}
     .layout{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start;}
     .pitch,.card{border-radius:24px;}
     .pitch-title{margin:0 0 8px;}
     .pitch-subtitle{margin:0 0 20px;}
 
     .pitch-item{
-      background: var(--surface-2);
-      border: 1px solid var(--border);
+      background: var(--surface-2, rgba(15, 23, 42, 0.6));
+      border: 1px solid var(--border, rgba(148, 163, 184, 0.25));
       border-radius:16px;
       padding:12px 14px;
       margin-bottom:10px;
@@ -38,28 +47,28 @@
       padding:5px 11px;
       border-radius:999px;
       font-size:0.82rem;
-      border:1px solid var(--border);
+      border:1px solid var(--border, rgba(148, 163, 184, 0.25));
       background: rgba(124,58,237,0.18);
-      color: var(--text);
+      color: var(--text-main, #e5e7eb);
     }
 
     .field{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
     .field-label-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
-    .hint{font-size:0.78rem;color:var(--muted);}
+    .hint{font-size:0.78rem;color:var(--text-muted, #9ca3af);}
     .password-row{display:flex;gap:10px;align-items:center;}
     .password-row input{flex:1;}
 
     .toggle-password{
       padding:9px 12px;
       border-radius:999px;
-      border:1px solid var(--input-border);
-      background: var(--input-bg);
-      color: var(--input-text);
+      border:1px solid var(--input-border, rgba(148, 163, 184, 0.25));
+      background: var(--input-bg, rgba(15, 23, 42, 0.55));
+      color: var(--text-main, #e5e7eb);
       cursor:pointer;
       font-size:0.85rem;
     }
 
-    .meta-row{margin-top:4px;display:flex;justify-content:flex-end;font-size:0.78rem;color:var(--muted);}
+    .meta-row{margin-top:4px;display:flex;justify-content:flex-end;font-size:0.78rem;color:var(--text-muted, #9ca3af);}
     .w-full{width:100%;}
 
     @media (max-width:960px){
@@ -94,7 +103,7 @@
         <div class="pitch-item">
           <h3>Ad-Free &amp; Premium</h3>
           <p>Upgrade for ad-free experience, lower fees, and better visibility.</p>
-          <div class="badge-premium">â— Premium perks for power users</div>
+          <div class="badge-premium">● Premium perks for power users</div>
         </div>
       </section>
 
@@ -108,12 +117,28 @@
               <label for="registerUsername">Username</label>
               <span class="hint">3-32 characters</span>
             </div>
-            <input id="registerUsername" name="username" type="text" placeholder="e.g. dev_ally" autocomplete="username" required minlength="3" maxlength="32" />
+            <input
+              id="registerUsername"
+              name="username"
+              type="text"
+              placeholder="e.g. dev_ally"
+              autocomplete="username"
+              required
+              minlength="3"
+              maxlength="32"
+            />
           </div>
 
           <div class="field">
             <label for="registerEmail">Email</label>
-            <input id="registerEmail" name="email" type="email" placeholder="you@example.com" autocomplete="email" required />
+            <input
+              id="registerEmail"
+              name="email"
+              type="email"
+              placeholder="you@example.com"
+              autocomplete="email"
+              required
+            />
           </div>
 
           <div class="field">
@@ -123,7 +148,15 @@
             </div>
 
             <div class="password-row">
-              <input id="registerPassword" name="password" type="password" placeholder="Create a strong password" autocomplete="new-password" required minlength="8" />
+              <input
+                id="registerPassword"
+                name="password"
+                type="password"
+                placeholder="Create a strong password"
+                autocomplete="new-password"
+                required
+                minlength="8"
+              />
               <button type="button" class="toggle-password" id="togglePassword" aria-pressed="false">Show</button>
             </div>
 
@@ -134,7 +167,13 @@
 
           <div class="field">
             <label for="registerDescription">Tell us about yourself <span class="hint">(optional)</span></label>
-            <textarea id="registerDescription" name="description" rows="4" maxlength="400" placeholder="What do you offer? What are your skills?"></textarea>
+            <textarea
+              id="registerDescription"
+              name="description"
+              rows="4"
+              maxlength="400"
+              placeholder="What do you offer? What are your skills?"
+            ></textarea>
             <div class="meta-row"><span id="descCounter">0 / 400</span></div>
           </div>
 
@@ -142,12 +181,13 @@
 
           <p id="registerMessage" class="message" role="status" aria-live="polite"></p>
 
-          <p class="subtext">Already have an account? <a href="login.html">Log in</a></p>
+          <p class="subtext">Already have an account? <a href="/login.html">Log in</a></p>
         </form>
       </section>
     </div>
   </div>
 
+  <!-- ✅ Use absolute path so it works everywhere -->
   <script src="/register.js" defer></script>
 
   <footer class="site-footer">
@@ -157,8 +197,3 @@
   </footer>
 </body>
 </html>
-
-
-
-
-
