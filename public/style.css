@@ -706,3 +706,18 @@ html[data-theme="light"] .pill-btn {
 @media (max-width: 960px) {
   .bottom-brand { display: none; }
 }
+/* ================================
+   ONE SOLID BACKGROUND (NO GRADIENT)
+   Put at VERY BOTTOM of style.css
+================================ */
+
+/* Dark mode = one solid color */
+html, body{
+  background: #0b0313 !important;
+}
+
+/* Light mode = one solid color */
+html[data-theme="light"], 
+html[data-theme="light"] body{
+  background: #f5f0ff !important;
+}
