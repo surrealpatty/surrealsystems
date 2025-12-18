@@ -75,6 +75,71 @@
       .layout{grid-template-columns:1fr;}
       .card{margin-top:16px;}
     }
+
+    /* ===============================
+       REGISTER – MATCH INDEX EXACTLY
+       (THIS MUST BE INSIDE <style>)
+    ================================ */
+
+    body{
+      background: radial-gradient(
+        circle at top left,
+        #111827 0%,
+        #020617 55%,
+        #020617 75%,
+        #000000 100%
+      ) !important;
+    }
+
+    .card,
+    .pitch{
+      background: rgba(15, 23, 42, 0.92) !important;
+      border: 1px solid rgba(148, 163, 184, 0.25) !important;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.55),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+      color: #e5e7eb !important;
+    }
+
+    .pitch-item{
+      background: rgba(17, 24, 39, 0.85) !important;
+      border: 1px solid rgba(148, 163, 184, 0.25) !important;
+      transition: transform 0.18s ease, box-shadow 0.18s ease !important;
+    }
+
+    .pitch-item:hover{
+      transform: translateY(-2px) !important;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45) !important;
+    }
+
+    .pitch-title,
+    #register-heading{
+      color: #c7b9ff !important;
+    }
+
+    input,
+    textarea{
+      background: rgba(15, 23, 42, 0.9) !important;
+      border: 1px solid rgba(148, 163, 184, 0.25) !important;
+      color: #e5e7eb !important;
+    }
+
+    input:focus,
+    textarea:focus{
+      outline: none !important;
+      border-color: #a855f7 !important;
+      box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.25) !important;
+    }
+
+    button[type="submit"]{
+      background: linear-gradient(135deg, #7c3aed, #a855f7) !important;
+      border: none !important;
+      font-weight: 700 !important;
+      color: #fff !important;
+    }
+
+    button[type="submit"]:hover{
+      filter: brightness(1.05) !important;
+    }
   </style>
 </head>
 
@@ -117,28 +182,12 @@
               <label for="registerUsername">Username</label>
               <span class="hint">3-32 characters</span>
             </div>
-            <input
-              id="registerUsername"
-              name="username"
-              type="text"
-              placeholder="e.g. dev_ally"
-              autocomplete="username"
-              required
-              minlength="3"
-              maxlength="32"
-            />
+            <input id="registerUsername" name="username" type="text" placeholder="e.g. dev_ally" autocomplete="username" required minlength="3" maxlength="32" />
           </div>
 
           <div class="field">
             <label for="registerEmail">Email</label>
-            <input
-              id="registerEmail"
-              name="email"
-              type="email"
-              placeholder="you@example.com"
-              autocomplete="email"
-              required
-            />
+            <input id="registerEmail" name="email" type="email" placeholder="you@example.com" autocomplete="email" required />
           </div>
 
           <div class="field">
@@ -148,15 +197,7 @@
             </div>
 
             <div class="password-row">
-              <input
-                id="registerPassword"
-                name="password"
-                type="password"
-                placeholder="Create a strong password"
-                autocomplete="new-password"
-                required
-                minlength="8"
-              />
+              <input id="registerPassword" name="password" type="password" placeholder="Create a strong password" autocomplete="new-password" required minlength="8" />
               <button type="button" class="toggle-password" id="togglePassword" aria-pressed="false">Show</button>
             </div>
 
@@ -167,13 +208,7 @@
 
           <div class="field">
             <label for="registerDescription">Tell us about yourself <span class="hint">(optional)</span></label>
-            <textarea
-              id="registerDescription"
-              name="description"
-              rows="4"
-              maxlength="400"
-              placeholder="What do you offer? What are your skills?"
-            ></textarea>
+            <textarea id="registerDescription" name="description" rows="4" maxlength="400" placeholder="What do you offer? What are your skills?"></textarea>
             <div class="meta-row"><span id="descCounter">0 / 400</span></div>
           </div>
 
@@ -187,7 +222,6 @@
     </div>
   </div>
 
-  <!-- ✅ Use absolute path so it works everywhere -->
   <script src="/register.js" defer></script>
 
   <footer class="site-footer">
@@ -197,73 +231,3 @@
   </footer>
 </body>
 </html>
-/* ===============================
-   REGISTER – MATCH INDEX EXACTLY
-================================ */
-
-/* Page background (same as index) */
-body {
-  background: radial-gradient(
-    circle at top left,
-    #111827 0%,
-    #020617 55%,
-    #020617 75%,
-    #000000 100%
-  );
-}
-
-/* Glass cards */
-.card,
-.pitch {
-  background: rgba(15, 23, 42, 0.92);
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  box-shadow:
-    0 10px 40px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-/* Pitch items match index buttons */
-.pitch-item {
-  background: rgba(17, 24, 39, 0.85);
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-}
-
-.pitch-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
-}
-
-/* Headings color */
-.pitch-title,
-#register-heading {
-  color: #c7b9ff;
-}
-
-/* Inputs exactly like index */
-input,
-textarea {
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  color: #e5e7eb;
-}
-
-input:focus,
-textarea:focus {
-  outline: none;
-  border-color: #a855f7;
-  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.25);
-}
-
-/* Primary button identical */
-button[type="submit"] {
-  background: linear-gradient(135deg, #7c3aed, #a855f7);
-  border: none;
-  font-weight: 600;
-}
-
-button[type="submit"]:hover {
-  filter: brightness(1.05);
-}
-
-/* Red*
