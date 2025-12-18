@@ -14,137 +14,140 @@
     rel="stylesheet"
   />
 
-  <!-- ✅ IMPORTANT: Load your global theme + register styles -->
+  <!-- ✅ ONLY these two -->
   <link rel="stylesheet" href="/style.css" />
-<link rel="stylesheet" href="/services.css" />
   <link rel="stylesheet" href="/register.css" />
 
   <style>
-    /* Keep your layout, but rely on /style.css for colors + background */
-    body{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;}
-    .page{width:100%;max-width:1100px;padding:20px 20px 24px;flex:1 0 auto;}
-    .brand-row{display:flex;align-items:center;gap:8px;margin-bottom:20px;font-weight:600;font-size:1rem;color:var(--text-main, #e5e7eb);}
-    .brand-dot{width:10px;height:10px;border-radius:999px;background:linear-gradient(135deg,var(--brand-a, #7c3aed),var(--brand-b, #a855f7));box-shadow:0 0 18px rgba(192,132,252,0.35);}
-    .layout{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start;}
-    .pitch,.card{border-radius:24px;}
-    .pitch-title{margin:0 0 8px;}
-    .pitch-subtitle{margin:0 0 20px;}
-
-    .pitch-item{
-      background: var(--surface-2, rgba(15, 23, 42, 0.6));
-      border: 1px solid var(--border, rgba(148, 163, 184, 0.25));
-      border-radius:16px;
-      padding:12px 14px;
-      margin-bottom:10px;
-    }
-    .pitch-item h3{margin:0 0 4px;}
-    .pitch-item p{margin:0;}
-
-    .badge-premium{
-      margin-top:8px;
-      display:inline-flex;
-      align-items:center;
-      gap:7px;
-      padding:5px 11px;
-      border-radius:999px;
-      font-size:0.82rem;
-      border:1px solid var(--border, rgba(148, 163, 184, 0.25));
-      background: rgba(124,58,237,0.18);
-      color: var(--text-main, #e5e7eb);
+    /* Layout only (NO colors, NO background). Let /style.css control theme. */
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
     }
 
-    .field{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
-    .field-label-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
-    .hint{font-size:0.78rem;color:var(--text-muted, #9ca3af);}
-    .password-row{display:flex;gap:10px;align-items:center;}
-    .password-row input{flex:1;}
-
-    .toggle-password{
-      padding:9px 12px;
-      border-radius:999px;
-      border:1px solid var(--input-border, rgba(148, 163, 184, 0.25));
-      background: var(--input-bg, rgba(15, 23, 42, 0.55));
-      color: var(--text-main, #e5e7eb);
-      cursor:pointer;
-      font-size:0.85rem;
+    .page {
+      width: 100%;
+      max-width: 1100px;
+      padding: 20px 20px 24px;
+      flex: 1 0 auto;
     }
 
-    .meta-row{margin-top:4px;display:flex;justify-content:flex-end;font-size:0.78rem;color:var(--text-muted, #9ca3af);}
-    .w-full{width:100%;}
-
-    @media (max-width:960px){
-      .layout{grid-template-columns:1fr;}
-      .card{margin-top:16px;}
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--text);
     }
 
-    /* ===============================
-       REGISTER – MATCH INDEX EXACTLY
-       (THIS MUST BE INSIDE <style>)
-    ================================ */
-
-    body{
-      background: radial-gradient(
-        circle at top left,
-        #111827 0%,
-        #020617 55%,
-        #020617 75%,
-        #000000 100%
-      ) !important;
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
+      box-shadow: 0 0 18px rgba(192, 132, 252, 0.35);
     }
 
-    .card,
-    .pitch{
-      background: rgba(15, 23, 42, 0.92) !important;
-      border: 1px solid rgba(148, 163, 184, 0.25) !important;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.55),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
-      color: #e5e7eb !important;
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      align-items: start;
     }
 
-    .pitch-item{
-      background: rgba(17, 24, 39, 0.85) !important;
-      border: 1px solid rgba(148, 163, 184, 0.25) !important;
-      transition: transform 0.18s ease, box-shadow 0.18s ease !important;
+    .pitch,
+    .card {
+      border-radius: 24px;
     }
 
-    .pitch-item:hover{
-      transform: translateY(-2px) !important;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45) !important;
+    .pitch-title { margin: 0 0 8px; }
+    .pitch-subtitle { margin: 0 0 20px; }
+
+    .pitch-item {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
     }
 
-    .pitch-title,
-    #register-heading{
-      color: #c7b9ff !important;
+    .pitch-item h3 { margin: 0 0 4px; }
+    .pitch-item p { margin: 0; }
+
+    .badge-premium {
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      border: 1px solid var(--border);
+      background: rgba(124, 58, 237, 0.18);
+      color: var(--text);
     }
 
-    input,
-    textarea{
-      background: rgba(15, 23, 42, 0.9) !important;
-      border: 1px solid rgba(148, 163, 184, 0.25) !important;
-      color: #e5e7eb !important;
+    .field {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
-    input:focus,
-    textarea:focus{
-      outline: none !important;
-      border-color: #a855f7 !important;
-      box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.25) !important;
+    .field-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
     }
 
-    button[type="submit"]{
-      background: linear-gradient(135deg, #7c3aed, #a855f7) !important;
-      border: none !important;
-      font-weight: 700 !important;
-      color: #fff !important;
+    .hint {
+      font-size: 0.78rem;
+      color: var(--muted);
     }
 
-    button[type="submit"]:hover{
-      filter: brightness(1.05) !important;
+    .password-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .password-row input { flex: 1; }
+
+    .toggle-password {
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.85rem;
+      box-shadow: none;
+    }
+
+    .meta-row {
+      margin-top: 4px;
+      display: flex;
+      justify-content: flex-end;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .w-full { width: 100%; }
+
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: 1fr; }
+      .card { margin-top: 16px; }
     }
   </style>
 </head>
 
-<body class="dashboard profile-page profile-dark">
+<!-- ✅ REMOVE dashboard/profile classes -->
+<body>
   <div class="page">
     <div class="brand-row">
       <span class="brand-dot"></span>
@@ -175,7 +178,7 @@
 
       <section class="card" aria-labelledby="register-heading">
         <h2 id="register-heading">Create your account</h2>
-        <p>Join Surreal Systems to create posts, manage your messages, and grow your projects.</p>
+        <p class="hint">Join Surreal Systems to create posts, manage your messages, and grow your projects.</p>
 
         <form id="registerForm" novalidate>
           <div class="field">
