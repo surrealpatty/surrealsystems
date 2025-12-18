@@ -14,139 +14,224 @@
     rel="stylesheet"
   />
 
-  <!-- ✅ ONLY these two -->
+  <!-- ✅ Global theme first -->
   <link rel="stylesheet" href="/style.css" />
+  <!-- ✅ Page css (keep) -->
   <link rel="stylesheet" href="/register.css" />
 
   <style>
-    /* Layout only (NO colors, NO background). Let /style.css control theme. */
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-    }
+    /* ==========================================
+       REGISTER PAGE FIXES (match other pages)
+       - Layout only + "anti-white-card" overrides
+       - No inline styles, no broken theme
+    ========================================== */
 
-    .page {
-      width: 100%;
-      max-width: 1100px;
-      padding: 20px 20px 24px;
-      flex: 1 0 auto;
-    }
-
-    .brand-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 20px;
-      font-weight: 600;
-      font-size: 1rem;
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      font-family:"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--text);
     }
 
-    .brand-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
+    .page{
+      width:100%;
+      max-width:1100px;
+      padding:20px 20px 24px;
+      flex:1 0 auto;
+    }
+
+    .brand-row{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin-bottom:20px;
+      font-weight:600;
+      font-size:1rem;
+      color: var(--text);
+    }
+
+    .brand-dot{
+      width:10px;
+      height:10px;
+      border-radius:999px;
       background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
       box-shadow: 0 0 18px rgba(192, 132, 252, 0.35);
+      flex:0 0 auto;
     }
 
-    .layout {
-      display: grid;
+    .layout{
+      display:grid;
       grid-template-columns: 1fr 1fr;
-      gap: 28px;
-      align-items: start;
+      gap:28px;
+      align-items:start;
     }
 
-    .pitch,
-    .card {
-      border-radius: 24px;
-    }
-
-    .pitch-title { margin: 0 0 8px; }
-    .pitch-subtitle { margin: 0 0 20px; }
-
-    .pitch-item {
+    /* ✅ IMPORTANT:
+       These overrides prevent “white cards” even if register.css sets white backgrounds.
+       They force the same dark glass look as profile/services/messages. */
+    .card,
+    .pitch{
+      border-radius:24px;
+      border:1px solid var(--border);
       background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 12px 14px;
-      margin-bottom: 10px;
+      color: var(--text);
+      box-shadow: var(--shadow-1);
     }
 
-    .pitch-item h3 { margin: 0 0 4px; }
-    .pitch-item p { margin: 0; }
+    /* Give padding here so it works even if register.css is incomplete */
+    .card{ padding: 22px 22px 20px; }
+    .pitch{ padding: 22px 22px 20px; }
 
-    .badge-premium {
-      margin-top: 8px;
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      padding: 5px 11px;
-      border-radius: 999px;
-      font-size: 0.82rem;
-      border: 1px solid var(--border);
+    .pitch-title{ margin:0 0 8px; font-size:2.1rem; letter-spacing:-0.02em; }
+    .pitch-subtitle{ margin:0 0 18px; color: var(--muted); }
+
+    .pitch-item{
+      border-radius:16px;
+      border:1px solid var(--border);
+      background: rgba(2,6,23,0.35);
+      padding:12px 14px;
+      margin-bottom:10px;
+    }
+    :root[data-theme="light"] .pitch-item{ background:#ffffff; }
+
+    .pitch-item h3{ margin:0 0 4px; font-size:1rem; }
+    .pitch-item p{ margin:0; color: var(--muted); }
+
+    .badge-premium{
+      margin-top:10px;
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:0.82rem;
+      border:1px solid var(--border);
       background: rgba(124, 58, 237, 0.18);
       color: var(--text);
+      width: fit-content;
     }
 
-    .field {
-      margin-top: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+    h2{ margin:0 0 8px; font-size:1.35rem; }
+    .hint{ font-size:0.82rem; color: var(--muted); margin:0 0 10px; }
+
+    form{ margin-top:10px; }
+
+    .field{
+      margin-top:12px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
     }
 
-    .field-label-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 8px;
+    .field-label-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      gap:10px;
     }
 
-    .hint {
-      font-size: 0.78rem;
+    label{ font-weight:600; font-size:0.92rem; color: var(--text); }
+
+    .field-hint{
+      font-size:0.78rem;
       color: var(--muted);
     }
 
-    .password-row {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .password-row input { flex: 1; }
-
-    .toggle-password {
-      padding: 9px 12px;
-      border-radius: 999px;
+    /* Inputs match the rest of your site */
+    input, textarea{
+      width:100%;
+      border-radius: 14px;
       border: 1px solid var(--input-border);
       background: var(--input-bg);
       color: var(--text);
-      cursor: pointer;
-      font-size: 0.85rem;
-      box-shadow: none;
+      padding: 12px 12px;
+      outline: none;
+      font-size: 0.95rem;
     }
 
-    .meta-row {
-      margin-top: 4px;
-      display: flex;
-      justify-content: flex-end;
-      font-size: 0.78rem;
+    input:focus, textarea:focus{
+      border-color: rgba(192, 132, 252, 0.65);
+      box-shadow: 0 0 0 4px rgba(192, 132, 252, 0.15);
+    }
+
+    textarea{ resize: vertical; min-height: 110px; }
+
+    .password-row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .password-row input{ flex:1; }
+
+    .toggle-password{
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text);
+      cursor:pointer;
+      font-size:0.85rem;
+      font-weight:600;
+      white-space:nowrap;
+    }
+    .toggle-password:hover{ filter: brightness(1.06); }
+
+    .meta-row{
+      margin-top:4px;
+      display:flex;
+      justify-content:flex-end;
+      font-size:0.78rem;
       color: var(--muted);
     }
 
-    .w-full { width: 100%; }
+    .w-full{ width:100%; }
 
-    @media (max-width: 960px) {
-      .layout { grid-template-columns: 1fr; }
-      .card { margin-top: 16px; }
+    /* Button matches your site */
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: 0.8rem 1.1rem;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+    }
+    .btn-primary{
+      background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
+      color: #ffffff;
+    }
+    .btn-primary:hover{ filter: brightness(1.06); }
+
+    .message{
+      margin: 10px 0 0;
+      min-height: 18px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .subtext{
+      margin: 12px 0 0;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .subtext a{ color: var(--brand-b); text-decoration:none; }
+    .subtext a:hover{ text-decoration:underline; }
+
+    @media (max-width: 960px){
+      .layout{ grid-template-columns: 1fr; }
+      .card{ margin-top: 16px; }
+      .pitch-title{ font-size:1.8rem; }
     }
   </style>
 </head>
 
-<!-- ✅ REMOVE dashboard/profile classes -->
 <body>
   <div class="page">
     <div class="brand-row">
@@ -155,9 +240,11 @@
     </div>
 
     <div class="layout">
-      <section class="card pitch">
+      <section class="pitch">
         <h1 class="pitch-title">Offer your coding skills to the world.</h1>
-        <p class="pitch-subtitle">Create posts, connect with developers, and get noticed by clients worldwide.</p>
+        <p class="pitch-subtitle">
+          Create posts, connect with developers, and get noticed by clients worldwide.
+        </p>
 
         <div class="pitch-item">
           <h3>Offer Your Services</h3>
@@ -178,49 +265,89 @@
 
       <section class="card" aria-labelledby="register-heading">
         <h2 id="register-heading">Create your account</h2>
-        <p class="hint">Join Surreal Systems to create posts, manage your messages, and grow your projects.</p>
+        <p class="hint">
+          Join Surreal Systems to create posts, manage your messages, and grow your projects.
+        </p>
 
         <form id="registerForm" novalidate>
           <div class="field">
             <div class="field-label-row">
               <label for="registerUsername">Username</label>
-              <span class="hint">3-32 characters</span>
+              <span class="field-hint">3-32 characters</span>
             </div>
-            <input id="registerUsername" name="username" type="text" placeholder="e.g. dev_ally" autocomplete="username" required minlength="3" maxlength="32" />
+            <input
+              id="registerUsername"
+              name="username"
+              type="text"
+              placeholder="e.g. dev_ally"
+              autocomplete="username"
+              required
+              minlength="3"
+              maxlength="32"
+            />
           </div>
 
           <div class="field">
             <label for="registerEmail">Email</label>
-            <input id="registerEmail" name="email" type="email" placeholder="you@example.com" autocomplete="email" required />
+            <input
+              id="registerEmail"
+              name="email"
+              type="email"
+              placeholder="you@example.com"
+              autocomplete="email"
+              required
+            />
           </div>
 
           <div class="field">
             <div class="field-label-row">
               <label for="registerPassword">Password</label>
-              <span class="hint">At least 8 characters</span>
+              <span class="field-hint">At least 8 characters</span>
             </div>
 
             <div class="password-row">
-              <input id="registerPassword" name="password" type="password" placeholder="Create a strong password" autocomplete="new-password" required minlength="8" />
-              <button type="button" class="toggle-password" id="togglePassword" aria-pressed="false">Show</button>
+              <input
+                id="registerPassword"
+                name="password"
+                type="password"
+                placeholder="Create a strong password"
+                autocomplete="new-password"
+                required
+                minlength="8"
+              />
+              <button type="button" class="toggle-password" id="togglePassword" aria-pressed="false">
+                Show
+              </button>
             </div>
 
-            <div id="passwordStrength" class="hint" aria-live="polite">
+            <div id="passwordStrength" class="field-hint" aria-live="polite">
               Use at least 8 characters with a mix of letters, numbers, and symbols.
             </div>
           </div>
 
           <div class="field">
-            <label for="registerDescription">Tell us about yourself <span class="hint">(optional)</span></label>
-            <textarea id="registerDescription" name="description" rows="4" maxlength="400" placeholder="What do you offer? What are your skills?"></textarea>
+            <label for="registerDescription">
+              Tell us about yourself <span class="field-hint">(optional)</span>
+            </label>
+            <textarea
+              id="registerDescription"
+              name="description"
+              rows="4"
+              maxlength="400"
+              placeholder="What do you offer? What are your skills?"
+            ></textarea>
             <div class="meta-row"><span id="descCounter">0 / 400</span></div>
           </div>
 
-          <button id="submitBtn" class="w-full" type="submit">Create account</button>
+          <button id="submitBtn" class="btn btn-primary w-full" type="submit">
+            Create account
+          </button>
 
           <p id="registerMessage" class="message" role="status" aria-live="polite"></p>
 
-          <p class="subtext">Already have an account? <a href="/login.html">Log in</a></p>
+          <p class="subtext">
+            Already have an account? <a href="/login.html">Log in</a>
+          </p>
         </form>
       </section>
     </div>
