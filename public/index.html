@@ -59,7 +59,6 @@
 
       <!-- MIDDLE: Video + Logo -->
       <section class="middle-stack" aria-label="Intro and brand">
-
         <section class="panel video video--compact" aria-labelledby="video-title">
           <div class="video-head">
             <h2 id="video-title">Quick intro</h2>
@@ -74,18 +73,15 @@
           </div>
         </section>
 
-        <!-- BIG LOGO, NO BUBBLE, NO EXTRA TEXT -->
         <div class="mid-logo" aria-hidden="true">
           <img src="/surrealsystems-logo.png" alt="" />
         </div>
-
       </section>
 
-      <!-- RIGHT: Login + Create account button -->
+      <!-- RIGHT: Login -->
       <section class="panel card" aria-labelledby="login-title">
-        <div class="right-top">
-          <a class="ghost-link" href="/register.html">Create account</a>
-        </div>
+        <!-- Create account button INSIDE the right panel (no top strip) -->
+        <a class="ghost-link card-cta" href="/register.html">Create account</a>
 
         <h2 id="login-title">Welcome back</h2>
         <p>Log in to manage your posts, messages, and projects.</p>
@@ -100,7 +96,12 @@
             <label for="password">Password</label>
             <div class="password-row">
               <input id="password" name="password" type="password" placeholder="Your password" required />
-              <button type="button" class="toggle-password" id="togglePassword" aria-label="Toggle password visibility">
+              <button
+                type="button"
+                class="toggle-password"
+                id="togglePassword"
+                aria-label="Toggle password visibility"
+              >
                 Show
               </button>
             </div>

@@ -26,49 +26,55 @@ body{
   color: var(--text);
 }
 
-/* Desktop: keep one-screen */
+/* Desktop: keep one screen */
 .index-page{ overflow:hidden; }
 
 .shell{
   width:min(1200px, 92vw);
   margin:0 auto;
-  height:100vh;                  /* ✅ hard fit to screen */
+
+  /* ✅ KEY FIX: make layout calculate correctly + footer never overlaps */
+  height: 100vh;
   display:flex;
   flex-direction:column;
-  padding: 12px 0 12px;          /* ✅ tighter + predictable */
-  position:relative;
+
+  /* ✅ no "top strip" space */
+  padding: 16px 0 16px;
 }
 
-/* 3-panel grid */
 .grid{
-  flex:1;
+  flex: 1 1 auto;
+  min-height: 0;
+
   display:grid;
   grid-template-columns: 1.15fr 0.85fr 0.85fr;
   gap: 18px;
   align-items:stretch;
-  min-height:0;
 
-  /* ✅ main fix: grid must fit viewport */
-  height: calc(100vh - 24px);    /* subtract shell padding (12 + 12) */
+  /* ✅ KEY FIX: creates clean breathing room above footer */
+  padding-bottom: 14px;
 }
 
+/* Panels base */
 .panel{
   background: var(--panel);
   border-radius: var(--radius);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   padding: 18px;
+
   display:flex;
   flex-direction:column;
   min-height:0;
 }
 
-/* ✅ purple fade on middle + right like left */
+/* Purple fade on middle + right like left */
 .video,
 .card{
   position: relative;
   overflow: hidden;
 }
+
 .video::before,
 .card::before{
   content:"";
@@ -80,6 +86,7 @@ body{
   pointer-events:none;
   z-index:0;
 }
+
 .video > *,
 .card > *{
   position:relative;
@@ -95,6 +102,7 @@ body{
   overflow: hidden;
   padding: 16px;
 }
+
 .pitch--sharktank::before{
   content:"";
   position:absolute;
@@ -104,7 +112,11 @@ body{
     radial-gradient(circle at 90% 22%, rgba(168,85,247,0.18), transparent 60%);
   pointer-events:none;
 }
-.pitch--sharktank > *{ position:relative; z-index:1; }
+
+.pitch--sharktank > *{
+  position: relative;
+  z-index: 1;
+}
 
 .pitch-title{
   font-size: 2.05rem;
@@ -219,9 +231,9 @@ body{
   font-weight: 950;
 }
 
-/* keep balanced so nothing cuts off */
+/* Balanced so footer + logo fit */
 .video-frame{
-  height: 310px;
+  height: 320px;
   border-radius: 18px;
   border: 1px solid rgba(124,58,237,0.22);
   background: radial-gradient(circle at top left, rgba(124,58,237,0.18), rgba(168,85,247,0.06));
@@ -253,7 +265,7 @@ body{
 .video-text strong{ font-size: 1.05rem; font-weight: 950; }
 .video-text span{ color: var(--muted); font-size: 0.94rem; }
 
-/* ✅ Logo: NO bubble, BIG */
+/* ✅ Logo: no bubble, bigger, and constrained so it doesn't push into footer */
 .mid-logo{
   display:flex;
   align-items:center;
@@ -262,12 +274,18 @@ body{
   border: none;
   background: none;
   box-shadow: none;
+
+  /* keep the logo from eating the footer space */
+  flex: 0 0 auto;
 }
+
 .mid-logo img{
-  width: min(340px, 92%);
+  width: min(360px, 96%);
+  max-height: 260px;          /* ✅ prevents footer overlap/cutoff */
   height: auto;
   display:block;
   border-radius: 0;
+  object-fit: contain;
   filter: drop-shadow(0 18px 40px rgba(0,0,0,0.18));
 }
 
@@ -275,10 +293,15 @@ body{
    RIGHT (Login)
 ========================== */
 
-.right-top{
-  display:flex;
-  justify-content:flex-end;
-  margin-bottom: 10px;
+.card{
+  position: relative;
+}
+
+/* Create account moved into right panel */
+.card-cta{
+  position:absolute;
+  top: 16px;
+  right: 16px;
 }
 
 .ghost-link{
@@ -293,10 +316,11 @@ body{
 .ghost-link:hover{ filter: brightness(0.98); }
 
 .card h2{
-  margin: 4px 0 6px;
+  margin: 34px 0 6px; /* ✅ pushes title below the Create account button */
   font-size: 1.6rem;
   font-weight: 950;
 }
+
 .card > p{
   margin:0 0 12px;
   color: var(--muted);
@@ -322,6 +346,7 @@ input{
   border: 1px solid rgba(124,58,237,0.20);
   outline:none;
   font-size: 0.95rem;
+  background: #fff;
 }
 
 input:focus{
@@ -372,22 +397,22 @@ input:focus{
 }
 .subtext a:hover{ text-decoration:underline; }
 
-/* ✅ footer: fixed so it never cuts layout */
+/* ✅ Footer never overlaps now */
 .site-footer{
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 6px;
+  flex: 0 0 auto;
+  margin-top: 2px;
   text-align:center;
+  padding: 8px 0 0;
   color: rgba(17,24,39,0.65);
-  font-size: 0.9rem;
-  pointer-events:none;
+  font-size: 0.92rem;
 }
 
 /* Mobile: allow scroll + stack */
 @media (max-width: 980px){
   .index-page{ overflow:auto; }
   .shell{ height:auto; min-height:100vh; }
-  .grid{ grid-template-columns: 1fr; height:auto; }
-  .site-footer{ position: static; pointer-events:auto; padding: 10px 0 2px; }
+  .grid{
+    grid-template-columns: 1fr;
+    padding-bottom: 0;
+  }
 }
