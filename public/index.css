@@ -1,3 +1,4 @@
+/* public/index.css */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap");
 
 :root{
@@ -36,7 +37,6 @@ body{
   display:flex;
   flex-direction:column;
   padding: 22px 0 14px;
-  position:relative;
 }
 
 .topbar{
@@ -83,6 +83,7 @@ body{
   min-height:0;
 }
 
+/* ✅ Panels + purple fade on ALL (left/middle/right) */
 .panel{
   background: var(--panel);
   border-radius: var(--radius);
@@ -92,19 +93,10 @@ body{
   display:flex;
   flex-direction:column;
   min-height:0;
-}
-
-/* ==========================
-   LEFT (Pitch) — SHORTER
-========================== */
-
-.pitch--sharktank{
   position: relative;
   overflow: hidden;
-  padding: 16px;
 }
-
-.pitch--sharktank::before{
+.panel::before{
   content:"";
   position:absolute;
   inset:-2px;
@@ -113,11 +105,13 @@ body{
     radial-gradient(circle at 90% 22%, rgba(168,85,247,0.18), transparent 60%);
   pointer-events:none;
 }
-
-.pitch--sharktank > *{
+.panel > *{
   position: relative;
   z-index: 1;
 }
+
+/* LEFT */
+.pitch--sharktank{ padding: 16px; }
 
 .pitch-title{
   font-size: 2.05rem;
@@ -127,7 +121,6 @@ body{
   letter-spacing: -0.02em;
 }
 
-/* ✅ clamp order: -webkit-line-clamp first, then line-clamp */
 .pitch-subtitle{
   margin:0 0 10px;
   color: var(--muted);
@@ -191,7 +184,6 @@ body{
   font-weight: 950;
 }
 
-/* ✅ clamp order: -webkit-line-clamp first, then line-clamp */
 .pitch-item p{
   margin:0;
   color: var(--muted);
@@ -217,10 +209,7 @@ body{
   font-size: 0.85rem;
 }
 
-/* ==========================
-   MIDDLE STACK
-========================== */
-
+/* MIDDLE */
 .middle-stack{
   display:flex;
   flex-direction:column;
@@ -238,7 +227,6 @@ body{
   color: var(--muted);
 }
 
-/* ✅ Video taller */
 .video-frame{
   height: 340px;
   border-radius: 18px;
@@ -288,30 +276,26 @@ body{
   background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
 }
 
-/* ✅ IMAGE-ONLY LOGO (no text) + MUCH BIGGER */
+/* ✅ LOGO: no bubble, bigger image */
 .mid-logo{
   display:flex;
   align-items:center;
   justify-content:center;
-  padding: 16px 20px;
-  border-radius: 999px;
-  border: 1px solid rgba(124,58,237,0.18);
-  background: rgba(255,255,255,0.62);
-  box-shadow: 0 18px 40px rgba(0,0,0,0.10);
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 
-/* ✅ Increase this number if you want it even bigger */
-.mid-logo img{
-  width: 160px; /* ✅ was 64 */
+.mid-logo-img{
+  width: 320px; /* ✅ bigger */
+  max-width: 100%;
   height: auto;
   display:block;
-  filter: drop-shadow(0 0 18px rgba(124,58,237,0.28));
+  filter: drop-shadow(0 18px 40px rgba(124,58,237,0.18));
 }
 
-/* ==========================
-   RIGHT (Login)
-========================== */
-
+/* RIGHT */
 .card h2{
   margin: 4px 0 6px;
   font-size: 1.6rem;

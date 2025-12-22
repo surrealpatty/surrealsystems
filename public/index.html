@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿<!-- public/index.html -->
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
@@ -31,14 +32,8 @@
 
       <!-- LEFT: Pitch -->
       <section class="panel pitch pitch--sharktank" aria-labelledby="pitch-title">
-        <div class="pitch-kicker">
-          <span class="chip chip-live">● Live pitches</span>
-          <span class="chip chip-deal">Deal-based collabs</span>
-        </div>
 
-        <h1 id="pitch-title" class="pitch-title">
-          Bring your idea to life.
-        </h1>
+        <h1 id="pitch-title" class="pitch-title">Bring your idea to life.</h1>
 
         <p class="pitch-subtitle">
           Surreal Systems connects founders with the missing piece — a business partner,
@@ -79,7 +74,7 @@
       <!-- MIDDLE: Video + Logo underneath -->
       <section class="middle-stack" aria-label="Intro and brand">
 
-        <section class="panel video video--compact" aria-labelledby="video-title">
+        <section class="panel video" aria-labelledby="video-title">
           <div class="video-head">
             <h2 id="video-title">Quick intro</h2>
             <p>60 seconds to explain Surreal Systems.</p>
@@ -99,9 +94,9 @@
           </div>
         </section>
 
-        <!-- ✅ Logo under the middle panel (IMAGE ONLY now) -->
+        <!-- ✅ Logo under the middle panel (IMAGE ONLY, no bubble) -->
         <div class="mid-logo" aria-hidden="true">
-          <img src="/surrealsystems-logo.png" alt="" />
+          <img class="mid-logo-img" src="/surrealsystems-logo.png" alt="" />
         </div>
 
       </section>
