@@ -26,6 +26,7 @@ body{
   color: var(--text);
 }
 
+/* Desktop: keep one-screen */
 .index-page{ overflow:hidden; }
 
 .shell{
@@ -93,10 +94,14 @@ body{
   min-height:0;
 }
 
-/* LEFT (pitch) */
+/* ==========================
+   LEFT (Pitch) — SHORTER
+========================== */
+
 .pitch--sharktank{
   position: relative;
   overflow: hidden;
+  padding: 16px;              /* ✅ slightly tighter */
 }
 
 .pitch--sharktank::before{
@@ -118,17 +123,17 @@ body{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
-  margin-bottom: 10px;
+  margin-bottom: 8px;         /* ✅ tighter */
 }
 
 .chip{
   display:inline-flex;
   align-items:center;
   gap:8px;
-  padding: 7px 12px;
+  padding: 6px 10px;          /* ✅ tighter */
   border-radius: 999px;
   font-weight: 900;
-  font-size: 0.85rem;
+  font-size: 0.82rem;         /* ✅ slightly smaller */
   border: 1px solid rgba(124,58,237,0.25);
   background: rgba(124,58,237,0.10);
   color: #4c1d95;
@@ -137,34 +142,31 @@ body{
 .chip-live{
   background: linear-gradient(135deg, rgba(124,58,237,0.14), rgba(168,85,247,0.10));
 }
-
-.chip-deal{
-  background: rgba(255,255,255,0.65);
-}
+.chip-deal{ background: rgba(255,255,255,0.65); }
 
 .pitch-title{
-  font-size: 2.35rem;
-  line-height: 1.02;
-  margin: 2px 0 10px;
+  font-size: 2.15rem;         /* ✅ smaller headline */
+  line-height: 1.04;
+  margin: 2px 0 8px;
   font-weight: 950;
   letter-spacing: -0.02em;
 }
 
 .pitch-subtitle{
-  margin:0 0 12px;
+  margin:0 0 10px;
   color: var(--muted);
-  line-height: 1.45;
-  font-size: 1.02rem;
+  line-height: 1.42;
+  font-size: 0.98rem;
 
   display:-webkit-box;
   -webkit-box-orient: vertical;
   overflow:hidden;
-  -webkit-line-clamp: 4;
-  line-clamp: 4;
+  -webkit-line-clamp: 3;      /* ✅ clamp tighter */
+  line-clamp: 3;
 }
 
 .pitch-list{
-  margin-top: 8px;
+  margin-top: 6px;
   display:flex;
   flex-direction:column;
   gap: 10px;
@@ -175,19 +177,19 @@ body{
   border-radius: 18px;
   border: 1px solid rgba(124,58,237,0.25);
   background: rgba(124,58,237,0.07);
-  padding: 14px;
+  padding: 12px;              /* ✅ tighter */
 }
 
 .step{
   display:flex;
   align-items:center;
   gap:10px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;         /* ✅ tighter */
 }
 
 .step-num{
-  width:28px;
-  height:28px;
+  width:26px;
+  height:26px;
   border-radius: 999px;
   display:flex;
   align-items:center;
@@ -196,19 +198,20 @@ body{
   color: white;
   background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
   box-shadow: 0 10px 20px rgba(124,58,237,0.18);
+  flex: 0 0 auto;
 }
 
 .step-label{
   font-weight: 950;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-size: 0.78rem;
+  font-size: 0.74rem;         /* ✅ smaller */
   color: rgba(76,29,149,0.85);
 }
 
 .pitch-item h3{
   margin:0 0 6px;
-  font-size: 1.05rem;
+  font-size: 1.0rem;          /* ✅ smaller */
   font-weight: 950;
 }
 
@@ -216,28 +219,30 @@ body{
   margin:0;
   color: var(--muted);
   line-height:1.35;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
 
   display:-webkit-box;
   -webkit-box-orient: vertical;
   overflow:hidden;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
+  -webkit-line-clamp: 2;      /* ✅ clamp to reduce height */
+  line-clamp: 2;
 }
 
 .badge-premium{
   display:inline-flex;
-  margin-top: 10px;
-  padding: 8px 12px;
+  margin-top: 8px;
+  padding: 7px 11px;          /* ✅ tighter */
   border-radius: 999px;
   border: 1px solid rgba(124,58,237,0.25);
   background: linear-gradient(135deg, rgba(124,58,237,0.14), rgba(168,85,247,0.10));
   color: #4c1d95;
   font-weight: 950;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
 }
 
-/* ✅ MIDDLE STACK (video + logo under it) */
+/* ==========================
+   MIDDLE STACK
+========================== */
 .middle-stack{
   display:flex;
   flex-direction:column;
@@ -245,7 +250,7 @@ body{
   min-height:0;
 }
 
-/* ✅ Make the video card shorter */
+/* ✅ Video taller */
 .video--compact{
   flex: 0 0 auto;
 }
@@ -260,8 +265,9 @@ body{
   color: var(--muted);
 }
 
+/* ✅ taller than before */
 .video-frame{
-  height: 240px;            /* ✅ shorter than before */
+  height: 320px;              /* ✅ was 240 */
   border-radius: 18px;
   border: 1px solid rgba(124,58,237,0.22);
   background: radial-gradient(circle at top left, rgba(124,58,237,0.18), rgba(168,85,247,0.06));
@@ -273,8 +279,8 @@ body{
 }
 
 .video-badge{
-  width:46px;
-  height:46px;
+  width:52px;                 /* ✅ slightly bigger */
+  height:52px;
   border-radius:999px;
   display:flex;
   align-items:center;
@@ -290,8 +296,8 @@ body{
   flex-direction:column;
   gap: 3px;
 }
-.video-text strong{ font-size: 1.02rem; font-weight: 950; }
-.video-text span{ color: var(--muted); font-size: 0.92rem; }
+.video-text strong{ font-size: 1.05rem; font-weight: 950; }
+.video-text span{ color: var(--muted); font-size: 0.94rem; }
 
 .video-notes{
   margin-top: 10px;
@@ -309,37 +315,40 @@ body{
   background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
 }
 
-/* ✅ Logo under middle card */
+/* ✅ Logo bigger + more “hero” */
 .mid-logo{
   display:flex;
   align-items:center;
   justify-content:center;
-  gap: 12px;
-  padding: 10px 12px;
+  gap: 14px;
+  padding: 14px 18px;         /* ✅ bigger */
   border-radius: 999px;
   border: 1px solid rgba(124,58,237,0.18);
-  background: rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.62);
   box-shadow: 0 18px 40px rgba(0,0,0,0.10);
 }
 
 .mid-logo img{
-  width: 34px;
+  width: 52px;                /* ✅ was 34 */
   height: auto;
   display:block;
-  opacity: 0.9;
+  filter: drop-shadow(0 0 16px rgba(124,58,237,0.25));
 }
 
 .mid-logo-text{
   font-weight: 950;
-  letter-spacing: 0.22em;
-  font-size: 0.85rem;
+  letter-spacing: 0.28em;     /* ✅ bolder feel */
+  font-size: 1.02rem;         /* ✅ bigger */
   background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
   -webkit-background-clip:text;
   background-clip:text;
   color: transparent;
 }
 
-/* RIGHT: login */
+/* ==========================
+   RIGHT (Login)
+========================== */
+
 .card h2{
   margin: 4px 0 6px;
   font-size: 1.6rem;
