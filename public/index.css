@@ -101,7 +101,7 @@ body{
 .pitch--sharktank{
   position: relative;
   overflow: hidden;
-  padding: 16px;              /* ✅ slightly tighter */
+  padding: 16px;
 }
 
 .pitch--sharktank::before{
@@ -119,39 +119,15 @@ body{
   z-index: 1;
 }
 
-.pitch-kicker{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-bottom: 8px;         /* ✅ tighter */
-}
-
-.chip{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding: 6px 10px;          /* ✅ tighter */
-  border-radius: 999px;
-  font-weight: 900;
-  font-size: 0.82rem;         /* ✅ slightly smaller */
-  border: 1px solid rgba(124,58,237,0.25);
-  background: rgba(124,58,237,0.10);
-  color: #4c1d95;
-}
-
-.chip-live{
-  background: linear-gradient(135deg, rgba(124,58,237,0.14), rgba(168,85,247,0.10));
-}
-.chip-deal{ background: rgba(255,255,255,0.65); }
-
 .pitch-title{
-  font-size: 2.15rem;         /* ✅ smaller headline */
+  font-size: 2.05rem;
   line-height: 1.04;
   margin: 2px 0 8px;
   font-weight: 950;
   letter-spacing: -0.02em;
 }
 
+/* ✅ Fixed clamp order + tighter height */
 .pitch-subtitle{
   margin:0 0 10px;
   color: var(--muted);
@@ -161,7 +137,7 @@ body{
   display:-webkit-box;
   -webkit-box-orient: vertical;
   overflow:hidden;
-  -webkit-line-clamp: 3;      /* ✅ clamp tighter */
+  -webkit-line-clamp: 3;
   line-clamp: 3;
 }
 
@@ -177,14 +153,14 @@ body{
   border-radius: 18px;
   border: 1px solid rgba(124,58,237,0.25);
   background: rgba(124,58,237,0.07);
-  padding: 12px;              /* ✅ tighter */
+  padding: 12px;
 }
 
 .step{
   display:flex;
   align-items:center;
   gap:10px;
-  margin-bottom: 6px;         /* ✅ tighter */
+  margin-bottom: 6px;
 }
 
 .step-num{
@@ -205,16 +181,17 @@ body{
   font-weight: 950;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-size: 0.74rem;         /* ✅ smaller */
+  font-size: 0.74rem;
   color: rgba(76,29,149,0.85);
 }
 
 .pitch-item h3{
   margin:0 0 6px;
-  font-size: 1.0rem;          /* ✅ smaller */
+  font-size: 1.0rem;
   font-weight: 950;
 }
 
+/* ✅ Fixed clamp order */
 .pitch-item p{
   margin:0;
   color: var(--muted);
@@ -224,14 +201,14 @@ body{
   display:-webkit-box;
   -webkit-box-orient: vertical;
   overflow:hidden;
-  -webkit-line-clamp: 2;      /* ✅ clamp to reduce height */
+  -webkit-line-clamp: 2;
   line-clamp: 2;
 }
 
 .badge-premium{
   display:inline-flex;
   margin-top: 8px;
-  padding: 7px 11px;          /* ✅ tighter */
+  padding: 7px 11px;
   border-radius: 999px;
   border: 1px solid rgba(124,58,237,0.25);
   background: linear-gradient(135deg, rgba(124,58,237,0.14), rgba(168,85,247,0.10));
@@ -243,16 +220,12 @@ body{
 /* ==========================
    MIDDLE STACK
 ========================== */
+
 .middle-stack{
   display:flex;
   flex-direction:column;
   gap: 12px;
   min-height:0;
-}
-
-/* ✅ Video taller */
-.video--compact{
-  flex: 0 0 auto;
 }
 
 .video-head h2{
@@ -265,9 +238,9 @@ body{
   color: var(--muted);
 }
 
-/* ✅ taller than before */
+/* ✅ Video taller */
 .video-frame{
-  height: 320px;              /* ✅ was 240 */
+  height: 340px;
   border-radius: 18px;
   border: 1px solid rgba(124,58,237,0.22);
   background: radial-gradient(circle at top left, rgba(124,58,237,0.18), rgba(168,85,247,0.06));
@@ -279,8 +252,8 @@ body{
 }
 
 .video-badge{
-  width:52px;                 /* ✅ slightly bigger */
-  height:52px;
+  width:54px;
+  height:54px;
   border-radius:999px;
   display:flex;
   align-items:center;
@@ -315,13 +288,13 @@ body{
   background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
 }
 
-/* ✅ Logo bigger + more “hero” */
+/* ✅ Logo bigger + more hero */
 .mid-logo{
   display:flex;
   align-items:center;
   justify-content:center;
   gap: 14px;
-  padding: 14px 18px;         /* ✅ bigger */
+  padding: 16px 20px;
   border-radius: 999px;
   border: 1px solid rgba(124,58,237,0.18);
   background: rgba(255,255,255,0.62);
@@ -329,7 +302,7 @@ body{
 }
 
 .mid-logo img{
-  width: 52px;                /* ✅ was 34 */
+  width: 64px;
   height: auto;
   display:block;
   filter: drop-shadow(0 0 16px rgba(124,58,237,0.25));
@@ -337,8 +310,8 @@ body{
 
 .mid-logo-text{
   font-weight: 950;
-  letter-spacing: 0.28em;     /* ✅ bolder feel */
-  font-size: 1.02rem;         /* ✅ bigger */
+  letter-spacing: 0.28em;
+  font-size: 1.05rem;
   background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
   -webkit-background-clip:text;
   background-clip:text;
