@@ -121,6 +121,7 @@ body{
 .pitch-item p{
   margin: 0;
   color: var(--muted);
+  line-height: 1.4;
 }
 
 .badge-premium{
