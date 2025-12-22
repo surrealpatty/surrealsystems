@@ -300,6 +300,9 @@ body{
 
 .card{
   position: relative;
+
+  /* ✅ NEW: reserve space for the top-right button */
+  padding-top: 68px;  /* gives the "Create account" pill its own zone */
 }
 
 /* Create account moved into right panel */
@@ -320,8 +323,9 @@ body{
 }
 .ghost-link:hover{ filter: brightness(0.98); }
 
+/* ✅ FIX: title no longer needs a huge margin */
 .card h2{
-  margin: 34px 0 6px; /* ✅ pushes title below the Create account button */
+  margin: 0 0 6px;
   font-size: 1.6rem;
   font-weight: 950;
 }
@@ -420,4 +424,7 @@ input:focus{
     grid-template-columns: 1fr;
     padding-bottom: 0;
   }
+
+  /* ✅ still keep room for the button on mobile */
+  .card{ padding-top: 64px; }
 }
