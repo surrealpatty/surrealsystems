@@ -6,16 +6,17 @@
 
   <title>Surreal Systems – Build, Connect, Create</title>
 
-  <!-- External CSS ONLY -->
-  <link rel="stylesheet" href="style.css" />
+  <!-- Global theme FIRST -->
+  <link rel="stylesheet" href="/style.css" />
+  <!-- Page-specific styling -->
+  <link rel="stylesheet" href="/index.css" />
 
   <!-- Existing JS (unchanged) -->
-  <script src="init.js" defer></script>
-  <script src="script.js" defer></script>
+  <script src="/init.js" defer></script>
+  <script src="/script.js" defer></script>
 </head>
 
-<body class="dashboard profile-page profile-dark">
-
+<body class="index-page">
   <header class="page-header">
     <div class="brand-row">
       <span class="brand-dot" aria-hidden="true"></span>
@@ -29,7 +30,7 @@
          HERO VIDEO SECTION
     ========================== -->
     <section class="hero-video" aria-labelledby="hero-title">
-      <h1 id="hero-title">
+      <h1 id="hero-title" class="hero-title">
         A platform built for developers who want more.
       </h1>
 
@@ -40,7 +41,10 @@
 
       <figure class="hero-video-frame">
         <!-- Replace with <video> or <iframe> later -->
-        <span aria-hidden="true">Intro video goes here</span>
+        <div class="hero-video-placeholder" aria-hidden="true">
+          Intro video goes here
+        </div>
+
         <figcaption class="sr-only">
           Introduction video explaining what makes Surreal Systems unique
         </figcaption>
@@ -86,7 +90,7 @@
       </section>
 
       <!-- RIGHT: LOGIN -->
-      <section class="card" aria-labelledby="login-title">
+      <section class="card login-card" aria-labelledby="login-title">
         <h2 id="login-title">Welcome back</h2>
         <p>Log in to manage your posts, messages, and projects.</p>
 
@@ -129,7 +133,7 @@
 
           <p class="subtext">
             Don’t have an account?
-            <a href="register.html">Sign up</a>
+            <a href="/register.html">Sign up</a>
           </p>
         </form>
       </section>
