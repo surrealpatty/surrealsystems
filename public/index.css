@@ -286,9 +286,16 @@ body{
   display:block;
   object-fit: contain;
 
-  border-radius: 18px; /* ✅ soft, premium rounding */
-  filter: drop-shadow(0 14px 32px rgba(0,0,0,0.16));
+  /* ✅ Match your design language */
+  border-radius: var(--radius); /* same rounding as panels */
+
+  /* ✅ Subtle edge definition so it blends, not floats */
+  border: 1px solid rgba(124,58,237,0.18);
+
+  /* ✅ Softer, integrated shadow */
+  filter: drop-shadow(0 12px 28px rgba(0,0,0,0.14));
 }
+
 
 /* ==========================
    RIGHT (Login)
