@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Surreal Systems – Build, Connect, Create</title>
 
-  <!-- ✅ External CSS ONLY -->
+  <!-- ✅ ALWAYS load global tokens first -->
+  <link rel="stylesheet" href="/style.css" />
+  <!-- ✅ Page-specific layout -->
   <link rel="stylesheet" href="/index.css" />
 
-  <!-- Existing JS (unchanged) -->
   <script src="/init.js" defer></script>
   <script src="/script.js" defer></script>
 </head>
@@ -136,7 +137,6 @@
     </footer>
   </main>
 
-  <!-- password toggle -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const input = document.getElementById("password");
@@ -152,3 +152,4 @@
   </script>
 </body>
 </html>
+
