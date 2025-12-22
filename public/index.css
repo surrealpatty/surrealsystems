@@ -3,8 +3,6 @@
 :root{
   --bg:#f5f0ff;
   --panel:#ffffff;
-  --border: rgba(124,58,237,0.20);
-  --shadow: 0 26px 60px rgba(0,0,0,0.18);
 
   --brand-a:#7c3aed;
   --brand-b:#a855f7;
@@ -12,12 +10,15 @@
   --text:#111827;
   --muted:#4b5563;
 
+  --border: rgba(124,58,237,0.20);
+  --shadow: 0 26px 60px rgba(0,0,0,0.18);
+
   --radius: 24px;
 }
 
-/* Base */
 *{ box-sizing:border-box; }
 html, body{ height:100%; }
+
 body{
   margin:0;
   font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -25,12 +26,9 @@ body{
   color: var(--text);
 }
 
-/* Keep everything on one screen (desktop) */
-.index-page{
-  overflow:hidden;
-}
+/* No scroll on desktop */
+.index-page{ overflow:hidden; }
 
-/* Main shell */
 .shell{
   width:min(1200px, 92vw);
   margin:0 auto;
@@ -41,7 +39,6 @@ body{
   position:relative;
 }
 
-/* Topbar */
 .topbar{
   display:flex;
   align-items:center;
@@ -53,7 +50,7 @@ body{
   display:flex;
   align-items:center;
   gap:10px;
-  font-weight:700;
+  font-weight:800;
 }
 
 .brand-dot{
@@ -64,9 +61,7 @@ body{
   box-shadow: 0 0 14px rgba(124,58,237,0.25);
 }
 
-.brand-text{
-  font-size: 1.05rem;
-}
+.brand-text{ font-size: 1.05rem; }
 
 .ghost-link{
   text-decoration:none;
@@ -75,27 +70,23 @@ body{
   border: 1px solid rgba(124,58,237,0.25);
   background: rgba(124,58,237,0.08);
   color: var(--brand-a);
-  font-weight: 700;
+  font-weight: 800;
 }
+.ghost-link:hover{ filter: brightness(0.98); }
 
-.ghost-link:hover{
-  filter: brightness(0.98);
-}
-
-/* Grid layout */
 .grid{
   flex: 1;
   display:grid;
   grid-template-columns: 1.15fr 0.85fr 0.85fr;
   gap: 18px;
   align-items:stretch;
+  min-height: 0;
 }
 
-/* Panels */
 .panel{
   background: var(--panel);
   border-radius: var(--radius);
-  border: 1px solid rgba(124,58,237,0.20);
+  border: 1px solid var(--border);
   box-shadow: var(--shadow);
   padding: 18px;
   display:flex;
@@ -103,19 +94,19 @@ body{
   min-height: 0;
 }
 
-/* Left pitch */
+/* LEFT */
 .pitch-title{
-  font-size: 2.15rem;
-  line-height: 1.02;
+  font-size: 2.1rem;
+  line-height: 1.05;
   margin: 4px 0 10px;
 }
 
+/* Short + clean (no wall of text) */
 .pitch-subtitle{
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   color: var(--muted);
   line-height: 1.45;
 
-  /* clamp (prefix first, then standard) */
   display: -webkit-box;
   -webkit-box-orient: vertical;
   overflow: hidden;
@@ -124,7 +115,7 @@ body{
 }
 
 .pitch-list{
-  margin-top: 10px;
+  margin-top: 8px;
   display:flex;
   flex-direction:column;
   gap: 10px;
@@ -155,6 +146,7 @@ body{
   line-clamp: 3;
 }
 
+/* Keep badge inside the tile (no floating into footer) */
 .badge-premium{
   display:inline-flex;
   margin-top: 10px;
@@ -163,11 +155,11 @@ body{
   border: 1px solid rgba(124,58,237,0.25);
   background: rgba(124,58,237,0.12);
   color: #4c1d95;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.88rem;
 }
 
-/* Video panel */
+/* VIDEO */
 .video-head h2{
   margin: 4px 0 4px;
   font-size: 1.3rem;
@@ -208,9 +200,7 @@ body{
   flex-direction:column;
   gap: 3px;
 }
-.video-text strong{
-  font-size: 1.02rem;
-}
+.video-text strong{ font-size: 1.02rem; }
 .video-text span{
   color: var(--muted);
   font-size: 0.92rem;
@@ -232,7 +222,7 @@ body{
   background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
 }
 
-/* Login panel */
+/* LOGIN */
 .card h2{
   margin: 4px 0 6px;
   font-size: 1.6rem;
@@ -250,7 +240,7 @@ body{
 }
 
 label{
-  font-weight:700;
+  font-weight:800;
   color: var(--text);
   font-size: 0.92rem;
 }
@@ -281,7 +271,7 @@ input:focus{
   border: 1px solid rgba(124,58,237,0.25);
   background: rgba(124,58,237,0.10);
   color: var(--brand-a);
-  font-weight: 800;
+  font-weight: 900;
   cursor:pointer;
 }
 
@@ -297,10 +287,7 @@ input:focus{
   cursor:pointer;
   background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
 }
-
-.primary-btn:hover{
-  filter: brightness(1.03);
-}
+.primary-btn:hover{ filter: brightness(1.03); }
 
 .subtext{
   margin-top: 10px;
@@ -310,14 +297,12 @@ input:focus{
 
 .subtext a{
   color: var(--brand-a);
-  font-weight: 800;
+  font-weight: 900;
   text-decoration:none;
 }
-.subtext a:hover{
-  text-decoration:underline;
-}
+.subtext a:hover{ text-decoration:underline; }
 
-/* Bottom watermark logo */
+/* Bottom watermark */
 .bottom-brand{
   position: absolute;
   right: 12px;
@@ -325,7 +310,7 @@ input:focus{
   display:flex;
   align-items:center;
   gap: 12px;
-  opacity: 0.22;
+  opacity: 0.18;
   pointer-events:none;
 }
 
