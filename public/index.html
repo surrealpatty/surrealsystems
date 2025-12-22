@@ -3,12 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>Surreal Systems – Build, Connect, Create</title>
 
-  <!-- Global theme FIRST -->
-  <link rel="stylesheet" href="/style.css" />
-  <!-- Page-specific styling -->
+  <!-- ✅ External CSS ONLY -->
   <link rel="stylesheet" href="/index.css" />
 
   <!-- Existing JS (unchanged) -->
@@ -17,119 +14,107 @@
 </head>
 
 <body class="index-page">
-  <header class="page-header">
-    <div class="brand-row">
-      <span class="brand-dot" aria-hidden="true"></span>
-      <span class="brand-text">Surreal Systems</span>
-    </div>
-  </header>
+  <main class="shell">
 
-  <main class="page">
+    <!-- Top Brand Row -->
+    <header class="topbar">
+      <div class="brand-row">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-text">Surreal Systems</span>
+      </div>
 
-    <!-- =========================
-         HERO VIDEO SECTION
-    ========================== -->
-    <section class="hero-video" aria-labelledby="hero-title">
-      <h1 id="hero-title" class="hero-title">
-        A platform built for developers who want more.
-      </h1>
+      <div class="top-actions">
+        <a class="ghost-link" href="/register.html">Create account</a>
+      </div>
+    </header>
 
-      <p class="hero-subtitle">
-        Showcase your skills, connect with real clients, and grow without
-        noise, ads, or algorithm games.
-      </p>
+    <!-- 3-column layout -->
+    <section class="grid">
 
-      <figure class="hero-video-frame">
-        <!-- Replace with <video> or <iframe> later -->
-        <div class="hero-video-placeholder" aria-hidden="true">
-          Intro video goes here
-        </div>
-
-        <figcaption class="sr-only">
-          Introduction video explaining what makes Surreal Systems unique
-        </figcaption>
-      </figure>
-    </section>
-
-    <!-- =========================
-         MAIN TWO-COLUMN LAYOUT
-    ========================== -->
-    <section class="layout">
-
-      <!-- LEFT: MARKETING / VALUE -->
-      <section class="pitch" aria-labelledby="pitch-title">
-        <h2 id="pitch-title" class="pitch-title">
-          Offer your coding skills to the world.
-        </h2>
-
+      <!-- LEFT: Value / Pitch -->
+      <section class="panel pitch" aria-labelledby="pitch-title">
+        <h1 id="pitch-title" class="pitch-title">Where great minds come together.</h1>
         <p class="pitch-subtitle">
-          Create posts, connect with developers, and get noticed by clients worldwide.
+          Showcase your skills, connect with real people, and build projects that actually ship.
         </p>
 
-        <article class="pitch-item">
-          <h3>Offer Your Services</h3>
-          <p>Create posts to sell your skills and showcase your best work.</p>
-        </article>
+        <div class="pitch-list">
+          <article class="pitch-item">
+            <h3>Offer Your Services</h3>
+            <p>Create posts, showcase work, and get hired.</p>
+          </article>
 
-        <article class="pitch-item">
-          <h3>Connect &amp; Collaborate</h3>
-          <p>
-            Rate and interact with other developers, build credibility,
-            and grow your professional network.
-          </p>
-        </article>
+          <article class="pitch-item">
+            <h3>Connect &amp; Collaborate</h3>
+            <p>Message, rate, and build credibility through real outcomes.</p>
+          </article>
 
-        <article class="pitch-item">
-          <h3>Ad-Free &amp; Premium</h3>
-          <p>
-            Upgrade for an ad-free experience, lower fees,
-            and better visibility.
-          </p>
-          <span class="badge-premium">● Premium perks for power users</span>
-        </article>
+          <article class="pitch-item">
+            <h3>Ad-Free &amp; Premium</h3>
+            <p>Lower fees, better visibility, and an ad-free experience.</p>
+            <span class="badge-premium">● Premium perks for power users</span>
+          </article>
+        </div>
+
+        <div class="quick-stats" aria-label="Highlights">
+          <div class="stat">
+            <span class="stat-num">2</span>
+            <span class="stat-label">tiers</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num">1</span>
+            <span class="stat-label">profile</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num">∞</span>
+            <span class="stat-label">collabs</span>
+          </div>
+        </div>
       </section>
 
-      <!-- RIGHT: LOGIN -->
-      <section class="card login-card" aria-labelledby="login-title">
+      <!-- MIDDLE: Video placeholder (future embed) -->
+      <section class="panel video" aria-labelledby="video-title">
+        <div class="video-head">
+          <h2 id="video-title">Quick intro</h2>
+          <p>60 seconds to explain Surreal Systems.</p>
+        </div>
+
+        <div class="video-frame" role="img" aria-label="Intro video placeholder">
+          <div class="video-badge">▶</div>
+          <div class="video-text">
+            <strong>Intro video goes here</strong>
+            <span>Drop in an iframe or MP4 later</span>
+          </div>
+        </div>
+
+        <div class="video-notes">
+          <span class="note-dot" aria-hidden="true"></span>
+          <span>Later you can embed YouTube, Vimeo, or a self-hosted video.</span>
+        </div>
+      </section>
+
+      <!-- RIGHT: Login -->
+      <section class="panel card" aria-labelledby="login-title">
         <h2 id="login-title">Welcome back</h2>
         <p>Log in to manage your posts, messages, and projects.</p>
 
         <form id="loginForm" novalidate>
           <div class="field">
             <label for="email">Email</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="you@example.com"
-              required
-            />
+            <input id="email" name="email" type="email" placeholder="you@example.com" required />
           </div>
 
           <div class="field">
             <label for="password">Password</label>
             <div class="password-row">
-              <input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Your password"
-                required
-              />
-              <button
-                type="button"
-                class="toggle-password"
-                id="togglePassword"
-                aria-label="Toggle password visibility"
-              >
+              <input id="password" name="password" type="password" placeholder="Your password" required />
+              <button type="button" class="toggle-password" id="togglePassword" aria-label="Toggle password visibility">
                 Show
               </button>
             </div>
           </div>
 
-          <button type="submit" class="primary-btn">
-            Login
-          </button>
+          <button type="submit" class="primary-btn">Login</button>
 
           <p class="subtext">
             Don’t have an account?
@@ -139,28 +124,19 @@
       </section>
 
     </section>
+
+    <!-- Bottom brand mark (soft, not covering content) -->
+    <aside class="bottom-brand" aria-hidden="true">
+      <img src="/surrealsystems-logo.png" alt="" />
+      <div class="bottom-brand-text">Surreal Systems</div>
+    </aside>
+
+    <footer class="site-footer">
+      <span>© 2025 Surreal Systems. All rights reserved.</span>
+    </footer>
   </main>
 
-  <!-- =========================
-       BRAND MARK
-  ========================== -->
-  <aside class="bottom-brand" aria-hidden="true">
-    <img src="/surrealsystems-logo.png" alt="" />
-    <span class="bottom-brand-text">Surreal Systems</span>
-  </aside>
-
-  <!-- =========================
-       FOOTER
-  ========================== -->
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <span>© 2025 Surreal Systems. All rights reserved.</span>
-    </div>
-  </footer>
-
-  <!-- =========================
-       PASSWORD TOGGLE (UNCHANGED)
-  ========================== -->
+  <!-- password toggle -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const input = document.getElementById("password");
@@ -174,6 +150,5 @@
       });
     });
   </script>
-
 </body>
 </html>

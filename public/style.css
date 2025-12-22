@@ -9,7 +9,7 @@
 
 /* =========================================================
    THEME TOKENS
-   ========================================================= */
+========================================================= */
 
 :root {
   /* BRAND */
@@ -17,14 +17,8 @@
   --brand-b: #a855f7; /* bright purple */
   --accent: #c084fc;  /* lilac glow */
 
-  /* ✅ Page background is a GRADIENT token (so footer/bottom always matches) */
-  --page-bg: radial-gradient(
-    circle at top left,
-    #1a0b2e 0%,
-    #0b0313 55%,
-    #07020e 75%,
-    #000000 100%
-  );
+  /* ✅ ONE SOLID BACKGROUND TOKEN (dark default) */
+  --page-bg: #0b0313;
 
   /* SURFACES (dark default) */
   --surface: rgba(18, 10, 32, 0.92);
@@ -71,12 +65,7 @@
 
 /* Light theme */
 html[data-theme="light"] {
-  --page-bg: radial-gradient(
-    circle at top,
-    #f5f0ff 0%,
-    #ede9fe 45%,
-    #ffffff 100%
-  );
+  --page-bg: #f5f0ff;
 
   --surface: #ffffff;
   --surface-2: #ffffff;
@@ -91,22 +80,9 @@ html[data-theme="light"] {
   --input-placeholder: #6b7280;
 }
 
-/* Respect OS preference if no explicit theme is set */
-@media (prefers-color-scheme: dark) {
-  html:not([data-theme]) {
-    --page-bg: radial-gradient(
-      circle at top left,
-      #1a0b2e 0%,
-      #0b0313 55%,
-      #07020e 75%,
-      #000000 100%
-    );
-  }
-}
-
 /* =========================================================
    RESET / BASE
-   ========================================================= */
+========================================================= */
 
 *,
 *::before,
@@ -121,7 +97,7 @@ body {
   padding: 0;
 }
 
-/* ✅ This is the key: background lives on BOTH html and body */
+/* ✅ One background everywhere (no fighting overrides) */
 html {
   background: var(--page-bg);
 }
@@ -142,7 +118,7 @@ body {
 
 /* =========================================================
    CONTAINER
-   ========================================================= */
+========================================================= */
 
 .container {
   max-width: var(--max-width);
@@ -179,7 +155,7 @@ body {
 
 /* =========================================================
    WORDMARK
-   ========================================================= */
+========================================================= */
 
 .brand-wordmark {
   display: inline-flex;
@@ -244,8 +220,8 @@ body {
 }
 
 /* =========================================================
-   MAIN LAYOUT (landing)
-   ========================================================= */
+   MAIN LAYOUT (landing generic)
+========================================================= */
 
 main {
   display: grid;
@@ -265,7 +241,7 @@ main {
 
 /* =========================================================
    CARDS
-   ========================================================= */
+========================================================= */
 
 .card {
   background: var(--surface-2);
@@ -313,7 +289,7 @@ html[data-theme="dark"] .sidebar {
 
 /* =========================================================
    BUTTONS
-   ========================================================= */
+========================================================= */
 
 button,
 .btn {
@@ -376,7 +352,7 @@ html[data-theme="light"] .btn-muted:hover {
 
 /* =========================================================
    INPUTS
-   ========================================================= */
+========================================================= */
 
 .input,
 input,
@@ -409,7 +385,7 @@ select:focus {
 
 /* =========================================================
    SERVICES GRID HELPERS
-   ========================================================= */
+========================================================= */
 
 #services-list {
   display: grid;
@@ -427,15 +403,15 @@ select:focus {
 
 /* =========================================================
    FOOTER (no dark band, always blends)
-   ========================================================= */
+========================================================= */
 
 .site-footer {
-  margin-top: auto; /* ✅ pushes footer to bottom if page is short */
+  margin-top: auto;
   padding: 28px 0;
   text-align: center;
   color: var(--muted);
   font-size: 0.9rem;
-  background: transparent; /* ✅ no separate color strip */
+  background: transparent;
 }
 
 .site-footer .footer-inner {
@@ -467,7 +443,7 @@ select:focus {
 
 /* =========================================================
    PROFILE LAYOUT
-   ========================================================= */
+========================================================= */
 
 .profile-wrapper {
   max-width: 1100px;
@@ -550,7 +526,7 @@ html[data-theme="light"] .nav-link--danger {
 
 /* =========================================================
    MESSAGE MODAL
-   ========================================================= */
+========================================================= */
 
 #messageModal {
   position: fixed;
@@ -581,7 +557,7 @@ html[data-theme="light"] #messageModal .modal-content {
 
 /* =========================================================
    UTILITIES
-   ========================================================= */
+========================================================= */
 
 .hidden { display: none !important; }
 .is-hidden { display: none !important; }
@@ -593,7 +569,7 @@ html[data-theme="light"] #messageModal .modal-content {
 
 /* =========================================================
    MOBILE TWEAKS
-   ========================================================= */
+========================================================= */
 
 @media (max-width: 480px) {
   .container {
@@ -612,7 +588,7 @@ html[data-theme="light"] #messageModal .modal-content {
 
 /* =========================================================
    FORCE PURPLE (single clean override section)
-   ========================================================= */
+========================================================= */
 
 button,
 a.btn,
@@ -665,10 +641,11 @@ html[data-theme="light"] .pill-btn {
 }
 
 /* =========================================================
-   Auth bottom-right logo badge (login page)
-   ========================================================= */
+   Auth bottom-right logo badge (ONLY on auth pages)
+   Add class="auth-page" on login/register body
+========================================================= */
 
-.bottom-brand {
+.auth-page .bottom-brand {
   position: fixed;
   right: 320px;
   bottom: 120px;
@@ -680,14 +657,14 @@ html[data-theme="light"] .pill-btn {
   transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
-.bottom-brand img {
+.auth-page .bottom-brand img {
   width: 150px;
   height: auto;
   display: block;
   filter: drop-shadow(0 0 26px rgba(192, 132, 252, 0.65));
 }
 
-.bottom-brand-text {
+.auth-page .bottom-brand-text {
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.15em;
@@ -698,48 +675,38 @@ html[data-theme="light"] .pill-btn {
   color: transparent;
 }
 
-.bottom-brand:hover {
+.auth-page .bottom-brand:hover {
   opacity: 0.36;
   transform: translateY(-2px);
 }
 
 @media (max-width: 960px) {
-  .bottom-brand { display: none; }
-}
-/* ================================
-   ONE SOLID BACKGROUND (NO GRADIENT)
-   Put at VERY BOTTOM of style.css
-================================ */
-
-/* Dark mode = one solid color */
-html, body{
-  background: #0b0313 !important;
+  .auth-page .bottom-brand { display: none; }
 }
 
-/* Light mode = one solid color */
-html[data-theme="light"], 
-html[data-theme="light"] body{
-  background: #f5f0ff !important;
-}
-.hero-video {
-  grid-column: span 2;
-  background: #0b0313;
+/* =========================================================
+   Index hero video (ONLY when body has class "index-page")
+========================================================= */
+
+.index-page .hero-video {
+  background: var(--surface-2);
   border-radius: 22px;
-  border: 1px solid rgba(186,160,210,0.25);
+  border: 1px solid rgba(186, 160, 210, 0.25);
   padding: 20px;
 }
 
-.hero-video h2 {
+.index-page .hero-video h2 {
   margin-top: 0;
 }
 
-.hero-video-frame {
+.index-page .hero-video-frame {
   margin-top: 14px;
   aspect-ratio: 16 / 9;
   border-radius: 16px;
-  background: #000;
+  background: rgba(0, 0, 0, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(232,224,255,0.6);
+  color: rgba(232, 224, 255, 0.6);
+  border: 1px solid rgba(186, 160, 210, 0.18);
 }
