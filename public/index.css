@@ -278,22 +278,19 @@ body{
   /* keep the logo from eating the footer space */
   flex: 0 0 auto;
 }
-
 .mid-logo img{
   width: min(360px, 96%);
   max-height: 260px;
   height: auto;
   display:block;
-  object-fit: contain;
 
-  /* ✅ Match your design language */
-  border-radius: var(--radius); /* same rounding as panels */
+  object-fit: cover;
 
-  /* ✅ Subtle edge definition so it blends, not floats */
-  border: 1px solid rgba(124,58,237,0.18);
+  /* ✅ round the image itself */
+  border-radius: 24px;
 
-  /* ✅ Softer, integrated shadow */
-  filter: drop-shadow(0 12px 28px rgba(0,0,0,0.14));
+  /* ✅ clean, subtle depth (optional but recommended) */
+  box-shadow: 0 16px 36px rgba(0,0,0,0.18);
 }
 
 
