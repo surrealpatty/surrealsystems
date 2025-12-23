@@ -1,9 +1,8 @@
 // public/profile.js
 // Profile page logic: profile info + edit + create service dropdown + show & edit services.
 
-console.log("[profile] loaded profile.js v8");
+console.log("[profile] loaded profile.js v9 (project fields)");
 
-// Safe localStorage helpers
 function safeGet(key) {
   try {
     return localStorage.getItem(key);
@@ -20,7 +19,6 @@ function safeSet(key, value) {
   }
 }
 
-// Simple JWT decoder (kept for backward-compatibility; backend is cookie-based now)
 function decodeJwt(token) {
   if (!token || typeof token !== "string") return null;
   const parts = token.split(".");
@@ -40,15 +38,20 @@ function decodeJwt(token) {
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const DEFAULT_DESCRIPTION =
-    "Write a short bio so clients know what you do.";
+function clampEquity(value) {
+  // keep as number
+  if (!Number.isFinite(value)) return null;
+  const rounded = Math.round(value * 2) / 2; // 0.5 steps
+  if (rounded < 0.5 || rounded > 99.5) return null;
+  return rounded;
+}
 
-  // These will be filled from /api/users/me
+document.addEventListener("DOMContentLoaded", () => {
+  const DEFAULT_DESCRIPTION = "Write a short bio so clients know what you do.";
+
   let currentUserId = null;
   let currentUsername = "";
 
-  // ---------------- Read token & cc_me, reconcile current user (fallback only) ----------------
   const token =
     safeGet("token") ||
     safeGet("authToken") ||
@@ -56,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
     safeGet("accessToken") ||
     "";
 
-  const tokenPayload = decodeJwt(token) || null; // may contain id, email, username, etc.
+  const tokenPayload = decodeJwt(token) || null;
 
   let meUser = null;
   try {
@@ -66,7 +69,6 @@ document.addEventListener("DOMContentLoaded", () => {
     meUser = null;
   }
 
-  // If cc_me.id and tokenPayload.id disagree, cc_me is for a different user → discard it
   if (
     meUser &&
     tokenPayload &&
@@ -74,14 +76,11 @@ document.addEventListener("DOMContentLoaded", () => {
     tokenPayload.id != null &&
     String(meUser.id) !== String(tokenPayload.id)
   ) {
-    console.warn(
-      "[profile] cc_me user id does not match token id. Clearing stale cc_me."
-    );
+    console.warn("[profile] cc_me user id does not match token id. Clearing stale cc_me.");
     meUser = null;
-    safeSet("cc_me", ""); // wipe old one
+    safeSet("cc_me", "");
   }
 
-  // ---------------- Profile display (initial, from storage) ----------------
   const storedUsername = safeGet("username") || "";
   const storedEmail = safeGet("email") || "";
   const storedDescription = safeGet("description") || "";
@@ -91,47 +90,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const paramEmail = params.get("email") || "";
 
   const fromMeUsername =
-    (meUser &&
-      (meUser.username || meUser.name || meUser.displayName || "")) ||
-    "";
+    (meUser && (meUser.username || meUser.name || meUser.displayName || "")) || "";
   const fromMeEmail = (meUser && meUser.email) || "";
   const fromMeDescription = (meUser && meUser.description) || "";
 
   const fromTokenUsername =
     (tokenPayload &&
-      (tokenPayload.username ||
-        tokenPayload.name ||
-        tokenPayload.displayName ||
-        "")) ||
+      (tokenPayload.username || tokenPayload.name || tokenPayload.displayName || "")) ||
     "";
   const fromTokenEmail = (tokenPayload && tokenPayload.email) || "";
-  const fromTokenDescription =
-    (tokenPayload && tokenPayload.description) || "";
+  const fromTokenDescription = (tokenPayload && tokenPayload.description) || "";
 
-  // Prefer: cc_me → token → old storage → URL
   const username =
-    fromMeUsername ||
-    fromTokenUsername ||
-    storedUsername ||
-    paramUsername ||
-    "";
-  const email =
-    fromMeEmail || fromTokenEmail || storedEmail || paramEmail || "";
-  const description =
-    fromMeDescription ||
-    fromTokenDescription ||
-    storedDescription ||
-    "" ||
-    DEFAULT_DESCRIPTION;
+    fromMeUsername || fromTokenUsername || storedUsername || paramUsername || "";
+  const email = fromMeEmail || fromTokenEmail || storedEmail || paramEmail || "";
+  const description = fromMeDescription || fromTokenDescription || storedDescription || "" || DEFAULT_DESCRIPTION;
 
-  // Keep simple keys in sync with whichever user we decided is "current"
   if (username) safeSet("username", username);
   if (email) safeSet("email", email);
-  if (description && description !== DEFAULT_DESCRIPTION) {
-    safeSet("description", description);
-  }
+  if (description && description !== DEFAULT_DESCRIPTION) safeSet("description", description);
 
-  // Also rebuild cc_me from token + existing data if we don't have it
   if (!meUser) {
     const newMe = {};
     if (tokenPayload && tokenPayload.id != null) newMe.id = tokenPayload.id;
@@ -144,58 +122,32 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  if (meUser && meUser.id != null) {
-    currentUserId = meUser.id;
-  }
+  if (meUser && meUser.id != null) currentUserId = meUser.id;
   currentUsername = username || currentUsername;
 
-  // Grab DOM elements
-  const avatarEl =
-    document.getElementById("profileAvatar") ||
-    document.getElementById("topUserAvatar");
-  const emailBadge =
-    document.getElementById("profileEmail") ||
-    document.getElementById("topUserEmail");
+  const avatarEl = document.getElementById("profileAvatar") || document.getElementById("topUserAvatar");
+  const emailBadge = document.getElementById("profileEmail") || document.getElementById("topUserEmail");
   const emailMain = document.getElementById("profileEmailMain");
   const nameEl = document.getElementById("profileName");
   const descEl = document.getElementById("profileDescription");
 
-  // Compute display name (username or email local-part)
   let displayName = username;
-  if (!displayName && email) {
-    displayName = email.split("@")[0];
-  }
+  if (!displayName && email) displayName = email.split("@")[0];
 
-  // Initial fill from storage (will be overwritten by /users/me)
-  // - Big card EMAIL field still shows full email
-  // - Top-right chip (emailBadge) now shows DISPLAY NAME
-  if (emailMain) {
-    emailMain.textContent = email;
-  }
-  if (emailBadge) {
-    emailBadge.textContent = displayName || email || "User";
-  }
-
-  if (displayName && nameEl) {
-    nameEl.textContent = displayName;
-  }
-
-  if (descEl) {
-    descEl.textContent = description || DEFAULT_DESCRIPTION;
-  }
+  if (emailMain) emailMain.textContent = email;
+  if (emailBadge) emailBadge.textContent = displayName || email || "User";
+  if (displayName && nameEl) nameEl.textContent = displayName;
+  if (descEl) descEl.textContent = description || DEFAULT_DESCRIPTION;
 
   const initialSource = displayName || email || "U";
-  if (avatarEl && initialSource) {
-    avatarEl.textContent = initialSource.trim()[0].toUpperCase();
-  }
+  if (avatarEl && initialSource) avatarEl.textContent = initialSource.trim()[0].toUpperCase();
 
-  // ---------------- Fetch real user from backend: /api/users/me ----------------
   async function loadUserFromBackend() {
     const baseUrl = window.API_URL || "";
     try {
       const res = await fetch(baseUrl + "/users/me", {
         method: "GET",
-        credentials: "include", // send cookie with token
+        credentials: "include",
         headers: { Accept: "application/json" },
       });
 
@@ -205,9 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const payload = await res.json();
-      const u =
-        (payload && payload.user) ||
-        (payload && payload.data && payload.data.user);
+      const u = (payload && payload.user) || (payload && payload.data && payload.data.user);
 
       if (!u) {
         console.warn("[profile] /users/me payload has no user");
@@ -215,30 +165,21 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const uname =
-        u.username ||
-        u.name ||
-        u.displayName ||
-        (u.email ? u.email.split("@")[0] : "User");
+        u.username || u.name || u.displayName || (u.email ? u.email.split("@")[0] : "User");
       const uemail = u.email || "";
       const udesc = u.description || "";
 
       currentUserId = u.id;
       currentUsername = uname;
 
-      // Update UI with real user
       if (nameEl) nameEl.textContent = uname;
-      // chip shows display name, not email
       if (emailBadge) emailBadge.textContent = uname;
-      // big card EMAIL stays actual email
       if (emailMain) emailMain.textContent = uemail;
       if (descEl) descEl.textContent = udesc || DEFAULT_DESCRIPTION;
 
       const source = uname || uemail || "U";
-      if (avatarEl && source) {
-        avatarEl.textContent = source.trim()[0].toUpperCase();
-      }
+      if (avatarEl && source) avatarEl.textContent = source.trim()[0].toUpperCase();
 
-      // Persist for next visit
       safeSet("userId", String(u.id));
       safeSet("username", uname);
       safeSet("email", uemail);
@@ -262,56 +203,37 @@ document.addEventListener("DOMContentLoaded", () => {
   function enterEditMode() {
     if (!profileView || !profileEditForm) return;
 
-    if (editDisplayNameInput && nameEl) {
-      editDisplayNameInput.value = nameEl.textContent.trim();
-    }
-    if (editEmailInput && emailMain) {
-      editEmailInput.value = emailMain.textContent.trim();
-    }
+    if (editDisplayNameInput && nameEl) editDisplayNameInput.value = nameEl.textContent.trim();
+    if (editEmailInput && emailMain) editEmailInput.value = emailMain.textContent.trim();
     if (editDescriptionInput && descEl) {
       const current = descEl.textContent.trim();
-      editDescriptionInput.value =
-        current === DEFAULT_DESCRIPTION ? "" : current;
+      editDescriptionInput.value = current === DEFAULT_DESCRIPTION ? "" : current;
     }
 
     profileView.classList.add("is-hidden");
     profileEditForm.classList.remove("is-hidden");
 
-    if (accountSettingsCard) {
-      accountSettingsCard.classList.remove("is-hidden");
-    }
+    if (accountSettingsCard) accountSettingsCard.classList.remove("is-hidden");
   }
 
   function exitEditMode() {
     if (!profileView || !profileEditForm) return;
     profileEditForm.classList.add("is-hidden");
     profileView.classList.remove("is-hidden");
-
-    if (accountSettingsCard) {
-      accountSettingsCard.classList.add("is-hidden");
-    }
+    if (accountSettingsCard) accountSettingsCard.classList.add("is-hidden");
   }
 
-  if (editBtn) {
-    editBtn.addEventListener("click", enterEditMode);
-  }
-
-  if (cancelEditBtn) {
-    cancelEditBtn.addEventListener("click", exitEditMode);
-  }
+  if (editBtn) editBtn.addEventListener("click", enterEditMode);
+  if (cancelEditBtn) cancelEditBtn.addEventListener("click", exitEditMode);
 
   if (profileEditForm) {
     profileEditForm.addEventListener("submit", (e) => {
       e.preventDefault();
       if (!editEmailInput) return;
 
-      const newName = editDisplayNameInput
-        ? editDisplayNameInput.value.trim()
-        : "";
+      const newName = editDisplayNameInput ? editDisplayNameInput.value.trim() : "";
       const newEmail = editEmailInput.value.trim();
-      const newDescription = editDescriptionInput
-        ? editDescriptionInput.value.trim()
-        : "";
+      const newDescription = editDescriptionInput ? editDescriptionInput.value.trim() : "";
 
       if (!newEmail) {
         alert("Email is required.");
@@ -319,35 +241,22 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Decide what the display name should be
       const usernameToStore = newName || newEmail.split("@")[0];
 
-      // Update UI
-      if (nameEl) {
-        nameEl.textContent = newName || usernameToStore || "New developer";
-      }
-      if (emailBadge) {
-        emailBadge.textContent = usernameToStore;
-      }
-      if (emailMain) {
-        emailMain.textContent = newEmail;
-      }
-      if (descEl) {
-        descEl.textContent = newDescription || DEFAULT_DESCRIPTION;
-      }
+      if (nameEl) nameEl.textContent = newName || usernameToStore || "New developer";
+      if (emailBadge) emailBadge.textContent = usernameToStore;
+      if (emailMain) emailMain.textContent = newEmail;
+      if (descEl) descEl.textContent = newDescription || DEFAULT_DESCRIPTION;
 
-      // Avatar
       if (avatarEl) {
         const source = (usernameToStore || newEmail || "U").trim();
         avatarEl.textContent = source[0].toUpperCase();
       }
 
-      // Persist (UI only)
       safeSet("email", newEmail);
       safeSet("username", usernameToStore);
       safeSet("description", newDescription);
 
-      // Keep cc_me in sync so current user stays correct
       try {
         const raw = safeGet("cc_me");
         const me = raw ? JSON.parse(raw) : {};
@@ -366,16 +275,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------- Create Service dropdown + submit ----------------
   const createServiceBtn = document.getElementById("createServiceBtn");
   const createServiceForm = document.getElementById("createServiceForm");
-  const cancelCreateServiceBtn = document.getElementById(
-    "cancelCreateServiceBtn"
-  );
+  const cancelCreateServiceBtn = document.getElementById("cancelCreateServiceBtn");
 
   if (createServiceBtn && createServiceForm) {
     console.log("[profile] Create Service button & form found");
 
-    const originalBtnText =
-      (createServiceBtn.textContent && createServiceBtn.textContent.trim()) ||
-      "Create Service";
+    const originalBtnText = (createServiceBtn.textContent && createServiceBtn.textContent.trim()) || "Create Service";
 
     function showCreateForm() {
       createServiceForm.classList.remove("is-hidden");
@@ -389,17 +294,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     createServiceBtn.addEventListener("click", () => {
       const isHidden = createServiceForm.classList.contains("is-hidden");
-      console.log("[profile] Create Service clicked, isHidden =", isHidden);
-      if (isHidden) {
-        showCreateForm();
-      } else {
-        hideCreateForm();
-      }
+      if (isHidden) showCreateForm();
+      else hideCreateForm();
     });
 
     if (cancelCreateServiceBtn) {
       cancelCreateServiceBtn.addEventListener("click", () => {
-        console.log("[profile] Cancel Create Service clicked");
         hideCreateForm();
         createServiceForm.reset();
       });
@@ -409,23 +309,23 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
 
       const titleEl = document.getElementById("serviceTitle");
-      const priceEl = document.getElementById("servicePrice");
       const descElService = document.getElementById("serviceDescription");
+      const needsEl = document.getElementById("serviceNeeds");
+      const equityEl = document.getElementById("serviceEquity");
 
       const title = titleEl ? titleEl.value.trim() : "";
-      const priceValue = priceEl ? priceEl.value.trim() : "";
-      const descriptionService = descElService
-        ? descElService.value.trim()
-        : "";
+      const descriptionService = descElService ? descElService.value.trim() : "";
+      const needs = needsEl ? needsEl.value.trim() : "";
+      const equityRaw = equityEl ? equityEl.value.trim() : "";
 
-      if (!title || !priceValue || !descriptionService) {
-        alert("Please fill in all service fields.");
+      if (!title || !descriptionService || !needs || !equityRaw) {
+        alert("Please fill in all fields.");
         return;
       }
 
-      const price = Number(priceValue);
-      if (Number.isNaN(price) || price <= 0) {
-        alert("Please enter a valid price.");
+      const equityNum = clampEquity(Number(equityRaw));
+      if (equityNum == null) {
+        alert("Equity must be between 0.5 and 99.5 (steps of 0.5).");
         return;
       }
 
@@ -435,8 +335,9 @@ document.addEventListener("DOMContentLoaded", () => {
             method: "POST",
             body: {
               title,
-              price,
               description: descriptionService,
+              needs,
+              equityPercentage: equityNum,
             },
           });
         } else {
@@ -444,29 +345,23 @@ document.addEventListener("DOMContentLoaded", () => {
           const headers = { "Content-Type": "application/json" };
 
           const tokenInner =
-            safeGet("token") ||
-            safeGet("authToken") ||
-            safeGet("jwt") ||
-            safeGet("accessToken");
-          if (tokenInner) {
-            headers.Authorization = "Bearer " + tokenInner;
-          }
+            safeGet("token") || safeGet("authToken") || safeGet("jwt") || safeGet("accessToken");
+          if (tokenInner) headers.Authorization = "Bearer " + tokenInner;
 
           const res = await fetch(baseUrl + "/services", {
             method: "POST",
             headers,
             body: JSON.stringify({
               title,
-              price,
               description: descriptionService,
+              needs,
+              equityPercentage: equityNum,
             }),
           });
 
           if (!res.ok) {
             const errJson = await res.json().catch(() => ({}));
-            const msg =
-              errJson.message ||
-              `Failed to create service (status ${res.status}).`;
+            const msg = errJson.message || `Failed to create service (status ${res.status}).`;
             throw new Error(msg);
           }
         }
@@ -474,8 +369,6 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Service created successfully!");
         createServiceForm.reset();
         hideCreateForm();
-
-        // Reload list so the new service shows under "Your services"
         loadServicesForProfile();
       } catch (err) {
         console.error(err);
@@ -491,7 +384,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ---------------- Helpers for editing & deleting a service ----------------
-
   async function updateServiceById(serviceId, payload) {
     if (typeof window.apiFetch === "function") {
       return window.apiFetch(`services/${serviceId}`, {
@@ -504,13 +396,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const headers = { "Content-Type": "application/json" };
 
     const tokenInner =
-      safeGet("token") ||
-      safeGet("authToken") ||
-      safeGet("jwt") ||
-      safeGet("accessToken");
-    if (tokenInner) {
-      headers.Authorization = "Bearer " + tokenInner;
-    }
+      safeGet("token") || safeGet("authToken") || safeGet("jwt") || safeGet("accessToken");
+    if (tokenInner) headers.Authorization = "Bearer " + tokenInner;
 
     const res = await fetch(baseUrl + `/services/${serviceId}`, {
       method: "PUT",
@@ -520,79 +407,65 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!res.ok) {
       const errJson = await res.json().catch(() => ({}));
-      const msg =
-        errJson.message || `Failed to update service (status ${res.status}).`;
+      const msg = errJson.message || `Failed to update service (status ${res.status}).`;
       throw new Error(msg);
     }
   }
 
   async function deleteServiceById(serviceId) {
     if (typeof window.apiFetch === "function") {
-      return window.apiFetch(`services/${serviceId}`, {
-        method: "DELETE",
-      });
+      return window.apiFetch(`services/${serviceId}`, { method: "DELETE" });
     }
 
     const baseUrl = window.API_URL || "";
     const headers = {};
 
     const tokenInner =
-      safeGet("token") ||
-      safeGet("authToken") ||
-      safeGet("jwt") ||
-      safeGet("accessToken");
-    if (tokenInner) {
-      headers.Authorization = "Bearer " + tokenInner;
-    }
+      safeGet("token") || safeGet("authToken") || safeGet("jwt") || safeGet("accessToken");
+    if (tokenInner) headers.Authorization = "Bearer " + tokenInner;
 
-    const res = await fetch(baseUrl + `/services/${serviceId}`, {
-      method: "DELETE",
-      headers,
-    });
+    const res = await fetch(baseUrl + `/services/${serviceId}`, { method: "DELETE", headers });
 
     if (!res.ok) {
       const errJson = await res.json().catch(() => ({}));
-      const msg =
-        errJson.message || `Failed to delete service (status ${res.status}).`;
+      const msg = errJson.message || `Failed to delete service (status ${res.status}).`;
       throw new Error(msg);
     }
   }
 
   // ✨ INLINE EDIT MODE inside the card (no browser prompt)
   function handleEditServiceFromCard(card, serviceId) {
-    // If already editing, do nothing
     if (card.querySelector(".service-inline-edit")) return;
 
     const titleEl = card.querySelector(".profile-service-title");
     const metaEls = card.querySelectorAll(".profile-service-meta");
 
-    const descElMeta = metaEls[0]; // description
-    const priceElMeta = metaEls[1]; // "Price: $123"
-    const actionsRow =
-      card.querySelector(".profile-service-actions") || metaEls[2];
+    // We will render: description, needs, equity
+    const descElMeta = metaEls[0];
+    const needsElMeta = metaEls[1];
+    const equityElMeta = metaEls[2];
+    const actionsRow = card.querySelector(".profile-service-actions") || metaEls[3];
 
     const currentTitle = (titleEl && titleEl.textContent.trim()) || "";
     const currentDesc = (descElMeta && descElMeta.textContent.trim()) || "";
-    const priceText = (priceElMeta && priceElMeta.textContent.trim()) || "";
+    const currentNeeds = (needsElMeta && needsElMeta.textContent.trim()) || "";
+    const equityText = (equityElMeta && equityElMeta.textContent.trim()) || ""; // "Equity: 10.5%"
 
-    const match = priceText.match(/([\d,.]+)/);
-    const currentPrice = match ? match[1].replace(/,/g, "") : "0";
+    const equityMatch = equityText.match(/([\d.]+)/);
+    const currentEquity = equityMatch ? equityMatch[1] : "0.5";
 
-    // Hide static content while editing
-    [titleEl, descElMeta, priceElMeta, actionsRow]
+    [titleEl, descElMeta, needsElMeta, equityElMeta, actionsRow]
       .filter(Boolean)
       .forEach((el) => el.classList.add("is-hidden"));
 
-    // Build inline edit UI
     const wrapper = document.createElement("div");
     wrapper.className = "service-inline-edit profile-edit";
 
-    // Title row
     const rowTitle = document.createElement("div");
     rowTitle.className = "profile-edit-row";
     const labelTitle = document.createElement("label");
     labelTitle.className = "profile-edit-label";
-    labelTitle.textContent = "Service title";
+    labelTitle.textContent = "Title";
     const inputTitle = document.createElement("input");
     inputTitle.type = "text";
     inputTitle.className = "profile-edit-input";
@@ -601,12 +474,11 @@ document.addEventListener("DOMContentLoaded", () => {
     rowTitle.appendChild(labelTitle);
     rowTitle.appendChild(inputTitle);
 
-    // Description row
     const rowDesc = document.createElement("div");
     rowDesc.className = "profile-edit-row";
     const labelDesc = document.createElement("label");
     labelDesc.className = "profile-edit-label";
-    labelDesc.textContent = "Description";
+    labelDesc.textContent = "Description of the project";
     const textareaDesc = document.createElement("textarea");
     textareaDesc.className = "profile-edit-textarea";
     textareaDesc.rows = 3;
@@ -614,22 +486,33 @@ document.addEventListener("DOMContentLoaded", () => {
     rowDesc.appendChild(labelDesc);
     rowDesc.appendChild(textareaDesc);
 
-    // Price row
-    const rowPrice = document.createElement("div");
-    rowPrice.className = "profile-edit-row";
-    const labelPrice = document.createElement("label");
-    labelPrice.className = "profile-edit-label";
-    labelPrice.textContent = "Price (USD)";
-    const inputPrice = document.createElement("input");
-    inputPrice.type = "number";
-    inputPrice.className = "profile-edit-input";
-    inputPrice.min = "1";
-    inputPrice.step = "1";
-    inputPrice.value = currentPrice;
-    rowPrice.appendChild(labelPrice);
-    rowPrice.appendChild(inputPrice);
+    const rowNeeds = document.createElement("div");
+    rowNeeds.className = "profile-edit-row";
+    const labelNeeds = document.createElement("label");
+    labelNeeds.className = "profile-edit-label";
+    labelNeeds.textContent = "What the project needs";
+    const textareaNeeds = document.createElement("textarea");
+    textareaNeeds.className = "profile-edit-textarea";
+    textareaNeeds.rows = 3;
+    textareaNeeds.value = currentNeeds;
+    rowNeeds.appendChild(labelNeeds);
+    rowNeeds.appendChild(textareaNeeds);
 
-    // Actions row
+    const rowEquity = document.createElement("div");
+    rowEquity.className = "profile-edit-row";
+    const labelEquity = document.createElement("label");
+    labelEquity.className = "profile-edit-label";
+    labelEquity.textContent = "Equity % (0.5 to 99.5)";
+    const inputEquity = document.createElement("input");
+    inputEquity.type = "number";
+    inputEquity.className = "profile-edit-input";
+    inputEquity.min = "0.5";
+    inputEquity.max = "99.5";
+    inputEquity.step = "0.5";
+    inputEquity.value = currentEquity;
+    rowEquity.appendChild(labelEquity);
+    rowEquity.appendChild(inputEquity);
+
     const actions = document.createElement("div");
     actions.className = "profile-edit-actions";
 
@@ -648,7 +531,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     wrapper.appendChild(rowTitle);
     wrapper.appendChild(rowDesc);
-    wrapper.appendChild(rowPrice);
+    wrapper.appendChild(rowNeeds);
+    wrapper.appendChild(rowEquity);
     wrapper.appendChild(actions);
 
     card.appendChild(wrapper);
@@ -656,16 +540,17 @@ document.addEventListener("DOMContentLoaded", () => {
     async function handleSave() {
       const newTitle = inputTitle.value.trim();
       const newDesc = textareaDesc.value.trim();
-      const priceRaw = inputPrice.value.trim();
+      const newNeeds = textareaNeeds.value.trim();
+      const equityRaw = inputEquity.value.trim();
 
-      if (!newTitle || !priceRaw) {
-        alert("Please fill in at least title and price.");
+      if (!newTitle || !newDesc || !newNeeds || !equityRaw) {
+        alert("Please fill in all fields.");
         return;
       }
 
-      const newPrice = parseFloat(priceRaw);
-      if (Number.isNaN(newPrice) || newPrice <= 0) {
-        alert("Price must be a positive number.");
+      const equityNum = clampEquity(Number(equityRaw));
+      if (equityNum == null) {
+        alert("Equity must be between 0.5 and 99.5 (steps of 0.5).");
         return;
       }
 
@@ -673,17 +558,17 @@ document.addEventListener("DOMContentLoaded", () => {
         await updateServiceById(serviceId, {
           title: newTitle,
           description: newDesc,
-          price: newPrice,
+          needs: newNeeds,
+          equityPercentage: equityNum,
         });
 
-        // Update static UI
         if (titleEl) titleEl.textContent = newTitle;
-        if (descElMeta) descElMeta.textContent = newDesc || "";
-        if (priceElMeta) priceElMeta.textContent = `Price: $${newPrice}`;
+        if (descElMeta) descElMeta.textContent = newDesc;
+        if (needsElMeta) needsElMeta.textContent = newNeeds;
+        if (equityElMeta) equityElMeta.textContent = `Equity: ${equityNum}%`;
 
-        // Clean up
         wrapper.remove();
-        [titleEl, descElMeta, priceElMeta, actionsRow]
+        [titleEl, descElMeta, needsElMeta, equityElMeta, actionsRow]
           .filter(Boolean)
           .forEach((el) => el.classList.remove("is-hidden"));
       } catch (err) {
@@ -694,7 +579,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function handleCancel() {
       wrapper.remove();
-      [titleEl, descElMeta, priceElMeta, actionsRow]
+      [titleEl, descElMeta, needsElMeta, equityElMeta, actionsRow]
         .filter(Boolean)
         .forEach((el) => el.classList.remove("is-hidden"));
     }
@@ -708,7 +593,6 @@ document.addEventListener("DOMContentLoaded", () => {
       handleCancel();
     });
 
-    // focus title for quick typing
     inputTitle.focus();
   }
 
@@ -723,8 +607,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const emptyEl = document.getElementById("profileServicesEmpty");
       if (listEl && emptyEl && listEl.children.length === 0) {
         emptyEl.classList.remove("is-hidden");
-        emptyEl.textContent =
-          "You don’t have any services yet. Create one to start attracting clients.";
+        emptyEl.textContent = "You don’t have any services yet. Create one to start posting.";
       }
     } catch (err) {
       console.error("Failed to delete service", err);
@@ -740,7 +623,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     listEl.innerHTML = "";
 
-    // Determine the current user ID and username
     const hasGetUserId = typeof window.getUserId === "function";
     const fallbackUserId = hasGetUserId ? window.getUserId() : "";
     const storedUsernameInner = safeGet("username") || "";
@@ -753,25 +635,15 @@ document.addEventListener("DOMContentLoaded", () => {
       meUserInner = null;
     }
 
-    const userId =
-      currentUserId ||
-      (meUserInner && meUserInner.id) ||
-      fallbackUserId ||
-      "";
-
+    const userId = currentUserId || (meUserInner && meUserInner.id) || fallbackUserId || "";
     const myUsername =
       currentUsername ||
-      (meUserInner &&
-        (meUserInner.username ||
-          meUserInner.name ||
-          meUserInner.displayName ||
-          "")) ||
+      (meUserInner && (meUserInner.username || meUserInner.name || meUserInner.displayName || "")) ||
       storedUsernameInner;
 
     if (!userId && !myUsername) {
       emptyEl.classList.remove("is-hidden");
-      emptyEl.textContent =
-        "Could not determine your account. Please log in again.";
+      emptyEl.textContent = "Could not determine your account. Please log in again.";
       return;
     }
 
@@ -784,92 +656,45 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const queryId = userId ? `userId=${encodeURIComponent(userId)}&` : "";
       if (typeof window.apiFetch === "function") {
-        payload = await window.apiFetch(
-          `services?${queryId}limit=50&sort=newest`
-        );
+        payload = await window.apiFetch(`services?${queryId}limit=50&sort=newest`);
       } else {
         const baseUrl = window.API_URL || "";
-        const res = await fetch(
-          baseUrl + `/services?${queryId}limit=50&sort=newest`
-        );
+        const res = await fetch(baseUrl + `/services?${queryId}limit=50&sort=newest`);
         payload = await res.json();
       }
 
-      if (Array.isArray(payload)) {
-        services = payload;
-      } else if (payload && Array.isArray(payload.data)) {
-        services = payload.data;
-      } else if (payload && Array.isArray(payload.services)) {
-        services = payload.services;
-      } else if (
-        payload &&
-        payload.data &&
-        Array.isArray(payload.data.services)
-      ) {
-        services = payload.data.services;
-      } else if (payload && Array.isArray(payload.rows)) {
-        services = payload.rows;
-      } else if (
-        payload &&
-        payload.data &&
-        Array.isArray(payload.data.rows)
-      ) {
-        services = payload.data.rows;
-      }
+      if (Array.isArray(payload)) services = payload;
+      else if (payload && Array.isArray(payload.data)) services = payload.data;
+      else if (payload && Array.isArray(payload.services)) services = payload.services;
+      else if (payload && payload.data && Array.isArray(payload.data.services)) services = payload.data.services;
+      else if (payload && Array.isArray(payload.rows)) services = payload.rows;
+      else if (payload && payload.data && Array.isArray(payload.data.rows)) services = payload.data.rows;
 
       const uidStr = userId ? String(userId) : "";
       const myNameLower = myUsername ? myUsername.toLowerCase() : "";
 
       services = services.filter((svc) => {
         const svcUserId =
-          svc.userId ??
-          svc.UserId ??
-          (svc.user && (svc.user.id ?? svc.user.userId));
+          svc.userId ?? svc.UserId ?? (svc.user && (svc.user.id ?? svc.user.userId));
         const svcUsername =
-          (svc.user &&
-            (svc.user.username ||
-              svc.user.name ||
-              svc.user.displayName ||
-              "")) ||
-          "";
+          (svc.user && (svc.user.username || svc.user.name || svc.user.displayName || "")) || "";
 
         let match = false;
-
-        if (uidStr && svcUserId !== undefined && svcUserId !== null) {
-          match = String(svcUserId) === uidStr;
-        }
-
-        if (!match && myNameLower && svcUsername) {
-          match = svcUsername.toLowerCase() === myNameLower;
-        }
-
+        if (uidStr && svcUserId !== undefined && svcUserId !== null) match = String(svcUserId) === uidStr;
+        if (!match && myNameLower && svcUsername) match = svcUsername.toLowerCase() === myNameLower;
         return match;
       });
     } catch (err) {
       console.error("Failed to load services on profile page:", err);
 
-      const status = err && err.status ? err.status : null;
-      if (status === 401 || status === 403) {
-        try {
-          if (typeof window.clearToken === "function") window.clearToken();
-          if (typeof window.clearUserId === "function") window.clearUserId();
-        } catch {}
-
-        emptyEl.classList.remove("is-hidden");
-        emptyEl.textContent =
-          "Your session has expired. Please log in again to see your services.";
-      } else {
-        emptyEl.classList.remove("is-hidden");
-        emptyEl.textContent =
-          "Could not load your services right now. Please try again.";
-      }
+      emptyEl.classList.remove("is-hidden");
+      emptyEl.textContent = "Could not load your services right now. Please try again.";
       return;
     }
 
     if (!services.length) {
       emptyEl.classList.remove("is-hidden");
-      emptyEl.textContent =
-        "You don’t have any services yet. Create one to start attracting clients.";
+      emptyEl.textContent = "You don’t have any services yet. Create one to start posting.";
       listEl.innerHTML = "";
       return;
     }
@@ -881,13 +706,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const card = document.createElement("div");
       card.className = "profile-service-card";
 
-      if (svc.id != null) {
-        card.dataset.serviceId = String(svc.id);
-      }
+      if (svc.id != null) card.dataset.serviceId = String(svc.id);
 
       const titleDiv = document.createElement("div");
       titleDiv.className = "profile-service-title";
-      titleDiv.textContent = svc.title || "Untitled service";
+      titleDiv.textContent = svc.title || "Untitled project";
       card.appendChild(titleDiv);
 
       const metaDesc = document.createElement("div");
@@ -895,15 +718,16 @@ document.addEventListener("DOMContentLoaded", () => {
       metaDesc.textContent = svc.description || "";
       card.appendChild(metaDesc);
 
-      const metaPrice = document.createElement("div");
-      metaPrice.className = "profile-service-meta";
-      const rawPrice = svc.price ?? 0;
-      const priceNum = Number(rawPrice);
-      const priceText = Number.isFinite(priceNum)
-        ? priceNum.toLocaleString()
-        : String(rawPrice);
-      metaPrice.textContent = `Price: $${priceText}`;
-      card.appendChild(metaPrice);
+      const metaNeeds = document.createElement("div");
+      metaNeeds.className = "profile-service-meta";
+      metaNeeds.textContent = svc.needs || "";
+      card.appendChild(metaNeeds);
+
+      const metaEquity = document.createElement("div");
+      metaEquity.className = "profile-service-meta";
+      const eq = svc.equityPercentage ?? svc.equity ?? "";
+      metaEquity.textContent = eq !== "" ? `Equity: ${eq}%` : "Equity: —";
+      card.appendChild(metaEquity);
 
       const actionsRow = document.createElement("div");
       actionsRow.className = "profile-service-meta profile-service-actions";
@@ -925,7 +749,6 @@ document.addEventListener("DOMContentLoaded", () => {
       listEl.appendChild(card);
     });
 
-    // Attach click handler ONCE for edit/delete (event delegation)
     if (!listEl.dataset.hasServiceHandlers) {
       listEl.addEventListener("click", (event) => {
         const editButton = event.target.closest(".service-edit-btn");
@@ -934,23 +757,16 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!card) return;
 
         const serviceId = card.dataset.serviceId;
-        if (!serviceId) {
-          console.warn("[profile] service card missing data-service-id");
-          return;
-        }
+        if (!serviceId) return;
 
-        if (editButton) {
-          handleEditServiceFromCard(card, serviceId);
-        } else if (deleteButton) {
-          handleDeleteServiceFromCard(card, serviceId);
-        }
+        if (editButton) handleEditServiceFromCard(card, serviceId);
+        else if (deleteButton) handleDeleteServiceFromCard(card, serviceId);
       });
 
       listEl.dataset.hasServiceHandlers = "1";
     }
   }
 
-  // --- Final initialisation: load real user THEN services ---
   loadUserFromBackend().then(() => {
     loadServicesForProfile();
   });

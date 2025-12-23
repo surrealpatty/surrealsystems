@@ -1,25 +1,35 @@
 // src/models/service.js
 module.exports = (sequelize) => {
-  const { DataTypes } = require('sequelize');
+  const { DataTypes } = require("sequelize");
 
   const Service = sequelize.define(
-    'Service',
+    "Service",
     {
       id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
 
-      // Keep the JS attribute name 'userId' and map to the DB column 'userId'
-      // (the DB currently uses camelCase columns).
-      userId: { type: DataTypes.INTEGER, allowNull: false, field: 'userId' }, // owner
+      // owner
+      userId: { type: DataTypes.INTEGER, allowNull: false, field: "userId" },
 
       title: { type: DataTypes.STRING, allowNull: false },
-      description: { type: DataTypes.TEXT, allowNull: true },
-      price: { type: DataTypes.DECIMAL(10, 2), allowNull: true },
+
+      // project description
+      description: { type: DataTypes.TEXT, allowNull: false },
+
+      // what the project needs
+      needs: { type: DataTypes.TEXT, allowNull: false },
+
+      // percentage of company up for offer (0.5 to 99.5)
+      equityPercentage: {
+        type: DataTypes.DECIMAL(4, 1), // 99.5 fits
+        allowNull: false,
+        validate: { min: 0.5, max: 99.5 },
+      },
     },
     {
-      tableName: 'services',
+      tableName: "services",
       timestamps: true,
-      underscored: false, // Use camelCase timestamps/columns
-    },
+      underscored: false,
+    }
   );
 
   return Service;

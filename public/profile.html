@@ -251,6 +251,13 @@
         width:100%;
       }
 
+      /* extra helper text */
+      .help-text{
+        margin:0;
+        font-size:0.82rem;
+        color: var(--muted);
+      }
+
       #profileServicesList{
         margin-top:12px;
         display:grid;
@@ -500,20 +507,55 @@
               </button>
             </div>
 
+            <!-- ✅ UPDATED FORM FIELDS -->
             <form id="createServiceForm" class="service-panel is-hidden">
               <div class="profile-edit-row">
-                <label for="serviceTitle" class="profile-label">Service title</label>
-                <input type="text" id="serviceTitle" class="profile-edit-input" maxlength="100" required />
+                <label for="serviceTitle" class="profile-label">Title</label>
+                <input
+                  type="text"
+                  id="serviceTitle"
+                  class="profile-edit-input"
+                  maxlength="100"
+                  placeholder="Project title"
+                  required
+                />
               </div>
 
               <div class="profile-edit-row">
-                <label for="servicePrice" class="profile-label">Price (USD)</label>
-                <input type="number" id="servicePrice" class="profile-edit-input" min="5" step="1" required />
+                <label for="serviceDescription" class="profile-label">Description of the project</label>
+                <textarea
+                  id="serviceDescription"
+                  class="profile-edit-textarea"
+                  rows="4"
+                  placeholder="What is the project? What problem does it solve?"
+                  required
+                ></textarea>
               </div>
 
               <div class="profile-edit-row">
-                <label for="serviceDescription" class="profile-label">Description</label>
-                <textarea id="serviceDescription" class="profile-edit-textarea" rows="4" required></textarea>
+                <label for="serviceNeeds" class="profile-label">What the project needs</label>
+                <textarea
+                  id="serviceNeeds"
+                  class="profile-edit-textarea"
+                  rows="4"
+                  placeholder="Example: funding, developers, marketing, design, mentorship..."
+                  required
+                ></textarea>
+              </div>
+
+              <div class="profile-edit-row">
+                <label for="serviceEquity" class="profile-label">Percentage of company up for offer</label>
+                <input
+                  type="number"
+                  id="serviceEquity"
+                  class="profile-edit-input"
+                  min="0.5"
+                  max="99.5"
+                  step="0.5"
+                  placeholder="0.5 to 99.5"
+                  required
+                />
+                <p class="help-text">Allowed: 0.5% to 99.5% (steps of 0.5)</p>
               </div>
 
               <div class="btn-row">
