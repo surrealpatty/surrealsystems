@@ -1,7 +1,7 @@
 // public/profile.js
 // Profile page logic: profile info + edit + create service dropdown + show & edit services.
 
-console.log("[profile] loaded profile.js v9 (project fields)");
+console.log("[profile] loaded profile.js v10 (project fields + /api fixes)");
 
 function safeGet(key) {
   try {
@@ -39,11 +39,29 @@ function decodeJwt(token) {
 }
 
 function clampEquity(value) {
-  // keep as number
   if (!Number.isFinite(value)) return null;
   const rounded = Math.round(value * 2) / 2; // 0.5 steps
   if (rounded < 0.5 || rounded > 99.5) return null;
   return rounded;
+}
+
+// ✅ helper: extract API error message consistently
+async function readApiError(res) {
+  let errJson = null;
+  try {
+    errJson = await res.json();
+  } catch {
+    errJson = null;
+  }
+
+  // supports: { error:{message} } OR { message } OR { success:false,error:{message} }
+  const msg =
+    (errJson && errJson.error && errJson.error.message) ||
+    (errJson && errJson.message) ||
+    (errJson && errJson.error && errJson.error.details && JSON.stringify(errJson.error.details)) ||
+    null;
+
+  return msg || `Request failed (status ${res.status}).`;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -104,7 +122,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const username =
     fromMeUsername || fromTokenUsername || storedUsername || paramUsername || "";
   const email = fromMeEmail || fromTokenEmail || storedEmail || paramEmail || "";
-  const description = fromMeDescription || fromTokenDescription || storedDescription || "" || DEFAULT_DESCRIPTION;
+  const description =
+    fromMeDescription ||
+    fromTokenDescription ||
+    storedDescription ||
+    "" ||
+    DEFAULT_DESCRIPTION;
 
   if (username) safeSet("username", username);
   if (email) safeSet("email", email);
@@ -125,8 +148,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (meUser && meUser.id != null) currentUserId = meUser.id;
   currentUsername = username || currentUsername;
 
-  const avatarEl = document.getElementById("profileAvatar") || document.getElementById("topUserAvatar");
-  const emailBadge = document.getElementById("profileEmail") || document.getElementById("topUserEmail");
+  const avatarEl =
+    document.getElementById("profileAvatar") || document.getElementById("topUserAvatar");
+  const emailBadge =
+    document.getElementById("profileEmail") || document.getElementById("topUserEmail");
   const emailMain = document.getElementById("profileEmailMain");
   const nameEl = document.getElementById("profileName");
   const descEl = document.getElementById("profileDescription");
@@ -145,14 +170,15 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadUserFromBackend() {
     const baseUrl = window.API_URL || "";
     try {
-      const res = await fetch(baseUrl + "/users/me", {
+      // ✅ FIX: backend routes are /api/users/*
+      const res = await fetch(baseUrl + "/api/users/me", {
         method: "GET",
         credentials: "include",
         headers: { Accept: "application/json" },
       });
 
       if (!res.ok) {
-        console.warn("[profile] /users/me returned status", res.status);
+        console.warn("[profile] /api/users/me returned status", res.status);
         return;
       }
 
@@ -160,7 +186,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const u = (payload && payload.user) || (payload && payload.data && payload.data.user);
 
       if (!u) {
-        console.warn("[profile] /users/me payload has no user");
+        console.warn("[profile] /api/users/me payload has no user");
         return;
       }
 
@@ -186,7 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
       safeSet("description", udesc);
       safeSet("cc_me", JSON.stringify(u));
     } catch (err) {
-      console.error("[profile] Failed to load /users/me", err);
+      console.error("[profile] Failed to load /api/users/me", err);
     }
   }
 
@@ -280,7 +306,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (createServiceBtn && createServiceForm) {
     console.log("[profile] Create Service button & form found");
 
-    const originalBtnText = (createServiceBtn.textContent && createServiceBtn.textContent.trim()) || "Create Service";
+    const originalBtnText =
+      (createServiceBtn.textContent && createServiceBtn.textContent.trim()) || "Create Service";
 
     function showCreateForm() {
       createServiceForm.classList.remove("is-hidden");
@@ -331,6 +358,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         if (typeof window.apiFetch === "function") {
+          // ✅ if your apiFetch already prefixes /api, this is fine.
           await window.apiFetch("services", {
             method: "POST",
             body: {
@@ -348,9 +376,12 @@ document.addEventListener("DOMContentLoaded", () => {
             safeGet("token") || safeGet("authToken") || safeGet("jwt") || safeGet("accessToken");
           if (tokenInner) headers.Authorization = "Bearer " + tokenInner;
 
-          const res = await fetch(baseUrl + "/services", {
+          // ✅ FIX 1: must hit /api/services
+          // ✅ FIX 2: include credentials for cookie auth
+          const res = await fetch(baseUrl + "/api/services", {
             method: "POST",
             headers,
+            credentials: "include",
             body: JSON.stringify({
               title,
               description: descriptionService,
@@ -360,8 +391,7 @@ document.addEventListener("DOMContentLoaded", () => {
           });
 
           if (!res.ok) {
-            const errJson = await res.json().catch(() => ({}));
-            const msg = errJson.message || `Failed to create service (status ${res.status}).`;
+            const msg = await readApiError(res);
             throw new Error(msg);
           }
         }
@@ -399,15 +429,16 @@ document.addEventListener("DOMContentLoaded", () => {
       safeGet("token") || safeGet("authToken") || safeGet("jwt") || safeGet("accessToken");
     if (tokenInner) headers.Authorization = "Bearer " + tokenInner;
 
-    const res = await fetch(baseUrl + `/services/${serviceId}`, {
+    // ✅ FIX: must hit /api/services/:id + include credentials
+    const res = await fetch(baseUrl + `/api/services/${serviceId}`, {
       method: "PUT",
       headers,
+      credentials: "include",
       body: JSON.stringify(payload),
     });
 
     if (!res.ok) {
-      const errJson = await res.json().catch(() => ({}));
-      const msg = errJson.message || `Failed to update service (status ${res.status}).`;
+      const msg = await readApiError(res);
       throw new Error(msg);
     }
   }
@@ -424,11 +455,15 @@ document.addEventListener("DOMContentLoaded", () => {
       safeGet("token") || safeGet("authToken") || safeGet("jwt") || safeGet("accessToken");
     if (tokenInner) headers.Authorization = "Bearer " + tokenInner;
 
-    const res = await fetch(baseUrl + `/services/${serviceId}`, { method: "DELETE", headers });
+    // ✅ FIX: must hit /api/services/:id + include credentials
+    const res = await fetch(baseUrl + `/api/services/${serviceId}`, {
+      method: "DELETE",
+      headers,
+      credentials: "include",
+    });
 
     if (!res.ok) {
-      const errJson = await res.json().catch(() => ({}));
-      const msg = errJson.message || `Failed to delete service (status ${res.status}).`;
+      const msg = await readApiError(res);
       throw new Error(msg);
     }
   }
@@ -440,7 +475,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const titleEl = card.querySelector(".profile-service-title");
     const metaEls = card.querySelectorAll(".profile-service-meta");
 
-    // We will render: description, needs, equity
     const descElMeta = metaEls[0];
     const needsElMeta = metaEls[1];
     const equityElMeta = metaEls[2];
@@ -659,23 +693,27 @@ document.addEventListener("DOMContentLoaded", () => {
         payload = await window.apiFetch(`services?${queryId}limit=50&sort=newest`);
       } else {
         const baseUrl = window.API_URL || "";
-        const res = await fetch(baseUrl + `/services?${queryId}limit=50&sort=newest`);
+        // ✅ FIX: /api/services + credentials
+        const res = await fetch(baseUrl + `/api/services?${queryId}limit=50&sort=newest`, {
+          credentials: "include",
+        });
         payload = await res.json();
       }
 
       if (Array.isArray(payload)) services = payload;
       else if (payload && Array.isArray(payload.data)) services = payload.data;
       else if (payload && Array.isArray(payload.services)) services = payload.services;
-      else if (payload && payload.data && Array.isArray(payload.data.services)) services = payload.data.services;
+      else if (payload && payload.data && Array.isArray(payload.data.services))
+        services = payload.data.services;
       else if (payload && Array.isArray(payload.rows)) services = payload.rows;
-      else if (payload && payload.data && Array.isArray(payload.data.rows)) services = payload.data.rows;
+      else if (payload && payload.data && Array.isArray(payload.data.rows))
+        services = payload.data.rows;
 
       const uidStr = userId ? String(userId) : "";
       const myNameLower = myUsername ? myUsername.toLowerCase() : "";
 
       services = services.filter((svc) => {
-        const svcUserId =
-          svc.userId ?? svc.UserId ?? (svc.user && (svc.user.id ?? svc.user.userId));
+        const svcUserId = svc.userId ?? svc.UserId ?? (svc.user && (svc.user.id ?? svc.user.userId));
         const svcUsername =
           (svc.user && (svc.user.username || svc.user.name || svc.user.displayName || "")) || "";
 
