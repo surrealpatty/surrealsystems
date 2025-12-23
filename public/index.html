@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Surreal Systems – Build, Connect, Create</title>
 
+  <!-- ✅ Cross-browser: preload the logo -->
+  <link rel="preload" as="image" href="/surrealsystems-logo.png" />
+
   <link rel="stylesheet" href="/index.css" />
 
   <script src="/init.js" defer></script>
@@ -13,11 +16,9 @@
 
 <body class="index-page">
   <main class="shell">
-
-    <!-- 3-panel layout -->
     <section class="grid">
 
-      <!-- LEFT: Pitch -->
+      <!-- LEFT -->
       <section class="panel pitch pitch--sharktank" aria-labelledby="pitch-title">
         <h1 id="pitch-title" class="pitch-title">Bring your idea to life.</h1>
 
@@ -57,7 +58,7 @@
         </div>
       </section>
 
-      <!-- MIDDLE: Video + Logo -->
+      <!-- MIDDLE -->
       <section class="middle-stack" aria-label="Intro and brand">
         <section class="panel video video--compact" aria-labelledby="video-title">
           <div class="video-head">
@@ -74,13 +75,19 @@
         </section>
 
         <div class="mid-logo" aria-hidden="true">
-          <img src="/surrealsystems-logo.png" alt="" />
+          <img
+            src="/surrealsystems-logo.png"
+            alt=""
+            width="360"
+            height="260"
+            loading="eager"
+            decoding="async"
+          />
         </div>
       </section>
 
-      <!-- RIGHT: Login -->
+      <!-- RIGHT -->
       <section class="panel card" aria-labelledby="login-title">
-        <!-- Create account button INSIDE the right panel (no top strip) -->
         <a class="ghost-link card-cta" href="/register.html">Create account</a>
 
         <h2 id="login-title">Welcome back</h2>
@@ -96,12 +103,7 @@
             <label for="password">Password</label>
             <div class="password-row">
               <input id="password" name="password" type="password" placeholder="Your password" required />
-              <button
-                type="button"
-                class="toggle-password"
-                id="togglePassword"
-                aria-label="Toggle password visibility"
-              >
+              <button type="button" class="toggle-password" id="togglePassword" aria-label="Toggle password visibility">
                 Show
               </button>
             </div>
@@ -122,19 +124,5 @@
       <span>© 2025 Surreal Systems. All rights reserved.</span>
     </footer>
   </main>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const input = document.getElementById("password");
-      const btn = document.getElementById("togglePassword");
-      if (!input || !btn) return;
-
-      btn.addEventListener("click", () => {
-        const isHidden = input.type === "password";
-        input.type = isHidden ? "text" : "password";
-        btn.textContent = isHidden ? "Hide" : "Show";
-      });
-    });
-  </script>
 </body>
 </html>

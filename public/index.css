@@ -33,12 +33,10 @@ body{
   width:min(1200px, 92vw);
   margin:0 auto;
 
-  /* ✅ KEY FIX: make layout calculate correctly + footer never overlaps */
   height: 100vh;
   display:flex;
   flex-direction:column;
 
-  /* ✅ no "top strip" space */
   padding: 16px 0 16px;
 }
 
@@ -51,7 +49,6 @@ body{
   gap: 18px;
   align-items:stretch;
 
-  /* ✅ KEY FIX: creates clean breathing room above footer */
   padding-bottom: 14px;
 }
 
@@ -231,7 +228,6 @@ body{
   font-weight: 950;
 }
 
-/* Balanced so footer + logo fit */
 .video-frame{
   height: 320px;
   border-radius: 18px;
@@ -265,7 +261,7 @@ body{
 .video-text strong{ font-size: 1.05rem; font-weight: 950; }
 .video-text span{ color: var(--muted); font-size: 0.94rem; }
 
-/* ✅ Logo: no bubble, bigger, and constrained so it doesn't push into footer */
+/* ✅ Logo */
 .mid-logo{
   display:flex;
   align-items:center;
@@ -274,10 +270,9 @@ body{
   border: none;
   background: none;
   box-shadow: none;
-
-  /* keep the logo from eating the footer space */
   flex: 0 0 auto;
 }
+
 .mid-logo img{
   width: min(360px, 96%);
   max-height: 260px;
@@ -285,14 +280,9 @@ body{
   display:block;
 
   object-fit: cover;
-
-  /* ✅ round the image itself */
   border-radius: 24px;
-
-  /* ✅ clean, subtle depth (optional but recommended) */
   box-shadow: 0 16px 36px rgba(0,0,0,0.18);
 }
-
 
 /* ==========================
    RIGHT (Login)
@@ -300,12 +290,9 @@ body{
 
 .card{
   position: relative;
-
-  /* ✅ NEW: reserve space for the top-right button */
-  padding-top: 68px;  /* gives the "Create account" pill its own zone */
+  padding-top: 68px;
 }
 
-/* Create account moved into right panel */
 .card-cta{
   position:absolute;
   top: 16px;
@@ -323,7 +310,6 @@ body{
 }
 .ghost-link:hover{ filter: brightness(0.98); }
 
-/* ✅ FIX: title no longer needs a huge margin */
 .card h2{
   margin: 0 0 6px;
   font-size: 1.6rem;
@@ -406,7 +392,6 @@ input:focus{
 }
 .subtext a:hover{ text-decoration:underline; }
 
-/* ✅ Footer never overlaps now */
 .site-footer{
   flex: 0 0 auto;
   margin-top: 2px;
@@ -416,7 +401,6 @@ input:focus{
   font-size: 0.92rem;
 }
 
-/* Mobile: allow scroll + stack */
 @media (max-width: 980px){
   .index-page{ overflow:auto; }
   .shell{ height:auto; min-height:100vh; }
@@ -424,7 +408,5 @@ input:focus{
     grid-template-columns: 1fr;
     padding-bottom: 0;
   }
-
-  /* ✅ still keep room for the button on mobile */
   .card{ padding-top: 64px; }
 }
