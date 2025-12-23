@@ -9,23 +9,6 @@
   padding: 22px 0 22px;
 }
 
-/* top row */
-.register-page .topbar{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap: 16px;
-  margin-bottom: 18px;
-}
-
-.register-page .brand-row{
-  display:flex;
-  align-items:center;
-  gap: 10px;
-  font-weight: 800;
-  color: var(--text);
-}
-
 /* ✅ MATCH INDEX: 1fr + fixed sidebar width */
 .register-page .layout{
   display:grid;
@@ -47,8 +30,6 @@
    - premium pill
 ============================ */
 .register-page .pitch{
-  /* The card class should already give border/radius/shadow from style.css,
-     but we add the index fade background here */
   background:
     radial-gradient(1200px circle at -10% -20%, rgba(124,58,237,0.28), transparent 60%),
     radial-gradient(900px circle at 40% 10%, rgba(168,85,247,0.18), transparent 55%),
@@ -153,10 +134,10 @@
 }
 
 .register-page .field{
-  margin-top: 10px;     /* ✅ slightly tighter */
+  margin-top: 10px;
   display:flex;
   flex-direction:column;
-  gap: 6px;             /* ✅ slightly tighter */
+  gap: 6px;
 }
 
 .register-page .field-label-row{
@@ -186,7 +167,6 @@
   min-height: 74px;
 }
 
-/* Show button should look like your index pills */
 .register-page .toggle-password{
   padding: 10px 14px;
   border-radius: 999px;
