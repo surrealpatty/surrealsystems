@@ -2,6 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 // --- support JWT_SECRETS rotation env var (first secret used if JWT_SECRET missing) ---
@@ -243,23 +244,45 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/projects', serviceRoutes); // alias: “projects” uses same routes as “services”
 
 /* --------------------------- Static Files -------------------------- */
-const publicDir = path.join(__dirname, '../public');
+/**
+ * ✅ Render-safe: process.cwd() points at your project root.
+ * This avoids /dist vs /src path problems.
+ */
+const publicDir = path.resolve(process.cwd(), 'public');
 
-// ✅ serve all files in /public at site root (style.css, register.css, etc.)
+console.log('✅ PUBLIC DIR:', publicDir);
+console.log('✅ projects.html exists?', fs.existsSync(path.join(publicDir, 'projects.html')));
+
+// ✅ serve all files in /public at site root (style.css, pages, images, etc.)
 app.use(express.static(publicDir));
 
-// ✅ explicit routes for your HTML pages (prevents wildcard from hijacking them)
-app.get('/', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
-app.get('/index.html', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
-app.get('/register.html', (_req, res) => res.sendFile(path.join(publicDir, 'register.html')));
-app.get('/profile.html', (_req, res) => res.sendFile(path.join(publicDir, 'profile.html')));
-app.get('/projects.html', (_req, res) => res.sendFile(path.join(publicDir, 'projects.html')));
-app.get('/messages.html', (_req, res) => res.sendFile(path.join(publicDir, 'messages.html')));
+function sendHtml(res, fileName) {
+  const full = path.join(publicDir, fileName);
+
+  // ✅ If the file is missing on Render, do not show white "Not Found"
+  res.sendFile(full, (err) => {
+    if (!err) return;
+
+    console.warn(`⚠️ Missing file in /public: ${fileName} -> falling back to index.html`);
+    res.sendFile(path.join(publicDir, 'index.html'));
+  });
+}
+
+// ✅ explicit routes for your HTML pages
+app.get('/', (_req, res) => sendHtml(res, 'index.html'));
+app.get('/index.html', (_req, res) => sendHtml(res, 'index.html'));
+app.get('/register.html', (_req, res) => sendHtml(res, 'register.html'));
+app.get('/profile.html', (_req, res) => sendHtml(res, 'profile.html'));
+app.get('/messages.html', (_req, res) => sendHtml(res, 'messages.html'));
+
+// ✅ Projects page (support BOTH urls)
+app.get('/projects', (_req, res) => sendHtml(res, 'projects.html'));
+app.get('/projects.html', (_req, res) => sendHtml(res, 'projects.html'));
 
 // ✅ fallback: if it's not /api/* and not a real file, return index.html
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
-  res.sendFile(path.join(publicDir, 'index.html'));
+  return sendHtml(res, 'index.html');
 });
 
 const PORT = process.env.PORT || 10000;
