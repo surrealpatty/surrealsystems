@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Surreal Systems - Your Profile</title>
-    <meta name="description" content="Your Surreal Systems profile." />
+    <title>Surreal Systems - Projects</title>
+    <meta name="description" content="Browse projects on Surreal Systems." />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
@@ -18,8 +18,6 @@
     <link rel="stylesheet" href="/style.css" />
 
     <style>
-      /* Layout-only tweaks that won't fight style.css colors */
-
       body.dashboard{
         margin:0;
         min-height:100vh;
@@ -67,9 +65,7 @@
         background: rgba(15,23,42,0.35);
         color: var(--text);
       }
-      :root[data-theme="light"] .profile-user-pill{
-        background:#ffffff;
-      }
+      :root[data-theme="light"] .profile-user-pill{ background:#ffffff; }
 
       .profile-avatar{
         width:30px;
@@ -94,7 +90,6 @@
         .profile-user-pill{ display:none; }
       }
 
-      /* Use your theme cards */
       .sidebar{
         border-radius: var(--radius-lg);
         border: 1px solid var(--border);
@@ -145,9 +140,7 @@
         background: rgba(15,23,42,0.25);
         border-color: var(--border);
       }
-      :root[data-theme="light"] .nav-link:hover{
-        background:#f5f0ff;
-      }
+      :root[data-theme="light"] .nav-link:hover{ background:#f5f0ff; }
 
       .nav-link--active{
         background: rgba(124,58,237,0.18);
@@ -163,31 +156,36 @@
         gap:16px;
       }
 
-      .profile-row{ margin-top:8px; margin-bottom:6px; }
-
-      .profile-label{
-        font-size:0.78rem;
-        text-transform:uppercase;
-        letter-spacing:0.06em;
-        color: var(--muted);
+      .filters{
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px;
+        margin-top:12px;
       }
 
-      .profile-value{
-        font-size:0.95rem;
-        font-weight:500;
+      .projects-list{
+        margin-top:12px;
+        display:grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap:12px;
       }
 
-      .profile-row--name .profile-value{
-        font-size:1.25rem;
-        font-weight:700;
-        letter-spacing:-0.01em;
+      .project-card{
+        border-radius:0.9rem;
+        padding:12px 14px;
+        border:1px solid var(--border);
+        background: rgba(15,23,42,0.35);
       }
+      :root[data-theme="light"] .project-card{ background:#ffffff; }
+
+      .project-title{ font-weight:700; margin:0 0 6px; }
+      .project-meta{ margin:0; font-size:0.9rem; color: var(--muted); }
 
       .btn-row{
         display:flex;
         flex-wrap:wrap;
         gap:8px;
-        margin-top:10px;
+        margin-top:12px;
         align-items:center;
       }
 
@@ -203,12 +201,10 @@
         border:none;
         text-decoration:none;
       }
-
       .btn-primary{
         background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
         color:#ffffff;
       }
-
       .btn-muted{
         background: transparent;
         border:1px solid var(--border);
@@ -216,7 +212,7 @@
       }
 
       .projects-empty{
-        margin-top:6px;
+        margin-top:10px;
         padding:0.65rem 0.75rem;
         border-radius:0.9rem;
         font-size:0.85rem;
@@ -224,145 +220,9 @@
         background: rgba(15,23,42,0.35);
         color: var(--muted);
       }
-      :root[data-theme="light"] .projects-empty{
-        background:#ffffff;
-      }
+      :root[data-theme="light"] .projects-empty{ background:#ffffff; }
 
       .is-hidden{ display:none !important; }
-
-      .profile-edit,
-      .project-panel{
-        margin-top:14px;
-        padding-top:12px;
-        border-top:1px solid var(--border);
-        display:flex;
-        flex-direction:column;
-        gap:12px;
-      }
-
-      .profile-edit-row{
-        display:flex;
-        flex-direction:column;
-        gap:6px;
-      }
-
-      .profile-edit-input,
-      .profile-edit-textarea{
-        width:100%;
-      }
-
-      /* extra helper text */
-      .help-text{
-        margin:0;
-        font-size:0.82rem;
-        color: var(--muted);
-      }
-
-      #profileprojectsList{
-        margin-top:12px;
-        display:grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap:12px;
-      }
-
-      .profile-project-card,
-      .settings-item{
-        border-radius:0.9rem;
-        padding:10px 12px;
-        font-size:0.9rem;
-        border:1px solid var(--border);
-        background: rgba(15,23,42,0.35);
-      }
-      :root[data-theme="light"] .profile-project-card,
-      :root[data-theme="light"] .settings-item{
-        background:#ffffff;
-      }
-
-      .profile-project-title{ font-weight:600; margin-bottom:4px; }
-      .profile-project-meta{ font-size:0.83rem; color: var(--muted); }
-
-      .settings-subtitle{
-        margin:0 0 12px;
-        font-size:0.9rem;
-        color: var(--muted);
-      }
-
-      .settings-grid{
-        display:grid;
-        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-        gap:12px;
-        margin-top:8px;
-      }
-
-      .settings-item h3{ margin:0 0 4px; font-size:0.95rem; }
-      .settings-item p{ margin:0 0 8px; font-size:0.85rem; color: var(--muted); }
-
-      .settings-item.danger h3{ color: var(--danger); }
-
-      .switch{
-        position:relative;
-        display:inline-block;
-        width:40px;
-        height:22px;
-      }
-      .switch input{
-        opacity:0;
-        width:0;
-        height:0;
-      }
-      .slider{
-        position:absolute;
-        cursor:pointer;
-        inset:0;
-        background-color: rgba(148,163,184,0.35);
-        transition:0.2s;
-        border-radius:999px;
-        border:1px solid var(--border);
-      }
-      .slider:before{
-        position:absolute;
-        content:"";
-        height:16px;
-        width:16px;
-        left:3px;
-        bottom:3px;
-        background-color:#f9fafb;
-        transition:0.2s;
-        border-radius:50%;
-      }
-      .switch input:checked + .slider{
-        background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
-        border-color: transparent;
-      }
-      .switch input:checked + .slider:before{
-        transform: translateX(16px);
-      }
-
-      .theme-toggle-wrapper{
-        margin-left:auto;
-        display:inline-flex;
-        align-items:center;
-        gap:8px;
-      }
-      .theme-toggle-label{
-        font-size:0.8rem;
-        color: var(--muted);
-      }
-
-      #deleteAccountBtn{
-        background: transparent !important;
-        color: var(--danger) !important;
-        border: 2px solid var(--danger) !important;
-        font-weight: 600;
-      }
-      #deleteAccountBtn:hover{
-        background: rgba(255,77,79,0.12) !important;
-        box-shadow: 0 0 8px rgba(255,77,79,0.35);
-      }
-      #deleteAccountBtn:active{
-        background: rgba(255,77,79,0.25) !important;
-        color:#ffffff !important;
-      }
 
       .profile-footer{
         text-align:center;
@@ -373,7 +233,7 @@
     </style>
   </head>
 
-  <body class="dashboard profile-page profile-dark">
+  <body class="dashboard projects-page">
     <div class="profile-wrapper">
       <header class="profile-header">
         <a href="index.html" class="profile-brand">
@@ -381,9 +241,9 @@
           <span>Surreal Systems</span>
         </a>
 
-        <div class="profile-user-pill" id="topUserChip">
-          <div class="profile-avatar" id="topUserAvatar">Q</div>
-          <span class="profile-email" id="topUserEmail">you@example.com</span>
+        <div class="profile-user-pill">
+          <div class="profile-avatar" id="topUserAvatar">U</div>
+          <span class="profile-email" id="topUserEmail">User</span>
         </div>
       </header>
 
@@ -392,8 +252,11 @@
           <p class="sidebar-title">Dashboard</p>
           <ul class="nav-list">
             <li><a href="index.html" class="nav-link">Home</a></li>
-            <li><a href="profile.html" class="nav-link nav-link--active">Profile</a></li>
-            <li><a href="projects.html" class="nav-link">Projects</a></li>
+            <li><a href="profile.html" class="nav-link">Profile</a></li>
+
+            <!-- ✅ FIX: Capitalized -->
+            <li><a href="projects.html" class="nav-link nav-link--active">Projects</a></li>
+
             <li><a href="messages.html" class="nav-link">Messages</a></li>
             <li><a href="login.html" class="nav-link nav-link--danger">Logout</a></li>
           </ul>
@@ -401,168 +264,36 @@
 
         <main class="content-column">
           <section class="card">
-            <div id="profileView">
-              <div class="profile-row profile-row--name">
-                <div class="profile-label">Display name</div>
-                <div class="profile-value" id="profileName">New developer</div>
-              </div>
+            <h1>Projects</h1>
+            <p class="project-meta">Browse projects posted on Surreal Systems.</p>
 
-              <div class="profile-row">
-                <div class="profile-label">Email</div>
-                <div class="profile-value" id="profileEmailMain">you@example.com</div>
-              </div>
+            <div class="filters">
+              <input
+                id="projectSearch"
+                class="profile-edit-input"
+                placeholder="Search projects..."
+                aria-label="Search projects"
+              />
 
-              <div class="profile-row">
-                <div class="profile-label">Description</div>
-                <div class="profile-value" id="profileDescription">
-                  Write a short bio so clients know what you do.
-                </div>
-              </div>
-
-              <div class="profile-row">
-                <div class="profile-label">Account type</div>
-                <div class="profile-value">Free user</div>
-              </div>
-
-              <div class="btn-row">
-                <button type="button" class="btn btn-primary" id="editProfileBtn">
-                  Edit Profile
-                </button>
-
-                <div class="theme-toggle-wrapper">
-                  <span class="theme-toggle-label">Light mode</span>
-                  <label class="switch" aria-label="Toggle dark / light theme">
-                    <input type="checkbox" id="themeToggle" />
-                    <span class="slider"></span>
-                  </label>
-                </div>
-              </div>
+              <!-- ✅ FIX: accessible name for select -->
+              <label for="projectSort">Sort projects</label>
+              <select id="projectSort" class="profile-edit-input">
+                <option value="newest" selected>Newest</option>
+                <option value="oldest">Oldest</option>
+                <option value="equityHigh">Equity: High → Low</option>
+                <option value="equityLow">Equity: Low → High</option>
+              </select>
             </div>
 
-            <form id="profileEditForm" class="profile-edit is-hidden">
-              <div class="profile-edit-row">
-                <label for="editDisplayName" class="profile-label">Display name</label>
-                <input type="text" id="editDisplayName" class="profile-edit-input" maxlength="64" />
-              </div>
+            <div id="projectsStatus" class="projects-empty">Loading projects…</div>
 
-              <div class="profile-edit-row">
-                <label for="editEmail" class="profile-label">Email</label>
-                <input type="email" id="editEmail" class="profile-edit-input" required />
-              </div>
-
-              <div class="profile-edit-row">
-                <label for="editDescription" class="profile-label">Description</label>
-                <textarea id="editDescription" class="profile-edit-textarea" rows="4"></textarea>
-                <p class="settings-subtitle">This appears on your public profile. Keep it short and clear.</p>
-              </div>
-
-              <div class="btn-row">
-                <button type="submit" class="btn btn-primary">Save changes</button>
-                <button type="button" class="btn btn-muted" id="cancelEditBtn">Cancel</button>
-              </div>
-            </form>
-          </section>
-
-          <section class="card card-settings is-hidden" id="accountSettingsCard">
-            <h2>Account settings</h2>
-            <p class="settings-subtitle">Manage your account preferences and security.</p>
-
-            <div class="settings-grid">
-              <div class="settings-item">
-                <h3>Change password</h3>
-                <p>Update your password to keep your account secure.</p>
-                <button type="button" class="btn btn-muted" id="changePasswordBtn">Change password</button>
-              </div>
-
-              <div class="settings-item">
-                <h3>Email notifications</h3>
-                <p>Allow Surreal Systems to email you about new messages and updates.</p>
-                <label class="switch" aria-label="Email notifications">
-                  <input type="checkbox" id="emailNotificationsToggle" />
-                  <span class="slider"></span>
-                </label>
-              </div>
-
-              <div class="settings-item danger">
-                <h3>Delete account</h3>
-                <p>This will permanently delete your account and all data.</p>
-                <button type="button" class="btn btn-muted" id="deleteAccountBtn">Delete account</button>
-              </div>
-            </div>
-          </section>
-
-          <section class="card">
-            <h2>Your Projects</h2>
-            <p class="settings-subtitle">Once you start posting, your projects will appear here.</p>
-
-            <div id="profileprojectsEmpty" class="projects-empty">
-              You don’t have any projects yet. Create one to start attracting clients.
-            </div>
-
-            <div id="profileprojectsList"></div>
+            <!-- ✅ IMPORTANT: must match projects.js -->
+            <div id="projectsList" class="projects-list"></div>
 
             <div class="btn-row">
-              <button type="button" class="btn btn-primary" id="createprojectBtn">
-                Create Project
-              </button>
+              <button class="btn btn-primary" id="refreshProjectsBtn" type="button">Refresh</button>
+              <a class="btn btn-muted" href="profile.html">Back to Profile</a>
             </div>
-
-            <!-- ✅ UPDATED FORM FIELDS -->
-            <form id="createprojectForm" class="project-panel is-hidden">
-              <div class="profile-edit-row">
-                <label for="projectTitle" class="profile-label">Title</label>
-                <input
-                  type="text"
-                  id="projectTitle"
-                  class="profile-edit-input"
-                  maxlength="100"
-                  placeholder="Project title"
-                  required
-                />
-              </div>
-
-              <div class="profile-edit-row">
-                <label for="projectDescription" class="profile-label">Description of the project</label>
-                <textarea
-                  id="projectDescription"
-                  class="profile-edit-textarea"
-                  rows="4"
-                  placeholder="What is the project? What problem does it solve?"
-                  required
-                ></textarea>
-              </div>
-
-              <div class="profile-edit-row">
-                <label for="projectNeeds" class="profile-label">What the project needs</label>
-                <textarea
-                  id="projectNeeds"
-                  class="profile-edit-textarea"
-                  rows="4"
-                  placeholder="Example: funding, developers, marketing, design, mentorship..."
-                  required
-                ></textarea>
-              </div>
-
-              <div class="profile-edit-row">
-                <label for="projectEquity" class="profile-label">Percentage of company up for offer</label>
-                <input
-                  type="number"
-                  id="projectEquity"
-                  class="profile-edit-input"
-                  min="0.5"
-                  max="99.5"
-                  step="0.5"
-                  placeholder="0.5 to 99.5"
-                  required
-                />
-                <p class="help-text">Allowed: 0.5% to 99.5% (steps of 0.5)</p>
-              </div>
-
-              <div class="btn-row">
-                <button type="submit" class="btn btn-primary">Save Project</button>
-                <button type="button" class="btn btn-muted" id="cancelCreateprojectBtn">Cancel</button>
-              </div>
-            </form>
           </section>
         </main>
       </div>
@@ -572,25 +303,8 @@
       </footer>
     </div>
 
-    <!-- ✅ absolute paths so Render always finds them -->
     <script src="/init.js" defer></script>
     <script src="/script.js" defer></script>
-    <script src="/profile.js" defer></script>
-
-    <script>
-      setTimeout(function () {
-        var nameEl = document.getElementById("profileName");
-        var chipLabel = document.getElementById("topUserEmail");
-        var chipAvatar = document.getElementById("topUserAvatar");
-
-        if (!nameEl || !chipLabel || !chipAvatar) return;
-
-        var txt = (nameEl.textContent || "").trim();
-        if (!txt || txt === "New developer") return;
-
-        chipLabel.textContent = txt;
-        chipAvatar.textContent = txt[0].toUpperCase();
-      }, 1000);
-    </script>
+    <script src="/projects.js" defer></script>
   </body>
 </html>
