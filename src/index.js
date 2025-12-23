@@ -236,7 +236,6 @@ app.get('/api/health', (_req, res) => {
 
 /* ----------------------------- API Routes ------------------------------ */
 app.use('/api/users', userRoutes);
-app.use('/api/projects', projectRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/messages', messagesRoutes);
 app.use('/api/payments', paymentsRoutes);
