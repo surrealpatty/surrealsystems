@@ -65,7 +65,7 @@ const { sequelize, testConnection } = require('./config/database');
 const userRoutes = require('./routes/user');
 
 // ✅ FIX: point to the route file you actually edited
-const projectRoutes = require('./routes/projects');
+const serviceRoutes = require('./routes/services');
 
 const ratingRoutes = require('./routes/rating');
 const messagesRoutes = require('./routes/messages');
