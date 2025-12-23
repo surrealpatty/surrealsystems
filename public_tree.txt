@@ -7,6 +7,6 @@ public\profile.js
 public\register.css
 public\register.html
 public\script.js
-public\services.css
-public\services.html
+public\projects.css
+public\projects.html
 public\style.css

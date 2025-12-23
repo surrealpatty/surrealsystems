@@ -6,12 +6,12 @@ const { QueryTypes } = require('sequelize');
     console.log('DB connected for agg test');
 
     const rows = await m.sequelize.query(
-      `SELECT service_id AS "serviceId",
+      `SELECT project_id AS "projectId",
               AVG(COALESCE(stars,score))::numeric(10,2) AS "avgRating",
               COUNT(*)::int AS "ratingsCount"
        FROM ratings
-       WHERE service_id IS NOT NULL
-       GROUP BY service_id
+       WHERE project_id IS NOT NULL
+       GROUP BY project_id
        LIMIT 5`,
       { type: QueryTypes.SELECT },
     );

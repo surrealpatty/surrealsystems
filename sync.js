@@ -4,7 +4,7 @@ const sequelize = require('./config/database');
 /* eslint-disable-next-line no-unused-vars */
 const { User } = require('./models/User');
 /* eslint-disable-next-line no-unused-vars */
-const { Service } = require('./models/Service');
+const { project } = require('./models/project');
 
 (async () => {
   try {

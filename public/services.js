@@ -1,5 +1,5 @@
-// public/services.js
-// Services page logic: load services, filter/sort, and send messages.
+// public/projects.js
+// projects page logic: load projects, filter/sort, and send messages.
 
 (function () {
   "use strict";
@@ -22,7 +22,7 @@
   }
 
   // ---------- DOM references ----------
-  let servicesList;
+  let projectsList;
   let searchInput;
   let sortSelect;
   let refreshBtn;
@@ -36,12 +36,12 @@
   let charCount;
   let toastEl;
 
-  // in-memory services
-  let allServices = [];
+  // in-memory projects
+  let allprojects = [];
   let currentRecipientId = null;
   let currentRecipientName = "";
-  let currentServiceId = null;
-  let currentServiceTitle = "";
+  let currentprojectId = null;
+  let currentprojectTitle = "";
 
   // ---------- Toast helper ----------
   function showToast(message) {
@@ -53,37 +53,37 @@
     }, 2600);
   }
 
-  // ---------- Services loading / rendering ----------
-  async function loadServices() {
-    if (!servicesList) return;
+  // ---------- projects loading / rendering ----------
+  async function loadprojects() {
+    if (!projectsList) return;
 
-    servicesList.innerHTML =
-      '<p><span class="spinner"></span> Loading services…</p>';
+    projectsList.innerHTML =
+      '<p><span class="spinner"></span> Loading projects…</p>';
 
     try {
       // apiFetch is defined in script.js and automatically sends auth (if any)
-      const json = await apiFetch("/services");
+      const json = await apiFetch("/projects");
 
-      // Accept either { services: [...] } or { data: [...] }
+      // Accept either { projects: [...] } or { data: [...] }
       const raw =
-        (Array.isArray(json.services) && json.services) ||
+        (Array.isArray(json.projects) && json.projects) ||
         (Array.isArray(json.data) && json.data) ||
         [];
 
-      allServices = raw;
-      renderServices();
+      allprojects = raw;
+      renderprojects();
     } catch (err) {
-      console.error("Failed to load services:", err);
-      servicesList.innerHTML =
-        "<p>Failed to load services. Please try again.</p>";
+      console.error("Failed to load projects:", err);
+      projectsList.innerHTML =
+        "<p>Failed to load projects. Please try again.</p>";
     }
   }
 
-  function getFilteredAndSortedServices() {
+  function getFilteredAndSortedprojects() {
     const term = (searchInput?.value || "").trim().toLowerCase();
     const sortBy = sortSelect?.value || "newest";
 
-    let list = allServices.slice();
+    let list = allprojects.slice();
 
     if (term) {
       list = list.filter((svc) => {
@@ -113,18 +113,18 @@
     return list;
   }
 
-  function renderServices() {
-    if (!servicesList) return;
+  function renderprojects() {
+    if (!projectsList) return;
 
-    const list = getFilteredAndSortedServices();
+    const list = getFilteredAndSortedprojects();
 
     if (!list.length) {
-      servicesList.innerHTML =
-        '<div class="services-empty">No services found yet.</div>';
+      projectsList.innerHTML =
+        '<div class="projects-empty">No projects found yet.</div>';
       return;
     }
 
-    servicesList.innerHTML = "";
+    projectsList.innerHTML = "";
 
     list.forEach((svc) => {
       const userObj = svc.User || svc.user || {};
@@ -132,23 +132,23 @@
       const ownerId = userObj.id || userObj.userId || svc.userId || null;
 
       const card = document.createElement("article");
-      card.className = "service-card";
+      card.className = "project-card";
 
       const titleEl = document.createElement("h3");
-      titleEl.className = "service-title";
-      titleEl.textContent = svc.title || "Untitled service";
+      titleEl.className = "project-title";
+      titleEl.textContent = svc.title || "Untitled project";
 
       const descEl = document.createElement("p");
-      descEl.className = "service-meta";
+      descEl.className = "project-meta";
       descEl.textContent =
-        svc.description || "No description provided for this service.";
+        svc.description || "No description provided for this project.";
 
       const postedByEl = document.createElement("p");
-      postedByEl.className = "service-meta";
+      postedByEl.className = "project-meta";
       postedByEl.textContent = `Posted by: ${username}`;
 
       const priceEl = document.createElement("p");
-      priceEl.className = "service-price";
+      priceEl.className = "project-price";
       if (svc.price != null && svc.price !== "") {
         priceEl.textContent = `Price: $${svc.price}`;
       } else {
@@ -156,20 +156,20 @@
       }
 
       const footer = document.createElement("div");
-      footer.className = "service-footer";
+      footer.className = "project-footer";
 
       const msgBtn = document.createElement("button");
       msgBtn.type = "button";
-      msgBtn.className = "service-message-btn";
+      msgBtn.className = "project-message-btn";
       msgBtn.textContent = "Message";
 
       msgBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         if (!ownerId) {
-          showToast("Cannot determine service owner.");
+          showToast("Cannot determine project owner.");
           return;
         }
-        // pass the whole service so we can use its title + id
+        // pass the whole project so we can use its title + id
         openMessageModal(ownerId, username, svc);
       });
 
@@ -181,17 +181,17 @@
       card.appendChild(priceEl);
       card.appendChild(footer);
 
-      servicesList.appendChild(card);
+      projectsList.appendChild(card);
     });
   }
 
   // ---------- Message modal ----------
-  function openMessageModal(recipientId, recipientName, service) {
+  function openMessageModal(recipientId, recipientName, project) {
     currentRecipientId = recipientId;
     currentRecipientName = recipientName || "";
 
-    currentServiceId = service && service.id != null ? service.id : null;
-    currentServiceTitle = (service && service.title) || "";
+    currentprojectId = project && project.id != null ? project.id : null;
+    currentprojectTitle = (project && project.title) || "";
 
     if (messageRecipientSpan) {
       messageRecipientSpan.textContent = currentRecipientName;
@@ -216,8 +216,8 @@
   function closeMessageModal() {
     currentRecipientId = null;
     currentRecipientName = "";
-    currentServiceId = null;
-    currentServiceTitle = "";
+    currentprojectId = null;
+    currentprojectTitle = "";
 
     if (messageModal) {
       messageModal.style.display = "none";
@@ -247,11 +247,11 @@
       sendMessageBtn.disabled = true;
     }
 
-    // Build subject from the service title, or fall back
+    // Build subject from the project title, or fall back
     const subject =
-      currentServiceTitle && currentServiceTitle.trim().length > 0
-        ? `RE "${currentServiceTitle}"`
-        : "Message about your service";
+      currentprojectTitle && currentprojectTitle.trim().length > 0
+        ? `RE "${currentprojectTitle}"`
+        : "Message about your project";
 
     const payload = {
       receiverId: currentRecipientId, // backend expects receiverId
@@ -259,9 +259,9 @@
       subject,
     };
 
-    // Attach the serviceId so the backend can group by ad
-    if (currentServiceId) {
-      payload.serviceId = currentServiceId;
+    // Attach the projectId so the backend can group by ad
+    if (currentprojectId) {
+      payload.projectId = currentprojectId;
     }
 
     try {
@@ -303,7 +303,7 @@
 
   // ---------- Init ----------
   document.addEventListener("DOMContentLoaded", () => {
-    servicesList = document.getElementById("services-list");
+    projectsList = document.getElementById("projects-list");
     searchInput = document.getElementById("search");
     sortSelect = document.getElementById("sort");
     refreshBtn = document.getElementById("refreshBtn");
@@ -318,13 +318,13 @@
     toastEl = document.getElementById("toast");
 
     if (searchInput) {
-      searchInput.addEventListener("input", renderServices);
+      searchInput.addEventListener("input", renderprojects);
     }
     if (sortSelect) {
-      sortSelect.addEventListener("change", renderServices);
+      sortSelect.addEventListener("change", renderprojects);
     }
     if (refreshBtn) {
-      refreshBtn.addEventListener("click", loadServices);
+      refreshBtn.addEventListener("click", loadprojects);
     }
 
     if (messageContent) {
@@ -343,6 +343,6 @@
       }
     });
 
-    loadServices();
+    loadprojects();
   });
 })();

@@ -1,5 +1,5 @@
 // src/controllers/userController.js
-const { User, Service } = require('../models');
+const { User, project } = require('../models');
 const bcrypt = require('bcryptjs'); // use bcryptjs to avoid native build issues
 const { promisify } = require('util');
 const bcryptHash = promisify(bcrypt.hash);
@@ -104,7 +104,7 @@ const getMe = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
       attributes: { exclude: ['password'] },
-      include: [{ model: Service, as: 'services', required: false }],
+      include: [{ model: project, as: 'projects', required: false }],
     });
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({ user });

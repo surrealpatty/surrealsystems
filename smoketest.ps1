@@ -14,14 +14,14 @@ Write-Host "Got token (len):" $token.Length
 Write-Host "`nGET /api/users/me"
 Invoke-RestMethod -Uri "$base/api/users/me" -Method Get -Headers @{ Authorization = "Bearer $token" } | Js | Write-Host
 
-Write-Host "`nCreating service..."
-$newService = Invoke-RestMethod -Uri "$base/api/services" -Method Post `
+Write-Host "`nCreating project..."
+$newproject = Invoke-RestMethod -Uri "$base/api/projects" -Method Post `
   -Headers @{ 'Content-Type'='application/json'; Authorization = "Bearer $token" } `
-  -Body (Js @{ title='PS Smoke Service'; description='Created by smoketest'; price = 42.5 }) -ErrorAction Stop
-Write-Host "Created:"; $newService | Js | Write-Host
+  -Body (Js @{ title='PS Smoke project'; description='Created by smoketest'; price = 42.5 }) -ErrorAction Stop
+Write-Host "Created:"; $newproject | Js | Write-Host
 
-Write-Host "`nListing services..."
-Invoke-RestMethod -Uri "$base/api/services" -Method Get | Js | Write-Host
+Write-Host "`nListing projects..."
+Invoke-RestMethod -Uri "$base/api/projects" -Method Get | Js | Write-Host
 
 Write-Host "`nPosting rating..."
 # change rateeId to an existing user id if required

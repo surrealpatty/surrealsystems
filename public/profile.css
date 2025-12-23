@@ -169,7 +169,7 @@
 .is-hidden{ display:none !important; }
 
 .profile-edit,
-.service-panel{
+.project-panel{
   margin-top:14px;
   padding-top:12px;
   border-top:1px solid var(--border);
@@ -184,14 +184,14 @@
   gap:6px;
 }
 
-#profileServicesList{
+#profileprojectsList{
   margin-top:12px;
   display:grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap:12px;
 }
 
-.profile-service-card,
+.profile-project-card,
 .settings-item{
   border-radius:0.9rem;
   padding:10px 12px;
@@ -199,7 +199,7 @@
   border:1px solid var(--border);
   background: rgba(15,23,42,0.35);
 }
-:root[data-theme="light"] .profile-service-card,
+:root[data-theme="light"] .profile-project-card,
 :root[data-theme="light"] .settings-item{
   background:#ffffff;
 }

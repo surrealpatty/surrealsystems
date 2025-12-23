@@ -1,5 +1,5 @@
 /* eslint-disable no-empty */
-// debug_services.js
+// debug_projects.js
 require('dotenv').config();
 const { sequelize } = require('./src/config/database');
 const { QueryTypes } = require('sequelize');
@@ -13,10 +13,10 @@ const models = require('./src/models');
 
     // Raw SQL rows
     const raw = await sequelize.query(
-      'SELECT id, user_id, title, created_at FROM services ORDER BY created_at DESC LIMIT 20',
+      'SELECT id, user_id, title, created_at FROM projects ORDER BY created_at DESC LIMIT 20',
       { type: QueryTypes.SELECT },
     );
-    console.log('== Raw services rows (DB columns) ==');
+    console.log('== Raw projects rows (DB columns) ==');
     console.log(JSON.stringify(raw, null, 2), '\n');
 
     // Query referenced user_ids
@@ -26,15 +26,15 @@ const models = require('./src/models');
         `SELECT id, username, email FROM users WHERE id IN (${userIds.join(',')})`,
         { type: QueryTypes.SELECT },
       );
-      console.log('== Users referenced by services ==');
+      console.log('== Users referenced by projects ==');
       console.log(JSON.stringify(users, null, 2), '\n');
     } else {
-      console.log('No user_id values found in those service rows.\n');
+      console.log('No user_id values found in those project rows.\n');
     }
 
-    // ORM query (Sequelize + association) — show owner if attached
-    console.log('== ORM result: Service.findAll(...) with owner association ==');
-    const orm = await models.Service.findAll({
+    // ORM query (Sequelize + association) ï¿½ show owner if attached
+    console.log('== ORM result: project.findAll(...) with owner association ==');
+    const orm = await models.project.findAll({
       limit: 20,
       include: [{ model: models.User, as: 'owner', attributes: ['id', 'username'] }],
       order: [['createdAt', 'DESC']],

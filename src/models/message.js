@@ -19,7 +19,7 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      serviceId: {
+      projectId: {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
@@ -38,9 +38,9 @@ module.exports = (sequelize) => {
       as: "receiver",
       foreignKey: "receiverId",
     });
-    Message.belongsTo(models.Service, {
-      as: "service",
-      foreignKey: "serviceId",
+    Message.belongsTo(models.project, {
+      as: "project",
+      foreignKey: "projectId",
     });
   };
 

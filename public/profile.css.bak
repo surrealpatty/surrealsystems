@@ -195,18 +195,18 @@ button:hover {
   font-size: 0.95rem;
 }
 
-#services-list {
+#projects-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
 }
 
-.service-buttons {
+.project-buttons {
   display: flex;
   gap: 8px;
 }
 
-.new-service {
+.new-project {
   display: none;
   flex-direction: column;
   gap: 10px;
@@ -214,7 +214,7 @@ button:hover {
   text-align: left;
 }
 
-.new-service.show-flex {
+.new-project.show-flex {
   display: flex;
 }
 
@@ -312,7 +312,7 @@ textarea {
   z-index: 100;
 }
 
-#goToServicesBtn {
+#goToprojectsBtn {
   background-color: #28a745;
   bottom: 200px;
 }
@@ -322,7 +322,7 @@ textarea {
   bottom: 140px;
 }
 
-#addNewServiceBtn {
+#addNewprojectBtn {
   background-color: #ffc107;
   color: #333;
   bottom: 80px;

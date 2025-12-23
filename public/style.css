@@ -140,7 +140,7 @@ body {
   align-items: stretch;
 }
 
-/* ✅ REMOVED: this was clamping profile/services/messages to 920px */
+/* ✅ REMOVED: this was clamping profile/projects/messages to 920px */
 /*
 .container > header,
 .container > section,
@@ -391,17 +391,17 @@ select:focus {
 }
 
 /* =========================================================
-   SERVICES GRID HELPERS
+   projectS GRID HELPERS
 ========================================================= */
 
-#services-list {
+#projects-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
   align-items: start;
 }
 
-#newServiceSection {
+#newprojectSection {
   display: none;
   flex-direction: column;
   gap: 10px;
@@ -601,7 +601,7 @@ html[data-theme="light"] #messageModal .modal-content {
 }
 
 /* =========================================================
-   DASHBOARD WIDTH FIX (services/messages/profile)
+   DASHBOARD WIDTH FIX (projects/messages/profile)
    These pages use .dash-wrapper (seen in DevTools),
    so they ignore .container/.profile-wrapper rules.
 ========================================================= */
@@ -648,7 +648,7 @@ input[type="submit"],
 .tab-btn,
 #editProfileBtn,
 #messageBtn,
-#createServiceBtn,
+#createprojectBtn,
 #refreshBtn {
   background: var(--btn-gradient) !important;
   background-image: var(--btn-gradient) !important;

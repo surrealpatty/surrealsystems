@@ -1,15 +1,15 @@
 // models/index.js
 const User = require('./user');
-const Service = require('./services');
+const project = require('./projects');
 const Rating = require('./rating');
 
-// Services
-User.hasMany(Service, {
+// projects
+User.hasMany(project, {
   foreignKey: 'userId',
-  as: 'services',
+  as: 'projects',
   onDelete: 'CASCADE',
 });
-Service.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+project.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 // Ratings
 User.hasMany(Rating, {
@@ -25,4 +25,4 @@ User.hasMany(Rating, {
 Rating.belongsTo(User, { foreignKey: 'raterId', as: 'rater' });
 Rating.belongsTo(User, { foreignKey: 'rateeId', as: 'ratee' });
 
-module.exports = { User, Service, Rating };
+module.exports = { User, project, Rating };

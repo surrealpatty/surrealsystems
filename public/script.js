@@ -7,7 +7,7 @@ const TOKEN_KEY = "token";
 const USER_ID_KEY = "userId";
 
 /* =============================== Theme keys ============================== */
-/* Single global theme key used on all pages (profile, services, messages, home) */
+/* Single global theme key used on all pages (profile, projects, messages, home) */
 const THEME_KEY = "Surreal Systems-theme";
 
 /* ---------- Theme helpers ---------- */

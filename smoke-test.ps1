@@ -64,10 +64,10 @@ Write-Host "User2: id=$user2Id, token len=$($token2.Length)"
 $headers1 = @{ Authorization = "Bearer $token1" }
 $headers2 = @{ Authorization = "Bearer $token2" }
 
-# 2) Create a service as user1
-$svcBody = @{ title = "Test Service $suffix"; description = "Test desc"; price = 25 } | ConvertTo-Json
-$svcResp = Invoke-RestMethod -Uri "$baseUrl/api/services" -Method Post -ContentType 'application/json' -Headers $headers1 -Body $svcBody
-Write-Host "Create service response: $($svcResp | ConvertTo-Json -Depth 2)"
+# 2) Create a project as user1
+$svcBody = @{ title = "Test project $suffix"; description = "Test desc"; price = 25 } | ConvertTo-Json
+$svcResp = Invoke-RestMethod -Uri "$baseUrl/api/projects" -Method Post -ContentType 'application/json' -Headers $headers1 -Body $svcBody
+Write-Host "Create project response: $($svcResp | ConvertTo-Json -Depth 2)"
 
 # 3) Send a message (content must be a string)
 $msg = @{

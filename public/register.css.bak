@@ -191,17 +191,17 @@ button:hover {
   color: #555;
 }
 
-/* ---------- SERVICE GRID + SMALL SQUARE CARDS ---------- */
-/* container that holds all services on the profile page */
-#services-list {
+/* ---------- project GRID + SMALL SQUARE CARDS ---------- */
+/* container that holds all projects on the profile page */
+#projects-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 18px;
   margin-top: 18px;
 }
 
-/* add class="card service-card" to each service for these styles */
-.service-card {
+/* add class="card project-card" to each project for these styles */
+.project-card {
   background: #0f172a;
   color: #e5e7eb;
   border-radius: 12px;
@@ -217,27 +217,27 @@ button:hover {
     background 0.2s ease;
 }
 
-.service-card:hover {
+.project-card:hover {
   transform: translateY(-6px);
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6);
   background: #111827;
 }
 
-.service-card h3 {
+.project-card h3 {
   margin: 0 0 4px 0;
   font-size: 0.98rem;
   color: #f9fafb;
   line-height: 1.2;
 }
 
-.service-card p {
+.project-card p {
   margin: 2px 0;
   font-size: 0.9rem;
   color: #cbd5e1;
 }
 
 /* price line inside card */
-.service-card .price {
+.project-card .price {
   margin-top: 8px;
   font-weight: 600;
   font-size: 0.95rem;
@@ -245,24 +245,24 @@ button:hover {
 }
 
 /* tiny footer text if you use it */
-.service-card .meta {
+.project-card .meta {
   font-size: 0.8rem;
   color: #94a3b8;
 }
 
-/* ------------------- end service styles ------------------- */
+/* ------------------- end project styles ------------------- */
 
 .muted {
   color: #777;
   font-size: 0.95rem;
 }
 
-.service-buttons {
+.project-buttons {
   display: flex;
   gap: 8px;
 }
 
-.new-service {
+.new-project {
   display: none;
   flex-direction: column;
   gap: 10px;
@@ -270,7 +270,7 @@ button:hover {
   text-align: left;
 }
 
-.new-service.show-flex {
+.new-project.show-flex {
   display: flex;
 }
 
@@ -368,7 +368,7 @@ textarea {
   z-index: 100;
 }
 
-#goToServicesBtn {
+#goToprojectsBtn {
   background-color: #28a745;
   bottom: 200px;
 }
@@ -378,7 +378,7 @@ textarea {
   bottom: 140px;
 }
 
-#addNewServiceBtn {
+#addNewprojectBtn {
   background-color: #ffc107;
   color: #333;
   bottom: 80px;

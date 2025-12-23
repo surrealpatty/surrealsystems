@@ -2,13 +2,13 @@
 const { sequelize } = require('../config/database');
 const buildUser = require('./user');
 const buildMessage = require('./message');
-const buildService = require('./service');
+const buildproject = require('./project');
 const buildRating = require('./rating');
 const buildBilling = require('./billing'); // <- new
 
 const User = buildUser(sequelize);
 const Message = buildMessage(sequelize);
-const Service = buildService(sequelize);
+const project = buildproject(sequelize);
 const Rating = buildRating(sequelize);
 const Billing = buildBilling(sequelize); // <- new
 
@@ -20,13 +20,13 @@ Message.belongsTo(User, { as: 'receiver', foreignKey: 'receiverId' });
 User.hasMany(Message, { as: 'sentMessages', foreignKey: 'senderId' });
 User.hasMany(Message, { as: 'receivedMessages', foreignKey: 'receiverId' });
 
-// Services
-Service.belongsTo(User, { as: 'owner', foreignKey: 'userId' });
-User.hasMany(Service, { as: 'services', foreignKey: 'userId' });
+// projects
+project.belongsTo(User, { as: 'owner', foreignKey: 'userId' });
+User.hasMany(project, { as: 'projects', foreignKey: 'userId' });
 
-// Ratings — service ratings (nullable)
-Rating.belongsTo(Service, { as: 'service', foreignKey: 'serviceId' });
-Service.hasMany(Rating, { as: 'ratings', foreignKey: 'serviceId' });
+// Ratings — project ratings (nullable)
+Rating.belongsTo(project, { as: 'project', foreignKey: 'projectId' });
+project.hasMany(Rating, { as: 'ratings', foreignKey: 'projectId' });
 
 // Ratings — user-to-user
 Rating.belongsTo(User, { as: 'rater', foreignKey: 'raterId' });
@@ -42,7 +42,7 @@ module.exports = {
   sequelize,
   User,
   Message,
-  Service,
+  project,
   Rating,
   Billing, // <- export Billing
 };

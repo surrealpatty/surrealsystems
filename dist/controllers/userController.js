@@ -1,5 +1,5 @@
 ﻿"use strict";
-const { User, Service } = require('../models');
+const { User, project } = require('../models');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 // ---------------- Register ----------------
@@ -47,7 +47,7 @@ const getProfile = async (req, res) => {
         const userId = req.params.id || req.user.id;
         const user = await User.findByPk(userId, {
             attributes: ['id', 'username', 'email', 'description', 'tier'],
-            include: [{ model: Service, as: 'services' }]
+            include: [{ model: project, as: 'projects' }]
         });
         if (!user)
             return res.status(404).json({ error: 'User not found' });

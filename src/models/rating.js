@@ -11,8 +11,8 @@ module.exports = (sequelize) => {
         autoIncrement: true,
       },
 
-      // For service ratings (nullable so rating can be user-to-user)
-      serviceId: {
+      // For project ratings (nullable so rating can be user-to-user)
+      projectId: {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
@@ -52,7 +52,7 @@ module.exports = (sequelize) => {
     {
       tableName: 'ratings',
       timestamps: true,
-      underscored: false, // use camelCase columns: serviceId, raterId, rateeId
+      underscored: false, // use camelCase columns: projectId, raterId, rateeId
 
       // Unique rating constraint for rater -> ratee (only when rateeId is not null)
       // Use camelCase column names here as well

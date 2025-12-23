@@ -75,23 +75,23 @@ try {
     exit 1
 }
 
-# Create a service as user A
-Write-Host "`n4) Create a service as user A..."
+# Create a project as user A
+Write-Host "`n4) Create a project as user A..."
 try {
-    $serviceResp = Invoke-Api -Method 'Post' -Path 'services' -Body @{
-        title = "Smoke Service $ts"
-        description = "Smoke-test service created at $ts"
+    $projectResp = Invoke-Api -Method 'Post' -Path 'projects' -Body @{
+        title = "Smoke project $ts"
+        description = "Smoke-test project created at $ts"
         price = 25.00
     } -Token $tokenA
 
-    if ($serviceResp.service) {
-        $svc = $serviceResp.service
-        Write-Host "Service created: id=$($svc.id) title=$($svc.title) price=$($svc.price)"
+    if ($projectResp.project) {
+        $svc = $projectResp.project
+        Write-Host "project created: id=$($svc.id) title=$($svc.title) price=$($svc.price)"
     } else {
-        Write-Host "Unexpected service response: $($serviceResp | ConvertTo-Json -Depth 4)"
+        Write-Host "Unexpected project response: $($projectResp | ConvertTo-Json -Depth 4)"
     }
 } catch {
-    Write-Host "Create service failed: $($_ | Out-String)"
+    Write-Host "Create project failed: $($_ | Out-String)"
     exit 1
 }
 
@@ -122,7 +122,7 @@ Write-Host "`nSmoke test completed successfully."
 Write-Host "Summary:"
 Write-Host "  User A: id=$($userA.id) username=$($userA.username) email=$emailA"
 Write-Host "  User B: id=$($userB.id) username=$($userB.username) email=$emailB"
-Write-Host "  Service: id=$($svc.id) title=$($svc.title) price=$($svc.price)"
+Write-Host "  project: id=$($svc.id) title=$($svc.title) price=$($svc.price)"
 Write-Host "`nTokens (A/B):"
 Write-Host "  tokenA present: $([bool]$tokenA)"
 Write-Host "  tokenB present: $([bool]$tokenB)"

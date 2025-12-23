@@ -24,8 +24,8 @@ module.exports = {
       },
     });
 
-    // Services
-    await queryInterface.createTable('services', {
+    // projects
+    await queryInterface.createTable('projects', {
       id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
       userId: {
         type: Sequelize.INTEGER,
@@ -82,10 +82,10 @@ module.exports = {
     // Ratings
     await queryInterface.createTable('ratings', {
       id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
-      serviceId: {
+      projectId: {
         type: Sequelize.INTEGER,
         allowNull: true,
-        references: { model: 'services', key: 'id' },
+        references: { model: 'projects', key: 'id' },
         onDelete: 'SET NULL',
         onUpdate: 'CASCADE',
       },
@@ -161,7 +161,7 @@ module.exports = {
     await queryInterface.removeIndex('ratings', 'ratings_rater_ratee_unique').catch(() => {});
     await queryInterface.dropTable('ratings');
     await queryInterface.dropTable('messages');
-    await queryInterface.dropTable('services');
+    await queryInterface.dropTable('projects');
     await queryInterface.dropTable('users');
   },
 };

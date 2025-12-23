@@ -1,5 +1,5 @@
-/* public/services.css
-   Services page (Surreal Systems) — layout + modal + toast ONLY.
+/* public/projects.css
+   projects page (Surreal Systems) — layout + modal + toast ONLY.
    NO html/body background. NO .container styling. NO global button styling.
    style.css owns the theme.
 */
@@ -43,8 +43,8 @@ img, video { max-width: 100%; height: auto; display: block; }
   flex-wrap:wrap;
 }
 
-/* ---------- Services grid ---------- */
-#services-list{
+/* ---------- projects grid ---------- */
+#projects-list{
   display:grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap:20px;
@@ -52,8 +52,8 @@ img, video { max-width: 100%; height: auto; display: block; }
   margin-top: 12px;
 }
 
-/* ---------- Service card: match index glass ---------- */
-.service-card{
+/* ---------- project card: match index glass ---------- */
+.project-card{
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -68,22 +68,22 @@ img, video { max-width: 100%; height: auto; display: block; }
   hyphens:auto;
 }
 
-:root[data-theme="light"] .service-card{ background: var(--surface); }
+:root[data-theme="light"] .project-card{ background: var(--surface); }
 
-.service-card:hover{
+.project-card:hover{
   transform: translateY(-6px);
   box-shadow: 0 18px 36px rgba(0,0,0,0.12);
 }
 
-.service-card h3{
+.project-card h3{
   margin:0 0 8px;
   color: var(--brand-b);
   font-size: 1.1rem;
 }
 
-.service-card p{ margin:6px 0; color: var(--muted); }
+.project-card p{ margin:6px 0; color: var(--muted); }
 
-.service-card .username{
+.project-card .username{
   font-style: italic;
   opacity: 0.9;
 }
@@ -97,15 +97,15 @@ img, video { max-width: 100%; height: auto; display: block; }
   align-items:center;
 }
 
-/* ---------- New service editor section ---------- */
-.new-service{
+/* ---------- New project editor section ---------- */
+.new-project{
   display:none;
   flex-direction:column;
   gap:10px;
   margin-top:10px;
   text-align:left;
 }
-.new-service.show-flex{ display:flex; }
+.new-project.show-flex{ display:flex; }
 
 .input-number{ max-width:200px; }
 

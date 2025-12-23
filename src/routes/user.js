@@ -3,14 +3,14 @@
 // src/routes/user.js
 const express = require('express');
 const router = express.Router();
-const { User, Service, Message } = require('../models');
+const { User, project, Message } = require('../models');
 let bcrypt;
 try {
   bcrypt = require('bcrypt');
 } catch (e) {
   try {
     bcrypt = require('bcryptjs');
-    console.warn('bcrypt not available — falling back to bcryptjs');
+    console.warn('bcrypt not available ï¿½ falling back to bcryptjs');
   } catch (e2) {
     console.error('No bcrypt implementation available. Install "bcrypt" or "bcryptjs".');
     throw e2;
@@ -207,7 +207,7 @@ router.post(
         where: email ? { email } : { username },
       });
 
-      // Debug logging (safe) — helpful if login fails. Remove or lower log level in production.
+      // Debug logging (safe) ï¿½ helpful if login fails. Remove or lower log level in production.
       console.info('LOGIN ATTEMPT', {
         by: email ? 'email' : 'username',
         identifier: email || username,
@@ -312,23 +312,23 @@ router.get(
   },
 );
 
-router.get('/me/services', authenticateToken, async (req, res) => {
+router.get('/me/projects', authenticateToken, async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 20, 50);
     const offset = Number(req.query.offset) || 0;
-    const rows = await Service.findAll({
+    const rows = await project.findAll({
       where: { userId: req.user.id },
       attributes: ['id', 'title', 'price', 'createdAt', 'updatedAt'],
       order: [['createdAt', 'DESC']],
       limit,
       offset,
     });
-    const payload = { services: rows, nextOffset: offset + rows.length };
+    const payload = { projects: rows, nextOffset: offset + rows.length };
     res.set('Cache-Control', 'private, max-age=15');
     return respondCompat(res, payload);
   } catch (err) {
-    console.error('Get /me/services error:', err && err.stack ? err.stack : err);
-    return sendError(res, 'Failed to fetch services', 500);
+    console.error('Get /me/projects error:', err && err.stack ? err.stack : err);
+    return sendError(res, 'Failed to fetch projects', 500);
   }
 });
 

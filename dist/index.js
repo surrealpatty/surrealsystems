@@ -2,15 +2,15 @@
 const express = require('express');
 const cors = require('cors');
 const { sequelize, testConnection } = require('./config/database');
-const serviceRoutes = require('./routes/service');
+const projectRoutes = require('./routes/project');
 const { User } = require('./models/User');
-const { Service } = require('./models/Service');
+const { project } = require('./models/project');
 require('dotenv').config();
 const app = express();
 app.use(cors());
 app.use(express.json());
 // Routes
-app.use('/services', serviceRoutes);
+app.use('/projects', projectRoutes);
 // Test DB and sync
 (async () => {
     try {

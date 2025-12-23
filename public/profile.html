@@ -215,7 +215,7 @@
         color: var(--muted);
       }
 
-      .services-empty{
+      .projects-empty{
         margin-top:6px;
         padding:0.65rem 0.75rem;
         border-radius:0.9rem;
@@ -224,14 +224,14 @@
         background: rgba(15,23,42,0.35);
         color: var(--muted);
       }
-      :root[data-theme="light"] .services-empty{
+      :root[data-theme="light"] .projects-empty{
         background:#ffffff;
       }
 
       .is-hidden{ display:none !important; }
 
       .profile-edit,
-      .service-panel{
+      .project-panel{
         margin-top:14px;
         padding-top:12px;
         border-top:1px solid var(--border);
@@ -258,14 +258,14 @@
         color: var(--muted);
       }
 
-      #profileServicesList{
+      #profileprojectsList{
         margin-top:12px;
         display:grid;
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         gap:12px;
       }
 
-      .profile-service-card,
+      .profile-project-card,
       .settings-item{
         border-radius:0.9rem;
         padding:10px 12px;
@@ -273,13 +273,13 @@
         border:1px solid var(--border);
         background: rgba(15,23,42,0.35);
       }
-      :root[data-theme="light"] .profile-service-card,
+      :root[data-theme="light"] .profile-project-card,
       :root[data-theme="light"] .settings-item{
         background:#ffffff;
       }
 
-      .profile-service-title{ font-weight:600; margin-bottom:4px; }
-      .profile-service-meta{ font-size:0.83rem; color: var(--muted); }
+      .profile-project-title{ font-weight:600; margin-bottom:4px; }
+      .profile-project-meta{ font-size:0.83rem; color: var(--muted); }
 
       .settings-subtitle{
         margin:0 0 12px;
@@ -393,7 +393,7 @@
           <ul class="nav-list">
             <li><a href="index.html" class="nav-link">Home</a></li>
             <li><a href="profile.html" class="nav-link nav-link--active">Profile</a></li>
-            <li><a href="services.html" class="nav-link">Services</a></li>
+            <li><a href="projects.html" class="nav-link">projects</a></li>
             <li><a href="messages.html" class="nav-link">Messages</a></li>
             <li><a href="login.html" class="nav-link nav-link--danger">Logout</a></li>
           </ul>
@@ -492,28 +492,28 @@
           </section>
 
           <section class="card">
-            <h2>Your services</h2>
-            <p class="settings-subtitle">Once you start posting, your services will appear here.</p>
+            <h2>Your projects</h2>
+            <p class="settings-subtitle">Once you start posting, your projects will appear here.</p>
 
-            <div id="profileServicesEmpty" class="services-empty">
-              You don’t have any services yet. Create one to start attracting clients.
+            <div id="profileprojectsEmpty" class="projects-empty">
+              You don’t have any projects yet. Create one to start attracting clients.
             </div>
 
-            <div id="profileServicesList"></div>
+            <div id="profileprojectsList"></div>
 
             <div class="btn-row">
-              <button type="button" class="btn btn-primary" id="createServiceBtn">
-                Create Service
+              <button type="button" class="btn btn-primary" id="createprojectBtn">
+                Create project
               </button>
             </div>
 
             <!-- ✅ UPDATED FORM FIELDS -->
-            <form id="createServiceForm" class="service-panel is-hidden">
+            <form id="createprojectForm" class="project-panel is-hidden">
               <div class="profile-edit-row">
-                <label for="serviceTitle" class="profile-label">Title</label>
+                <label for="projectTitle" class="profile-label">Title</label>
                 <input
                   type="text"
-                  id="serviceTitle"
+                  id="projectTitle"
                   class="profile-edit-input"
                   maxlength="100"
                   placeholder="Project title"
@@ -522,9 +522,9 @@
               </div>
 
               <div class="profile-edit-row">
-                <label for="serviceDescription" class="profile-label">Description of the project</label>
+                <label for="projectDescription" class="profile-label">Description of the project</label>
                 <textarea
-                  id="serviceDescription"
+                  id="projectDescription"
                   class="profile-edit-textarea"
                   rows="4"
                   placeholder="What is the project? What problem does it solve?"
@@ -533,9 +533,9 @@
               </div>
 
               <div class="profile-edit-row">
-                <label for="serviceNeeds" class="profile-label">What the project needs</label>
+                <label for="projectNeeds" class="profile-label">What the project needs</label>
                 <textarea
-                  id="serviceNeeds"
+                  id="projectNeeds"
                   class="profile-edit-textarea"
                   rows="4"
                   placeholder="Example: funding, developers, marketing, design, mentorship..."
@@ -544,10 +544,10 @@
               </div>
 
               <div class="profile-edit-row">
-                <label for="serviceEquity" class="profile-label">Percentage of company up for offer</label>
+                <label for="projectEquity" class="profile-label">Percentage of company up for offer</label>
                 <input
                   type="number"
-                  id="serviceEquity"
+                  id="projectEquity"
                   class="profile-edit-input"
                   min="0.5"
                   max="99.5"
@@ -559,8 +559,8 @@
               </div>
 
               <div class="btn-row">
-                <button type="submit" class="btn btn-primary">Save service</button>
-                <button type="button" class="btn btn-muted" id="cancelCreateServiceBtn">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save project</button>
+                <button type="button" class="btn btn-muted" id="cancelCreateprojectBtn">Cancel</button>
               </div>
             </form>
           </section>

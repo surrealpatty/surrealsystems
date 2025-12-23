@@ -65,7 +65,7 @@ const { sequelize, testConnection } = require('./config/database');
 const userRoutes = require('./routes/user');
 
 // ✅ FIX: point to the route file you actually edited
-const serviceRoutes = require('./routes/services');
+const projectRoutes = require('./routes/projects');
 
 const ratingRoutes = require('./routes/rating');
 const messagesRoutes = require('./routes/messages');
@@ -236,7 +236,7 @@ app.get('/api/health', (_req, res) => {
 
 /* ----------------------------- API Routes ------------------------------ */
 app.use('/api/users', userRoutes);
-app.use('/api/services', serviceRoutes);
+app.use('/api/projects', projectRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/messages', messagesRoutes);
 app.use('/api/payments', paymentsRoutes);
@@ -252,7 +252,7 @@ app.get('/', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
 app.get('/index.html', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
 app.get('/register.html', (_req, res) => res.sendFile(path.join(publicDir, 'register.html')));
 app.get('/profile.html', (_req, res) => res.sendFile(path.join(publicDir, 'profile.html')));
-app.get('/services.html', (_req, res) => res.sendFile(path.join(publicDir, 'services.html')));
+app.get('/projects.html', (_req, res) => res.sendFile(path.join(publicDir, 'projects.html')));
 app.get('/messages.html', (_req, res) => res.sendFile(path.join(publicDir, 'messages.html')));
 
 // ✅ fallback: if it's not /api/* and not a real file, return index.html

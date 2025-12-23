@@ -59,7 +59,7 @@ function getApiBase() {
       hostname.endsWith(".onrender.com") ||
       hostname.endsWith(".render.com")
     ) {
-      // Use https and point to same host + /api. If your API is on a different render service,
+      // Use https and point to same host + /api. If your API is on a different render project,
       // set window.API_URL explicitly in your page (recommended).
       return `https://${hostname}/api`;
     }

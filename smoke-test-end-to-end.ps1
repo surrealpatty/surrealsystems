@@ -56,18 +56,18 @@ $regE = Invoke-Api -Method 'Post' -Path 'users/register' -Body ($rateePayload | 
 $RATEE_ID = $regE.user.id
 Write-Host "Ratee id=$RATEE_ID"
 
-# Create a service as rater (authenticated)
-Write-Host "`n4) Create a service as rater..."
-$servicePayload = @{
-  title = "Smoke Service $ts"
-  description = "Smoke-test service created at $ts"
+# Create a project as rater (authenticated)
+Write-Host "`n4) Create a project as rater..."
+$projectPayload = @{
+  title = "Smoke project $ts"
+  description = "Smoke-test project created at $ts"
   price = 25.00
 }
-$svcResp = Invoke-Api -Method 'Post' -Path 'services' -Body $servicePayload -Token $TOKEN
-if ($svcResp.service) {
-  Write-Host "Service created id=$($svcResp.service.id) title=$($svcResp.service.title)"
+$svcResp = Invoke-Api -Method 'Post' -Path 'projects' -Body $projectPayload -Token $TOKEN
+if ($svcResp.project) {
+  Write-Host "project created id=$($svcResp.project.id) title=$($svcResp.project.title)"
 } else {
-  Write-Host "Unexpected service response: $($svcResp | ConvertTo-Json -Depth 4)"
+  Write-Host "Unexpected project response: $($svcResp | ConvertTo-Json -Depth 4)"
 }
 
 # Mark rater as paid using Node script (requires DATABASE_URL in env)

@@ -9,15 +9,15 @@ const User = sequelize.define('User', {
     description: { type: DataTypes.TEXT, defaultValue: '' },
     tier: { type: DataTypes.ENUM('free', 'paid'), defaultValue: 'free' }
 }, { tableName: 'users', timestamps: true });
-// Service model
-const Service = sequelize.define('Service', {
+// project model
+const project = sequelize.define('project', {
     title: { type: DataTypes.STRING, allowNull: false },
     description: { type: DataTypes.TEXT, allowNull: false },
     price: { type: DataTypes.FLOAT, allowNull: false }
-}, { tableName: 'services', timestamps: true });
+}, { tableName: 'projects', timestamps: true });
 // Associations
-User.hasMany(Service, { as: 'services', foreignKey: 'userId' });
-Service.belongsTo(User, { as: 'user', foreignKey: 'userId' });
-module.exports = { sequelize, User, Service };
+User.hasMany(project, { as: 'projects', foreignKey: 'userId' });
+project.belongsTo(User, { as: 'user', foreignKey: 'userId' });
+module.exports = { sequelize, User, project };
 
 

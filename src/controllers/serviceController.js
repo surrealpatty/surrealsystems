@@ -1,15 +1,15 @@
-const { Service } = require('../models');
+const { project } = require('../models');
 
 // Helpers
-function ownOr403(service, userId, res) {
-  if (!service) return res.status(404).json({ error: 'Service not found' });
-  if (String(service.userId) !== String(userId)) {
+function ownOr403(project, userId, res) {
+  if (!project) return res.status(404).json({ error: 'project not found' });
+  if (String(project.userId) !== String(userId)) {
     return res.status(403).json({ error: 'Not allowed' });
   }
   return null;
 }
 
-// GET /api/services?search=&page=&limit=
+// GET /api/projects?search=&page=&limit=
 exports.list = async (req, res) => {
   try {
     const page = Math.max(parseInt(req.query.page || '1', 10), 1);
@@ -21,7 +21,7 @@ exports.list = async (req, res) => {
     const { Op } = require('sequelize');
     if (where.title) where.title = { [Op.iLike]: `%${req.query.search}%` };
 
-    const result = await Service.findAndCountAll({
+    const result = await project.findAndCountAll({
       where,
       limit,
       offset,
@@ -34,71 +34,71 @@ exports.list = async (req, res) => {
       pages: Math.ceil(result.count / limit),
     });
   } catch (err) {
-    console.error('Services list error:', err);
-    res.status(500).json({ error: 'Failed to list services' });
+    console.error('projects list error:', err);
+    res.status(500).json({ error: 'Failed to list projects' });
   }
 };
 
-// GET /api/services/:id
+// GET /api/projects/:id
 exports.getById = async (req, res) => {
   try {
-    const service = await Service.findByPk(req.params.id);
-    if (!service) return res.status(404).json({ error: 'Service not found' });
-    res.json({ service });
+    const project = await project.findByPk(req.params.id);
+    if (!project) return res.status(404).json({ error: 'project not found' });
+    res.json({ project });
   } catch (err) {
-    console.error('Service get error:', err);
-    res.status(500).json({ error: 'Failed to fetch service' });
+    console.error('project get error:', err);
+    res.status(500).json({ error: 'Failed to fetch project' });
   }
 };
 
-// POST /api/services  (protected)
+// POST /api/projects  (protected)
 exports.create = async (req, res) => {
   try {
     const { title, description, price } = req.body;
-    const service = await Service.create({
+    const project = await project.create({
       title,
       description,
       price,
       userId: req.user.id,
     });
-    res.status(201).json({ service });
+    res.status(201).json({ project });
   } catch (err) {
-    console.error('Service create error:', err);
-    res.status(500).json({ error: 'Failed to create service' });
+    console.error('project create error:', err);
+    res.status(500).json({ error: 'Failed to create project' });
   }
 };
 
-// PUT /api/services/:id  (protected + owner)
+// PUT /api/projects/:id  (protected + owner)
 exports.update = async (req, res) => {
   try {
-    const service = await Service.findByPk(req.params.id);
-    const early = ownOr403(service, req.user.id, res);
+    const project = await project.findByPk(req.params.id);
+    const early = ownOr403(project, req.user.id, res);
     if (early) return;
 
     const { title, description, price } = req.body;
-    if (title !== undefined) service.title = title;
-    if (description !== undefined) service.description = description;
-    if (price !== undefined) service.price = price;
-    await service.save();
+    if (title !== undefined) project.title = title;
+    if (description !== undefined) project.description = description;
+    if (price !== undefined) project.price = price;
+    await project.save();
 
-    res.json({ service });
+    res.json({ project });
   } catch (err) {
-    console.error('Service update error:', err);
-    res.status(500).json({ error: 'Failed to update service' });
+    console.error('project update error:', err);
+    res.status(500).json({ error: 'Failed to update project' });
   }
 };
 
-// DELETE /api/services/:id  (protected + owner)
+// DELETE /api/projects/:id  (protected + owner)
 exports.remove = async (req, res) => {
   try {
-    const service = await Service.findByPk(req.params.id);
-    const early = ownOr403(service, req.user.id, res);
+    const project = await project.findByPk(req.params.id);
+    const early = ownOr403(project, req.user.id, res);
     if (early) return;
 
-    await service.destroy();
-    res.json({ message: 'Service deleted' });
+    await project.destroy();
+    res.json({ message: 'project deleted' });
   } catch (err) {
-    console.error('Service delete error:', err);
-    res.status(500).json({ error: 'Failed to delete service' });
+    console.error('project delete error:', err);
+    res.status(500).json({ error: 'Failed to delete project' });
   }
 };

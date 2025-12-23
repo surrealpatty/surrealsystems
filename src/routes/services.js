@@ -1,9 +1,9 @@
-// src/routes/service.js
+// src/routes/project.js
 const express = require('express');
 const router = express.Router();
 const models = require('../models');
 /* eslint-disable-next-line no-unused-vars */
-const { Service, User, Rating, sequelize } = models;
+const { project, User, Rating, sequelize } = models;
 const { QueryTypes } = require('sequelize');
 const authenticateToken = require('../middlewares/authenticateToken');
 const { query, param, body } = require('express-validator');
@@ -50,8 +50,8 @@ router.get(
       const where = {};
       if (req.query.userId) where.userId = Number(req.query.userId);
 
-      // fetch services with owner
-      const rows = await Service.findAll({
+      // fetch projects with owner
+      const rows = await project.findAll({
         where: Object.keys(where).length ? where : undefined,
         attributes: [
           'id',
@@ -70,29 +70,29 @@ router.get(
       });
 
       if (!rows || !rows.length)
-        return ok(res, { services: [], hasMore: false, nextOffset: offset });
+        return ok(res, { projects: [], hasMore: false, nextOffset: offset });
 
-      const serviceIds = rows.map((r) => r.id);
-      console.info('[services] fetched rows count=%d, serviceIds=%o', rows.length, serviceIds.slice(0, 5));
+      const projectIds = rows.map((r) => r.id);
+      console.info('[projects] fetched rows count=%d, projectIds=%o', rows.length, projectIds.slice(0, 5));
 
       const summaryMap = {};
 
       try {
-        // NOTE: ratings table columns use camelCase ("serviceId"). Alias to "serviceId"
+        // NOTE: ratings table columns use camelCase ("projectId"). Alias to "projectId"
         const rowsRaw = await sequelize.query(
-          `SELECT "serviceId",
+          `SELECT "projectId",
                   AVG(COALESCE(stars, score))::numeric(10,2) AS "avgRating",
                   COUNT(*)::int AS "ratingsCount"
            FROM ratings
-           WHERE "serviceId" IS NOT NULL AND "serviceId" IN (:ids)
-           GROUP BY "serviceId"`,
-          { replacements: { ids: serviceIds }, type: QueryTypes.SELECT },
+           WHERE "projectId" IS NOT NULL AND "projectId" IN (:ids)
+           GROUP BY "projectId"`,
+          { replacements: { ids: projectIds }, type: QueryTypes.SELECT },
         );
 
-        console.info('[services] aggregation rowsRaw sample:', (rowsRaw || []).slice(0, 5));
+        console.info('[projects] aggregation rowsRaw sample:', (rowsRaw || []).slice(0, 5));
 
         (rowsRaw || []).forEach((r) => {
-          summaryMap[r.serviceId] = {
+          summaryMap[r.projectId] = {
             avgRating:
               r.avgRating !== null && r.avgRating !== undefined
                 ? Number(Number(r.avgRating).toFixed(2))
@@ -102,12 +102,12 @@ router.get(
         });
       } catch (e) {
         console.info(
-          'Ratings aggregation skipped or failed (no service-level ratings or DB schema mismatch):',
+          'Ratings aggregation skipped or failed (no project-level ratings or DB schema mismatch):',
           e && e.message ? e.message : e,
         );
       }
 
-      const services = rows.map((s) => {
+      const projects = rows.map((s) => {
         const sum = summaryMap[s.id] || { avgRating: null, ratingsCount: 0 };
         return {
           id: s.id,
@@ -126,10 +126,10 @@ router.get(
       });
 
       const hasMore = rows.length >= limit;
-      return ok(res, { services, hasMore, nextOffset: offset + rows.length });
+      return ok(res, { projects, hasMore, nextOffset: offset + rows.length });
     } catch (e) {
-      console.error('GET /api/services error:', e && e.stack ? e.stack : e);
-      return err(res, 'Failed to load services', 500);
+      console.error('GET /api/projects error:', e && e.stack ? e.stack : e);
+      return err(res, 'Failed to load projects', 500);
     }
   },
 );
@@ -169,7 +169,7 @@ router.post(
         return err(res, 'Equity must be between 0.5 and 99.5 (steps of 0.5)', 400);
       }
 
-      const svc = await Service.create({
+      const svc = await project.create({
         userId,
         title,
         description,
@@ -177,10 +177,10 @@ router.post(
         equityPercentage: equity,
       });
 
-      return ok(res, { service: svc }, 201);
+      return ok(res, { project: svc }, 201);
     } catch (e) {
-      console.error('Create service error:', e && e.stack ? e.stack : e);
-      return err(res, 'Failed to create service', 500);
+      console.error('Create project error:', e && e.stack ? e.stack : e);
+      return err(res, 'Failed to create project', 500);
     }
   },
 );
@@ -189,14 +189,14 @@ router.post(
 router.get('/:id', [param('id').isInt({ min: 1 }).toInt()], validate, async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const svc = await Service.findByPk(id, {
+    const svc = await project.findByPk(id, {
       include: [{ model: User, as: 'owner', attributes: ['id', 'username'] }],
     });
-    if (!svc) return err(res, 'Service not found', 404);
-    return ok(res, { service: svc });
+    if (!svc) return err(res, 'project not found', 404);
+    return ok(res, { project: svc });
   } catch (e) {
-    console.error('Get service error:', e && e.stack ? e.stack : e);
-    return err(res, 'Failed to load service', 500);
+    console.error('Get project error:', e && e.stack ? e.stack : e);
+    return err(res, 'Failed to load project', 500);
   }
 });
 
@@ -230,8 +230,8 @@ router.put(
   async (req, res) => {
     try {
       const id = Number(req.params.id);
-      const svc = await Service.findByPk(id);
-      if (!svc) return err(res, 'Service not found', 404);
+      const svc = await project.findByPk(id);
+      if (!svc) return err(res, 'project not found', 404);
       if (Number(svc.userId) !== Number(req.user.id)) return err(res, 'Forbidden', 403);
 
       const updates = {};
@@ -247,10 +247,10 @@ router.put(
       }
 
       await svc.update(updates);
-      return ok(res, { service: svc });
+      return ok(res, { project: svc });
     } catch (e) {
-      console.error('Update service error:', e && e.stack ? e.stack : e);
-      return err(res, 'Failed to update service', 500);
+      console.error('Update project error:', e && e.stack ? e.stack : e);
+      return err(res, 'Failed to update project', 500);
     }
   },
 );
@@ -264,15 +264,15 @@ router.delete(
   async (req, res) => {
     try {
       const id = Number(req.params.id);
-      const svc = await Service.findByPk(id);
-      if (!svc) return err(res, 'Service not found', 404);
+      const svc = await project.findByPk(id);
+      if (!svc) return err(res, 'project not found', 404);
       if (Number(svc.userId) !== Number(req.user.id)) return err(res, 'Forbidden', 403);
 
       await svc.destroy();
-      return ok(res, { message: 'Service deleted' });
+      return ok(res, { message: 'project deleted' });
     } catch (e) {
-      console.error('Delete service error:', e && e.stack ? e.stack : e);
-      return err(res, 'Failed to delete service', 500);
+      console.error('Delete project error:', e && e.stack ? e.stack : e);
+      return err(res, 'Failed to delete project', 500);
     }
   },
 );

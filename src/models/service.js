@@ -1,9 +1,9 @@
-// src/models/service.js
+// src/models/project.js
 module.exports = (sequelize) => {
   const { DataTypes } = require("sequelize");
 
-  const Service = sequelize.define(
-    "Service",
+  const project = sequelize.define(
+    "project",
     {
       id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
 
@@ -26,11 +26,11 @@ module.exports = (sequelize) => {
       },
     },
     {
-      tableName: "services",
+      tableName: "projects",
       timestamps: true,
       underscored: false,
     }
   );
 
-  return Service;
+  return project;
 };

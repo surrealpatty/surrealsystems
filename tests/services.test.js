@@ -1,4 +1,4 @@
-// tests/services.test.js
+// tests/projects.test.js
 const request = require('supertest');
 const { getApp, sequelize } = require('./testUtils');
 
@@ -16,7 +16,7 @@ afterAll(async () => {
   await sequelize.close();
 });
 
-describe('Services API', () => {
+describe('projects API', () => {
   let token;
   let userId;
 
@@ -34,53 +34,53 @@ describe('Services API', () => {
     userId = login.body.user?.id;
   });
 
-  test('create, list, get, update, delete service', async () => {
+  test('create, list, get, update, delete project', async () => {
     // create
     const create = await request(app)
-      .post('/api/services')
+      .post('/api/projects')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        title: 'Test Service',
+        title: 'Test project',
         description: 'Do the thing',
         price: '12.50',
       })
       .expect(201);
 
-    const svc = create.body.service;
+    const svc = create.body.project;
     expect(svc).toBeDefined();
-    expect(svc.title).toBe('Test Service');
+    expect(svc.title).toBe('Test project');
 
-    const serviceId = svc.id;
+    const projectId = svc.id;
 
     // list (by user)
-    const list = await request(app).get(`/api/services?userId=${userId}`).expect(200);
+    const list = await request(app).get(`/api/projects?userId=${userId}`).expect(200);
 
-    expect(Array.isArray(list.body.services || list.body.data?.services)).toBeTruthy();
-    const servicesList = list.body.services || list.body.data?.services || [];
-    expect(servicesList.find((s) => Number(s.id) === Number(serviceId))).toBeTruthy();
+    expect(Array.isArray(list.body.projects || list.body.data?.projects)).toBeTruthy();
+    const projectsList = list.body.projects || list.body.data?.projects || [];
+    expect(projectsList.find((s) => Number(s.id) === Number(projectId))).toBeTruthy();
 
     // get by id
-    const get = await request(app).get(`/api/services/${serviceId}`).expect(200);
-    expect(get.body.service || get.body.data?.service).toBeDefined();
+    const get = await request(app).get(`/api/projects/${projectId}`).expect(200);
+    expect(get.body.project || get.body.data?.project).toBeDefined();
 
     // update
     const newTitle = 'Updated Title';
     const upd = await request(app)
-      .put(`/api/services/${serviceId}`)
+      .put(`/api/projects/${projectId}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ title: newTitle })
       .expect(200);
 
-    const updated = upd.body.service || upd.body.data?.service;
+    const updated = upd.body.project || upd.body.data?.project;
     expect(updated.title).toBe(newTitle);
 
     // delete
     await request(app)
-      .delete(`/api/services/${serviceId}`)
+      .delete(`/api/projects/${projectId}`)
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
     // ensure gone
-    await request(app).get(`/api/services/${serviceId}`).expect(404);
+    await request(app).get(`/api/projects/${projectId}`).expect(404);
   });
 });

@@ -1,5 +1,5 @@
 // public/profile.js
-// Profile page logic: profile info + edit + create service dropdown + show & edit services.
+// Profile page logic: profile info + edit + create project dropdown + show & edit projects.
 
 console.log("[profile] loaded profile.js v10 (project fields + /api fixes)");
 
@@ -298,54 +298,54 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---------------- Create Service dropdown + submit ----------------
-  const createServiceBtn = document.getElementById("createServiceBtn");
-  const createServiceForm = document.getElementById("createServiceForm");
-  const cancelCreateServiceBtn = document.getElementById("cancelCreateServiceBtn");
+  // ---------------- Create project dropdown + submit ----------------
+  const createprojectBtn = document.getElementById("createprojectBtn");
+  const createprojectForm = document.getElementById("createprojectForm");
+  const cancelCreateprojectBtn = document.getElementById("cancelCreateprojectBtn");
 
-  if (createServiceBtn && createServiceForm) {
-    console.log("[profile] Create Service button & form found");
+  if (createprojectBtn && createprojectForm) {
+    console.log("[profile] Create project button & form found");
 
     const originalBtnText =
-      (createServiceBtn.textContent && createServiceBtn.textContent.trim()) || "Create Service";
+      (createprojectBtn.textContent && createprojectBtn.textContent.trim()) || "Create project";
 
     function showCreateForm() {
-      createServiceForm.classList.remove("is-hidden");
-      createServiceBtn.textContent = "Hide form";
+      createprojectForm.classList.remove("is-hidden");
+      createprojectBtn.textContent = "Hide form";
     }
 
     function hideCreateForm() {
-      createServiceForm.classList.add("is-hidden");
-      createServiceBtn.textContent = originalBtnText;
+      createprojectForm.classList.add("is-hidden");
+      createprojectBtn.textContent = originalBtnText;
     }
 
-    createServiceBtn.addEventListener("click", () => {
-      const isHidden = createServiceForm.classList.contains("is-hidden");
+    createprojectBtn.addEventListener("click", () => {
+      const isHidden = createprojectForm.classList.contains("is-hidden");
       if (isHidden) showCreateForm();
       else hideCreateForm();
     });
 
-    if (cancelCreateServiceBtn) {
-      cancelCreateServiceBtn.addEventListener("click", () => {
+    if (cancelCreateprojectBtn) {
+      cancelCreateprojectBtn.addEventListener("click", () => {
         hideCreateForm();
-        createServiceForm.reset();
+        createprojectForm.reset();
       });
     }
 
-    createServiceForm.addEventListener("submit", async (e) => {
+    createprojectForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const titleEl = document.getElementById("serviceTitle");
-      const descElService = document.getElementById("serviceDescription");
-      const needsEl = document.getElementById("serviceNeeds");
-      const equityEl = document.getElementById("serviceEquity");
+      const titleEl = document.getElementById("projectTitle");
+      const descElproject = document.getElementById("projectDescription");
+      const needsEl = document.getElementById("projectNeeds");
+      const equityEl = document.getElementById("projectEquity");
 
       const title = titleEl ? titleEl.value.trim() : "";
-      const descriptionService = descElService ? descElService.value.trim() : "";
+      const descriptionproject = descElproject ? descElproject.value.trim() : "";
       const needs = needsEl ? needsEl.value.trim() : "";
       const equityRaw = equityEl ? equityEl.value.trim() : "";
 
-      if (!title || !descriptionService || !needs || !equityRaw) {
+      if (!title || !descriptionproject || !needs || !equityRaw) {
         alert("Please fill in all fields.");
         return;
       }
@@ -359,11 +359,11 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         if (typeof window.apiFetch === "function") {
           // ✅ if your apiFetch already prefixes /api, this is fine.
-          await window.apiFetch("services", {
+          await window.apiFetch("projects", {
             method: "POST",
             body: {
               title,
-              description: descriptionService,
+              description: descriptionproject,
               needs,
               equityPercentage: equityNum,
             },
@@ -376,15 +376,15 @@ document.addEventListener("DOMContentLoaded", () => {
             safeGet("token") || safeGet("authToken") || safeGet("jwt") || safeGet("accessToken");
           if (tokenInner) headers.Authorization = "Bearer " + tokenInner;
 
-          // ✅ FIX 1: must hit /api/services
+          // ✅ FIX 1: must hit /api/projects
           // ✅ FIX 2: include credentials for cookie auth
-          const res = await fetch(baseUrl + "/api/services", {
+          const res = await fetch(baseUrl + "/api/projects", {
             method: "POST",
             headers,
             credentials: "include",
             body: JSON.stringify({
               title,
-              description: descriptionService,
+              description: descriptionproject,
               needs,
               equityPercentage: equityNum,
             }),
@@ -396,27 +396,27 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
 
-        alert("Service created successfully!");
-        createServiceForm.reset();
+        alert("project created successfully!");
+        createprojectForm.reset();
         hideCreateForm();
-        loadServicesForProfile();
+        loadprojectsForProfile();
       } catch (err) {
         console.error(err);
-        alert(err.message || "Something went wrong creating the service.");
+        alert(err.message || "Something went wrong creating the project.");
       }
     });
   } else {
-    console.warn("[profile] Create Service elements not found", {
-      btn: !!createServiceBtn,
-      form: !!createServiceForm,
-      cancelBtn: !!cancelCreateServiceBtn,
+    console.warn("[profile] Create project elements not found", {
+      btn: !!createprojectBtn,
+      form: !!createprojectForm,
+      cancelBtn: !!cancelCreateprojectBtn,
     });
   }
 
-  // ---------------- Helpers for editing & deleting a service ----------------
-  async function updateServiceById(serviceId, payload) {
+  // ---------------- Helpers for editing & deleting a project ----------------
+  async function updateprojectById(projectId, payload) {
     if (typeof window.apiFetch === "function") {
-      return window.apiFetch(`services/${serviceId}`, {
+      return window.apiFetch(`projects/${projectId}`, {
         method: "PUT",
         body: payload,
       });
@@ -429,8 +429,8 @@ document.addEventListener("DOMContentLoaded", () => {
       safeGet("token") || safeGet("authToken") || safeGet("jwt") || safeGet("accessToken");
     if (tokenInner) headers.Authorization = "Bearer " + tokenInner;
 
-    // ✅ FIX: must hit /api/services/:id + include credentials
-    const res = await fetch(baseUrl + `/api/services/${serviceId}`, {
+    // ✅ FIX: must hit /api/projects/:id + include credentials
+    const res = await fetch(baseUrl + `/api/projects/${projectId}`, {
       method: "PUT",
       headers,
       credentials: "include",
@@ -443,9 +443,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  async function deleteServiceById(serviceId) {
+  async function deleteprojectById(projectId) {
     if (typeof window.apiFetch === "function") {
-      return window.apiFetch(`services/${serviceId}`, { method: "DELETE" });
+      return window.apiFetch(`projects/${projectId}`, { method: "DELETE" });
     }
 
     const baseUrl = window.API_URL || "";
@@ -455,8 +455,8 @@ document.addEventListener("DOMContentLoaded", () => {
       safeGet("token") || safeGet("authToken") || safeGet("jwt") || safeGet("accessToken");
     if (tokenInner) headers.Authorization = "Bearer " + tokenInner;
 
-    // ✅ FIX: must hit /api/services/:id + include credentials
-    const res = await fetch(baseUrl + `/api/services/${serviceId}`, {
+    // ✅ FIX: must hit /api/projects/:id + include credentials
+    const res = await fetch(baseUrl + `/api/projects/${projectId}`, {
       method: "DELETE",
       headers,
       credentials: "include",
@@ -469,16 +469,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ✨ INLINE EDIT MODE inside the card (no browser prompt)
-  function handleEditServiceFromCard(card, serviceId) {
-    if (card.querySelector(".service-inline-edit")) return;
+  function handleEditprojectFromCard(card, projectId) {
+    if (card.querySelector(".project-inline-edit")) return;
 
-    const titleEl = card.querySelector(".profile-service-title");
-    const metaEls = card.querySelectorAll(".profile-service-meta");
+    const titleEl = card.querySelector(".profile-project-title");
+    const metaEls = card.querySelectorAll(".profile-project-meta");
 
     const descElMeta = metaEls[0];
     const needsElMeta = metaEls[1];
     const equityElMeta = metaEls[2];
-    const actionsRow = card.querySelector(".profile-service-actions") || metaEls[3];
+    const actionsRow = card.querySelector(".profile-project-actions") || metaEls[3];
 
     const currentTitle = (titleEl && titleEl.textContent.trim()) || "";
     const currentDesc = (descElMeta && descElMeta.textContent.trim()) || "";
@@ -493,7 +493,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .forEach((el) => el.classList.add("is-hidden"));
 
     const wrapper = document.createElement("div");
-    wrapper.className = "service-inline-edit profile-edit";
+    wrapper.className = "project-inline-edit profile-edit";
 
     const rowTitle = document.createElement("div");
     rowTitle.className = "profile-edit-row";
@@ -589,7 +589,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       try {
-        await updateServiceById(serviceId, {
+        await updateprojectById(projectId, {
           title: newTitle,
           description: newDesc,
           needs: newNeeds,
@@ -606,8 +606,8 @@ document.addEventListener("DOMContentLoaded", () => {
           .filter(Boolean)
           .forEach((el) => el.classList.remove("is-hidden"));
       } catch (err) {
-        console.error("Failed to update service", err);
-        alert(err.message || "Could not update service. Please try again.");
+        console.error("Failed to update project", err);
+        alert(err.message || "Could not update project. Please try again.");
       }
     }
 
@@ -630,29 +630,29 @@ document.addEventListener("DOMContentLoaded", () => {
     inputTitle.focus();
   }
 
-  async function handleDeleteServiceFromCard(card, serviceId) {
-    if (!confirm("Delete this service? This cannot be undone.")) return;
+  async function handleDeleteprojectFromCard(card, projectId) {
+    if (!confirm("Delete this project? This cannot be undone.")) return;
 
     try {
-      await deleteServiceById(serviceId);
+      await deleteprojectById(projectId);
       card.remove();
 
-      const listEl = document.getElementById("profileServicesList");
-      const emptyEl = document.getElementById("profileServicesEmpty");
+      const listEl = document.getElementById("profileprojectsList");
+      const emptyEl = document.getElementById("profileprojectsEmpty");
       if (listEl && emptyEl && listEl.children.length === 0) {
         emptyEl.classList.remove("is-hidden");
-        emptyEl.textContent = "You don’t have any services yet. Create one to start posting.";
+        emptyEl.textContent = "You don’t have any projects yet. Create one to start posting.";
       }
     } catch (err) {
-      console.error("Failed to delete service", err);
-      alert(err.message || "Could not delete service. Please try again.");
+      console.error("Failed to delete project", err);
+      alert(err.message || "Could not delete project. Please try again.");
     }
   }
 
-  // ---------------- Load services for profile (current user) ----------------
-  async function loadServicesForProfile() {
-    const listEl = document.getElementById("profileServicesList");
-    const emptyEl = document.getElementById("profileServicesEmpty");
+  // ---------------- Load projects for profile (current user) ----------------
+  async function loadprojectsForProfile() {
+    const listEl = document.getElementById("profileprojectsList");
+    const emptyEl = document.getElementById("profileprojectsEmpty");
     if (!listEl || !emptyEl) return;
 
     listEl.innerHTML = "";
@@ -682,37 +682,37 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     emptyEl.classList.remove("is-hidden");
-    emptyEl.textContent = "Loading your services…";
+    emptyEl.textContent = "Loading your projects…";
 
-    let services = [];
+    let projects = [];
     try {
       let payload;
 
       const queryId = userId ? `userId=${encodeURIComponent(userId)}&` : "";
       if (typeof window.apiFetch === "function") {
-        payload = await window.apiFetch(`services?${queryId}limit=50&sort=newest`);
+        payload = await window.apiFetch(`projects?${queryId}limit=50&sort=newest`);
       } else {
         const baseUrl = window.API_URL || "";
-        // ✅ FIX: /api/services + credentials
-        const res = await fetch(baseUrl + `/api/services?${queryId}limit=50&sort=newest`, {
+        // ✅ FIX: /api/projects + credentials
+        const res = await fetch(baseUrl + `/api/projects?${queryId}limit=50&sort=newest`, {
           credentials: "include",
         });
         payload = await res.json();
       }
 
-      if (Array.isArray(payload)) services = payload;
-      else if (payload && Array.isArray(payload.data)) services = payload.data;
-      else if (payload && Array.isArray(payload.services)) services = payload.services;
-      else if (payload && payload.data && Array.isArray(payload.data.services))
-        services = payload.data.services;
-      else if (payload && Array.isArray(payload.rows)) services = payload.rows;
+      if (Array.isArray(payload)) projects = payload;
+      else if (payload && Array.isArray(payload.data)) projects = payload.data;
+      else if (payload && Array.isArray(payload.projects)) projects = payload.projects;
+      else if (payload && payload.data && Array.isArray(payload.data.projects))
+        projects = payload.data.projects;
+      else if (payload && Array.isArray(payload.rows)) projects = payload.rows;
       else if (payload && payload.data && Array.isArray(payload.data.rows))
-        services = payload.data.rows;
+        projects = payload.data.rows;
 
       const uidStr = userId ? String(userId) : "";
       const myNameLower = myUsername ? myUsername.toLowerCase() : "";
 
-      services = services.filter((svc) => {
+      projects = projects.filter((svc) => {
         const svcUserId = svc.userId ?? svc.UserId ?? (svc.user && (svc.user.id ?? svc.user.userId));
         const svcUsername =
           (svc.user && (svc.user.username || svc.user.name || svc.user.displayName || "")) || "";
@@ -723,16 +723,16 @@ document.addEventListener("DOMContentLoaded", () => {
         return match;
       });
     } catch (err) {
-      console.error("Failed to load services on profile page:", err);
+      console.error("Failed to load projects on profile page:", err);
 
       emptyEl.classList.remove("is-hidden");
-      emptyEl.textContent = "Could not load your services right now. Please try again.";
+      emptyEl.textContent = "Could not load your projects right now. Please try again.";
       return;
     }
 
-    if (!services.length) {
+    if (!projects.length) {
       emptyEl.classList.remove("is-hidden");
-      emptyEl.textContent = "You don’t have any services yet. Create one to start posting.";
+      emptyEl.textContent = "You don’t have any projects yet. Create one to start posting.";
       listEl.innerHTML = "";
       return;
     }
@@ -740,44 +740,44 @@ document.addEventListener("DOMContentLoaded", () => {
     emptyEl.classList.add("is-hidden");
     listEl.innerHTML = "";
 
-    services.forEach((svc) => {
+    projects.forEach((svc) => {
       const card = document.createElement("div");
-      card.className = "profile-service-card";
+      card.className = "profile-project-card";
 
-      if (svc.id != null) card.dataset.serviceId = String(svc.id);
+      if (svc.id != null) card.dataset.projectId = String(svc.id);
 
       const titleDiv = document.createElement("div");
-      titleDiv.className = "profile-service-title";
+      titleDiv.className = "profile-project-title";
       titleDiv.textContent = svc.title || "Untitled project";
       card.appendChild(titleDiv);
 
       const metaDesc = document.createElement("div");
-      metaDesc.className = "profile-service-meta";
+      metaDesc.className = "profile-project-meta";
       metaDesc.textContent = svc.description || "";
       card.appendChild(metaDesc);
 
       const metaNeeds = document.createElement("div");
-      metaNeeds.className = "profile-service-meta";
+      metaNeeds.className = "profile-project-meta";
       metaNeeds.textContent = svc.needs || "";
       card.appendChild(metaNeeds);
 
       const metaEquity = document.createElement("div");
-      metaEquity.className = "profile-service-meta";
+      metaEquity.className = "profile-project-meta";
       const eq = svc.equityPercentage ?? svc.equity ?? "";
       metaEquity.textContent = eq !== "" ? `Equity: ${eq}%` : "Equity: —";
       card.appendChild(metaEquity);
 
       const actionsRow = document.createElement("div");
-      actionsRow.className = "profile-service-meta profile-service-actions";
+      actionsRow.className = "profile-project-meta profile-project-actions";
 
       const editBtn = document.createElement("button");
       editBtn.type = "button";
-      editBtn.className = "btn btn-muted btn-small service-edit-btn";
+      editBtn.className = "btn btn-muted btn-small project-edit-btn";
       editBtn.textContent = "Edit";
 
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
-      deleteBtn.className = "btn btn-muted btn-small service-delete-btn";
+      deleteBtn.className = "btn btn-muted btn-small project-delete-btn";
       deleteBtn.textContent = "Delete";
 
       actionsRow.appendChild(editBtn);
@@ -787,25 +787,25 @@ document.addEventListener("DOMContentLoaded", () => {
       listEl.appendChild(card);
     });
 
-    if (!listEl.dataset.hasServiceHandlers) {
+    if (!listEl.dataset.hasprojectHandlers) {
       listEl.addEventListener("click", (event) => {
-        const editButton = event.target.closest(".service-edit-btn");
-        const deleteButton = event.target.closest(".service-delete-btn");
-        const card = event.target.closest(".profile-service-card");
+        const editButton = event.target.closest(".project-edit-btn");
+        const deleteButton = event.target.closest(".project-delete-btn");
+        const card = event.target.closest(".profile-project-card");
         if (!card) return;
 
-        const serviceId = card.dataset.serviceId;
-        if (!serviceId) return;
+        const projectId = card.dataset.projectId;
+        if (!projectId) return;
 
-        if (editButton) handleEditServiceFromCard(card, serviceId);
-        else if (deleteButton) handleDeleteServiceFromCard(card, serviceId);
+        if (editButton) handleEditprojectFromCard(card, projectId);
+        else if (deleteButton) handleDeleteprojectFromCard(card, projectId);
       });
 
-      listEl.dataset.hasServiceHandlers = "1";
+      listEl.dataset.hasprojectHandlers = "1";
     }
   }
 
   loadUserFromBackend().then(() => {
-    loadServicesForProfile();
+    loadprojectsForProfile();
   });
 });

@@ -1,76 +1,76 @@
 ﻿"use strict";
-// src/controllers/serviceController.js
-const { Service } = require('../models/service');
+// src/controllers/projectController.js
+const { project } = require('../models/project');
 const { User } = require('../models/user');
-// GET all services
-exports.getAllServices = async (req, res) => {
+// GET all projects
+exports.getAllprojects = async (req, res) => {
     try {
-        const services = await Service.findAll({
+        const projects = await project.findAll({
             include: [{ model: User, attributes: ['id', 'username'] }],
         });
-        res.json({ services });
+        res.json({ projects });
     }
     catch (err) {
-        console.error('Error fetching services:', err);
-        res.status(500).json({ error: 'Failed to fetch services' });
+        console.error('Error fetching projects:', err);
+        res.status(500).json({ error: 'Failed to fetch projects' });
     }
 };
-// CREATE a new service
-exports.createService = async (req, res) => {
+// CREATE a new project
+exports.createproject = async (req, res) => {
     try {
         const { title, description, price } = req.body;
         const userId = req.user.id;
         if (!title || !description || !price) {
             return res.status(400).json({ error: 'All fields are required' });
         }
-        const newService = await Service.create({
+        const newproject = await project.create({
             title,
             description,
             price: parseFloat(price),
             userId,
         });
-        res.status(201).json({ service: newService });
+        res.status(201).json({ project: newproject });
     }
     catch (err) {
-        console.error('Error creating service:', err);
-        res.status(500).json({ error: 'Failed to create service' });
+        console.error('Error creating project:', err);
+        res.status(500).json({ error: 'Failed to create project' });
     }
 };
-// UPDATE a service
-exports.updateService = async (req, res) => {
+// UPDATE a project
+exports.updateproject = async (req, res) => {
     try {
         const { id } = req.params;
         const { title, description, price } = req.body;
-        const service = await Service.findByPk(id);
-        if (!service)
-            return res.status(404).json({ error: 'Service not found' });
-        if (service.userId !== req.user.id) {
+        const project = await project.findByPk(id);
+        if (!project)
+            return res.status(404).json({ error: 'project not found' });
+        if (project.userId !== req.user.id) {
             return res.status(403).json({ error: 'Unauthorized' });
         }
-        await service.update({ title, description, price });
-        res.json({ service });
+        await project.update({ title, description, price });
+        res.json({ project });
     }
     catch (err) {
-        console.error('Error updating service:', err);
-        res.status(500).json({ error: 'Failed to update service' });
+        console.error('Error updating project:', err);
+        res.status(500).json({ error: 'Failed to update project' });
     }
 };
-// DELETE a service
-exports.deleteService = async (req, res) => {
+// DELETE a project
+exports.deleteproject = async (req, res) => {
     try {
         const { id } = req.params;
-        const service = await Service.findByPk(id);
-        if (!service)
-            return res.status(404).json({ error: 'Service not found' });
-        if (service.userId !== req.user.id) {
+        const project = await project.findByPk(id);
+        if (!project)
+            return res.status(404).json({ error: 'project not found' });
+        if (project.userId !== req.user.id) {
             return res.status(403).json({ error: 'Unauthorized' });
         }
-        await service.destroy();
-        res.json({ message: 'Service deleted' });
+        await project.destroy();
+        res.json({ message: 'project deleted' });
     }
     catch (err) {
-        console.error('Error deleting service:', err);
-        res.status(500).json({ error: 'Failed to delete service' });
+        console.error('Error deleting project:', err);
+        res.status(500).json({ error: 'Failed to delete project' });
     }
 };
 

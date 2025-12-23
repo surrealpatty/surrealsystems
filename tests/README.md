@@ -4,7 +4,7 @@ This folder contains integration tests that exercise the main API flows.
 
 - `tests/testUtils.js` — test helper (starts the app, exposes `sequelize`)
 - `tests/users.test.js` — register / login / /me
-- `tests/services.test.js` — create / list / get / update / delete service
+- `tests/projects.test.js` — create / list / get / update / delete project
 - `tests/messages.test.js` — send & fetch messages (inbox & thread)
 - `tests/ratings.test.js` — rating workflow (free vs paid)
 

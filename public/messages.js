@@ -1,10 +1,10 @@
 // public/messages.js
 // Messages page with "Reply" button, per-ad threads, and Delete.
-// Each card = one thread (ad/service + other user).
+// Each card = one thread (ad/project + other user).
 
 (() => {
   console.log(
-    "[messages] loaded messages.js (front-end v8 – ad title from service + subject)"
+    "[messages] loaded messages.js (front-end v8 – ad title from project + subject)"
   );
 
   // -----------------------------
@@ -36,8 +36,8 @@
   let allMessages = [];
   const currentUserId = getCurrentUserId();
 
-  // cache of service titles: { [id]: "title" }
-  const serviceTitleCache = {};
+  // cache of project titles: { [id]: "title" }
+  const projectTitleCache = {};
 
   // -----------------------------
   // Helpers
@@ -225,18 +225,18 @@
   }
 
   // -----------------------------
-  // Load service titles for messages using /api/services/:id
+  // Load project titles for messages using /api/projects/:id
   // -----------------------------
-  async function hydrateServiceTitles(messages) {
+  async function hydrateprojectTitles(messages) {
     const ids = new Set();
 
     for (const m of messages) {
       if (!m) continue;
-      const rawId = m.serviceId ?? m.service_id;
+      const rawId = m.projectId ?? m.project_id;
       if (rawId == null) continue;
       const num = Number(rawId);
       if (!Number.isFinite(num)) continue;
-      if (serviceTitleCache[num]) continue; // already have it
+      if (projectTitleCache[num]) continue; // already have it
       ids.add(num);
     }
 
@@ -244,15 +244,15 @@
 
     const tasks = Array.from(ids).map(async (id) => {
       try {
-        const data = await apiGet(`/services/${encodeURIComponent(id)}`);
-        // Try to pull service object from various shapes
-        const svc = data.service || (data.data && data.data.service) || data;
+        const data = await apiGet(`/projects/${encodeURIComponent(id)}`);
+        // Try to pull project object from various shapes
+        const svc = data.project || (data.data && data.data.project) || data;
         const title = svc && (svc.title || svc.name);
         if (title) {
-          serviceTitleCache[id] = title;
+          projectTitleCache[id] = title;
         }
       } catch (err) {
-        console.warn("[messages] failed to fetch service title for", id, err);
+        console.warn("[messages] failed to fetch project title for", id, err);
       }
     });
 
@@ -273,8 +273,8 @@
       inboxMessages = normalizeMessages(inboxRaw);
       sentMessages = normalizeMessages(sentRaw);
 
-      // fetch ad titles for any messages that have serviceId
-      await hydrateServiceTitles([...inboxMessages, ...sentMessages]);
+      // fetch ad titles for any messages that have projectId
+      await hydrateprojectTitles([...inboxMessages, ...sentMessages]);
 
       indexAllMessages();
       renderView("inbox");
@@ -301,7 +301,7 @@
       return;
     }
 
-    // Group into threads by (serviceId + partnerId)
+    // Group into threads by (projectId + partnerId)
     const latestByThread = new Map();
 
     for (const m of rawList) {
@@ -314,9 +314,9 @@
       if (currentUserId != null && sId === currentUserId) partnerId = rId;
       else if (currentUserId != null && rId === currentUserId) partnerId = sId;
 
-      const serviceId = m.serviceId ?? m.service_id ?? "no-service";
+      const projectId = m.projectId ?? m.project_id ?? "no-project";
 
-      const key = `${serviceId}:${partnerId ?? "unknown"}`;
+      const key = `${projectId}:${partnerId ?? "unknown"}`;
 
       const created = new Date(m.createdAt || m.created_at || 0).getTime();
       const existing = latestByThread.get(key);
@@ -402,14 +402,14 @@
     else if (currentUserId != null && rId === currentUserId) partnerId = sId;
     const partnerName = view === "inbox" ? senderName : receiverName || "User";
 
-    const serviceIdRaw = m.serviceId ?? m.service_id ?? "";
-    const serviceIdNum =
-      serviceIdRaw === "" ? null : Number(serviceIdRaw);
+    const projectIdRaw = m.projectId ?? m.project_id ?? "";
+    const projectIdNum =
+      projectIdRaw === "" ? null : Number(projectIdRaw);
     const cachedTitle =
-      serviceIdNum != null && Number.isFinite(serviceIdNum)
-        ? serviceTitleCache[serviceIdNum] || ""
+      projectIdNum != null && Number.isFinite(projectIdNum)
+        ? projectTitleCache[projectIdNum] || ""
         : "";
-    const serviceTitle = cachedTitle || "";
+    const projectTitle = cachedTitle || "";
 
     const subjectRaw = m.subject || "";
     const adTitleFromSubject = extractAdTitleFromSubject(subjectRaw);
@@ -418,10 +418,10 @@
     let cardTitle = "";
     let headerTitle = "";
 
-    if (serviceTitle) {
-      // Best: actual ad title from the Service
-      cardTitle = serviceTitle;
-      headerTitle = serviceTitle;
+    if (projectTitle) {
+      // Best: actual ad title from the project
+      cardTitle = projectTitle;
+      headerTitle = projectTitle;
     } else if (adTitleFromSubject) {
       // Next: extracted from subject (RE "Title")
       cardTitle = adTitleFromSubject;
@@ -431,7 +431,7 @@
       cardTitle = subjectRaw.trim();
       headerTitle = cardTitle;
     } else {
-      // Old messages with no subject + no service title
+      // Old messages with no subject + no project title
       cardTitle = `Message from ${senderName}`;
       headerTitle = cardTitle;
     }
@@ -462,8 +462,8 @@
           hidden
           data-partner-id="${escapeHtml(String(partnerId ?? ""))}"
           data-partner-name="${escapeHtml(partnerName)}"
-          data-service-id="${escapeHtml(String(serviceIdRaw))}"
-          data-service-title="${escapeHtml(headerTitle)}"
+          data-project-id="${escapeHtml(String(projectIdRaw))}"
+          data-project-title="${escapeHtml(headerTitle)}"
           data-root-created="${escapeHtml(createdIso || "")}"
         >
           <div class="thread-header"></div>
@@ -483,11 +483,11 @@
   // -----------------------------
   // THREAD VIEW – per (ad + user), built from allMessages
   // -----------------------------
-  function threadMessagesFor(partnerId, serviceId, rootCreatedIso, rootMessageId) {
+  function threadMessagesFor(partnerId, projectId, rootCreatedIso, rootMessageId) {
     const partnerIdNum =
       partnerId == null || partnerId === "" ? null : Number(partnerId);
     const svcIdNum =
-      serviceId == null || serviceId === "" ? null : Number(serviceId);
+      projectId == null || projectId === "" ? null : Number(projectId);
     const rootIdNum =
       rootMessageId == null || rootMessageId === "" ? null : Number(rootMessageId);
 
@@ -504,16 +504,16 @@
 
       if (!pairMatch) return false;
 
-      const mSvc = m.serviceId ?? m.service_id ?? null;
+      const mSvc = m.projectId ?? m.project_id ?? null;
 
       if (svcIdNum != null) {
-        // If the card has a service, require same serviceId
+        // If the card has a project, require same projectId
         if (mSvc == null) return false;
         if (Number(mSvc) !== svcIdNum) return false;
         return true;
       }
 
-      // ❗ No serviceId on this card:
+      // ❗ No projectId on this card:
       // treat this card as a single-message thread, not "all messages"
       if (rootIdNum != null) {
         return m.id === rootIdNum;
@@ -543,7 +543,7 @@
     return deduped;
   }
 
-  function buildThreadHeaderHtml(partnerName, serviceTitle) {
+  function buildThreadHeaderHtml(partnerName, projectTitle) {
     const parts = [];
 
     parts.push(
@@ -552,9 +552,9 @@
       )}</div>`,
     );
 
-    if (serviceTitle) {
+    if (projectTitle) {
       parts.push(
-        `<div><strong>Ad:</strong> ${escapeHtml(serviceTitle)}</div>`,
+        `<div><strong>Ad:</strong> ${escapeHtml(projectTitle)}</div>`,
       );
     }
 
@@ -597,8 +597,8 @@
 
     const partnerId = panel.getAttribute("data-partner-id");
     const partnerName = panel.getAttribute("data-partner-name") || "User";
-    const serviceId = panel.getAttribute("data-service-id") || "";
-    const serviceTitle = panel.getAttribute("data-service-title") || "";
+    const projectId = panel.getAttribute("data-project-id") || "";
+    const projectTitle = panel.getAttribute("data-project-title") || "";
     const rootCreatedIso = panel.getAttribute("data-root-created") || "";
     const rootMessageId = articleEl.getAttribute("data-message-id") || "";
 
@@ -608,13 +608,13 @@
 
     const msgs = threadMessagesFor(
       partnerId,
-      serviceId,
+      projectId,
       rootCreatedIso,
       rootMessageId,
     );
 
     if (headerEl) {
-      headerEl.innerHTML = buildThreadHeaderHtml(partnerName, serviceTitle);
+      headerEl.innerHTML = buildThreadHeaderHtml(partnerName, projectTitle);
     }
     if (messagesEl) {
       messagesEl.innerHTML = buildThreadMessagesHtml(msgs, partnerName);
@@ -635,14 +635,14 @@
     if (!panel) return;
 
     const partnerIdRaw = panel.getAttribute("data-partner-id");
-    const serviceIdRaw = panel.getAttribute("data-service-id") || "";
+    const projectIdRaw = panel.getAttribute("data-project-id") || "";
     const partnerName = panel.getAttribute("data-partner-name") || "User";
-    const serviceTitleAttr = panel.getAttribute("data-service-title") || "";
+    const projectTitleAttr = panel.getAttribute("data-project-title") || "";
     const rootCreatedIso = panel.getAttribute("data-root-created") || "";
     const rootMessageId = articleEl.getAttribute("data-message-id") || "";
 
     const partnerId = partnerIdRaw ? Number(partnerIdRaw) : null;
-    const serviceId = serviceIdRaw ? Number(serviceIdRaw) : null;
+    const projectId = projectIdRaw ? Number(projectIdRaw) : null;
 
     const textarea = panel.querySelector(".thread-reply-input");
     if (!textarea) return;
@@ -657,8 +657,8 @@
       return;
     }
 
-    const subject = serviceTitleAttr
-      ? `RE "${serviceTitleAttr}"`
+    const subject = projectTitleAttr
+      ? `RE "${projectTitleAttr}"`
       : "Message from Surreal Systems";
 
     const payload = {
@@ -666,7 +666,7 @@
       content,
       subject,
     };
-    if (serviceId) payload.serviceId = serviceId;
+    if (projectId) payload.projectId = projectId;
 
     try {
       const res = await apiPost("/messages", payload);
@@ -686,7 +686,7 @@
       // Rebuild this thread locally from updated allMessages
       const msgs = threadMessagesFor(
         partnerId,
-        serviceId,
+        projectId,
         rootCreatedIso,
         rootMessageId,
       );

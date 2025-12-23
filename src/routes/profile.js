@@ -10,24 +10,24 @@ usernameInput.value = localStorage.getItem('username') || '';
 descriptionInput.value = localStorage.getItem('description') || '';
 usernameDisplay.textContent = localStorage.getItem('username') || 'User';
 
-// Load user's services
-async function loadUserServices() {
-  const list = document.getElementById('services-list');
+// Load user's projects
+async function loadUserprojects() {
+  const list = document.getElementById('projects-list');
   if (!userId) {
     list.innerHTML = '<p class="error">No user logged in</p>';
     return;
   }
 
   try {
-    const res = await fetch(`${API_URL}/services`);
-    const services = await res.json();
+    const res = await fetch(`${API_URL}/projects`);
+    const projects = await res.json();
 
     list.innerHTML = '';
-    services
+    projects
       .filter((s) => s.User?.id == userId) // == because localStorage stores strings
       .forEach((s) => {
         const div = document.createElement('div');
-        div.className = 'service-card';
+        div.className = 'project-card';
         div.innerHTML = `
                     <h3>${s.title}</h3>
                     <p>${s.description}</p>
@@ -37,11 +37,11 @@ async function loadUserServices() {
       });
   } catch (err) {
     console.error(err);
-    list.innerHTML = '<p class="error">Failed to load services</p>';
+    list.innerHTML = '<p class="error">Failed to load projects</p>';
   }
 }
 
-loadUserServices();
+loadUserprojects();
 
 // Handle profile update
 document.getElementById('profileForm').addEventListener('submit', async (e) => {

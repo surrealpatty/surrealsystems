@@ -1,6 +1,6 @@
 ﻿# 🌐 Surreal Systems
 
-**Surreal Systems** is a Fiverr-like platform where users can sell their skills, post services, and hire others for tasks.  
+**Surreal Systems** is a Fiverr-like platform where users can sell their skills, post projects, and hire others for tasks.  
 Built with **Node.js, Express, Sequelize**, and **PostgreSQL**, it connects freelancers and clients in a lightweight, modern web app.
 
 ---
@@ -9,13 +9,13 @@ Built with **Node.js, Express, Sequelize**, and **PostgreSQL**, it connects free
 
 - 🔐 **User authentication** with JWT (register, login, profile)
 
-- 💼 **Service management:** create, edit, delete, and list services
+- 💼 **project management:** create, edit, delete, and list projects
 
-- 🔎 **Browse and search** services from other users
+- 🔎 **Browse and search** projects from other users
 
-- ⭐ **Ratings system** for users and services
+- ⭐ **Ratings system** for users and projects
 
-- 🧱 **REST API** for users, services, and ratings
+- 🧱 **REST API** for users, projects, and ratings
 
 - 🖥️ **Frontend served** via Express static routes (`/public`)
 

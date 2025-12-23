@@ -14,7 +14,7 @@ module.exports = {
         } catch (_) {}
       };
 
-      await add('service_id', { type: Sequelize.INTEGER, allowNull: true });
+      await add('project_id', { type: Sequelize.INTEGER, allowNull: true });
       await add('rater_id', { type: Sequelize.INTEGER, allowNull: true });
       await add('ratee_id', { type: Sequelize.INTEGER, allowNull: true });
       await add('stars', { type: Sequelize.INTEGER, allowNull: true });

@@ -22,7 +22,7 @@ module.exports = {
         username: 'alice',
         email: 'alice@example.com',
         password: pwHash,
-        description: 'Alice — frontend reviewer',
+        description: 'Alice ï¿½ frontend reviewer',
         tier: 'free',
         stripecustomerid: null,
         createdAt: now,
@@ -32,7 +32,7 @@ module.exports = {
         username: 'bob',
         email: 'bob@example.com',
         password: pwHash,
-        description: 'Bob — full-stack freelancer',
+        description: 'Bob ï¿½ full-stack freelancer',
         tier: 'paid',
         stripecustomerid: null,
         createdAt: now,
@@ -42,7 +42,7 @@ module.exports = {
         username: 'carol',
         email: 'carol@example.com',
         password: pwHash,
-        description: 'Carol — early tester',
+        description: 'Carol ï¿½ early tester',
         tier: 'free',
         stripecustomerid: null,
         createdAt: now,
@@ -70,8 +70,8 @@ module.exports = {
     const idByEmail = {};
     usersRows.forEach((r) => (idByEmail[r.email] = r.id));
 
-    // SERVICES (idempotent by title + user)
-    const servicesToEnsure = [
+    // projectS (idempotent by title + user)
+    const projectsToEnsure = [
       {
         userId: idByEmail['bob@example.com'],
         title: 'Fix bugs',
@@ -98,17 +98,17 @@ module.exports = {
       },
     ];
 
-    const serviceTitles = servicesToEnsure.map((s) => s.title);
-    const existingServices = await queryInterface.sequelize.query(
-      'SELECT title, "userId" FROM services WHERE title IN (:titles)',
-      { replacements: { titles: serviceTitles }, type: QueryTypes.SELECT },
+    const projectTitles = projectsToEnsure.map((s) => s.title);
+    const existingprojects = await queryInterface.sequelize.query(
+      'SELECT title, "userId" FROM projects WHERE title IN (:titles)',
+      { replacements: { titles: projectTitles }, type: QueryTypes.SELECT },
     );
-    const existingKey = new Set(existingServices.map((r) => `${r.title}::${r.userId}`));
-    const servicesToInsertFinal = servicesToEnsure.filter(
+    const existingKey = new Set(existingprojects.map((r) => `${r.title}::${r.userId}`));
+    const projectsToInsertFinal = projectsToEnsure.filter(
       (s) => !existingKey.has(`${s.title}::${s.userId}`),
     );
-    if (servicesToInsertFinal.length) {
-      await queryInterface.bulkInsert('services', servicesToInsertFinal, {});
+    if (projectsToInsertFinal.length) {
+      await queryInterface.bulkInsert('projects', projectsToInsertFinal, {});
     }
 
     // BILLINGS - ensure Bob has one (idempotent)
@@ -143,10 +143,10 @@ module.exports = {
   down: async (queryInterface, Sequelize) => {
     const Op = Sequelize.Op;
 
-    // Remove demo billings, services, users (safe selective deletion)
+    // Remove demo billings, projects, users (safe selective deletion)
     await queryInterface.bulkDelete('billings', { stripeCustomerId: 'cus_demo_bob' }, {});
     await queryInterface.bulkDelete(
-      'services',
+      'projects',
       { title: { [Op.in]: ['Fix bugs', 'Build REST API', 'Frontend review'] } },
       {},
     );

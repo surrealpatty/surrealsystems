@@ -1,6 +1,6 @@
 version: "3.8"
 
-services:
+projects:
   db:
     image: postgres:15
     restart: unless-stopped
@@ -23,7 +23,7 @@ services:
       context: .
     depends_on:
       db:
-        condition: service_healthy
+        condition: project_healthy
     # Mount your host entrypoint (the cleaned file) so the container uses it.
     # On Windows PowerShell, ${PWD} works; compose will expand it.
     volumes:

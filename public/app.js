@@ -5,7 +5,7 @@ require("dotenv").config();
 
 const { sequelize } = require("./config/database");
 const userRoutes = require("./routes/user");
-const serviceRoutes = require("./routes/service");
+const projectRoutes = require("./routes/project");
 
 const app = express();
 app.use(cors());
@@ -13,7 +13,7 @@ app.use(express.json());
 
 // ---------- API Routes ----------
 app.use("/api/users", userRoutes);
-app.use("/api/services", serviceRoutes);
+app.use("/api/projects", projectRoutes);
 
 // ---------- Serve Frontend ----------
 app.use(express.static(path.join(__dirname, "public")));

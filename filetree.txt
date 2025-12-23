@@ -11,8 +11,8 @@ public\profile.js
 public\register.css
 public\register.html
 public\script.js
-public\services.css
-public\services.html
+public\projects.css
+public\projects.html
 public\style.css
 README.md
 src\.env.example
@@ -20,7 +20,7 @@ src\.sequelizerc
 src\config\config.js
 src\config\database.js
 src\controllers\messageController.js
-src\controllers\serviceController.js
+src\controllers\projectController.js
 src\controllers\userController.js
 src\dbTest.js
 src\index.js
@@ -33,13 +33,13 @@ src\models\database.sqlite
 src\models\index.js
 src\models\message.js
 src\models\rating.js
-src\models\service.js
+src\models\project.js
 src\models\user.js
 src\routes\index.js
 src\routes\message.js
 src\routes\profile.js
 src\routes\rating.js
-src\routes\service.js
+src\routes\project.js
 src\routes\user.js
 sync.js
 tsconfig.json

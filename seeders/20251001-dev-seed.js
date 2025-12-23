@@ -27,14 +27,14 @@ module.exports = {
       {},
     );
 
-    // Insert a sample service owned by the dev user (assumes user id = 1)
+    // Insert a sample project owned by the dev user (assumes user id = 1)
     await queryInterface.bulkInsert(
-      'services',
+      'projects',
       [
         {
           userId: 1,
-          title: 'Dev Sample Service',
-          description: 'A sample service for local testing.',
+          title: 'Dev Sample project',
+          description: 'A sample project for local testing.',
           price: '25.00',
           createdAt: now,
           updatedAt: now,
@@ -45,7 +45,7 @@ module.exports = {
   },
 
   async down(queryInterface /* , Sequelize */) {
-    await queryInterface.bulkDelete('services', { title: 'Dev Sample Service' }, {});
+    await queryInterface.bulkDelete('projects', { title: 'Dev Sample project' }, {});
     await queryInterface.bulkDelete('users', { email: 'devuser@example.com' }, {});
   },
 };

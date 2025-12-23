@@ -7,7 +7,7 @@ const { QueryTypes } = require('sequelize');
 (async () => {
   try {
     const sql =
-      'SELECT "Service"."id", "Service"."userId", "Service"."title", "Service"."description", "Service"."price", "Service"."created_at" AS "createdAt", "Service"."updated_at" AS "updatedAt", "owner"."id" AS "owner.id", "owner"."username" AS "owner.username" FROM "services" AS "Service" LEFT OUTER JOIN "users" AS "owner" ON "Service"."userId" = "owner"."id" ORDER BY "createdAt" DESC LIMIT 20;';
+      'SELECT "project"."id", "project"."userId", "project"."title", "project"."description", "project"."price", "project"."created_at" AS "createdAt", "project"."updated_at" AS "updatedAt", "owner"."id" AS "owner.id", "owner"."username" AS "owner.username" FROM "projects" AS "project" LEFT OUTER JOIN "users" AS "owner" ON "project"."userId" = "owner"."id" ORDER BY "createdAt" DESC LIMIT 20;';
     console.log('=== RUNNING RAW SQL ===\n', sql, '\n=======================');
     const rows = await sequelize.query(sql, { type: QueryTypes.SELECT });
     console.log('RAW QUERY RESULT:\n', JSON.stringify(rows, null, 2));

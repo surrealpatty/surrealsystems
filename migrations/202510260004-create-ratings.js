@@ -4,10 +4,10 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('ratings', {
       id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
-      serviceId: {
+      projectId: {
         type: Sequelize.INTEGER,
         allowNull: true,
-        references: { model: 'services', key: 'id' },
+        references: { model: 'projects', key: 'id' },
         onDelete: 'SET NULL',
       },
       raterId: {

@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { Message, User, Service } = require('../models');
+const { Message, User, project } = require('../models');
 const authenticateToken = require('../middlewares/authenticateToken');
 const { body, query, param } = require('express-validator');
 const validate = require('../middlewares/validate');
@@ -115,7 +115,7 @@ router.get(
 /* ------------------------------------------------------------------ */
 /* POST /api/messages  (send a new message)                           */
 /*  - accepts either `body` or `content` field for the text           */
-/*  - auto-fills subject from the service title if missing            */
+/*  - auto-fills subject from the project title if missing            */
 /* ------------------------------------------------------------------ */
 router.post(
   '/',
@@ -134,12 +134,12 @@ router.post(
       .isString()
       .trim()
       .isLength({ max: 255 }),
-    body('serviceId').optional().isInt().toInt(),
+    body('projectId').optional().isInt().toInt(),
   ],
   validate,
   async (req, res) => {
     try {
-      const { receiverId, serviceId } = req.body;
+      const { receiverId, projectId } = req.body;
       let { subject } = req.body;
 
       const rawBody =
@@ -163,17 +163,17 @@ router.post(
       }
 
       if (!finalSubject) {
-        // Try to derive from the service title, if we have a serviceId
-        if (serviceId) {
-          const svc = await Service.findByPk(serviceId);
+        // Try to derive from the project title, if we have a projectId
+        if (projectId) {
+          const svc = await project.findByPk(projectId);
           if (svc && svc.title) {
             finalSubject = `RE "${svc.title}"`;
           }
         }
 
-        // Fallback if no service or title found
+        // Fallback if no project or title found
         if (!finalSubject) {
-          finalSubject = 'Message about your service';
+          finalSubject = 'Message about your project';
         }
       }
 
@@ -181,7 +181,7 @@ router.post(
         senderId: req.user.id,
         receiverId,
         content: bodyText,
-        serviceId: serviceId || null,
+        projectId: projectId || null,
         subject: finalSubject,
       });
 
@@ -290,7 +290,7 @@ router.get(
           ? root.receiverId
           : root.senderId;
 
-      const serviceId = root.serviceId || null;
+      const projectId = root.projectId || null;
 
       const where = {
         [Message.sequelize.Op.or]: [
@@ -299,9 +299,9 @@ router.get(
         ],
       };
 
-      // Lock to this specific ad / service if there is one
-      if (serviceId !== null) {
-        where.serviceId = serviceId;
+      // Lock to this specific ad / project if there is one
+      if (projectId !== null) {
+        where.projectId = projectId;
       }
 
       const rows = await Message.findAll({
