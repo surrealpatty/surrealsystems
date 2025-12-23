@@ -40,39 +40,110 @@
   padding-right: 0;
 }
 
-/* Make pitch panel look like index (soft lavender blocks) */
-.register-page .pitch-item{
-  border-radius: 16px;
-  border: 1px solid rgba(124,58,237,0.14);
-  background: rgba(124,58,237,0.06);
-  padding: 14px 14px;
-  margin-top: 12px;
+/* ============================
+   ✅ LEFT PANEL (MATCH INDEX)
+   - soft fade background
+   - 1/2/3 step cards
+   - premium pill
+============================ */
+.register-page .pitch{
+  /* The card class should already give border/radius/shadow from style.css,
+     but we add the index fade background here */
+  background:
+    radial-gradient(1200px circle at -10% -20%, rgba(124,58,237,0.28), transparent 60%),
+    radial-gradient(900px circle at 40% 10%, rgba(168,85,247,0.18), transparent 55%),
+    linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.64));
 }
 
 .register-page .pitch-title{
-  margin: 0 0 8px;
-  font-size: 2.1rem;
+  margin: 0 0 10px;
+  font-size: clamp(34px, 3.2vw, 54px);
+  line-height: 1.03;
   letter-spacing: -0.02em;
+  color: var(--text);
 }
 
 .register-page .pitch-subtitle{
-  margin: 0 0 10px;
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.55;
+  max-width: 62ch;
+}
+
+/* step list */
+.register-page .steps{
+  display:flex;
+  flex-direction:column;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+/* each step card */
+.register-page .step-card{
+  display:grid;
+  grid-template-columns: 44px 1fr;
+  gap: 14px;
+  padding: 16px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(124,58,237,0.18);
+  background: rgba(124,58,237,0.06);
+}
+
+.register-page .step-num{
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  display:grid;
+  place-items:center;
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
+  box-shadow: 0 10px 22px rgba(124,58,237,0.18);
+}
+
+.register-page .step-kicker{
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  font-size: 12px;
+  color: rgba(124,58,237,0.95);
+  margin: 2px 0 6px;
+}
+
+.register-page .step-title{
+  margin: 0 0 6px;
+  font-size: 22px;
+  line-height: 1.15;
+  color: var(--text);
+}
+
+.register-page .step-text{
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.55;
   color: var(--muted);
 }
 
-.register-page .badge-premium{
-  margin-top: 10px;
+/* premium pill */
+.register-page .premium-pill{
+  margin-top: 16px;
   display:inline-flex;
   align-items:center;
-  gap: 8px;
-  padding: 7px 12px;
+  gap: 10px;
+  padding: 10px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(124,58,237,0.18);
-  background: rgba(124,58,237,0.10);
-  font-weight: 800;
-  font-size: 0.85rem;
-  color: var(--text);
+  border: 1px solid rgba(124,58,237,0.22);
+  background: rgba(255,255,255,0.70);
+  color: rgba(124,58,237,0.95);
+  font-weight: 900;
   width: fit-content;
+}
+
+.register-page .premium-pill-dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
 }
 
 /* form spacing (slightly tighter so the right card stays closer to index height) */
@@ -96,7 +167,7 @@
 }
 
 .register-page label{
-  font-weight: 800;
+  font-weight: 900;
   font-size: 0.92rem;
 }
 
@@ -123,7 +194,7 @@
   background: rgba(124,58,237,0.10);
   color: var(--text);
   cursor: pointer;
-  font-weight: 800;
+  font-weight: 900;
 }
 
 .register-page .toggle-password:hover{
@@ -143,7 +214,7 @@
 
 .register-page .subtext a{
   color: var(--brand-b);
-  font-weight: 800;
+  font-weight: 900;
   text-decoration: none;
 }
 
@@ -159,5 +230,8 @@
   }
   .register-page .pitch-title{
     font-size: 1.8rem;
+  }
+  .register-page .pitch-subtitle{
+    font-size: 16px;
   }
 }
